@@ -2,7 +2,6 @@
 *.docx
 *.xlsx
 *.csv
-debug-*.log
 __pycache__/
 *.py[cod]
 *.egg-info/
