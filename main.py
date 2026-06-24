@@ -59,6 +59,11 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Produce quarter summaries only (no company rollup)",
     )
+    parser.add_argument(
+        "--skip-rescue-judge",
+        action="store_true",
+        help="Drop paraphrased excerpts without AI rescue (strict verbatim only)",
+    )
     return parser
 
 
@@ -111,6 +116,7 @@ def main() -> int:
             transcript_folder=str(folder),
             expected_quarters=args.quarters,
             skip_rollup=args.skip_rollup,
+            skip_rescue_judge=args.skip_rescue_judge,
         )
         all_rows.extend(rows)
 
