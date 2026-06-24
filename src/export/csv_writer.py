@@ -9,7 +9,6 @@ from typing import Sequence, Union
 from openpyxl import Workbook
 from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
-from openpyxl.worksheet.table import Table, TableStyleInfo
 
 from src.schemas.models import QuarterSummary, RollupSummary
 
@@ -103,15 +102,6 @@ def sanitize_sheet_title(title: str, existing_titles: set[str]) -> str:
     return candidate
 
 
-def table_name_for_sheet(sheet_title: str, index: int) -> str:
-    base = re.sub(r"\W+", "_", sheet_title).strip("_")
-    if not base:
-        base = "Company"
-    if not base[0].isalpha():
-        base = f"Company_{base}"
-    return f"{base}_Summary_{index}"
-
-
 def estimate_wrapped_line_count(value: object, column_width: float) -> int:
     text = str(value or "")
     if not text:
@@ -148,7 +138,7 @@ def write_csv(rows: Sequence[SummaryRow], output_path: Path) -> None:
             writer.writerow(summary_to_row(row))
 
 
-def populate_excel_sheet(worksheet, rows: Sequence[SummaryRow], table_name: str) -> None:
+def populate_excel_sheet(worksheet, rows: Sequence[SummaryRow]) -> None:
     headers = [DISPLAY_HEADERS[column] for column in CSV_COLUMNS]
     worksheet.append(headers)
 
@@ -189,17 +179,6 @@ def populate_excel_sheet(worksheet, rows: Sequence[SummaryRow], table_name: str)
     worksheet.freeze_panes = "A2"
     worksheet.auto_filter.ref = worksheet.dimensions
 
-    table_ref = f"A1:{get_column_letter(worksheet.max_column)}{worksheet.max_row}"
-    table = Table(displayName=table_name, ref=table_ref)
-    table.tableStyleInfo = TableStyleInfo(
-        name="TableStyleMedium2",
-        showFirstColumn=False,
-        showLastColumn=False,
-        showRowStripes=True,
-        showColumnStripes=False,
-    )
-    worksheet.add_table(table)
-
 
 def group_rows_by_company(rows: Sequence[SummaryRow]) -> dict[str, list[SummaryRow]]:
     grouped: dict[str, list[SummaryRow]] = {}
@@ -218,16 +197,12 @@ def write_excel(rows: Sequence[SummaryRow], output_path: Path) -> None:
     grouped_rows = group_rows_by_company(rows)
     if not grouped_rows:
         worksheet = workbook.create_sheet("Earnings Summary")
-        populate_excel_sheet(worksheet, [], "EarningsSummary_1")
+        populate_excel_sheet(worksheet, [])
     else:
-        for index, (company_name, company_rows) in enumerate(grouped_rows.items(), start=1):
+        for company_name, company_rows in grouped_rows.items():
             sheet_title = sanitize_sheet_title(company_name, existing_titles)
             worksheet = workbook.create_sheet(sheet_title)
-            populate_excel_sheet(
-                worksheet,
-                company_rows,
-                table_name_for_sheet(sheet_title, index),
-            )
+            populate_excel_sheet(worksheet, company_rows)
 
     workbook.save(output_path)
 
