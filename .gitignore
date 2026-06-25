@@ -16,4 +16,7 @@ data/transcripts/*
 output/*
 !output/
 !output/.gitkeep
+output_confidence/*
+!output_confidence/
+!output_confidence/.gitkeep
 .pytest_cache/

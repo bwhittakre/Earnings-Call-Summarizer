@@ -9,12 +9,12 @@ from typing import TypeVar
 import anthropic
 from pydantic import BaseModel, ValidationError
 
+from src.paths import ERRORS_DIR
 from src.schemas.models import LLMResult, TokenUsage
 
 T = TypeVar("T", bound=BaseModel)
 
 PROMPTS_DIR = Path(__file__).resolve().parent.parent / "prompts"
-ERRORS_DIR = Path(__file__).resolve().parent.parent.parent / "output" / "errors"
 
 
 def load_prompt(name: str) -> str:
@@ -101,7 +101,7 @@ class AnthropicClient:
                 raise ValueError(
                     f"Failed to parse LLM response for '{label}' after "
                     f"{self.max_retries + 1} attempt(s). "
-                    f"Raw response saved to output/errors/."
+                    f"Raw response saved to output_confidence/errors/."
                 ) from exc
 
         raise ValueError(f"Unexpected LLM failure for '{label}'") from last_error

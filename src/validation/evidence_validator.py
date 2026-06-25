@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 
+from src.paths import DROPPED_EVIDENCE_DIR, QUARANTINE_DIR
 from src.schemas.models import (
     ConfidenceEvidence,
     EvidenceBackedQuarterSummary,
@@ -13,12 +14,6 @@ from src.schemas.models import (
     EvidenceClaim,
 )
 
-QUARANTINE_DIR = (
-    Path(__file__).resolve().parent.parent.parent / "output" / "quarantine"
-)
-DROPPED_EVIDENCE_DIR = (
-    Path(__file__).resolve().parent.parent.parent / "output" / "dropped_evidence"
-)
 MIN_EXCERPT_LENGTH = 20
 
 
@@ -113,7 +108,7 @@ def validate_quarter_evidence(
     failures.extend(_validate_claims("what_happened", evidence.what_happened, transcript_text))
     failures.extend(_validate_claims("positives", evidence.positives, transcript_text))
     failures.extend(_validate_claims("negatives", evidence.negatives, transcript_text))
-    failures.extend(_validate_confidence(evidence.confidence, transcript_text))
+    failures.extend(_validate_claims("analysis", evidence.analysis, transcript_text))
     return ValidationResult(is_valid=not failures, failures=failures)
 
 
@@ -126,9 +121,9 @@ def build_quarter_evidence_corpus(
             summary.what_happened,
             summary.positives,
             summary.negatives,
+            summary.analysis,
         ):
             excerpts.extend(item.excerpt for item in claims)
-        excerpts.append(summary.confidence.excerpt)
     return "\n".join(excerpts)
 
 
@@ -151,10 +146,6 @@ def _failed_indices(failures: list[ValidationFailure], field_name: str) -> set[i
         for failure in failures
         if failure.field == field_name and failure.index is not None
     }
-
-
-def _confidence_failed(failures: list[ValidationFailure]) -> bool:
-    return any(failure.field == "confidence" for failure in failures)
 
 
 def _filter_claim_list(
@@ -202,6 +193,33 @@ def _ensure_what_happened(
     ]
 
 
+def _ensure_analysis(
+    analysis: list[EvidenceClaim],
+    what_happened: list[EvidenceClaim],
+    positives: list[EvidenceClaim],
+    negatives: list[EvidenceClaim],
+    source: str,
+) -> list[EvidenceClaim]:
+    if analysis:
+        return analysis
+
+    for candidate in what_happened + positives + negatives:
+        if excerpt_found_in_source(candidate.excerpt, source):
+            return [
+                EvidenceClaim(
+                    claim=f"Score rationale: {candidate.claim}",
+                    excerpt=candidate.excerpt,
+                )
+            ]
+
+    return [
+        EvidenceClaim(
+            claim="Limited validated analysis",
+            excerpt=_fallback_transcript_excerpt(source),
+        )
+    ]
+
+
 def _resolve_confidence(
     confidence: ConfidenceEvidence,
     what_happened: list[EvidenceClaim],
@@ -239,19 +257,22 @@ def filter_quarter_evidence(
         evidence.negatives,
         _failed_indices(validation.failures, "negatives"),
     )
+    analysis = _filter_claim_list(
+        evidence.analysis,
+        _failed_indices(validation.failures, "analysis"),
+    )
     what_happened = _ensure_what_happened(
         what_happened,
         positives,
         negatives,
         transcript_text,
     )
-    confidence = _resolve_confidence(
-        evidence.confidence,
+    analysis = _ensure_analysis(
+        analysis,
         what_happened,
         positives,
         negatives,
         transcript_text,
-        _confidence_failed(validation.failures),
     )
     return EvidenceBackedQuarterSummary(
         company_name=evidence.company_name,
@@ -259,7 +280,8 @@ def filter_quarter_evidence(
         what_happened=what_happened,
         positives=positives,
         negatives=negatives,
-        confidence=confidence,
+        confidence_score=evidence.confidence_score,
+        analysis=analysis,
     )
 
 
@@ -293,7 +315,7 @@ def filter_rollup_evidence(
         positives,
         negatives,
         source,
-        _confidence_failed(validation.failures),
+        any(failure.field == "confidence" for failure in validation.failures),
     )
     return EvidenceBackedRollupSummary(
         company_name=evidence.company_name,
@@ -352,6 +374,13 @@ def save_dropped_evidence_audit(
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     safe_label = re.sub(r"[^\w\-]+", "_", label)
     path = DROPPED_EVIDENCE_DIR / f"{safe_label}_{timestamp}.json"
+    final_counts: dict[str, int] = {
+        "what_happened": len(filtered.what_happened),
+        "positives": len(filtered.positives),
+        "negatives": len(filtered.negatives),
+    }
+    if isinstance(filtered, EvidenceBackedQuarterSummary):
+        final_counts["analysis"] = len(filtered.analysis)
     path.write_text(
         json.dumps(
             {
@@ -367,11 +396,7 @@ def save_dropped_evidence_audit(
                     }
                     for failure in validation.failures
                 ],
-                "final_claim_counts": {
-                    "what_happened": len(filtered.what_happened),
-                    "positives": len(filtered.positives),
-                    "negatives": len(filtered.negatives),
-                },
+                "final_claim_counts": final_counts,
             },
             indent=2,
         ),

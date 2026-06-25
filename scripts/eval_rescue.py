@@ -12,9 +12,10 @@ ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from src.paths import EVIDENCE_AUDIT_DIR
 from src.validation.quote_anchor import find_verbatim_quote
 
-DEFAULT_AUDIT_DIR = ROOT / "output" / "evidence_audit"
+DEFAULT_AUDIT_DIR = EVIDENCE_AUDIT_DIR
 
 
 def replay_audit_file(path: Path, source_map: dict[str, str]) -> dict:

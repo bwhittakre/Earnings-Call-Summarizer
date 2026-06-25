@@ -5,7 +5,6 @@ from unittest.mock import MagicMock, patch
 
 from src.llm.quarter_summarizer import QuarterSummarizer
 from src.schemas.models import (
-    ConfidenceEvidence,
     EvidenceBackedQuarterSummary,
     EvidenceClaim,
     LLMResult,
@@ -31,12 +30,36 @@ TRANSCRIPT = (
     "Margins expanded due to mix. FX remained a headwind."
 )
 
+SAMPLE_ANALYSIS = [
+    EvidenceClaim(
+        claim="+20: Raised outlook supports next-quarter momentum",
+        excerpt="We saw strong demand in data center and raised our full-year outlook.",
+    )
+]
+
+
+def _quarter_evidence(**overrides) -> EvidenceBackedQuarterSummary:
+    payload = {
+        "company_name": "Nvidia",
+        "quarter": "FY2026-Q1",
+        "what_happened": [
+            EvidenceClaim(
+                claim="Strong data center demand",
+                excerpt="We saw strong demand in data center and raised our full-year outlook.",
+            )
+        ],
+        "positives": [],
+        "negatives": [],
+        "confidence_score": 20,
+        "analysis": list(SAMPLE_ANALYSIS),
+    }
+    payload.update(overrides)
+    return EvidenceBackedQuarterSummary(**payload)
+
 
 class RescueJudgeTestCase(unittest.TestCase):
     def test_apply_rescue_reviews_keeps_verbatim_and_rescues_paraphrase(self):
-        evidence = EvidenceBackedQuarterSummary(
-            company_name="Nvidia",
-            quarter="FY2026-Q1",
+        evidence = _quarter_evidence(
             what_happened=[
                 EvidenceClaim(
                     claim="Strong data center demand",
@@ -46,13 +69,7 @@ class RescueJudgeTestCase(unittest.TestCase):
                     claim="Raised guidance",
                     excerpt="Management raised full-year outlook on data center strength.",
                 ),
-            ],
-            positives=[],
-            negatives=[],
-            confidence=ConfidenceEvidence(
-                level="High",
-                excerpt="We saw strong demand in data center and raised our full-year outlook.",
-            ),
+            ]
         )
         validation = validate_quarter_evidence(evidence, TRANSCRIPT)
         self.assertFalse(validation.is_valid)
@@ -80,21 +97,13 @@ class RescueJudgeTestCase(unittest.TestCase):
         self.assertEqual(len(processed.dropped), 0)
 
     def test_apply_rescue_reviews_drops_invalid_claim_with_drop_stage(self):
-        evidence = EvidenceBackedQuarterSummary(
-            company_name="Nvidia",
-            quarter="FY2026-Q1",
+        evidence = _quarter_evidence(
             what_happened=[
                 EvidenceClaim(
                     claim="Revenue collapse",
                     excerpt="Revenue declined sharply across all segments.",
                 )
-            ],
-            positives=[],
-            negatives=[],
-            confidence=ConfidenceEvidence(
-                level="Medium",
-                excerpt="We saw strong demand in data center and raised our full-year outlook.",
-            ),
+            ]
         )
         validation = validate_quarter_evidence(evidence, TRANSCRIPT)
         rescue_result = RescueJudgeResult(
@@ -138,13 +147,16 @@ class RescueJudgeTestCase(unittest.TestCase):
             ],
             positives=[],
             negatives=[],
-            confidence=ConfidenceEvidence(
-                level="High",
-                excerpt=(
-                    "Operating income was $21.2 billion, up 61% year over year, "
-                    "and trailing 12-month free cash flow was $36.2 billion."
-                ),
-            ),
+            confidence_score=80,
+            analysis=[
+                EvidenceClaim(
+                    claim="+25: Record operating income",
+                    excerpt=(
+                        "Operating income was $21.2 billion, up 61% year over year, "
+                        "and trailing 12-month free cash flow was $36.2 billion."
+                    ),
+                )
+            ],
         )
         validation = validate_quarter_evidence(evidence, source)
         rescue_result = RescueJudgeResult(
@@ -170,21 +182,13 @@ class RescueJudgeTestCase(unittest.TestCase):
         self.assertEqual(processed.rescued[0].reason, QUOTE_ANCHOR_REASON)
 
     def test_drop_stage_canonical_failed_when_rescued_without_anchor(self):
-        evidence = EvidenceBackedQuarterSummary(
-            company_name="Nvidia",
-            quarter="FY2026-Q1",
+        evidence = _quarter_evidence(
             what_happened=[
                 EvidenceClaim(
                     claim="Revenue collapse across all segments",
                     excerpt="Revenue declined sharply across all segments.",
                 )
-            ],
-            positives=[],
-            negatives=[],
-            confidence=ConfidenceEvidence(
-                level="High",
-                excerpt="We saw strong demand in data center and raised our full-year outlook.",
-            ),
+            ]
         )
         validation = validate_quarter_evidence(evidence, TRANSCRIPT)
         rescue_result = RescueJudgeResult(
@@ -235,7 +239,13 @@ class RescueJudgeTestCase(unittest.TestCase):
                 ],
                 positives=[],
                 negatives=[],
-                confidence=ConfidenceEvidence(level="High", excerpt="Operating income was $21.2 billion, up 61% year over year."),
+                confidence_score=80,
+                analysis=[
+                    EvidenceClaim(
+                        claim="+25: Record operating income",
+                        excerpt="Operating income was $21.2 billion, up 61% year over year.",
+                    )
+                ],
             ),
             "Operating income was $21.2 billion, up 61% year over year.",
         ).failures[0]
@@ -274,9 +284,7 @@ class RescueJudgeTestCase(unittest.TestCase):
         self.assertEqual(augmented.reviews[0].canonical_excerpt, retry_review.canonical_excerpt)
 
     def test_strict_mode_drops_paraphrase_without_rescue(self):
-        evidence = EvidenceBackedQuarterSummary(
-            company_name="Nvidia",
-            quarter="FY2026-Q1",
+        evidence = _quarter_evidence(
             what_happened=[
                 EvidenceClaim(
                     claim="Strong data center demand",
@@ -286,26 +294,51 @@ class RescueJudgeTestCase(unittest.TestCase):
                     claim="Raised guidance",
                     excerpt="Management raised full-year outlook on data center strength.",
                 ),
-            ],
-            positives=[],
-            negatives=[],
-            confidence=ConfidenceEvidence(
-                level="High",
-                excerpt="We saw strong demand in data center and raised our full-year outlook.",
-            ),
+            ]
         )
         processed = process_quarter_evidence_strict(evidence, TRANSCRIPT)
         self.assertEqual(len(processed.evidence.what_happened), 1)
         self.assertEqual(len(processed.dropped), 1)
+
+    def test_apply_rescue_reviews_rescues_analysis(self):
+        evidence = _quarter_evidence(
+            analysis=[
+                EvidenceClaim(
+                    claim="+15: Margin expansion supports outlook",
+                    excerpt="Margins expanded meaningfully due to favorable mix.",
+                )
+            ]
+        )
+        validation = validate_quarter_evidence(evidence, TRANSCRIPT)
+        self.assertFalse(validation.is_valid)
+
+        rescue_result = RescueJudgeResult(
+            reviews=[
+                RescueReview(
+                    field="analysis",
+                    index=0,
+                    verdict="rescued",
+                    reason="Faithful paraphrase of margin commentary.",
+                    canonical_excerpt="Margins expanded due to mix.",
+                )
+            ]
+        )
+        processed = apply_rescue_reviews_to_quarter(
+            evidence,
+            validation,
+            rescue_result,
+            TRANSCRIPT,
+        )
+        self.assertEqual(len(processed.evidence.analysis), 1)
+        self.assertEqual(len(processed.rescued), 1)
+        self.assertEqual(processed.rescued[0].field, "analysis")
 
     @patch.object(RescueJudge, "review_validation_result")
     def test_quarter_summarizer_single_extract_with_rescue(
         self,
         mock_review,
     ):
-        evidence = EvidenceBackedQuarterSummary(
-            company_name="Nvidia",
-            quarter="FY2026-Q1",
+        evidence = _quarter_evidence(
             what_happened=[
                 EvidenceClaim(
                     claim="Strong data center demand",
@@ -315,13 +348,7 @@ class RescueJudgeTestCase(unittest.TestCase):
                     claim="Raised guidance",
                     excerpt="Management raised full-year outlook on data center strength.",
                 ),
-            ],
-            positives=[],
-            negatives=[],
-            confidence=ConfidenceEvidence(
-                level="High",
-                excerpt="We saw strong demand in data center and raised our full-year outlook.",
-            ),
+            ]
         )
         client = MagicMock()
         client.complete_json.return_value = (
@@ -344,31 +371,22 @@ class RescueJudgeTestCase(unittest.TestCase):
         )
 
         summarizer = QuarterSummarizer(client, skip_rescue_judge=False)
-        output, _ = summarizer.summarize("Nvidia", "FY2026-Q1", TRANSCRIPT)
+        output, _ = summarizer.summarize(
+            quarter="FY2026-Q1",
+            transcript_text=TRANSCRIPT,
+            label="FY2026-Q1_quarter",
+        )
 
         self.assertEqual(client.complete_json.call_count, 1)
         mock_review.assert_called_once()
         self.assertEqual(len(output.summary.what_happened), 2)
+        self.assertEqual(output.summary.confidence_score, 20)
+        self.assertEqual(output.summary.company_name, "Nvidia")
 
     def test_quarter_summarizer_skips_rescue_when_all_verbatim(
         self,
     ):
-        evidence = EvidenceBackedQuarterSummary(
-            company_name="Nvidia",
-            quarter="FY2026-Q1",
-            what_happened=[
-                EvidenceClaim(
-                    claim="Strong data center demand",
-                    excerpt="We saw strong demand in data center and raised our full-year outlook.",
-                )
-            ],
-            positives=[],
-            negatives=[],
-            confidence=ConfidenceEvidence(
-                level="High",
-                excerpt="We saw strong demand in data center and raised our full-year outlook.",
-            ),
-        )
+        evidence = _quarter_evidence()
         client = MagicMock()
         client.complete_json.return_value = (
             evidence,
@@ -376,11 +394,17 @@ class RescueJudgeTestCase(unittest.TestCase):
         )
 
         summarizer = QuarterSummarizer(client, skip_rescue_judge=False)
-        output, _ = summarizer.summarize("Nvidia", "FY2026-Q1", TRANSCRIPT)
+        output, _ = summarizer.summarize(
+            quarter="FY2026-Q1",
+            transcript_text=TRANSCRIPT,
+            label="FY2026-Q1_quarter",
+        )
 
         self.assertEqual(client.complete_json.call_count, 1)
         summary = quarter_summary_from_evidence(output.evidence)
         self.assertEqual(summary.what_happened, ["Strong data center demand"])
+        self.assertEqual(summary.confidence_score, 20)
+        self.assertEqual(summary.company_name, "Nvidia")
 
 
 if __name__ == "__main__":

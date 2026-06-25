@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Literal
 
+from src.paths import EVIDENCE_AUDIT_DIR
 from src.schemas.models import (
     ConfidenceEvidence,
     EvidenceBackedQuarterSummary,
@@ -18,6 +19,7 @@ from src.schemas.models import (
 from src.validation.evidence_validator import (
     ValidationFailure,
     ValidationResult,
+    _ensure_analysis,
     _ensure_what_happened,
     _resolve_confidence,
     excerpt_found_in_source,
@@ -27,10 +29,6 @@ from src.validation.evidence_validator import (
     validate_rollup_evidence,
 )
 from src.validation.quote_anchor import find_verbatim_quote
-
-EVIDENCE_AUDIT_DIR = (
-    Path(__file__).resolve().parent.parent.parent / "output" / "evidence_audit"
-)
 
 DropStage = Literal["judge_rejected", "canonical_failed_verbatim", "missing_review"]
 QUOTE_ANCHOR_REASON = "programmatic quote anchor"
@@ -290,26 +288,24 @@ def apply_rescue_reviews_to_quarter(
     )
     verbatim_kept += kept
 
-    confidence, confidence_kept, confidence_failed = _process_confidence(
-        evidence.confidence,
-        evidence.confidence,
+    analysis, kept = _process_claim_list(
+        "analysis",
+        evidence.analysis,
         source,
         review_map,
         rescued,
         dropped,
     )
-    verbatim_kept += confidence_kept
-    if confidence_failed:
-        confidence = _resolve_confidence(
-            evidence.confidence,
-            what_happened,
-            positives,
-            negatives,
-            source,
-            confidence_failed=True,
-        )
+    verbatim_kept += kept
 
     what_happened = _ensure_what_happened(
+        what_happened,
+        positives,
+        negatives,
+        source,
+    )
+    analysis = _ensure_analysis(
+        analysis,
         what_happened,
         positives,
         negatives,
@@ -322,7 +318,8 @@ def apply_rescue_reviews_to_quarter(
         what_happened=what_happened,
         positives=positives,
         negatives=negatives,
-        confidence=confidence,
+        confidence_score=evidence.confidence_score,
+        analysis=analysis,
     )
     return EvidenceProcessingResult(
         evidence=filtered,
@@ -425,7 +422,7 @@ def process_quarter_evidence_strict(
             len(evidence.what_happened)
             + len(evidence.positives)
             + len(evidence.negatives)
-            + 1
+            + len(evidence.analysis)
         )
         return EvidenceProcessingResult(
             evidence=evidence,
@@ -447,7 +444,7 @@ def process_quarter_evidence_strict(
         len(evidence.what_happened)
         + len(evidence.positives)
         + len(evidence.negatives)
-        + 1
+        + len(evidence.analysis)
     )
     return EvidenceProcessingResult(
         evidence=filtered,
@@ -558,6 +555,11 @@ def save_evidence_audit(
                     "what_happened": len(result.evidence.what_happened),
                     "positives": len(result.evidence.positives),
                     "negatives": len(result.evidence.negatives),
+                    **(
+                        {"analysis": len(result.evidence.analysis)}
+                        if isinstance(result.evidence, EvidenceBackedQuarterSummary)
+                        else {}
+                    ),
                 },
             },
             indent=2,

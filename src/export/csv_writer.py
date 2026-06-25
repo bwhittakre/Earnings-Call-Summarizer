@@ -4,15 +4,13 @@ import csv
 import math
 import re
 from pathlib import Path
-from typing import Sequence, Union
+from typing import Sequence
 
 from openpyxl import Workbook
 from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
 
-from src.schemas.models import QuarterSummary, RollupSummary
-
-SummaryRow = Union[QuarterSummary, RollupSummary]
+from src.schemas.models import EvidenceClaim, QuarterSummary
 
 CSV_COLUMNS = [
     "summary_type",
@@ -21,7 +19,8 @@ CSV_COLUMNS = [
     "what_happened",
     "positives",
     "negatives",
-    "confidence",
+    "confidence_score",
+    "analysis",
 ]
 
 DISPLAY_HEADERS = {
@@ -31,7 +30,8 @@ DISPLAY_HEADERS = {
     "what_happened": "What Happened",
     "positives": "Positives",
     "negatives": "Negatives",
-    "confidence": "Confidence",
+    "confidence_score": "Confidence Score",
+    "analysis": "Analysis",
 }
 
 EXCEL_COLUMN_WIDTHS = {
@@ -41,10 +41,12 @@ EXCEL_COLUMN_WIDTHS = {
     "What Happened": 42,
     "Positives": 60,
     "Negatives": 60,
-    "Confidence": 14,
+    "Confidence Score": 16,
+    "Analysis": 80,
 }
 
-EXCEL_MAX_ROW_HEIGHT = 409
+EXCEL_MAX_ROW_HEIGHT = 409.6
+EXCEL_MAX_COLUMN_WIDTH = 255
 MIN_DATA_ROW_HEIGHT = 42
 POINTS_PER_WRAPPED_LINE = 15
 ROW_HEIGHT_PADDING = 8
@@ -62,7 +64,15 @@ def format_bullets(items: list[str]) -> str:
     return "\n".join(f"- {item}" for item in items)
 
 
-def summary_to_row(summary: SummaryRow) -> dict[str, str]:
+def format_analysis_bullets(items: list[EvidenceClaim]) -> str:
+    return "\n".join(f'• {item.claim} — "{item.excerpt}"' for item in items)
+
+
+def format_analysis_csv(items: list[EvidenceClaim]) -> str:
+    return " | ".join(f'{item.claim} — "{item.excerpt}"' for item in items)
+
+
+def summary_to_row(summary: QuarterSummary) -> dict[str, str]:
     return {
         "summary_type": summary.summary_type,
         "company_name": summary.company_name,
@@ -70,11 +80,12 @@ def summary_to_row(summary: SummaryRow) -> dict[str, str]:
         "what_happened": format_what_happened(summary.what_happened),
         "positives": format_list(summary.positives),
         "negatives": format_list(summary.negatives),
-        "confidence": summary.confidence,
+        "confidence_score": str(summary.confidence_score),
+        "analysis": format_analysis_csv(summary.analysis),
     }
 
 
-def summary_to_excel_row(summary: SummaryRow) -> dict[str, str]:
+def summary_to_excel_row(summary: QuarterSummary) -> dict[str, str]:
     return {
         "Summary Type": summary.summary_type.title(),
         "Company Name": summary.company_name,
@@ -82,7 +93,8 @@ def summary_to_excel_row(summary: SummaryRow) -> dict[str, str]:
         "What Happened": format_bullets(summary.what_happened),
         "Positives": format_bullets(summary.positives),
         "Negatives": format_bullets(summary.negatives),
-        "Confidence": summary.confidence,
+        "Confidence Score": str(summary.confidence_score),
+        "Analysis": format_analysis_bullets(summary.analysis),
     }
 
 
@@ -114,7 +126,54 @@ def estimate_wrapped_line_count(value: object, column_width: float) -> int:
     return wrapped_lines
 
 
-def estimate_row_height(worksheet, row_index: int) -> int:
+def max_lines_at_max_height() -> int:
+    return int(
+        (EXCEL_MAX_ROW_HEIGHT - ROW_HEIGHT_PADDING) // POINTS_PER_WRAPPED_LINE
+    )
+
+
+def min_column_width_for_text(
+    text: str,
+    max_lines: int,
+    min_width: int = 8,
+    max_width: int = EXCEL_MAX_COLUMN_WIDTH,
+) -> float:
+    if not text.strip():
+        return float(min_width)
+
+    if estimate_wrapped_line_count(text, max_width) > max_lines:
+        return float(max_width)
+
+    low = min_width
+    high = max_width
+    while low < high:
+        mid = (low + high) // 2
+        if estimate_wrapped_line_count(text, mid) <= max_lines:
+            high = mid
+        else:
+            low = mid + 1
+    return float(low)
+
+
+def compute_analysis_column_width(worksheet, analysis_column_index: int) -> float:
+    default_width = EXCEL_COLUMN_WIDTHS["Analysis"]
+    if worksheet.max_row < 2:
+        return default_width
+
+    max_lines = max_lines_at_max_height()
+    required_width = default_width
+    for row_index in range(2, worksheet.max_row + 1):
+        cell_value = worksheet.cell(row=row_index, column=analysis_column_index).value
+        if cell_value is None:
+            continue
+        required_width = max(
+            required_width,
+            min_column_width_for_text(str(cell_value), max_lines),
+        )
+    return min(required_width, float(EXCEL_MAX_COLUMN_WIDTH))
+
+
+def estimate_row_height(worksheet, row_index: int) -> float:
     max_lines = 1
     for column_index in range(1, worksheet.max_column + 1):
         column_letter = get_column_letter(column_index)
@@ -126,10 +185,13 @@ def estimate_row_height(worksheet, row_index: int) -> int:
         )
 
     estimated_height = (max_lines * POINTS_PER_WRAPPED_LINE) + ROW_HEIGHT_PADDING
-    return min(max(MIN_DATA_ROW_HEIGHT, estimated_height), EXCEL_MAX_ROW_HEIGHT)
+    return min(
+        max(float(MIN_DATA_ROW_HEIGHT), estimated_height),
+        EXCEL_MAX_ROW_HEIGHT,
+    )
 
 
-def write_csv(rows: Sequence[SummaryRow], output_path: Path) -> None:
+def write_csv(rows: Sequence[QuarterSummary], output_path: Path) -> None:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with output_path.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=CSV_COLUMNS)
@@ -138,7 +200,7 @@ def write_csv(rows: Sequence[SummaryRow], output_path: Path) -> None:
             writer.writerow(summary_to_row(row))
 
 
-def populate_excel_sheet(worksheet, rows: Sequence[SummaryRow]) -> None:
+def populate_excel_sheet(worksheet, rows: Sequence[QuarterSummary]) -> None:
     headers = [DISPLAY_HEADERS[column] for column in CSV_COLUMNS]
     worksheet.append(headers)
 
@@ -157,7 +219,12 @@ def populate_excel_sheet(worksheet, rows: Sequence[SummaryRow]) -> None:
         cell.font = header_font
         cell.alignment = header_alignment
 
-    centered_columns = {"Summary Type", "Company Name", "Quarter", "Confidence"}
+    centered_columns = {
+        "Summary Type",
+        "Company Name",
+        "Quarter",
+        "Confidence Score",
+    }
     for row in worksheet.iter_rows(min_row=2):
         for cell in row:
             header = worksheet.cell(row=1, column=cell.column).value
@@ -165,9 +232,18 @@ def populate_excel_sheet(worksheet, rows: Sequence[SummaryRow]) -> None:
                 centered_alignment if header in centered_columns else body_alignment
             )
 
+    analysis_column_index = headers.index("Analysis") + 1
     for column_index, header in enumerate(headers, start=1):
         column_letter = get_column_letter(column_index)
+        if header == "Analysis":
+            continue
         worksheet.column_dimensions[column_letter].width = EXCEL_COLUMN_WIDTHS[header]
+
+    analysis_letter = get_column_letter(analysis_column_index)
+    worksheet.column_dimensions[analysis_letter].width = compute_analysis_column_width(
+        worksheet,
+        analysis_column_index,
+    )
 
     worksheet.row_dimensions[1].height = 28
     for row_index in range(2, worksheet.max_row + 1):
@@ -180,14 +256,14 @@ def populate_excel_sheet(worksheet, rows: Sequence[SummaryRow]) -> None:
     worksheet.auto_filter.ref = worksheet.dimensions
 
 
-def group_rows_by_company(rows: Sequence[SummaryRow]) -> dict[str, list[SummaryRow]]:
-    grouped: dict[str, list[SummaryRow]] = {}
+def group_rows_by_company(rows: Sequence[QuarterSummary]) -> dict[str, list[QuarterSummary]]:
+    grouped: dict[str, list[QuarterSummary]] = {}
     for row in rows:
         grouped.setdefault(row.company_name, []).append(row)
     return grouped
 
 
-def write_excel(rows: Sequence[SummaryRow], output_path: Path) -> None:
+def write_excel(rows: Sequence[QuarterSummary], output_path: Path) -> None:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     workbook = Workbook()
     default_sheet = workbook.active
@@ -207,7 +283,7 @@ def write_excel(rows: Sequence[SummaryRow], output_path: Path) -> None:
     workbook.save(output_path)
 
 
-def write_output(rows: Sequence[SummaryRow], output_path: Path) -> None:
+def write_output(rows: Sequence[QuarterSummary], output_path: Path) -> None:
     if output_path.suffix.lower() == ".xlsx":
         write_excel(rows, output_path)
         return

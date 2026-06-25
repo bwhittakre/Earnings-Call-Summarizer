@@ -10,6 +10,7 @@ from src.schemas.models import (
     QuarterSummary,
     quarter_summary_from_evidence,
 )
+from src.scoring.analysis_score import apply_confidence_score_from_analysis
 from src.validation.evidence_processor import (
     EvidenceProcessingResult,
     apply_rescue_reviews_to_quarter,
@@ -42,13 +43,11 @@ class QuarterSummarizer:
 
     def summarize(
         self,
-        company_name: str,
         quarter: str,
         transcript_text: str,
+        label: str,
     ) -> tuple[ValidatedQuarterOutput, LLMResult]:
-        label = f"{company_name}_{quarter}_quarter"
         user_content = (
-            f"Company: {company_name}\n"
             f"Quarter: {quarter}\n\n"
             f"--- TRANSCRIPT ---\n{transcript_text}"
         )
@@ -59,7 +58,6 @@ class QuarterSummarizer:
             response_model=EvidenceBackedQuarterSummary,
             label=label,
         )
-        evidence.company_name = company_name
         evidence.quarter = quarter
 
         if self.skip_rescue_judge:
@@ -71,7 +69,7 @@ class QuarterSummarizer:
                     len(evidence.what_happened)
                     + len(evidence.positives)
                     + len(evidence.negatives)
-                    + 1
+                    + len(evidence.analysis)
                 )
                 processed = EvidenceProcessingResult(
                     evidence=evidence,
@@ -110,5 +108,12 @@ class QuarterSummarizer:
 
         final_evidence = processed.evidence
         assert isinstance(final_evidence, EvidenceBackedQuarterSummary)
+        final_evidence = apply_confidence_score_from_analysis(final_evidence)
+        if final_evidence.confidence_score != processed.evidence.confidence_score:
+            logger.info(
+                "Adjusted confidence_score from %s to %s based on analysis weights",
+                processed.evidence.confidence_score,
+                final_evidence.confidence_score,
+            )
         summary = quarter_summary_from_evidence(final_evidence)
         return ValidatedQuarterOutput(summary=summary, evidence=final_evidence), result

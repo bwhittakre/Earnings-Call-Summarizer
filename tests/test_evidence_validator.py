@@ -1,10 +1,13 @@
 import unittest
 
+from pydantic import ValidationError
+
 from src.schemas.models import (
     ConfidenceEvidence,
     EvidenceBackedQuarterSummary,
     EvidenceBackedRollupSummary,
     EvidenceClaim,
+    QuarterSummary,
     quarter_summary_from_evidence,
     rollup_summary_from_evidence,
 )
@@ -16,6 +19,42 @@ from src.validation.evidence_validator import (
     validate_quarter_evidence,
     validate_rollup_evidence,
 )
+
+SAMPLE_ANALYSIS = [
+    EvidenceClaim(
+        claim="+20: Raised outlook supports next-quarter momentum",
+        excerpt="We saw strong demand in data center and raised our full-year outlook.",
+    )
+]
+
+
+def _quarter_evidence(**overrides) -> EvidenceBackedQuarterSummary:
+    payload = {
+        "company_name": "Nvidia",
+        "quarter": "FY2025-Q2",
+        "what_happened": [
+            EvidenceClaim(
+                claim="Strong data center demand",
+                excerpt="We saw strong demand in data center and raised our full-year outlook.",
+            )
+        ],
+        "positives": [
+            EvidenceClaim(
+                claim="Margin expansion",
+                excerpt="Margins expanded due to mix.",
+            )
+        ],
+        "negatives": [
+            EvidenceClaim(
+                claim="FX headwinds",
+                excerpt="FX remained a headwind.",
+            )
+        ],
+        "confidence_score": 20,
+        "analysis": list(SAMPLE_ANALYSIS),
+    }
+    payload.update(overrides)
+    return EvidenceBackedQuarterSummary(**payload)
 
 
 class EvidenceValidatorTestCase(unittest.TestCase):
@@ -49,41 +88,13 @@ class EvidenceValidatorTestCase(unittest.TestCase):
             "We saw strong demand in data center and raised our full-year outlook. "
             "Margins expanded due to mix. FX remained a headwind."
         )
-        evidence = EvidenceBackedQuarterSummary(
-            company_name="Nvidia",
-            quarter="FY2025-Q2",
-            what_happened=[
-                EvidenceClaim(
-                    claim="Strong data center demand",
-                    excerpt="We saw strong demand in data center and raised our full-year outlook.",
-                )
-            ],
-            positives=[
-                EvidenceClaim(
-                    claim="Margin expansion",
-                    excerpt="Margins expanded due to mix.",
-                )
-            ],
-            negatives=[
-                EvidenceClaim(
-                    claim="FX headwinds",
-                    excerpt="FX remained a headwind.",
-                )
-            ],
-            confidence=ConfidenceEvidence(
-                level="High",
-                excerpt="We saw strong demand in data center and raised our full-year outlook.",
-            ),
-        )
-        result = validate_quarter_evidence(evidence, transcript)
+        result = validate_quarter_evidence(_quarter_evidence(), transcript)
         self.assertTrue(result.is_valid)
         self.assertEqual(result.failures, [])
 
     def test_validate_quarter_evidence_fails_on_missing_excerpt(self):
         transcript = "We saw strong demand in data center."
-        evidence = EvidenceBackedQuarterSummary(
-            company_name="Nvidia",
-            quarter="FY2025-Q2",
+        evidence = _quarter_evidence(
             what_happened=[
                 EvidenceClaim(
                     claim="Raised guidance",
@@ -92,32 +103,30 @@ class EvidenceValidatorTestCase(unittest.TestCase):
             ],
             positives=[],
             negatives=[],
-            confidence=ConfidenceEvidence(
-                level="Medium",
-                excerpt="We saw strong demand in data center.",
-            ),
+            analysis=SAMPLE_ANALYSIS,
         )
         result = validate_quarter_evidence(evidence, transcript)
         self.assertFalse(result.is_valid)
         self.assertEqual(result.failures[0].field, "what_happened")
 
-    def test_validate_rollup_evidence_uses_quarter_corpus(self):
-        quarter = EvidenceBackedQuarterSummary(
-            company_name="Nvidia",
-            quarter="FY2025-Q2",
-            what_happened=[
-                EvidenceClaim(
-                    claim="Strong data center demand",
-                    excerpt="We saw strong demand in data center and raised our full-year outlook.",
-                )
-            ],
+    def test_validate_quarter_evidence_validates_analysis(self):
+        transcript = "We saw strong demand in data center and raised our full-year outlook."
+        evidence = _quarter_evidence(
             positives=[],
             negatives=[],
-            confidence=ConfidenceEvidence(
-                level="High",
-                excerpt="We saw strong demand in data center and raised our full-year outlook.",
-            ),
+            analysis=[
+                EvidenceClaim(
+                    claim="+10: Demand commentary",
+                    excerpt="This quote is not in the transcript at all.",
+                )
+            ],
         )
+        result = validate_quarter_evidence(evidence, transcript)
+        self.assertFalse(result.is_valid)
+        self.assertEqual(result.failures[0].field, "analysis")
+
+    def test_validate_rollup_evidence_uses_quarter_corpus(self):
+        quarter = _quarter_evidence()
         rollup = EvidenceBackedRollupSummary(
             company_name="Nvidia",
             what_happened=[
@@ -140,26 +149,13 @@ class EvidenceValidatorTestCase(unittest.TestCase):
             build_quarter_evidence_corpus([quarter]),
         )
 
-    def test_summary_conversion_strips_evidence(self):
-        evidence = EvidenceBackedQuarterSummary(
-            company_name="Nvidia",
-            quarter="FY2025-Q2",
-            what_happened=[
-                EvidenceClaim(
-                    claim="Strong data center demand",
-                    excerpt="We saw strong demand in data center and raised our full-year outlook.",
-                )
-            ],
-            positives=[],
-            negatives=[],
-            confidence=ConfidenceEvidence(
-                level="High",
-                excerpt="We saw strong demand in data center and raised our full-year outlook.",
-            ),
-        )
+    def test_summary_conversion_preserves_analysis(self):
+        evidence = _quarter_evidence(positives=[], negatives=[])
         summary = quarter_summary_from_evidence(evidence)
         self.assertEqual(summary.what_happened, ["Strong data center demand"])
-        self.assertEqual(summary.confidence, "High")
+        self.assertEqual(summary.confidence_score, 20)
+        self.assertEqual(len(summary.analysis), 1)
+        self.assertEqual(summary.analysis[0].excerpt, SAMPLE_ANALYSIS[0].excerpt)
 
         rollup = rollup_summary_from_evidence(
             EvidenceBackedRollupSummary(
@@ -180,13 +176,24 @@ class EvidenceValidatorTestCase(unittest.TestCase):
         )
         self.assertEqual(rollup.summary_type, "rollup")
 
+    def test_confidence_score_bounds(self):
+        with self.assertRaises(ValidationError):
+            QuarterSummary(
+                company_name="Nvidia",
+                quarter="FY2025-Q2",
+                what_happened=["Strong demand"],
+                positives=[],
+                negatives=[],
+                confidence_score=101,
+                analysis=SAMPLE_ANALYSIS,
+            )
+
     def test_filter_quarter_evidence_drops_invalid_bullets(self):
         transcript = (
             "We saw strong demand in data center and raised our full-year outlook. "
             "Margins expanded due to mix."
         )
-        evidence = EvidenceBackedQuarterSummary(
-            company_name="Nvidia",
+        evidence = _quarter_evidence(
             quarter="FY2026-Q1",
             what_happened=[
                 EvidenceClaim(
@@ -200,10 +207,6 @@ class EvidenceValidatorTestCase(unittest.TestCase):
             ],
             positives=[],
             negatives=[],
-            confidence=ConfidenceEvidence(
-                level="High",
-                excerpt="We saw strong demand in data center and raised our full-year outlook.",
-            ),
         )
         validation = validate_quarter_evidence(evidence, transcript)
         filtered = filter_quarter_evidence(evidence, validation, transcript)

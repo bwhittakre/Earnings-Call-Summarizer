@@ -18,7 +18,6 @@ class TranscriptFile:
 
 @dataclass
 class LoadedTranscripts:
-    company_name: str
     transcripts: dict[str, str]
     files: list[TranscriptFile]
 
@@ -37,6 +36,19 @@ def parse_quarter_from_filename(path: Path) -> str | None:
     if matched_text.upper().startswith("FY"):
         return f"FY{year}-Q{quarter_num}"
     return f"{year}-Q{quarter_num}"
+
+
+def normalize_quarter_label(label: str) -> str:
+    parsed = parse_quarter_from_filename(Path(label.strip()))
+    if not parsed:
+        raise TranscriptLoadError(
+            "Invalid quarter label. Use FY2025-Q2 or 2025-Q2 format."
+        )
+    return parsed
+
+
+def transcript_audit_label(item: TranscriptFile) -> str:
+    return f"{item.path.stem}_quarter"
 
 
 def discover_transcript_files(folder: Path) -> list[Path]:
@@ -86,6 +98,55 @@ def assign_quarters(files: list[Path]) -> list[TranscriptFile]:
     return assigned
 
 
+def resolve_transcript_files(
+    transcript_path: Path,
+    quarter: str | None = None,
+) -> list[TranscriptFile]:
+    if not transcript_path.exists():
+        raise TranscriptLoadError(f"Transcript path not found: {transcript_path}")
+
+    if transcript_path.is_file():
+        if transcript_path.suffix.lower() not in SUPPORTED_EXTENSIONS:
+            raise TranscriptLoadError(
+                f"Unsupported transcript file type: {transcript_path.suffix}. "
+                f"Supported: {', '.join(sorted(SUPPORTED_EXTENSIONS))}"
+            )
+        file_quarter = parse_quarter_from_filename(transcript_path)
+        if not file_quarter:
+            raise TranscriptLoadError(
+                "Transcript file must include a quarter label (FY2025-Q2 or 2025-Q2) "
+                f"in the filename: {transcript_path.name}"
+            )
+        if quarter and normalize_quarter_label(quarter) != file_quarter:
+            raise TranscriptLoadError(
+                f"--quarter {quarter} does not match file quarter {file_quarter} "
+                f"for {transcript_path.name}"
+            )
+        return [
+            TranscriptFile(
+                path=transcript_path,
+                quarter=file_quarter,
+                quarter_from_filename=True,
+            )
+        ]
+
+    if not transcript_path.is_dir():
+        raise TranscriptLoadError(f"Transcript path is not a file or directory: {transcript_path}")
+
+    assigned = assign_quarters(discover_transcript_files(transcript_path))
+    if quarter:
+        target = normalize_quarter_label(quarter)
+        matched = [item for item in assigned if item.quarter == target]
+        if not matched:
+            available = ", ".join(item.quarter for item in assigned) or "(none)"
+            raise TranscriptLoadError(
+                f"Quarter {target} not found in {transcript_path}. "
+                f"Available: {available}"
+            )
+        return matched
+    return assigned
+
+
 def validate_transcript_count(
     files: list[TranscriptFile], expected: int
 ) -> None:
@@ -105,13 +166,12 @@ def validate_transcript_count(
         )
 
 
-def load_company_transcripts(
-    company_name: str,
-    folder: Path,
-    expected_quarters: int = 8,
+def load_transcripts(
+    transcript_path: Path,
+    expected_quarters: int = 1,
+    quarter: str | None = None,
 ) -> LoadedTranscripts:
-    files = discover_transcript_files(folder)
-    assigned = assign_quarters(files)
+    assigned = resolve_transcript_files(transcript_path, quarter=quarter)
     validate_transcript_count(assigned, expected_quarters)
 
     transcripts: dict[str, str] = {}
@@ -126,21 +186,31 @@ def load_company_transcripts(
             raise TranscriptLoadError(f"Transcript file is empty: {item.path.name}")
 
     return LoadedTranscripts(
-        company_name=company_name,
         transcripts=transcripts,
         files=assigned,
     )
 
 
-def dry_run_report(company_name: str, folder: Path, expected_quarters: int = 8) -> str:
-    files = discover_transcript_files(folder)
-    assigned = assign_quarters(files)
+def dry_run_report(
+    transcript_path: Path,
+    expected_quarters: int = 1,
+    quarter: str | None = None,
+) -> str:
     lines = [
-        f"Company: {company_name}",
-        f"Folder: {folder}",
+        "Company: (auto-detect from transcript)",
+        f"Path: {transcript_path}",
         f"Expected quarters: {expected_quarters}",
-        f"Found files: {len(files)}",
     ]
+    if quarter:
+        lines.append(f"Quarter filter: {normalize_quarter_label(quarter)}")
+
+    try:
+        assigned = resolve_transcript_files(transcript_path, quarter=quarter)
+    except TranscriptLoadError as exc:
+        lines.append(f"Validation: FAILED - {exc}")
+        return "\n".join(lines)
+
+    lines.append(f"Selected files: {len(assigned)}")
     for item in assigned:
         source = "filename" if item.quarter_from_filename else "fallback"
         lines.append(f"  - {item.path.name} -> {item.quarter} ({source})")
