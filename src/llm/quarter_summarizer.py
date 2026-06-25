@@ -18,6 +18,7 @@ from src.validation.evidence_processor import (
 )
 from src.validation.evidence_validator import validate_quarter_evidence
 from src.validation.rescue_judge import RescueJudge
+from src.validation.rescue_orchestrator import augment_rescue_reviews_with_retries
 
 logger = logging.getLogger(__name__)
 
@@ -79,6 +80,13 @@ class QuarterSummarizer:
             else:
                 rescue_result, _ = self.rescue_judge.review_validation_result(
                     validation,
+                    transcript_text,
+                    label,
+                )
+                rescue_result = augment_rescue_reviews_with_retries(
+                    self.rescue_judge,
+                    validation.failures,
+                    rescue_result,
                     transcript_text,
                     label,
                 )

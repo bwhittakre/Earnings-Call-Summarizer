@@ -1,0 +1,36 @@
+[
+  {
+    "name": "operating_income_paraphrase",
+    "source_text": "Operating income was $21.2 billion, up 61% year over year, and trailing 12-month free cash flow was $36.2 billion.",
+    "field": "what_happened",
+    "index": 0,
+    "claim": "Record quarterly operating income of $21.2B, up 61% YoY",
+    "excerpt": "Operating income was $21.2 billion, up 61% year over year, and trailing 12-month free cash flow was strong.",
+    "bad_canonical_excerpt": "Operating income was $21.2 billion, up 61% year over year, and trailing 12-month free cash flow was $36.2 billion.",
+    "expected_kept": true,
+    "expected_rescue_method": "quote_anchor_or_rescue"
+  },
+  {
+    "name": "aws_capacity_constraints",
+    "source_text": "Capacity constraints remain a headwind for AWS. They come in the form of chips, power constraints, and other components like motherboards that are short in supply.",
+    "field": "negatives",
+    "index": 0,
+    "claim": "AWS capacity constraints limiting growth due to chip supply, power, and component shortages",
+    "excerpt": "They come in the form of chips, power constraints, and other components like motherboards that are short in supply.",
+    "bad_canonical_excerpt": "They come in the form of chips, power constraints, and motherboards that are short.",
+    "expected_kept": true,
+    "expected_rescue_method": "quote_anchor_or_rescue"
+  },
+  {
+    "name": "nvidia_paraphrase_rescue",
+    "source_text": "We saw strong demand in data center and raised our full-year outlook. Margins expanded due to mix. FX remained a headwind.",
+    "field": "what_happened",
+    "index": 1,
+    "claim": "Raised guidance",
+    "excerpt": "Management raised full-year outlook on data center strength.",
+    "bad_canonical_excerpt": null,
+    "good_canonical_excerpt": "We saw strong demand in data center and raised our full-year outlook.",
+    "expected_kept": true,
+    "expected_rescue_method": "rescued"
+  }
+]

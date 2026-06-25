@@ -1,4 +1,6 @@
+import json
 import unittest
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 from src.llm.quarter_summarizer import QuarterSummarizer
@@ -13,12 +15,16 @@ from src.schemas.models import (
     quarter_summary_from_evidence,
 )
 from src.validation.evidence_processor import (
+    QUOTE_ANCHOR_REASON,
     apply_rescue_reviews_to_quarter,
     process_quarter_evidence_strict,
 )
 from src.validation.evidence_validator import validate_quarter_evidence
+from src.validation.quote_anchor import find_verbatim_quote
 from src.validation.rescue_judge import RescueJudge
+from src.validation.rescue_orchestrator import augment_rescue_reviews_with_retries
 
+FIXTURES_PATH = Path(__file__).parent / "fixtures" / "rescue_golden_cases.json"
 
 TRANSCRIPT = (
     "We saw strong demand in data center and raised our full-year outlook. "
@@ -73,7 +79,7 @@ class RescueJudgeTestCase(unittest.TestCase):
         self.assertEqual(processed.rescued[0].claim, "Raised guidance")
         self.assertEqual(len(processed.dropped), 0)
 
-    def test_apply_rescue_reviews_drops_invalid_claim(self):
+    def test_apply_rescue_reviews_drops_invalid_claim_with_drop_stage(self):
         evidence = EvidenceBackedQuarterSummary(
             company_name="Nvidia",
             quarter="FY2026-Q1",
@@ -109,7 +115,163 @@ class RescueJudgeTestCase(unittest.TestCase):
             TRANSCRIPT,
         )
         self.assertEqual(len(processed.dropped), 1)
+        self.assertEqual(processed.dropped[0].drop_stage, "judge_rejected")
+        self.assertEqual(processed.dropped[0].verdict, "drop")
         self.assertGreaterEqual(len(processed.evidence.what_happened), 1)
+
+    def test_quote_anchor_rescues_bad_canonical_excerpt(self):
+        source = (
+            "Operating income was $21.2 billion, up 61% year over year, "
+            "and trailing 12-month free cash flow was $36.2 billion."
+        )
+        evidence = EvidenceBackedQuarterSummary(
+            company_name="Amazon",
+            quarter="FY2025-Q4",
+            what_happened=[
+                EvidenceClaim(
+                    claim="Record quarterly operating income of $21.2B, up 61% YoY",
+                    excerpt=(
+                        "Operating income was $21.2 billion, up 61% year over year, "
+                        "and trailing 12-month free cash flow was strong."
+                    ),
+                )
+            ],
+            positives=[],
+            negatives=[],
+            confidence=ConfidenceEvidence(
+                level="High",
+                excerpt=(
+                    "Operating income was $21.2 billion, up 61% year over year, "
+                    "and trailing 12-month free cash flow was $36.2 billion."
+                ),
+            ),
+        )
+        validation = validate_quarter_evidence(evidence, source)
+        rescue_result = RescueJudgeResult(
+            reviews=[
+                RescueReview(
+                    field="what_happened",
+                    index=0,
+                    verdict="rescued",
+                    reason="Source states operating income was $21.2 billion, up 61% year over year.",
+                    canonical_excerpt="Operating income was $21.2B, up sixty-one percent YoY.",
+                )
+            ]
+        )
+        processed = apply_rescue_reviews_to_quarter(
+            evidence,
+            validation,
+            rescue_result,
+            source,
+        )
+        self.assertEqual(len(processed.evidence.what_happened), 1)
+        self.assertEqual(len(processed.dropped), 0)
+        self.assertEqual(len(processed.rescued), 1)
+        self.assertEqual(processed.rescued[0].reason, QUOTE_ANCHOR_REASON)
+
+    def test_drop_stage_canonical_failed_when_rescued_without_anchor(self):
+        evidence = EvidenceBackedQuarterSummary(
+            company_name="Nvidia",
+            quarter="FY2026-Q1",
+            what_happened=[
+                EvidenceClaim(
+                    claim="Revenue collapse across all segments",
+                    excerpt="Revenue declined sharply across all segments.",
+                )
+            ],
+            positives=[],
+            negatives=[],
+            confidence=ConfidenceEvidence(
+                level="High",
+                excerpt="We saw strong demand in data center and raised our full-year outlook.",
+            ),
+        )
+        validation = validate_quarter_evidence(evidence, TRANSCRIPT)
+        rescue_result = RescueJudgeResult(
+            reviews=[
+                RescueReview(
+                    field="what_happened",
+                    index=0,
+                    verdict="rescued",
+                    reason="Supported by transcript.",
+                    canonical_excerpt="This quote does not exist in the transcript at all.",
+                )
+            ]
+        )
+        processed = apply_rescue_reviews_to_quarter(
+            evidence,
+            validation,
+            rescue_result,
+            TRANSCRIPT,
+        )
+        self.assertEqual(len(processed.dropped), 1)
+        self.assertEqual(processed.dropped[0].drop_stage, "canonical_failed_verbatim")
+        self.assertEqual(processed.dropped[0].verdict, "rescued")
+
+    def test_find_verbatim_quote_from_golden_cases(self):
+        cases = json.loads(FIXTURES_PATH.read_text(encoding="utf-8"))
+        for case in cases:
+            quote = find_verbatim_quote(
+                case["claim"],
+                case["source_text"],
+                hint_excerpt=case["excerpt"],
+            )
+            if case["expected_kept"]:
+                self.assertIsNotNone(
+                    quote,
+                    msg=f"Expected quote anchor for case {case['name']}",
+                )
+
+    def test_augment_rescue_reviews_retries_bad_canonical(self):
+        failure = validate_quarter_evidence(
+            EvidenceBackedQuarterSummary(
+                company_name="Amazon",
+                quarter="FY2025-Q4",
+                what_happened=[
+                    EvidenceClaim(
+                        claim="Record quarterly operating income of $21.2B, up 61% YoY",
+                        excerpt="Operating income paraphrase that is not verbatim.",
+                    )
+                ],
+                positives=[],
+                negatives=[],
+                confidence=ConfidenceEvidence(level="High", excerpt="Operating income was $21.2 billion, up 61% year over year."),
+            ),
+            "Operating income was $21.2 billion, up 61% year over year.",
+        ).failures[0]
+        initial = RescueJudgeResult(
+            reviews=[
+                RescueReview(
+                    field=failure.field,
+                    index=failure.index,
+                    verdict="rescued",
+                    reason="Supported.",
+                    canonical_excerpt="Not a verbatim quote from source.",
+                )
+            ]
+        )
+        retry_review = RescueReview(
+            field=failure.field,
+            index=failure.index,
+            verdict="rescued",
+            reason="Copied exactly.",
+            canonical_excerpt="Operating income was $21.2 billion, up 61% year over year.",
+        )
+        rescue_judge = MagicMock(spec=RescueJudge)
+        rescue_judge.review_single_failure.return_value = (
+            RescueJudgeResult(reviews=[retry_review]),
+            LLMResult(usage=TokenUsage(input_tokens=1, output_tokens=1), raw_response="{}"),
+        )
+
+        augmented = augment_rescue_reviews_with_retries(
+            rescue_judge,
+            [failure],
+            initial,
+            "Operating income was $21.2 billion, up 61% year over year.",
+            "Amazon_FY2025-Q4_quarter",
+        )
+        rescue_judge.review_single_failure.assert_called_once()
+        self.assertEqual(augmented.reviews[0].canonical_excerpt, retry_review.canonical_excerpt)
 
     def test_strict_mode_drops_paraphrase_without_rescue(self):
         evidence = EvidenceBackedQuarterSummary(

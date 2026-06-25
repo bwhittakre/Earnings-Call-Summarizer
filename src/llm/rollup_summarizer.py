@@ -22,6 +22,7 @@ from src.validation.evidence_validator import (
     validate_rollup_evidence,
 )
 from src.validation.rescue_judge import RescueJudge
+from src.validation.rescue_orchestrator import augment_rescue_reviews_with_retries
 
 logger = logging.getLogger(__name__)
 
@@ -80,6 +81,13 @@ class RollupSummarizer:
             else:
                 rescue_result, _ = self.rescue_judge.review_validation_result(
                     validation,
+                    source,
+                    label,
+                )
+                rescue_result = augment_rescue_reviews_with_retries(
+                    self.rescue_judge,
+                    validation.failures,
+                    rescue_result,
                     source,
                     label,
                 )
