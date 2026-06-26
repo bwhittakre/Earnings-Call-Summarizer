@@ -1,0 +1,30 @@
+What Confidence Score means
+The Confidence Score is an outlook for how the company's stock is likely to perform in the NEXT QUARTER ONLY, based solely on this earnings call (reported results, guidance, demand commentary, risks, and Q&A tone). Scores range from -100 (worst reasonably achievable next quarter) to +100 (best reasonably achievable next quarter).
+
+How the final number is calculated
+Confidence Score = the sum of all Analysis bullet weights.
+Each Analysis bullet begins with a signed integer and colon, for example +25: or -10:.
+The application adds those weights together and clamps the total to the range [-100, 100]. The number in the Confidence Score column always reflects that sum — it is not a separate holistic judgment.
+
+How the LLM assigns weights
+The model produces 4–8 evidence-backed factors in the Analysis column. Each factor receives a weight that reflects how much it should move the next-quarter outlook:
+• Positive weights (+) = bullish drivers for the next quarter
+• Negative weights (-) = bearish risks or headwinds
+Weights reflect relative importance, not equal weighting across bullets.
+At least half of the Analysis bullets should address industry-specific metrics that typically move the stock next quarter for that sector (for example data center revenue for semiconductors, comp sales for retail, or subscription growth for software).
+Generic boilerplate (legal disclaimers, conference logistics, and similar) should not receive large weights.
+
+How to read the Analysis column
+Each bullet follows this format:
+• +25: headline describing the factor — "verbatim excerpt from the transcript"
+The excerpt is copied from the earnings call transcript and validated before export, so you can trace each weighted factor back to what management actually said.
+
+Score interpretation bands
++100: Best reasonably achievable next quarter
++20 to +79: Net positive signals outweigh risks
+-19 to +19: Mixed or insufficient directional signal
+-20 to -79: Net negative signals dominate
+-100: Worst reasonably achievable next quarter
+
+Other columns
+What Happened, Positives, and Negatives summarize factual themes from the call with supporting excerpts. Analysis is different: those bullets are the scored building blocks behind the Confidence Score. Read Analysis to see which factors drove the final number and by how much.

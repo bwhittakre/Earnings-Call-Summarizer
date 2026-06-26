@@ -4,6 +4,10 @@ from tempfile import TemporaryDirectory
 
 from openpyxl import load_workbook
 
+from src.export.confidence_reference_key import (
+    REFERENCE_KEY_TITLE,
+    load_reference_key_text,
+)
 from src.export.csv_writer import (
     EXCEL_COLUMN_WIDTHS,
     EXCEL_MAX_ROW_HEIGHT,
@@ -164,7 +168,17 @@ class BasicsTestCase(unittest.TestCase):
                 worksheet["C2"].value,
                 "FY2025-Q2\nCall Date: (08,28,2024)",
             )
-            self.assertEqual(worksheet.max_row, 2)
+            self.assertEqual(worksheet["J1"].value, REFERENCE_KEY_TITLE)
+            self.assertIn(
+                "sum of all Analysis bullet weights",
+                str(worksheet["J2"].value),
+            )
+            self.assertEqual(worksheet.auto_filter.ref, "A1:H2")
+
+    def test_load_reference_key_text(self):
+        text = load_reference_key_text()
+        self.assertIn("Score interpretation bands", text)
+        self.assertGreater(len(text), 100)
 
     def test_write_excel_creates_one_sheet_per_company(self):
         nvidia = _sample_summary()
@@ -182,6 +196,8 @@ class BasicsTestCase(unittest.TestCase):
             self.assertEqual(workbook.sheetnames, ["Nvidia", "Amazon"])
             self.assertEqual(workbook["Nvidia"]["B2"].value, "Nvidia")
             self.assertEqual(workbook["Amazon"]["B2"].value, "Amazon")
+            self.assertEqual(workbook["Nvidia"]["J1"].value, REFERENCE_KEY_TITLE)
+            self.assertEqual(workbook["Amazon"]["J1"].value, REFERENCE_KEY_TITLE)
 
     def test_load_single_transcript_file(self):
         transcript_path = (

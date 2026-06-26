@@ -10,6 +10,7 @@ from openpyxl import Workbook
 from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
 
+from src.export.confidence_reference_key import write_confidence_reference_key
 from src.schemas.models import EvidenceClaim, QuarterSummary
 
 CSV_COLUMNS = [
@@ -50,6 +51,10 @@ EXCEL_MAX_COLUMN_WIDTH = 255
 MIN_DATA_ROW_HEIGHT = 42
 POINTS_PER_WRAPPED_LINE = 15
 ROW_HEIGHT_PADDING = 8
+
+TABLE_COLUMN_COUNT = len(CSV_COLUMNS)
+REFERENCE_KEY_SPACER_COLUMN = TABLE_COLUMN_COUNT + 1
+REFERENCE_KEY_START_COLUMN = TABLE_COLUMN_COUNT + 2
 
 
 def format_quarter_cell(quarter: str, call_date: str | None = None) -> str:
@@ -179,9 +184,9 @@ def compute_analysis_column_width(worksheet, analysis_column_index: int) -> floa
     return min(required_width, float(EXCEL_MAX_COLUMN_WIDTH))
 
 
-def estimate_row_height(worksheet, row_index: int) -> float:
+def estimate_row_height(worksheet, row_index: int, table_column_count: int) -> float:
     max_lines = 1
-    for column_index in range(1, worksheet.max_column + 1):
+    for column_index in range(1, table_column_count + 1):
         column_letter = get_column_letter(column_index)
         column_width = worksheet.column_dimensions[column_letter].width or 12
         cell_value = worksheet.cell(row=row_index, column=column_index).value
@@ -257,11 +262,19 @@ def populate_excel_sheet(worksheet, rows: Sequence[QuarterSummary]) -> None:
         worksheet.row_dimensions[row_index].height = estimate_row_height(
             worksheet,
             row_index,
+            TABLE_COLUMN_COUNT,
         )
+
+    write_confidence_reference_key(
+        worksheet,
+        start_column=REFERENCE_KEY_START_COLUMN,
+        table_last_row=last_data_row,
+        spacer_column=REFERENCE_KEY_SPACER_COLUMN,
+    )
 
     worksheet.freeze_panes = "A2"
     worksheet.auto_filter.ref = (
-        f"A1:{get_column_letter(len(headers))}{last_data_row}"
+        f"A1:{get_column_letter(TABLE_COLUMN_COUNT)}{last_data_row}"
     )
 
 
