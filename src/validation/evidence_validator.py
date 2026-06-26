@@ -89,6 +89,20 @@ def excerpt_found_in_source(excerpt: str, source: str) -> bool:
     return normalized_excerpt in normalize_text(source)
 
 
+def excerpt_found_in_any_source(excerpt: str, sources: list[str]) -> bool:
+    return any(excerpt_found_in_source(excerpt, source) for source in sources)
+
+
+def analysis_validation_sources(
+    transcript_text: str,
+    price_block_text: str | None = None,
+) -> list[str]:
+    sources = [transcript_text]
+    if price_block_text:
+        sources.append(price_block_text)
+    return sources
+
+
 def _validate_claims(
     field_name: str,
     claims: list[EvidenceClaim],
@@ -106,6 +120,28 @@ def _validate_claims(
                     reason="excerpt not found in source text",
                 )
             )
+    return failures
+
+
+def _validate_analysis_claims(
+    claims: list[EvidenceClaim],
+    transcript_text: str,
+    price_block_text: str | None = None,
+) -> list[ValidationFailure]:
+    failures: list[ValidationFailure] = []
+    sources = analysis_validation_sources(transcript_text, price_block_text)
+    for index, item in enumerate(claims):
+        if excerpt_found_in_any_source(item.excerpt, sources):
+            continue
+        failures.append(
+            ValidationFailure(
+                field="analysis",
+                index=index,
+                claim=item.claim,
+                excerpt=item.excerpt,
+                reason="excerpt not found in transcript or price block",
+            )
+        )
     return failures
 
 
@@ -129,12 +165,19 @@ def _validate_confidence(
 def validate_quarter_evidence(
     evidence: EvidenceBackedQuarterSummary,
     transcript_text: str,
+    price_block_text: str | None = None,
 ) -> ValidationResult:
     failures: list[ValidationFailure] = []
     failures.extend(_validate_claims("what_happened", evidence.what_happened, transcript_text))
     failures.extend(_validate_claims("positives", evidence.positives, transcript_text))
     failures.extend(_validate_claims("negatives", evidence.negatives, transcript_text))
-    failures.extend(_validate_claims("analysis", evidence.analysis, transcript_text))
+    failures.extend(
+        _validate_analysis_claims(
+            evidence.analysis,
+            transcript_text,
+            price_block_text,
+        )
+    )
     return ValidationResult(is_valid=not failures, failures=failures)
 
 

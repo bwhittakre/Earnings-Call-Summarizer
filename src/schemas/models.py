@@ -27,7 +27,7 @@ class EvidenceBackedQuarterSummary(BaseModel):
     positives: list[EvidenceClaim]
     negatives: list[EvidenceClaim]
     confidence_score: int = Field(ge=-100, le=100)
-    analysis: list[EvidenceClaim] = Field(min_length=1, max_length=8)
+    analysis: list[EvidenceClaim] = Field(min_length=1)
 
 
 class EvidenceBackedRollupSummary(BaseModel):

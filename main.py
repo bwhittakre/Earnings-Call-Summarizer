@@ -9,8 +9,13 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 from src.export.csv_writer import write_output
-from src.ingest.loader import dry_run_report
+from src.ingest.loader import dry_run_report, resolve_transcript_files
 from src.llm.anthropic_client import AnthropicClient
+from src.market.fiscal_calendar import (
+    DEFAULT_FISCAL_CALENDARS_PATH,
+    parse_quarter_end_dates_override,
+)
+from src.market.pipeline import format_market_dry_run_lines
 from src.paths import DEFAULT_SUMMARY_OUTPUT
 from src.pipeline.runner import run_pipeline
 
@@ -48,6 +53,23 @@ def build_parser() -> argparse.ArgumentParser:
         help="Load only this quarter from a folder (e.g. FY2025-Q2). Ignored for single-file paths unless checking a match.",
     )
     parser.add_argument(
+        "--ticker",
+        help="Stock ticker for prior-quarter price lookup (e.g. NVDA). Enables market data input.",
+    )
+    parser.add_argument(
+        "--reported-quarter",
+        help="Override reported quarter parsed from transcript (e.g. 2025-Q4 or FY2025-Q4).",
+    )
+    parser.add_argument(
+        "--quarter-end-dates",
+        help="Override quarter-end dates as FY2025-Q2:2024-07-28,FY2025-Q3:2024-10-27,...",
+    )
+    parser.add_argument(
+        "--fiscal-calendars",
+        default=str(DEFAULT_FISCAL_CALENDARS_PATH),
+        help="Path to fiscal calendar YAML (default: config/fiscal_calendars.yaml)",
+    )
+    parser.add_argument(
         "--dry-run",
         action="store_true",
         help="Validate transcript paths without calling the API",
@@ -67,6 +89,13 @@ def configure_logging() -> None:
     )
 
 
+def _load_single_transcript_text(transcript_path: Path, quarter: str | None) -> str | None:
+    assigned = resolve_transcript_files(transcript_path, quarter=quarter)
+    if len(assigned) != 1:
+        return None
+    return assigned[0].path.read_text(encoding="utf-8", errors="replace")
+
+
 def main() -> int:
     load_dotenv()
     configure_logging()
@@ -74,9 +103,40 @@ def main() -> int:
     args = parser.parse_args()
 
     transcript_path = Path(args.transcripts)
+    date_overrides = (
+        parse_quarter_end_dates_override(args.quarter_end_dates)
+        if args.quarter_end_dates
+        else None
+    )
+    fiscal_calendars_path = Path(args.fiscal_calendars)
 
     if args.dry_run:
-        print(dry_run_report(transcript_path, args.quarters, args.quarter))
+        report = dry_run_report(transcript_path, args.quarters, args.quarter)
+        if args.ticker:
+            transcript_text = _load_single_transcript_text(transcript_path, args.quarter)
+            if transcript_text:
+                report = "\n".join(
+                    [
+                        report,
+                        "",
+                        *format_market_dry_run_lines(
+                            ticker=args.ticker,
+                            transcript_text=transcript_text,
+                            reported_quarter=args.reported_quarter,
+                            calendars_path=fiscal_calendars_path,
+                            date_overrides=date_overrides,
+                        ),
+                    ]
+                )
+            else:
+                report = "\n".join(
+                    [
+                        report,
+                        "",
+                        "Market data: SKIPPED (select exactly one transcript for date preview)",
+                    ]
+                )
+        print(report)
         return 0
 
     api_key = os.getenv("ANTHROPIC_API_KEY")
@@ -95,6 +155,10 @@ def main() -> int:
         expected_quarters=args.quarters,
         quarter=args.quarter,
         skip_rescue_judge=args.skip_rescue_judge,
+        ticker=args.ticker,
+        fiscal_calendars_path=fiscal_calendars_path,
+        quarter_end_date_overrides=date_overrides,
+        reported_quarter_override=args.reported_quarter,
     )
 
     output_path = Path(args.output)

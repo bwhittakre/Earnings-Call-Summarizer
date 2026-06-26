@@ -22,6 +22,7 @@ from src.validation.evidence_validator import (
     _ensure_analysis,
     _ensure_what_happened,
     _resolve_confidence,
+    excerpt_found_in_any_source,
     excerpt_found_in_source,
     filter_quarter_evidence,
     filter_rollup_evidence,
@@ -115,10 +116,24 @@ def _total_quarter_claims(evidence: EvidenceBackedQuarterSummary) -> int:
     )
 
 
+def _anchor_sources_for_failure(
+    failure: ValidationFailure,
+    claim: EvidenceClaim,
+    transcript_text: str,
+    price_block_text: str | None,
+) -> list[str]:
+    if failure.field != "analysis" or not price_block_text:
+        return [transcript_text]
+    if "[price]" in claim.claim.lower():
+        return [price_block_text, transcript_text]
+    return [transcript_text, price_block_text]
+
+
 def pre_anchor_quarter_failures(
     evidence: EvidenceBackedQuarterSummary,
     failures: list[ValidationFailure],
-    source: str,
+    transcript_text: str,
+    price_block_text: str | None = None,
 ) -> tuple[EvidenceBackedQuarterSummary, list[AutoAnchoredEntry], list[ValidationFailure]]:
     if not failures:
         return evidence, [], []
@@ -133,12 +148,24 @@ def pre_anchor_quarter_failures(
             continue
 
         claim = claim_lists[failure.field][failure.index]
-        anchored = find_verbatim_quote(
-            claim.claim,
-            source,
-            hint_excerpt=claim.excerpt,
+        sources = _anchor_sources_for_failure(
+            failure,
+            claim,
+            transcript_text,
+            price_block_text,
         )
-        if anchored and excerpt_found_in_source(anchored, source):
+        anchored: str | None = None
+        for source in sources:
+            anchored = find_verbatim_quote(
+                claim.claim,
+                source,
+                hint_excerpt=claim.excerpt,
+            )
+            if anchored and excerpt_found_in_source(anchored, source):
+                break
+            anchored = None
+
+        if anchored:
             claim_lists[failure.field][failure.index] = EvidenceClaim(
                 claim=claim.claim,
                 excerpt=anchored,
@@ -172,10 +199,15 @@ def process_quarter_evidence_with_rescue(
     transcript_text: str,
     rescue_judge: RescueJudge,
     label: str,
+    price_block_text: str | None = None,
 ) -> EvidenceProcessingResult:
     from src.validation.rescue_orchestrator import augment_rescue_reviews_with_retries
 
-    validation = validate_quarter_evidence(evidence, transcript_text)
+    validation = validate_quarter_evidence(
+        evidence,
+        transcript_text,
+        price_block_text,
+    )
     total_claims = _total_quarter_claims(evidence)
     if validation.is_valid:
         return EvidenceProcessingResult(
@@ -188,6 +220,7 @@ def process_quarter_evidence_with_rescue(
         evidence,
         validation.failures,
         transcript_text,
+        price_block_text,
     )
 
     if not remaining_failures:
@@ -218,6 +251,7 @@ def process_quarter_evidence_with_rescue(
         remaining_validation,
         rescue_result,
         transcript_text,
+        price_block_text,
     )
     processed.verbatim_kept = initial_verbatim_kept
     processed.auto_anchored = auto_anchored
@@ -268,41 +302,53 @@ def _process_claim_list(
     review_map: dict[tuple[str, int | None], RescueReview],
     rescued: list[RescuedEntry],
     dropped: list[DroppedEntry],
+    secondary_source: str | None = None,
 ) -> tuple[list[EvidenceClaim], int]:
     kept: list[EvidenceClaim] = []
     verbatim_kept = 0
+    sources = [source]
+    if secondary_source:
+        sources.append(secondary_source)
 
     for index, claim in enumerate(claims):
-        if excerpt_found_in_source(claim.excerpt, source):
+        if excerpt_found_in_any_source(claim.excerpt, sources):
             kept.append(claim)
             verbatim_kept += 1
             continue
 
         review = review_map.get(_review_key(field_name, index))
-        if (
-            review
-            and review.verdict == "rescued"
-            and review.canonical_excerpt
-            and excerpt_found_in_source(review.canonical_excerpt, source)
-        ):
-            kept.append(
-                EvidenceClaim(claim=claim.claim, excerpt=review.canonical_excerpt)
-            )
-            rescued.append(
-                RescuedEntry(
-                    field=field_name,
-                    index=index,
-                    claim=claim.claim,
-                    original_excerpt=claim.excerpt,
-                    canonical_excerpt=review.canonical_excerpt,
-                    reason=review.reason,
-                )
-            )
+        rescued_via_review = False
+        if review and review.verdict == "rescued" and review.canonical_excerpt:
+            for candidate_source in sources:
+                if excerpt_found_in_source(review.canonical_excerpt, candidate_source):
+                    kept.append(
+                        EvidenceClaim(
+                            claim=claim.claim,
+                            excerpt=review.canonical_excerpt,
+                        )
+                    )
+                    rescued.append(
+                        RescuedEntry(
+                            field=field_name,
+                            index=index,
+                            claim=claim.claim,
+                            original_excerpt=claim.excerpt,
+                            canonical_excerpt=review.canonical_excerpt,
+                            reason=review.reason,
+                        )
+                    )
+                    rescued_via_review = True
+                    break
+        if rescued_via_review:
             continue
 
-        anchored_claim = _try_quote_anchor_rescue(
-            field_name, index, claim, review, source, rescued
-        )
+        anchored_claim = None
+        for candidate_source in sources:
+            anchored_claim = _try_quote_anchor_rescue(
+                field_name, index, claim, review, candidate_source, rescued
+            )
+            if anchored_claim:
+                break
         if anchored_claim:
             kept.append(anchored_claim)
             continue
@@ -396,6 +442,7 @@ def apply_rescue_reviews_to_quarter(
     validation: ValidationResult,
     rescue_result: RescueJudgeResult,
     source: str,
+    price_block_text: str | None = None,
 ) -> EvidenceProcessingResult:
     review_map = _build_review_map(rescue_result.reviews)
     rescued: list[RescuedEntry] = []
@@ -439,6 +486,7 @@ def apply_rescue_reviews_to_quarter(
         review_map,
         rescued,
         dropped,
+        secondary_source=price_block_text,
     )
     verbatim_kept += kept
 
@@ -559,8 +607,13 @@ def apply_rescue_reviews_to_rollup(
 def process_quarter_evidence_strict(
     evidence: EvidenceBackedQuarterSummary,
     transcript_text: str,
+    price_block_text: str | None = None,
 ) -> EvidenceProcessingResult:
-    validation = validate_quarter_evidence(evidence, transcript_text)
+    validation = validate_quarter_evidence(
+        evidence,
+        transcript_text,
+        price_block_text,
+    )
     if validation.is_valid:
         total = (
             len(evidence.what_happened)

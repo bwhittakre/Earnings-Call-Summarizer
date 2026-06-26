@@ -5,3 +5,5 @@ pymupdf
 beautifulsoup4
 lxml
 openpyxl
+pyyaml
+yfinance

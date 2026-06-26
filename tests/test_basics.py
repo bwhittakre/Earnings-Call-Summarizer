@@ -178,6 +178,10 @@ class BasicsTestCase(unittest.TestCase):
     def test_load_reference_key_text(self):
         text = load_reference_key_text()
         self.assertIn("Score interpretation bands", text)
+        self.assertIn("no fixed maximum", text)
+        self.assertIn("Strong stock-moving drivers: ±20 to ±25", text)
+        self.assertIn("NEXT QUARTER ONLY", text)
+        self.assertIn("four fiscal quarters immediately before", text)
         self.assertGreater(len(text), 100)
 
     def test_write_excel_creates_one_sheet_per_company(self):

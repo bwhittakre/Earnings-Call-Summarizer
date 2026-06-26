@@ -43,11 +43,13 @@ class QuarterSummarizer:
         quarter: str,
         transcript_text: str,
         label: str,
+        price_block_text: str | None = None,
     ) -> tuple[ValidatedQuarterOutput, LLMResult]:
-        user_content = (
-            f"Quarter: {quarter}\n\n"
-            f"--- TRANSCRIPT ---\n{transcript_text}"
-        )
+        sections = [f"Quarter: {quarter}"]
+        if price_block_text:
+            sections.extend(["", price_block_text])
+        sections.extend(["", "--- TRANSCRIPT ---", transcript_text])
+        user_content = "\n".join(sections)
 
         evidence, result = self.client.complete_json(
             system_prompt=self.system_prompt,
@@ -58,13 +60,18 @@ class QuarterSummarizer:
         evidence.quarter = quarter
 
         if self.skip_rescue_judge:
-            processed = process_quarter_evidence_strict(evidence, transcript_text)
+            processed = process_quarter_evidence_strict(
+                evidence,
+                transcript_text,
+                price_block_text,
+            )
         else:
             processed = process_quarter_evidence_with_rescue(
                 evidence,
                 transcript_text,
                 self.rescue_judge,
                 label,
+                price_block_text,
             )
 
         audit_path = save_evidence_audit(label, processed)

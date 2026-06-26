@@ -52,6 +52,50 @@ class QuarterSummarizerTestCase(unittest.TestCase):
         self.assertEqual(output.summary.company_name, "Amazon")
         self.assertEqual(output.evidence.company_name, "Amazon")
 
+    def test_includes_price_block_in_user_content(self):
+        evidence = EvidenceBackedQuarterSummary(
+            company_name="Amazon",
+            quarter="FY2025-Q2",
+            what_happened=[
+                EvidenceClaim(
+                    claim="Strong demand",
+                    excerpt="We saw strong demand in data center and raised our full-year outlook.",
+                )
+            ],
+            positives=[],
+            negatives=[],
+            confidence_score=20,
+            analysis=[
+                EvidenceClaim(
+                    claim="+20: Raised outlook supports next-quarter momentum",
+                    excerpt="We saw strong demand in data center and raised our full-year outlook.",
+                )
+            ],
+        )
+        client = MagicMock()
+        client.complete_json.return_value = (
+            evidence,
+            LLMResult(usage=TokenUsage(input_tokens=10, output_tokens=5), raw_response="{}"),
+        )
+
+        price_block = (
+            "--- PRIOR QUARTER STOCK PRICES (source: yfinance adjusted close; not from transcript) ---\n"
+            "Ticker: AMZN\n"
+            "FY2024-Q3 end (2024-09-30, traded 2024-09-30): $186.00"
+        )
+        summarizer = QuarterSummarizer(client, skip_rescue_judge=True)
+        summarizer.summarize(
+            quarter="FY2025-Q2",
+            transcript_text=TRANSCRIPT,
+            label="FY2025-Q2_quarter",
+            price_block_text=price_block,
+        )
+
+        user_content = client.complete_json.call_args.kwargs["user_content"]
+        self.assertIn("PRIOR QUARTER STOCK PRICES", user_content)
+        self.assertIn(price_block, user_content)
+        self.assertIn("--- TRANSCRIPT ---", user_content)
+
 
 if __name__ == "__main__":
     unittest.main()

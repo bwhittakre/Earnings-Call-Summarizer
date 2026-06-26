@@ -22,6 +22,16 @@ class AnalysisScoreTestCase(unittest.TestCase):
         ]
         self.assertEqual(compute_confidence_score_from_analysis(analysis), 35)
 
+    def test_price_trend_bullet_counts_toward_score(self):
+        analysis = [
+            EvidenceClaim(claim="+20: Beat", excerpt="Revenue beat guidance."),
+            EvidenceClaim(
+                claim="+10: [price] Upward momentum",
+                excerpt="FY2025-Q2 end (2024-07-28, traded 2024-07-26): $123.45",
+            ),
+        ]
+        self.assertEqual(compute_confidence_score_from_analysis(analysis), 30)
+
     def test_compute_confidence_score_clamps_to_bounds(self):
         analysis = [
             EvidenceClaim(claim="+80: Factor A", excerpt="quote a"),
@@ -50,6 +60,24 @@ class AnalysisScoreTestCase(unittest.TestCase):
 
         summary = quarter_summary_from_evidence(evidence)
         self.assertEqual(summary.confidence_score, 35)
+
+    def test_evidence_summary_accepts_more_than_ten_analysis_bullets(self):
+        analysis = [
+            EvidenceClaim(claim=f"+5: Factor {index}", excerpt=f"quote {index}")
+            for index in range(12)
+        ]
+        evidence = EvidenceBackedQuarterSummary(
+            company_name="Nvidia",
+            quarter="FY2025-Q2",
+            what_happened=[
+                EvidenceClaim(claim="Beat", excerpt="Revenue beat guidance."),
+            ],
+            positives=[],
+            negatives=[],
+            confidence_score=60,
+            analysis=analysis,
+        )
+        self.assertEqual(len(evidence.analysis), 12)
 
 
 if __name__ == "__main__":

@@ -1,5 +1,11 @@
 from __future__ import annotations
 
+"""Confidence score is the sum of signed analysis weights.
+
+Weights may come from transcript-backed bullets or optional [price] trend bullets
+when prior-quarter stock prices were provided in the prompt.
+"""
+
 import re
 
 from src.schemas.models import EvidenceBackedQuarterSummary, EvidenceClaim
