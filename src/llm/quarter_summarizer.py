@@ -12,14 +12,11 @@ from src.schemas.models import (
 )
 from src.scoring.analysis_score import apply_confidence_score_from_analysis
 from src.validation.evidence_processor import (
-    EvidenceProcessingResult,
-    apply_rescue_reviews_to_quarter,
     process_quarter_evidence_strict,
+    process_quarter_evidence_with_rescue,
     save_evidence_audit,
 )
-from src.validation.evidence_validator import validate_quarter_evidence
 from src.validation.rescue_judge import RescueJudge
-from src.validation.rescue_orchestrator import augment_rescue_reviews_with_retries
 
 logger = logging.getLogger(__name__)
 
@@ -63,44 +60,20 @@ class QuarterSummarizer:
         if self.skip_rescue_judge:
             processed = process_quarter_evidence_strict(evidence, transcript_text)
         else:
-            validation = validate_quarter_evidence(evidence, transcript_text)
-            if validation.is_valid:
-                total = (
-                    len(evidence.what_happened)
-                    + len(evidence.positives)
-                    + len(evidence.negatives)
-                    + len(evidence.analysis)
-                )
-                processed = EvidenceProcessingResult(
-                    evidence=evidence,
-                    verbatim_kept=total,
-                )
-            else:
-                rescue_result, _ = self.rescue_judge.review_validation_result(
-                    validation,
-                    transcript_text,
-                    label,
-                )
-                rescue_result = augment_rescue_reviews_with_retries(
-                    self.rescue_judge,
-                    validation.failures,
-                    rescue_result,
-                    transcript_text,
-                    label,
-                )
-                processed = apply_rescue_reviews_to_quarter(
-                    evidence,
-                    validation,
-                    rescue_result,
-                    transcript_text,
-                )
+            processed = process_quarter_evidence_with_rescue(
+                evidence,
+                transcript_text,
+                self.rescue_judge,
+                label,
+            )
 
         audit_path = save_evidence_audit(label, processed)
-        if processed.rescued or processed.dropped:
+        if processed.rescued or processed.dropped or processed.auto_anchored:
             logger.warning(
-                "Evidence audit for %s: kept=%s rescued=%s dropped=%s audit=%s",
+                "Evidence audit for %s: kept=%s anchored=%s rescued=%s dropped=%s audit=%s",
                 label,
                 processed.verbatim_kept,
+                len(processed.auto_anchored),
                 len(processed.rescued),
                 len(processed.dropped),
                 audit_path,

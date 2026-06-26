@@ -5,7 +5,7 @@ import re
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 from src.paths import EVIDENCE_AUDIT_DIR
 from src.schemas.models import (
@@ -30,8 +30,22 @@ from src.validation.evidence_validator import (
 )
 from src.validation.quote_anchor import find_verbatim_quote
 
+if TYPE_CHECKING:
+    from src.validation.rescue_judge import RescueJudge
+
 DropStage = Literal["judge_rejected", "canonical_failed_verbatim", "missing_review"]
 QUOTE_ANCHOR_REASON = "programmatic quote anchor"
+AUTO_ANCHOR_REASON = "pre-rescue quote anchor"
+
+
+@dataclass
+class AutoAnchoredEntry:
+    field: str
+    index: int | None
+    claim: str
+    original_excerpt: str
+    canonical_excerpt: str
+    reason: str = AUTO_ANCHOR_REASON
 
 
 @dataclass
@@ -60,6 +74,7 @@ class DroppedEntry:
 class EvidenceProcessingResult:
     evidence: EvidenceBackedQuarterSummary | EvidenceBackedRollupSummary
     verbatim_kept: int
+    auto_anchored: list[AutoAnchoredEntry] = field(default_factory=list)
     rescued: list[RescuedEntry] = field(default_factory=list)
     dropped: list[DroppedEntry] = field(default_factory=list)
 
@@ -78,6 +93,135 @@ def _resolve_drop_stage(review: RescueReview | None) -> DropStage:
     if review.verdict == "drop":
         return "judge_rejected"
     return "canonical_failed_verbatim"
+
+
+def _claim_lists(
+    evidence: EvidenceBackedQuarterSummary,
+) -> dict[str, list[EvidenceClaim]]:
+    return {
+        "what_happened": list(evidence.what_happened),
+        "positives": list(evidence.positives),
+        "negatives": list(evidence.negatives),
+        "analysis": list(evidence.analysis),
+    }
+
+
+def _total_quarter_claims(evidence: EvidenceBackedQuarterSummary) -> int:
+    return (
+        len(evidence.what_happened)
+        + len(evidence.positives)
+        + len(evidence.negatives)
+        + len(evidence.analysis)
+    )
+
+
+def pre_anchor_quarter_failures(
+    evidence: EvidenceBackedQuarterSummary,
+    failures: list[ValidationFailure],
+    source: str,
+) -> tuple[EvidenceBackedQuarterSummary, list[AutoAnchoredEntry], list[ValidationFailure]]:
+    if not failures:
+        return evidence, [], []
+
+    claim_lists = _claim_lists(evidence)
+    auto_anchored: list[AutoAnchoredEntry] = []
+    remaining: list[ValidationFailure] = []
+
+    for failure in failures:
+        if failure.index is None or failure.field not in claim_lists:
+            remaining.append(failure)
+            continue
+
+        claim = claim_lists[failure.field][failure.index]
+        anchored = find_verbatim_quote(
+            claim.claim,
+            source,
+            hint_excerpt=claim.excerpt,
+        )
+        if anchored and excerpt_found_in_source(anchored, source):
+            claim_lists[failure.field][failure.index] = EvidenceClaim(
+                claim=claim.claim,
+                excerpt=anchored,
+            )
+            auto_anchored.append(
+                AutoAnchoredEntry(
+                    field=failure.field,
+                    index=failure.index,
+                    claim=claim.claim,
+                    original_excerpt=claim.excerpt,
+                    canonical_excerpt=anchored,
+                )
+            )
+            continue
+
+        remaining.append(failure)
+
+    updated = evidence.model_copy(
+        update={
+            "what_happened": claim_lists["what_happened"],
+            "positives": claim_lists["positives"],
+            "negatives": claim_lists["negatives"],
+            "analysis": claim_lists["analysis"],
+        }
+    )
+    return updated, auto_anchored, remaining
+
+
+def process_quarter_evidence_with_rescue(
+    evidence: EvidenceBackedQuarterSummary,
+    transcript_text: str,
+    rescue_judge: RescueJudge,
+    label: str,
+) -> EvidenceProcessingResult:
+    from src.validation.rescue_orchestrator import augment_rescue_reviews_with_retries
+
+    validation = validate_quarter_evidence(evidence, transcript_text)
+    total_claims = _total_quarter_claims(evidence)
+    if validation.is_valid:
+        return EvidenceProcessingResult(
+            evidence=evidence,
+            verbatim_kept=total_claims,
+        )
+
+    initial_verbatim_kept = total_claims - len(validation.failures)
+    evidence, auto_anchored, remaining_failures = pre_anchor_quarter_failures(
+        evidence,
+        validation.failures,
+        transcript_text,
+    )
+
+    if not remaining_failures:
+        return EvidenceProcessingResult(
+            evidence=evidence,
+            verbatim_kept=initial_verbatim_kept,
+            auto_anchored=auto_anchored,
+        )
+
+    remaining_validation = ValidationResult(
+        is_valid=False,
+        failures=remaining_failures,
+    )
+    rescue_result, _ = rescue_judge.review_failures(
+        remaining_failures,
+        transcript_text,
+        label,
+    )
+    rescue_result = augment_rescue_reviews_with_retries(
+        rescue_judge,
+        remaining_failures,
+        rescue_result,
+        transcript_text,
+        label,
+    )
+    processed = apply_rescue_reviews_to_quarter(
+        evidence,
+        remaining_validation,
+        rescue_result,
+        transcript_text,
+    )
+    processed.verbatim_kept = initial_verbatim_kept
+    processed.auto_anchored = auto_anchored
+    return processed
 
 
 def _try_quote_anchor_rescue(
@@ -527,7 +671,7 @@ def save_evidence_audit(
     label: str,
     result: EvidenceProcessingResult,
 ) -> Path | None:
-    if not result.rescued and not result.dropped:
+    if not result.rescued and not result.dropped and not result.auto_anchored:
         return None
 
     EVIDENCE_AUDIT_DIR.mkdir(parents=True, exist_ok=True)
@@ -539,6 +683,17 @@ def save_evidence_audit(
             {
                 "label": label,
                 "verbatim_kept": result.verbatim_kept,
+                "auto_anchored": [
+                    {
+                        "field": entry.field,
+                        "index": entry.index,
+                        "claim": entry.claim,
+                        "original_excerpt": entry.original_excerpt,
+                        "canonical_excerpt": entry.canonical_excerpt,
+                        "reason": entry.reason,
+                    }
+                    for entry in result.auto_anchored
+                ],
                 "rescued": [
                     {
                         "field": entry.field,

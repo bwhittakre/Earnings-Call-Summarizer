@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
+from src.ingest.call_date import resolve_call_date
 from src.ingest.loader import LoadedTranscripts, load_transcripts, transcript_audit_label
 from src.llm.anthropic_client import AnthropicClient
 from src.llm.quarter_summarizer import QuarterSummarizer, ValidatedQuarterOutput
@@ -66,4 +67,16 @@ def run_pipeline_from_loaded(
         )
         quarter_outputs.append(output)
 
-    return [output.summary for output in quarter_outputs]
+    summaries: list[QuarterSummary] = []
+    for item, output in zip(
+        sorted(loaded.files, key=lambda file: file.quarter),
+        quarter_outputs,
+    ):
+        call_date = resolve_call_date(
+            loaded.transcripts[item.quarter],
+            output.summary.call_date,
+        )
+        summaries.append(
+            output.summary.model_copy(update={"call_date": call_date})
+        )
+    return summaries

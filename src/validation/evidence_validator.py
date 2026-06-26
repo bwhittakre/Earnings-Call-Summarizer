@@ -16,6 +16,28 @@ from src.schemas.models import (
 
 MIN_EXCERPT_LENGTH = 20
 
+_SPOKEN_QUARTERS = (
+    ("q four", "q4"),
+    ("q three", "q3"),
+    ("q two", "q2"),
+    ("q one", "q1"),
+)
+
+
+def _repair_contraction_replacement_chars(text: str) -> str:
+    text = re.sub(r"(\w)\ufffd(\w)", r"\1'\2", text)
+    return text.replace("\ufffd", "'")
+
+
+def _normalize_numeric_tokens(text: str) -> str:
+    text = re.sub(r"\$(?=\d)", "", text)
+    while True:
+        updated = re.sub(r"(?<=\d),(?=\d)", "", text)
+        if updated == text:
+            break
+        text = updated
+    return text.replace(",", "")
+
 
 @dataclass
 class ValidationFailure:
@@ -52,12 +74,16 @@ def normalize_text(text: str) -> str:
     normalized = normalized.replace("\u2019", "'").replace("\u2018", "'")
     normalized = normalized.replace("\u201c", '"').replace("\u201d", '"')
     normalized = normalized.replace("\u2013", "-").replace("\u2014", "-")
+    normalized = _repair_contraction_replacement_chars(normalized)
+    for spoken, compact in _SPOKEN_QUARTERS:
+        normalized = normalized.replace(spoken, compact)
+    normalized = _normalize_numeric_tokens(normalized)
     normalized = re.sub(r"\s+", " ", normalized)
     return normalized.strip()
 
 
 def excerpt_found_in_source(excerpt: str, source: str) -> bool:
-    normalized_excerpt = normalize_text(excerpt)
+    normalized_excerpt = normalize_text(excerpt).rstrip(".,;")
     if len(normalized_excerpt) < MIN_EXCERPT_LENGTH:
         return False
     return normalized_excerpt in normalize_text(source)

@@ -1,0 +1,40 @@
+[
+  {
+    "name": "amazon_aws_run_rate_dollar_mismatch",
+    "source_text": "AWS grew 17.5% year over year and now has over a 123,000,000,000 annualized revenue run rate.",
+    "excerpt": "AWS grew 17.5% year over year and now has over a $123,000,000,000 annualized revenue run rate",
+    "expected_pass": true
+  },
+  {
+    "name": "amazon_spoken_quarter_labels",
+    "source_text": "We did see AWS segment margins decline from a record high of 39.5% in q one to 32.9% in q two.",
+    "excerpt": "AWS segment margins decline from a record high of 39.5% in Q1 to 32.9% in Q2",
+    "expected_pass": true
+  },
+  {
+    "name": "amazon_q3_opex_trailing_period",
+    "source_text": "Q3 operating income is expected to be between $15,500,000,000 and $20,500,000,000.",
+    "excerpt": "Q3 operating income is expected to be between $15,500,000,000 and $20,500,000,000",
+    "expected_pass": true
+  },
+  {
+    "name": "amazon_prime_day_apostrophe",
+    "source_text": "This year's Prime Day was our biggest ever with record sales, number of items sold, and number of Prime sign ups in the three weeks leading up to the Prime Day.",
+    "excerpt": "This year's Prime Day was our biggest ever with record sales, number of items sold, and number of Prime sign ups",
+    "expected_pass": true
+  },
+  {
+    "name": "amazon_multi_span_analysis_excerpt",
+    "source_text": "AWS grew 17.5% year over year and now has over a 123,000,000,000 annualized revenue run rate. At the end of the quarter at June 30, that was $195,000,000,000 so that's up about 25% year over year.",
+    "excerpt": "AWS grew 17.5% year over year and now has over a $123,000,000,000 annualized revenue run rate... backlog was $195,000,000,000, up about 25% year over year.",
+    "expected_pass": false,
+    "expected_anchor": true,
+    "claim": "+15: AWS revenue growth and backlog signal durable cloud demand"
+  },
+  {
+    "name": "amazon_operating_income_paraphrase",
+    "source_text": "Operating income was $19,200,000,000 which is $1,700,000,000 above the high end of our guidance range.",
+    "excerpt": "Operating income was $19,200,000,000, which is $1,700,000,000 above the high end of our guidance range.",
+    "expected_pass": true
+  }
+]

@@ -6,10 +6,16 @@ Rules:
 - Use ONLY the transcript. Do not invent metrics, events, or guidance.
 - Every item in what_happened, positives, negatives, and analysis must include:
   - "claim": a concise headline-style phrase (not a full sentence)
-  - "excerpt": a quote or tight paraphrase from the transcript that supports the claim
-- Prefer verbatim quotes when possible. Tight paraphrases are acceptable and will be normalized downstream.
+  - "excerpt": a single contiguous verbatim copy from the transcript (shortest span that supports the claim)
+- Excerpt rules (strict — excerpts are validated as exact transcript substrings):
+  - Copy character-for-character from the transcript; do not retype, paraphrase, or summarize
+  - Use one contiguous span only — never join multiple quotes with "..." or ellipses
+  - Copy numbers, currency symbols, and quarter labels exactly as they appear in the transcript
+  - Good excerpt: one sentence copied exactly from the transcript
+  - Bad excerpt: stitching two sentences with "..." or rewording ("Q1" when the transcript says "q one")
 - "company_name": identify the company from the transcript only (operator intro, IR welcome, property disclaimer). Use the common market/display name (e.g. Nvidia, Amazon, Microsoft, Alphabet). Do not invent a company name.
 - After identifying the company, infer its primary industry/sector from the transcript (e.g. Semiconductors, Cloud/Hyperscale, Retail, Financials, Pharma). Base this on company identity and what management emphasizes on the call.
+- "call_date": the date the earnings call took place, formatted exactly as (mm,dd,yyyy). Use the date stated in IR opening remarks or forward-looking disclaimers (e.g. "as of today, August 28, 2024" becomes (08,28,2024); "07/31/2025" becomes (07,31,2025)). Use null only if no call date appears in the transcript.
 - "what_happened": 2-5 evidence-backed claims capturing the most important developments on the call.
 - "positives": distinct positive themes mentioned by management or analysts. Use an empty list if none are material.
 - "negatives": distinct negative themes, risks, or headwinds mentioned. Use an empty list if none are material.
@@ -38,19 +44,20 @@ Return ONLY valid JSON matching this schema:
 {
   "company_name": "Nvidia",
   "quarter": "FY2025-Q2 or YYYY-Q[1-4] (use the quarter label provided in the prompt)",
+  "call_date": "(08,28,2024)",
   "what_happened": [
-    {"claim": "Strong data center demand", "excerpt": "quote or paraphrase supporting the claim"}
+    {"claim": "Strong data center demand", "excerpt": "We saw strong demand in data center and raised our full-year outlook."}
   ],
   "positives": [
-    {"claim": "Cloud growth", "excerpt": "quote or paraphrase supporting the claim"}
+    {"claim": "Cloud growth", "excerpt": "Cloud revenue grew 25% year over year."}
   ],
   "negatives": [
-    {"claim": "FX headwinds", "excerpt": "quote or paraphrase supporting the claim"}
+    {"claim": "FX headwinds", "excerpt": "Foreign exchange remained a headwind in the quarter."}
   ],
   "confidence_score": 20,
   "analysis": [
-    {"claim": "+20: Data center revenue beat supports next-quarter momentum", "excerpt": "quote or paraphrase supporting the claim"},
-    {"claim": "-5: FX headwinds limit upside", "excerpt": "quote or paraphrase supporting the claim"}
+    {"claim": "+20: Data center revenue beat supports next-quarter momentum", "excerpt": "Data center revenue grew 154% year over year."},
+    {"claim": "-5: FX headwinds limit upside", "excerpt": "Foreign exchange remained a headwind in the quarter."}
   ]
 }
 

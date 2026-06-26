@@ -52,6 +52,12 @@ POINTS_PER_WRAPPED_LINE = 15
 ROW_HEIGHT_PADDING = 8
 
 
+def format_quarter_cell(quarter: str, call_date: str | None = None) -> str:
+    if call_date:
+        return f"{quarter}\nCall Date: {call_date}"
+    return quarter
+
+
 def format_what_happened(items: list[str]) -> str:
     return " & ".join(items)
 
@@ -76,7 +82,7 @@ def summary_to_row(summary: QuarterSummary) -> dict[str, str]:
     return {
         "summary_type": summary.summary_type,
         "company_name": summary.company_name,
-        "quarter": summary.quarter,
+        "quarter": format_quarter_cell(summary.quarter, summary.call_date),
         "what_happened": format_what_happened(summary.what_happened),
         "positives": format_list(summary.positives),
         "negatives": format_list(summary.negatives),
@@ -89,7 +95,7 @@ def summary_to_excel_row(summary: QuarterSummary) -> dict[str, str]:
     return {
         "Summary Type": summary.summary_type.title(),
         "Company Name": summary.company_name,
-        "Quarter": summary.quarter,
+        "Quarter": format_quarter_cell(summary.quarter, summary.call_date),
         "What Happened": format_bullets(summary.what_happened),
         "Positives": format_bullets(summary.positives),
         "Negatives": format_bullets(summary.negatives),
@@ -246,14 +252,17 @@ def populate_excel_sheet(worksheet, rows: Sequence[QuarterSummary]) -> None:
     )
 
     worksheet.row_dimensions[1].height = 28
-    for row_index in range(2, worksheet.max_row + 1):
+    last_data_row = worksheet.max_row
+    for row_index in range(2, last_data_row + 1):
         worksheet.row_dimensions[row_index].height = estimate_row_height(
             worksheet,
             row_index,
         )
 
     worksheet.freeze_panes = "A2"
-    worksheet.auto_filter.ref = worksheet.dimensions
+    worksheet.auto_filter.ref = (
+        f"A1:{get_column_letter(len(headers))}{last_data_row}"
+    )
 
 
 def group_rows_by_company(rows: Sequence[QuarterSummary]) -> dict[str, list[QuarterSummary]]:

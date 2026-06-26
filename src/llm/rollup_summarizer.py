@@ -99,11 +99,12 @@ class RollupSummarizer:
                 )
 
         audit_path = save_evidence_audit(label, processed)
-        if processed.rescued or processed.dropped:
+        if processed.rescued or processed.dropped or processed.auto_anchored:
             logger.warning(
-                "Evidence audit for %s: kept=%s rescued=%s dropped=%s audit=%s",
+                "Evidence audit for %s: kept=%s anchored=%s rescued=%s dropped=%s audit=%s",
                 label,
                 processed.verbatim_kept,
+                len(processed.auto_anchored),
                 len(processed.rescued),
                 len(processed.dropped),
                 audit_path,

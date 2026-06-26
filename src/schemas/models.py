@@ -22,6 +22,7 @@ class ConfidenceEvidence(BaseModel):
 class EvidenceBackedQuarterSummary(BaseModel):
     company_name: str
     quarter: str
+    call_date: str | None = None
     what_happened: list[EvidenceClaim] = Field(min_length=1)
     positives: list[EvidenceClaim]
     negatives: list[EvidenceClaim]
@@ -41,6 +42,7 @@ class EvidenceBackedRollupSummary(BaseModel):
 class QuarterSummary(BaseModel):
     company_name: str
     quarter: str
+    call_date: str | None = None
     what_happened: list[str] = Field(min_length=1)
     positives: list[str]
     negatives: list[str]
@@ -96,6 +98,7 @@ def quarter_summary_from_evidence(
     return QuarterSummary(
         company_name=evidence.company_name,
         quarter=evidence.quarter,
+        call_date=evidence.call_date,
         what_happened=[item.claim for item in evidence.what_happened],
         positives=[item.claim for item in evidence.positives],
         negatives=[item.claim for item in evidence.negatives],

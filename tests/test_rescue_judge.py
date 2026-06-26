@@ -333,7 +333,7 @@ class RescueJudgeTestCase(unittest.TestCase):
         self.assertEqual(len(processed.rescued), 1)
         self.assertEqual(processed.rescued[0].field, "analysis")
 
-    @patch.object(RescueJudge, "review_validation_result")
+    @patch.object(RescueJudge, "review_failures")
     def test_quarter_summarizer_single_extract_with_rescue(
         self,
         mock_review,
@@ -346,7 +346,7 @@ class RescueJudgeTestCase(unittest.TestCase):
                 ),
                 EvidenceClaim(
                     claim="Raised guidance",
-                    excerpt="Management raised full-year outlook on data center strength.",
+                    excerpt="Completely fabricated sentence not present in the transcript.",
                 ),
             ]
         )

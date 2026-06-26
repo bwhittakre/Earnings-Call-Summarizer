@@ -10,6 +10,7 @@ from src.export.csv_writer import (
     format_analysis_bullets,
     format_bullets,
     format_list,
+    format_quarter_cell,
     format_what_happened,
     max_lines_at_max_height,
     min_column_width_for_text,
@@ -148,7 +149,7 @@ class BasicsTestCase(unittest.TestCase):
         self.assertIn('"We are raising full-year revenue guidance across every segment."', row["Analysis"])
 
     def test_write_excel(self):
-        summary = _sample_summary()
+        summary = _sample_summary(call_date="(08,28,2024)")
         with TemporaryDirectory() as tmp_dir:
             output_path = Path(tmp_dir) / "summary.xlsx"
             write_excel([summary], output_path)
@@ -159,6 +160,11 @@ class BasicsTestCase(unittest.TestCase):
             self.assertEqual(worksheet["H1"].value, "Analysis")
             self.assertEqual(worksheet["D2"].value, "- Strong data center demand\n- Raised guidance")
             self.assertEqual(worksheet["G2"].value, "72")
+            self.assertEqual(
+                worksheet["C2"].value,
+                "FY2025-Q2\nCall Date: (08,28,2024)",
+            )
+            self.assertEqual(worksheet.max_row, 2)
 
     def test_write_excel_creates_one_sheet_per_company(self):
         nvidia = _sample_summary()

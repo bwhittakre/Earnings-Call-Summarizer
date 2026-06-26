@@ -83,6 +83,32 @@ class EvidenceValidatorTestCase(unittest.TestCase):
         source = "Revenue grew strongly in the data center segment."
         self.assertFalse(excerpt_found_in_source("Revenue grew", source))
 
+    def test_excerpt_matches_amazon_style_normalization(self):
+        import json
+        from pathlib import Path
+
+        cases_path = Path(__file__).parent / "fixtures" / "amazon_audit_cases.json"
+        cases = json.loads(cases_path.read_text(encoding="utf-8"))
+        for case in cases:
+            if not case.get("expected_pass"):
+                continue
+            with self.subTest(case=case["name"]):
+                self.assertTrue(
+                    excerpt_found_in_source(case["excerpt"], case["source_text"]),
+                    case["name"],
+                )
+
+    def test_excerpt_rejects_multi_span_amazon_analysis(self):
+        import json
+        from pathlib import Path
+
+        cases_path = Path(__file__).parent / "fixtures" / "amazon_audit_cases.json"
+        cases = json.loads(cases_path.read_text(encoding="utf-8"))
+        case = next(item for item in cases if item["name"] == "amazon_multi_span_analysis_excerpt")
+        self.assertFalse(
+            excerpt_found_in_source(case["excerpt"], case["source_text"]),
+        )
+
     def test_validate_quarter_evidence_passes(self):
         transcript = (
             "We saw strong demand in data center and raised our full-year outlook. "
