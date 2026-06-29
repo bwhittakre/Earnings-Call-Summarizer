@@ -21,11 +21,11 @@ _NUMERIC_DATE_PATTERNS = (
 _NAMED_DATE_PATTERNS = (
     re.compile(
         r"(?:as of today|views as of today|made as of today),?\s*"
-        r"([A-Za-z]+)\s+(\d{1,2}),?\s+(\d{4})",
+        r"([A-Za-z]+)\s+(\d{1,2})(?:st|nd|rd|th)?,?\s+(\d{4})",
         re.IGNORECASE,
     ),
     re.compile(
-        r"([A-Za-z]+)\s+(\d{1,2}),?\s+(\d{4})\s+Financial Results",
+        r"([A-Za-z]+)\s+(\d{1,2})(?:st|nd|rd|th)?,?\s+(\d{4})\s+Financial Results",
         re.IGNORECASE,
     ),
 )

@@ -24,7 +24,7 @@ def format_price_block(
         f"Ticker: {ticker.strip().upper()}",
         f"Call date: {format_call_date(call_date)}",
         f"Reported quarter (from transcript): {reported_quarter}",
-        f"Prior quarters priced: {', '.join(prior_labels)}",
+        f"Prior {len(prior_labels)} quarter-ends (10 years): {', '.join(prior_labels)}",
     ]
     lines.extend(price.format_line() for price in prices)
     return "\n".join(lines)

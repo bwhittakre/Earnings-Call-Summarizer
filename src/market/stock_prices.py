@@ -13,6 +13,8 @@ class StockPriceError(Exception):
 
 HistoryFetcher = Callable[[str, date, date], list[tuple[date, float]]]
 
+LOOKBACK_DAYS = 14
+
 
 def _default_history_fetcher(
     ticker: str,
@@ -34,6 +36,18 @@ def _default_history_fetcher(
     return rows
 
 
+def _last_trading_close_on_or_before_from_rows(
+    rows: list[tuple[date, float]],
+    target: date,
+) -> tuple[date, float]:
+    eligible = [(day, close) for day, close in rows if day <= target]
+    if not eligible:
+        raise StockPriceError(
+            f"No trading data on or before {target.isoformat()}."
+        )
+    return eligible[-1]
+
+
 def _last_trading_close_on_or_before(
     ticker: str,
     target: date,
@@ -43,15 +57,9 @@ def _last_trading_close_on_or_before(
 ) -> tuple[date, float]:
     cap = as_of_date or date.today()
     effective_target = min(target, cap)
-    start = effective_target - timedelta(days=14)
+    start = effective_target - timedelta(days=LOOKBACK_DAYS)
     rows = fetcher(ticker, start, effective_target)
-    eligible = [(day, close) for day, close in rows if day <= effective_target]
-    if not eligible:
-        raise StockPriceError(
-            f"No trading data for {ticker} on or before {effective_target.isoformat()}."
-        )
-    day, close = eligible[-1]
-    return day, close
+    return _last_trading_close_on_or_before_from_rows(rows, effective_target)
 
 
 def fetch_quarter_end_prices(
@@ -65,6 +73,19 @@ def fetch_quarter_end_prices(
     history_fetcher = fetcher or _default_history_fetcher
     ticker_key = ticker.strip().upper()
     labels = ordered_labels or list(quarter_dates.keys())
+    if not labels:
+        return []
+
+    cap = as_of_date or date.today()
+    effective_targets = [
+        min(quarter_dates[normalize_quarter_label(label)], cap)
+        for label in labels
+    ]
+    earliest_target = min(effective_targets)
+    latest_target = max(effective_targets)
+    history_start = earliest_target - timedelta(days=LOOKBACK_DAYS)
+    history_rows = history_fetcher(ticker_key, history_start, latest_target)
+
     prices: list[QuarterEndPrice] = []
     for quarter_label in labels:
         normalized = normalize_quarter_label(quarter_label)
@@ -73,11 +94,10 @@ def fetch_quarter_end_prices(
                 f"Missing quarter-end date for {normalized!r}."
             )
         quarter_end_date = quarter_dates[normalized]
-        price_date, adjusted_close = _last_trading_close_on_or_before(
-            ticker_key,
-            quarter_end_date,
-            history_fetcher,
-            as_of_date=as_of_date,
+        effective_target = min(quarter_end_date, cap)
+        price_date, adjusted_close = _last_trading_close_on_or_before_from_rows(
+            history_rows,
+            effective_target,
         )
         prices.append(
             QuarterEndPrice(

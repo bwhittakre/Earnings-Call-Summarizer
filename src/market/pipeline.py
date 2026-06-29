@@ -7,6 +7,7 @@ from pathlib import Path
 from src.ingest.call_date import format_call_date, parse_call_date_format, resolve_call_date
 from src.ingest.loader import normalize_quarter_label, transcript_audit_label, TranscriptFile
 from src.ingest.reported_quarter import ReportedQuarterError, resolve_reported_quarter
+from src.market.constants import PRIOR_QUARTER_PRICE_COUNT
 from src.market.fiscal_calendar import (
     DEFAULT_FISCAL_CALENDARS_PATH,
     FiscalCalendarError,
@@ -53,10 +54,14 @@ def build_market_context(
     calendars_path: Path = DEFAULT_FISCAL_CALENDARS_PATH,
     date_overrides: dict[str, date] | None = None,
     fetcher=None,
+    price_history_quarters: int = PRIOR_QUARTER_PRICE_COUNT,
 ) -> MarketContext:
     ticker_key = ticker.strip().upper()
     normalized_reported = normalize_quarter_label(reported_quarter)
-    prior_labels = prior_quarter_labels(normalized_reported)
+    prior_labels = prior_quarter_labels(
+        normalized_reported,
+        count=price_history_quarters,
+    )
     quarter_end_dates = resolve_quarter_end_dates(
         ticker_key,
         prior_labels,
@@ -103,6 +108,7 @@ def format_market_dry_run_lines(
     reported_quarter: str | None = None,
     calendars_path: Path = DEFAULT_FISCAL_CALENDARS_PATH,
     date_overrides: dict[str, date] | None = None,
+    price_history_quarters: int = PRIOR_QUARTER_PRICE_COUNT,
 ) -> list[str]:
     ticker_key = ticker.strip().upper()
     try:
@@ -111,7 +117,10 @@ def format_market_dry_run_lines(
             transcript_text,
             cli_override=reported_quarter,
         )
-        prior_labels = prior_quarter_labels(resolved_reported)
+        prior_labels = prior_quarter_labels(
+            resolved_reported,
+            count=price_history_quarters,
+        )
         quarter_end_dates = resolve_quarter_end_dates(
             ticker_key,
             prior_labels,

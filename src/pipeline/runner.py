@@ -9,6 +9,7 @@ from src.ingest.loader import LoadedTranscripts, load_transcripts, transcript_au
 from src.ingest.reported_quarter import resolve_reported_quarter
 from src.llm.anthropic_client import AnthropicClient
 from src.llm.quarter_summarizer import QuarterSummarizer, ValidatedQuarterOutput
+from src.market.constants import PRIOR_QUARTER_PRICE_COUNT
 from src.market.fiscal_calendar import DEFAULT_FISCAL_CALENDARS_PATH
 from src.market.pipeline import MarketContext, build_market_context, resolve_call_date_value
 from src.schemas.models import QuarterSummary
@@ -27,6 +28,7 @@ def run_pipeline(
     quarter_end_date_overrides: dict[str, date] | None = None,
     reported_quarter_override: str | None = None,
     price_fetcher=None,
+    price_history_quarters: int | None = None,
 ) -> list[QuarterSummary]:
     loaded = load_transcripts(
         transcript_path=Path(transcript_path),
@@ -42,6 +44,7 @@ def run_pipeline(
         quarter_end_date_overrides=quarter_end_date_overrides,
         reported_quarter_override=reported_quarter_override,
         price_fetcher=price_fetcher,
+        price_history_quarters=price_history_quarters,
     )
 
 
@@ -54,10 +57,16 @@ def run_pipeline_from_loaded(
     quarter_end_date_overrides: dict[str, date] | None = None,
     reported_quarter_override: str | None = None,
     price_fetcher=None,
+    price_history_quarters: int | None = None,
 ) -> list[QuarterSummary]:
     quarter_summarizer = QuarterSummarizer(
         client,
         skip_rescue_judge=skip_rescue_judge,
+    )
+    history_quarters = (
+        price_history_quarters
+        if price_history_quarters is not None
+        else PRIOR_QUARTER_PRICE_COUNT
     )
 
     quarter_outputs: list[ValidatedQuarterOutput] = []
@@ -81,6 +90,7 @@ def run_pipeline_from_loaded(
                 calendars_path=fiscal_calendars_path,
                 date_overrides=quarter_end_date_overrides,
                 fetcher=price_fetcher,
+                price_history_quarters=history_quarters,
             )
             logger.info(
                 "Fetched %s prior-quarter prices for %s "

@@ -27,6 +27,13 @@ class CallDateTestCase(unittest.TestCase):
         )
         self.assertEqual(extract_call_date(transcript), "(08,28,2024)")
 
+    def test_extract_call_date_with_ordinal_day(self):
+        transcript = (
+            "Our comments and responses to your questions reflect management's views "
+            "as of today, February 6th, 2025 only and will include forward-looking statements."
+        )
+        self.assertEqual(extract_call_date(transcript), "(02,06,2025)")
+
     def test_resolve_call_date_prefers_transcript_extraction(self):
         transcript = (
             "Our comments reflect management's views as of today, 07/31/2025 only."

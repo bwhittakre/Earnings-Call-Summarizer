@@ -11,6 +11,7 @@ from dotenv import load_dotenv
 from src.export.csv_writer import write_output
 from src.ingest.loader import dry_run_report, resolve_transcript_files
 from src.llm.anthropic_client import AnthropicClient
+from src.market.constants import PRIOR_QUARTER_PRICE_COUNT
 from src.market.fiscal_calendar import (
     DEFAULT_FISCAL_CALENDARS_PATH,
     parse_quarter_end_dates_override,
@@ -70,6 +71,15 @@ def build_parser() -> argparse.ArgumentParser:
         help="Path to fiscal calendar YAML (default: config/fiscal_calendars.yaml)",
     )
     parser.add_argument(
+        "--price-history-quarters",
+        type=int,
+        default=PRIOR_QUARTER_PRICE_COUNT,
+        help=(
+            "Number of prior quarter-end stock prices to fetch when --ticker is set "
+            f"(default: {PRIOR_QUARTER_PRICE_COUNT}, i.e. 10 years)"
+        ),
+    )
+    parser.add_argument(
         "--dry-run",
         action="store_true",
         help="Validate transcript paths without calling the API",
@@ -125,6 +135,7 @@ def main() -> int:
                             reported_quarter=args.reported_quarter,
                             calendars_path=fiscal_calendars_path,
                             date_overrides=date_overrides,
+                            price_history_quarters=args.price_history_quarters,
                         ),
                     ]
                 )
@@ -159,6 +170,7 @@ def main() -> int:
         fiscal_calendars_path=fiscal_calendars_path,
         quarter_end_date_overrides=date_overrides,
         reported_quarter_override=args.reported_quarter,
+        price_history_quarters=args.price_history_quarters,
     )
 
     output_path = Path(args.output)

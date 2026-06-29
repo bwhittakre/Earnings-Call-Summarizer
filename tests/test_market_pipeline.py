@@ -3,6 +3,7 @@ from datetime import date
 from pathlib import Path
 
 from src.ingest.loader import TranscriptFile
+from src.market.constants import PRIOR_QUARTER_PRICE_COUNT
 from src.market.pipeline import build_market_context, resolve_call_date_value
 from src.market.quarter_labels import prior_quarter_labels
 
@@ -17,12 +18,24 @@ class MarketPipelineTestCase(unittest.TestCase):
         call_date = resolve_call_date_value(AMAZON_OPENING)
         self.assertEqual(call_date, date(2026, 2, 5))
         self.assertEqual(
-            prior_quarter_labels("2025-Q4"),
+            prior_quarter_labels("2025-Q4", count=4),
             ["2024-Q4", "2025-Q1", "2025-Q2", "2025-Q3"],
         )
+        expected_labels = prior_quarter_labels(
+            "2025-Q4",
+            count=PRIOR_QUARTER_PRICE_COUNT,
+        )
+        self.assertEqual(len(expected_labels), 40)
+        self.assertEqual(expected_labels[0], "2015-Q4")
+        self.assertEqual(expected_labels[-1], "2025-Q3")
 
         def fake_fetcher(ticker: str, start: date, end: date):
-            return [(end, 100.0 + end.day)]
+            rows: list[tuple[date, float]] = []
+            cursor = start
+            while cursor <= end:
+                rows.append((cursor, 100.0 + cursor.day))
+                cursor = date.fromordinal(cursor.toordinal() + 1)
+            return rows
 
         transcript_file = TranscriptFile(
             path=Path("FY2026-Q4.txt"),
@@ -38,14 +51,16 @@ class MarketPipelineTestCase(unittest.TestCase):
             fetcher=fake_fetcher,
         )
         self.assertEqual(context.reported_quarter, "2025-Q4")
+        self.assertEqual(len(context.prior_labels), 40)
         self.assertEqual(
             [price.quarter_label for price in context.prices],
-            ["2024-Q4", "2025-Q1", "2025-Q2", "2025-Q3"],
+            expected_labels,
         )
         for price in context.prices:
             self.assertLessEqual(price.price_date, call_date)
         self.assertIn("Reported quarter (from transcript): 2025-Q4", context.price_block_text)
         self.assertIn("Call date: (02,05,2026)", context.price_block_text)
+        self.assertIn("Prior 40 quarter-ends (10 years):", context.price_block_text)
 
     def test_amazon_transcript_file_integration(self):
         transcript_path = (
@@ -63,7 +78,12 @@ class MarketPipelineTestCase(unittest.TestCase):
         self.assertEqual(call_date, date(2026, 2, 5))
 
         def fake_fetcher(ticker: str, start: date, end: date):
-            return [(end, 200.0)]
+            rows: list[tuple[date, float]] = []
+            cursor = start
+            while cursor <= end:
+                rows.append((cursor, 200.0))
+                cursor = date.fromordinal(cursor.toordinal() + 1)
+            return rows
 
         context = build_market_context(
             ticker="AMZN",
