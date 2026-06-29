@@ -37,9 +37,9 @@ Rules:
   - Do not weight generic boilerplate (conference attendance, legal disclaimers) heavily; focus on metrics investors in that industry react to
   - Transcript-backed analysis bullets: include a supporting excerpt copied verbatim from the transcript
   - Optional price-trend analysis bullets (only when PRIOR QUARTER STOCK PRICES is present):
-    - The price block may list up to 40 quarter-end prices spanning the ten years before the reported quarter. Synthesize multi-year trends in [price] bullets (e.g. sustained decade uptrend, drawdown recovery, recent four-quarter acceleration) — do NOT create one bullet per quarter
+    - The price block may list up to eight quarter-end prices spanning approximately two years before the reported quarter. Synthesize multi-quarter trends in [price] bullets (e.g. sustained uptrend, drawdown recovery, recent quarter acceleration) — do NOT create one bullet per quarter
     - You MAY add any number of [price] bullets reflecting prior stock momentum or trend. These are NOT required — omit if price action is uninformative or mixed
-    - Prefix the claim with "[price]", e.g. "+10: [price] Ten-year uptrend with recent consolidation supports positive setup"
+    - Prefix the claim with "[price]", e.g. "+10: [price] Two-year uptrend with recent consolidation supports positive setup"
     - For these bullets only, copy the excerpt verbatim from one line in the PRIOR QUARTER STOCK PRICES block
     - Price-trend bullets still use signed weights and count toward confidence_score
 - "confidence_score": MUST equal the sum of all analysis weights (transcript-backed and optional price-trend). Do not assign a separate holistic score.

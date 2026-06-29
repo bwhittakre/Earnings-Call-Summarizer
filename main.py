@@ -76,7 +76,7 @@ def build_parser() -> argparse.ArgumentParser:
         default=PRIOR_QUARTER_PRICE_COUNT,
         help=(
             "Number of prior quarter-end stock prices to fetch when --ticker is set "
-            f"(default: {PRIOR_QUARTER_PRICE_COUNT}, i.e. 10 years)"
+            f"(default: {PRIOR_QUARTER_PRICE_COUNT}, i.e. 2 years)"
         ),
     )
     parser.add_argument(

@@ -1,7 +1,7 @@
 What Confidence Score means
 The Confidence Score is confidence in how the company's stock is likely to move in the NEXT QUARTER ONLY — not a multi-quarter or long-term view.
 It is based solely on this earnings report and conference call transcript (reported results, guidance, demand commentary, risks, and Q&A tone). No news feeds, analyst models, or macro data are used unless management discusses them on the call.
-When your run includes a ticker symbol, the model may also use ending stock prices at each of the 40 fiscal quarter-ends spanning the ten years before the quarter being reported on this call. Those prices are fetched independently as of the call date — they are not taken from the transcript. They provide trend context only; they are not a separate forecast model.
+When your run includes a ticker symbol, the model may also use ending stock prices at each of the eight fiscal quarter-ends spanning approximately two years before the quarter being reported on this call. Those prices are fetched independently as of the call date — they are not taken from the transcript. They provide trend context only; they are not a separate forecast model.
 Scores range from -100 (worst reasonably achievable next quarter) to +100 (best reasonably achievable next quarter).
 
 How the final number is calculated
@@ -31,7 +31,7 @@ Each transcript-backed bullet follows this format:
 The excerpt is copied from the earnings call transcript and validated before export, so you can trace each weighted factor back to what management actually said.
 
 Optional [price] bullets (when prior-quarter prices were provided at run time)
-When prior-quarter stock prices are included in the run (up to 40 quarter-ends spanning ten years), the model may add any number of [price] bullets that synthesize multi-year momentum or trend from those fetched prices, for example:
+When prior-quarter stock prices are included in the run (up to eight quarter-ends spanning approximately two years), the model may add any number of [price] bullets that synthesize multi-quarter momentum or trend from those fetched prices, for example:
 • +10: [price] Four-quarter upward momentum supports positive setup — "FY2025-Q2 end (...): $123.45"
 These bullets use the same per-factor weight ranges and are included in the Confidence Score sum. Omit [price] bullets when price action is uninformative or mixed.
 

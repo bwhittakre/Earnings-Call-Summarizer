@@ -185,7 +185,7 @@ class BasicsTestCase(unittest.TestCase):
         self.assertIn("no fixed maximum", text)
         self.assertIn("Strong stock-moving drivers: ±20 to ±25", text)
         self.assertIn("NEXT QUARTER ONLY", text)
-        self.assertIn("40 fiscal quarter-ends spanning the ten years", text)
+        self.assertIn("eight fiscal quarter-ends spanning approximately two years", text)
         self.assertGreater(len(text), 100)
 
     def test_write_excel_creates_one_sheet_per_company(self):

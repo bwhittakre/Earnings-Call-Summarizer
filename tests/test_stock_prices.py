@@ -86,11 +86,11 @@ class StockPricesTestCase(unittest.TestCase):
 
 
 class FiscalCalendarHistoryTestCase(unittest.TestCase):
-    def test_resolve_quarter_end_date_for_label_forty_quarters_back(self):
-        oldest = prior_quarter_labels("FY2025-Q2", count=40)[0]
+    def test_resolve_quarter_end_date_for_label_eight_quarters_back(self):
+        oldest = prior_quarter_labels("FY2025-Q2", count=8)[0]
         resolved = resolve_quarter_end_date("NVDA", oldest)
         self.assertEqual(resolved.weekday(), 6)
-        self.assertEqual(resolved.year, 2014)
+        self.assertEqual(resolved.year, 2022)
         self.assertEqual(resolved.month, 7)
 
 

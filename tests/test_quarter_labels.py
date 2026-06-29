@@ -16,16 +16,16 @@ class QuarterLabelsTestCase(unittest.TestCase):
             ["2024-Q1", "2024-Q2", "2024-Q3", "2024-Q4"],
         )
 
-    def test_prior_quarter_labels_forty_quarters_span_ten_years(self):
-        labels = prior_quarter_labels("2025-Q4", count=40)
-        self.assertEqual(len(labels), 40)
-        self.assertEqual(labels[0], "2015-Q4")
+    def test_prior_quarter_labels_eight_quarters_span_two_years(self):
+        labels = prior_quarter_labels("2025-Q4", count=8)
+        self.assertEqual(len(labels), 8)
+        self.assertEqual(labels[0], "2023-Q4")
         self.assertEqual(labels[-1], "2025-Q3")
 
-    def test_prior_quarter_labels_fiscal_forty_quarters(self):
-        labels = prior_quarter_labels("FY2026-Q2", count=40)
-        self.assertEqual(len(labels), 40)
-        self.assertEqual(labels[0], "FY2016-Q2")
+    def test_prior_quarter_labels_fiscal_eight_quarters(self):
+        labels = prior_quarter_labels("FY2026-Q2", count=8)
+        self.assertEqual(len(labels), 8)
+        self.assertEqual(labels[0], "FY2024-Q2")
         self.assertEqual(labels[-1], "FY2026-Q1")
 
 
