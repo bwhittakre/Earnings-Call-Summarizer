@@ -27,6 +27,15 @@ def extract_reported_quarter(transcript_text: str) -> str | None:
     search_text = transcript_text[:SEARCH_WINDOW]
 
     match = re.search(
+        r"\b(first|second|third|fourth)\s+quarter\s+of\s+fiscal\s+(20\d{2})\b",
+        search_text,
+        re.IGNORECASE,
+    )
+    if match:
+        quarter_num = _SPOKEN_QUARTER_NUMBERS[match.group(1).lower()]
+        return _format_label(True, int(match.group(2)), quarter_num)
+
+    match = re.search(
         r"\b(?:our\s+)?Q([1-4])\s+(20\d{2})\s+financial\s+results\b",
         search_text,
         re.IGNORECASE,

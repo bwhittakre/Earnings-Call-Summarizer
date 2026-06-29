@@ -14,6 +14,13 @@ class ReportedQuarterTestCase(unittest.TestCase):
     def test_extract_amazon_q4_2025(self):
         self.assertEqual(extract_reported_quarter(AMAZON_OPENING), "2025-Q4")
 
+    def test_extract_nvidia_fiscal_2025_q2(self):
+        opening = (
+            "Welcome to NVIDIA's conference call for the second quarter of fiscal 2025. "
+            "2025 Q2 Earnings Call Transcript"
+        )
+        self.assertEqual(extract_reported_quarter(opening), "FY2025-Q2")
+
     def test_resolve_uses_cli_override(self):
         self.assertEqual(
             resolve_reported_quarter("no quarter here", cli_override="FY2025-Q2"),
