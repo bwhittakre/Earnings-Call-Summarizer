@@ -5,6 +5,7 @@ When your run includes a ticker symbol, the model may also use ending stock pric
 Scores range from -100 (worst reasonably achievable next quarter) to +100 (best reasonably achievable next quarter).
 
 How the final number is calculated
+Transcript-Only Score = the sum of analysis bullet weights from transcript-backed bullets only; it excludes optional [price] bullets when prior-quarter prices were provided.
 Confidence Score = the sum of all Analysis bullet weights.
 Each Analysis bullet begins with a signed integer and colon, for example +25: or -10:.
 The application adds those weights together and clamps the total to the range [-100, 100]. The number in the Confidence Score column always reflects that sum — it is not a separate holistic judgment.

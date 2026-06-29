@@ -46,6 +46,7 @@ class QuarterSummary(BaseModel):
     what_happened: list[str] = Field(min_length=1)
     positives: list[str]
     negatives: list[str]
+    transcript_only_confidence_score: int = Field(ge=-100, le=100)
     confidence_score: int = Field(ge=-100, le=100)
     analysis: list[EvidenceClaim] = Field(min_length=1)
     summary_type: SummaryType = "quarter"
@@ -92,7 +93,10 @@ class LLMResult(BaseModel):
 def quarter_summary_from_evidence(
     evidence: EvidenceBackedQuarterSummary,
 ) -> QuarterSummary:
-    from src.scoring.analysis_score import apply_confidence_score_from_analysis
+    from src.scoring.analysis_score import (
+        apply_confidence_score_from_analysis,
+        compute_transcript_only_confidence_score,
+    )
 
     evidence = apply_confidence_score_from_analysis(evidence)
     return QuarterSummary(
@@ -103,6 +107,9 @@ def quarter_summary_from_evidence(
         positives=[item.claim for item in evidence.positives],
         negatives=[item.claim for item in evidence.negatives],
         confidence_score=evidence.confidence_score,
+        transcript_only_confidence_score=compute_transcript_only_confidence_score(
+            evidence.analysis
+        ),
         analysis=evidence.analysis,
         summary_type="quarter",
     )

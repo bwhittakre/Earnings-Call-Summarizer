@@ -263,6 +263,7 @@ class EvidenceValidatorTestCase(unittest.TestCase):
                 what_happened=["Strong demand"],
                 positives=[],
                 negatives=[],
+                transcript_only_confidence_score=50,
                 confidence_score=101,
                 analysis=SAMPLE_ANALYSIS,
             )

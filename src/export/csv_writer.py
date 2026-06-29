@@ -20,6 +20,7 @@ CSV_COLUMNS = [
     "what_happened",
     "positives",
     "negatives",
+    "transcript_only_confidence_score",
     "confidence_score",
     "analysis",
 ]
@@ -31,6 +32,7 @@ DISPLAY_HEADERS = {
     "what_happened": "What Happened",
     "positives": "Positives",
     "negatives": "Negatives",
+    "transcript_only_confidence_score": "Transcript-Only Score",
     "confidence_score": "Confidence Score",
     "analysis": "Analysis",
 }
@@ -42,6 +44,7 @@ EXCEL_COLUMN_WIDTHS = {
     "What Happened": 42,
     "Positives": 60,
     "Negatives": 60,
+    "Transcript-Only Score": 18,
     "Confidence Score": 16,
     "Analysis": 80,
 }
@@ -91,6 +94,7 @@ def summary_to_row(summary: QuarterSummary) -> dict[str, str]:
         "what_happened": format_what_happened(summary.what_happened),
         "positives": format_list(summary.positives),
         "negatives": format_list(summary.negatives),
+        "transcript_only_confidence_score": str(summary.transcript_only_confidence_score),
         "confidence_score": str(summary.confidence_score),
         "analysis": format_analysis_csv(summary.analysis),
     }
@@ -104,6 +108,7 @@ def summary_to_excel_row(summary: QuarterSummary) -> dict[str, str]:
         "What Happened": format_bullets(summary.what_happened),
         "Positives": format_bullets(summary.positives),
         "Negatives": format_bullets(summary.negatives),
+        "Transcript-Only Score": str(summary.transcript_only_confidence_score),
         "Confidence Score": str(summary.confidence_score),
         "Analysis": format_analysis_bullets(summary.analysis),
     }
@@ -234,6 +239,7 @@ def populate_excel_sheet(worksheet, rows: Sequence[QuarterSummary]) -> None:
         "Summary Type",
         "Company Name",
         "Quarter",
+        "Transcript-Only Score",
         "Confidence Score",
     }
     for row in worksheet.iter_rows(min_row=2):

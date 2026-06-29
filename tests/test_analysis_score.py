@@ -4,6 +4,7 @@ from src.schemas.models import EvidenceBackedQuarterSummary, EvidenceClaim, quar
 from src.scoring.analysis_score import (
     apply_confidence_score_from_analysis,
     compute_confidence_score_from_analysis,
+    compute_transcript_only_confidence_score,
     parse_analysis_weight,
 )
 
@@ -31,6 +32,27 @@ class AnalysisScoreTestCase(unittest.TestCase):
             ),
         ]
         self.assertEqual(compute_confidence_score_from_analysis(analysis), 30)
+
+    def test_transcript_only_score_excludes_price_bullets(self):
+        analysis = [
+            EvidenceClaim(claim="+20: Beat", excerpt="Revenue beat guidance."),
+            EvidenceClaim(
+                claim="+10: [price] Upward momentum",
+                excerpt="FY2025-Q2 end (2024-07-28, traded 2024-07-26): $123.45",
+            ),
+        ]
+        self.assertEqual(compute_transcript_only_confidence_score(analysis), 20)
+        self.assertEqual(compute_confidence_score_from_analysis(analysis), 30)
+
+    def test_transcript_only_equals_full_when_no_price_bullets(self):
+        analysis = [
+            EvidenceClaim(claim="+25: Beat", excerpt="Revenue beat guidance."),
+            EvidenceClaim(claim="-10: Risk", excerpt="Margins may compress."),
+        ]
+        self.assertEqual(
+            compute_transcript_only_confidence_score(analysis),
+            compute_confidence_score_from_analysis(analysis),
+        )
 
     def test_compute_confidence_score_clamps_to_bounds(self):
         analysis = [
@@ -60,6 +82,7 @@ class AnalysisScoreTestCase(unittest.TestCase):
 
         summary = quarter_summary_from_evidence(evidence)
         self.assertEqual(summary.confidence_score, 35)
+        self.assertEqual(summary.transcript_only_confidence_score, 35)
 
     def test_evidence_summary_accepts_more_than_ten_analysis_bullets(self):
         analysis = [

@@ -48,6 +48,7 @@ def _sample_summary(**overrides) -> QuarterSummary:
         "positives": ["Blackwell ramp", "Margin recovery"],
         "negatives": ["China restrictions"],
         "confidence_score": 72,
+        "transcript_only_confidence_score": 72,
         "analysis": list(SAMPLE_ANALYSIS),
     }
     payload.update(overrides)
@@ -139,7 +140,7 @@ class BasicsTestCase(unittest.TestCase):
             workbook = load_workbook(output_path)
             worksheet = workbook["Nvidia"]
             self.assertGreater(
-                worksheet.column_dimensions["H"].width,
+                worksheet.column_dimensions["I"].width,
                 EXCEL_COLUMN_WIDTHS["Analysis"],
             )
             self.assertLessEqual(worksheet.row_dimensions[2].height, EXCEL_MAX_ROW_HEIGHT)
@@ -150,6 +151,7 @@ class BasicsTestCase(unittest.TestCase):
         self.assertEqual(row["Summary Type"], "Quarter")
         self.assertEqual(row["What Happened"], "- Strong data center demand\n- Raised guidance")
         self.assertEqual(row["Confidence Score"], "72")
+        self.assertEqual(row["Transcript-Only Score"], "72")
         self.assertIn('"We are raising full-year revenue guidance across every segment."', row["Analysis"])
 
     def test_write_excel(self):
@@ -160,20 +162,22 @@ class BasicsTestCase(unittest.TestCase):
             workbook = load_workbook(output_path)
             worksheet = workbook["Nvidia"]
             self.assertEqual(worksheet["A1"].value, "Summary Type")
-            self.assertEqual(worksheet["G1"].value, "Confidence Score")
-            self.assertEqual(worksheet["H1"].value, "Analysis")
+            self.assertEqual(worksheet["G1"].value, "Transcript-Only Score")
+            self.assertEqual(worksheet["H1"].value, "Confidence Score")
+            self.assertEqual(worksheet["I1"].value, "Analysis")
             self.assertEqual(worksheet["D2"].value, "- Strong data center demand\n- Raised guidance")
             self.assertEqual(worksheet["G2"].value, "72")
+            self.assertEqual(worksheet["H2"].value, "72")
             self.assertEqual(
                 worksheet["C2"].value,
                 "FY2025-Q2\nCall Date: (08,28,2024)",
             )
-            self.assertEqual(worksheet["J1"].value, REFERENCE_KEY_TITLE)
+            self.assertEqual(worksheet["K1"].value, REFERENCE_KEY_TITLE)
             self.assertIn(
                 "sum of all Analysis bullet weights",
-                str(worksheet["J2"].value),
+                str(worksheet["K2"].value),
             )
-            self.assertEqual(worksheet.auto_filter.ref, "A1:H2")
+            self.assertEqual(worksheet.auto_filter.ref, "A1:I2")
 
     def test_load_reference_key_text(self):
         text = load_reference_key_text()
@@ -200,8 +204,8 @@ class BasicsTestCase(unittest.TestCase):
             self.assertEqual(workbook.sheetnames, ["Nvidia", "Amazon"])
             self.assertEqual(workbook["Nvidia"]["B2"].value, "Nvidia")
             self.assertEqual(workbook["Amazon"]["B2"].value, "Amazon")
-            self.assertEqual(workbook["Nvidia"]["J1"].value, REFERENCE_KEY_TITLE)
-            self.assertEqual(workbook["Amazon"]["J1"].value, REFERENCE_KEY_TITLE)
+            self.assertEqual(workbook["Nvidia"]["K1"].value, REFERENCE_KEY_TITLE)
+            self.assertEqual(workbook["Amazon"]["K1"].value, REFERENCE_KEY_TITLE)
 
     def test_load_single_transcript_file(self):
         transcript_path = (
