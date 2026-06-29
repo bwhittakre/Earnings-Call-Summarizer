@@ -5,6 +5,8 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DOCUMENTS_ROOT = PROJECT_ROOT / "data" / "documents"
 DEFAULT_DOCUMENTS_ROOT = DOCUMENTS_ROOT
+TRANSCRIPTS_ROOT = PROJECT_ROOT / "data" / "transcripts"
+DEFAULT_TRANSCRIPTS_ROOT = TRANSCRIPTS_ROOT
 OUTPUT_ROOT = PROJECT_ROOT / "output_confidence"
 
 ERRORS_DIR = OUTPUT_ROOT / "errors"

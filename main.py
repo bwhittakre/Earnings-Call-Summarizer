@@ -8,7 +8,9 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-from src.export.csv_writer import write_output
+from src.export.csv_writer import write_batch_excel, write_output
+from src.batch.historical_runner import run_historical_batch
+from src.enrichment.enrichment_runner import run_batch_enrichment
 from src.ingest.documents.cache import ticker_documents_folder
 from src.ingest.documents.loader import (
     dry_run_documents_report,
@@ -19,13 +21,15 @@ from src.ingest.documents.models import FetchRequest
 from src.ingest.documents.orchestrator import fetch_quarter_documents
 from src.ingest.loader import dry_run_report, resolve_transcript_files
 from src.llm.anthropic_client import AnthropicClient
-from src.market.constants import PRIOR_QUARTER_PRICE_COUNT
+from src.market.constants import BATCH_PRIOR_QUARTER_PRICE_COUNT, PRIOR_QUARTER_PRICE_COUNT
 from src.market.fiscal_calendar import (
     DEFAULT_FISCAL_CALENDARS_PATH,
     parse_quarter_end_dates_override,
 )
 from src.market.pipeline import format_market_dry_run_lines
+from src.market.quarter_labels import batch_quarter_labels_for_ticker
 from src.paths import DEFAULT_DOCUMENTS_ROOT, DEFAULT_SUMMARY_OUTPUT
+from src.batch.models import BatchQuarterResult
 from src.pipeline.runner import run_document_pipeline, run_pipeline
 
 DEFAULT_MODEL = "claude-sonnet-4-6"
@@ -113,7 +117,70 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--skip-rescue-judge",
         action="store_true",
-        help="Drop paraphrased excerpts without AI rescue (strict verbatim only)",
+        help=(
+            "Drop paraphrased excerpts without AI rescue (strict verbatim only). "
+            "Batch mode skips rescue judge by default; use --enable-rescue-judge to opt in."
+        ),
+    )
+    parser.add_argument(
+        "--enable-rescue-judge",
+        action="store_true",
+        help="Enable rescue-judge LLM calls in batch mode (default: skipped for speed/reliability)",
+    )
+    parser.add_argument(
+        "--batch",
+        action="store_true",
+        help="Run historical batch backtest across many quarters (requires --ticker)",
+    )
+    parser.add_argument(
+        "--years",
+        type=int,
+        default=10,
+        help="Years of calendar quarters for batch mode (default: 10 → 40 quarters)",
+    )
+    parser.add_argument(
+        "--end-quarter",
+        help="Last calendar quarter label for batch mode (default: latest completed quarter)",
+    )
+    parser.add_argument(
+        "--batch-quarters",
+        type=int,
+        help="Override number of calendar quarters in batch mode (default: years * 4)",
+    )
+    parser.add_argument(
+        "--batch-price-quarters",
+        type=int,
+        default=BATCH_PRIOR_QUARTER_PRICE_COUNT,
+        help=(
+            "Prior quarter-end prices per batch row "
+            f"(default: {BATCH_PRIOR_QUARTER_PRICE_COUNT})"
+        ),
+    )
+    parser.add_argument(
+        "--llm-timeout",
+        type=float,
+        default=120.0,
+        help="Anthropic API request timeout in seconds for batch mode (default: 120)",
+    )
+    parser.add_argument(
+        "--enrich-transcripts",
+        action="store_true",
+        help="Run transcript enrichment after batch scoring (separate sheet; no score impact)",
+    )
+    parser.add_argument(
+        "--enrich-only",
+        action="store_true",
+        help="Skip confidence LLM; only fetch transcripts and run enrichment",
+    )
+    parser.add_argument(
+        "--no-web-discovery",
+        action="store_true",
+        help="Structured transcript sources only (local cache, SEC exhibits)",
+    )
+    parser.add_argument(
+        "--web-discovery",
+        action="store_true",
+        help="Enable web-assisted transcript discovery when v2 is available",
     )
     return parser
 
@@ -143,6 +210,137 @@ def _resolve_ticker_folder(args: argparse.Namespace, documents_path: Path) -> Pa
     return ticker_documents_folder(args.ticker)
 
 
+def _run_batch_mode(args: argparse.Namespace) -> int:
+    if not args.ticker:
+        print("Error: --ticker is required for batch mode.", file=sys.stderr)
+        return 1
+
+    date_overrides = (
+        parse_quarter_end_dates_override(args.quarter_end_dates)
+        if args.quarter_end_dates
+        else None
+    )
+    fiscal_calendars_path = Path(args.fiscal_calendars)
+    ticker_folder = (
+        resolve_ticker_folder(Path(args.documents), args.ticker)
+        if args.documents
+        else ticker_documents_folder(args.ticker)
+    )
+
+    client = None
+    if not args.dry_run:
+        api_key = os.getenv("ANTHROPIC_API_KEY")
+        if not api_key:
+            print(
+                "Error: ANTHROPIC_API_KEY not set. Copy .env.example to .env and add your key.",
+                file=sys.stderr,
+            )
+            return 1
+        client = AnthropicClient(
+            api_key=api_key,
+            model=args.model,
+            max_retries=1,
+            timeout_seconds=args.llm_timeout,
+        )
+
+    skip_rescue_judge = not args.enable_rescue_judge
+    if args.skip_rescue_judge:
+        skip_rescue_judge = True
+
+    quarter_count = args.batch_quarters if args.batch_quarters is not None else args.years * 4
+    quarter_labels = batch_quarter_labels_for_ticker(
+        args.ticker,
+        quarter_count,
+        end_label=args.end_quarter,
+        calendars_path=fiscal_calendars_path,
+    )
+    allow_web_discovery = args.web_discovery and not args.no_web_discovery
+
+    if args.enrich_only:
+        if args.dry_run:
+            for quarter_label in quarter_labels:
+                print(f"{quarter_label}: enrich-only (no confidence LLM)")
+            return 0
+        results = [
+            BatchQuarterResult(quarter_label=label, status="success")
+            for label in quarter_labels
+        ]
+    else:
+        logging.info(
+            "Starting batch backtest for %s (%s years, end=%s)",
+            args.ticker,
+            args.years,
+            args.end_quarter or "latest completed quarter",
+        )
+        results = run_historical_batch(
+            client,
+            ticker=args.ticker,
+            years=args.years,
+            end_quarter=args.end_quarter,
+            quarter_count=args.batch_quarters,
+            price_history_quarters=args.batch_price_quarters,
+            skip_rescue_judge=skip_rescue_judge,
+            fetch=args.fetch,
+            force_fetch=args.force_fetch,
+            dry_run=args.dry_run,
+            fiscal_calendars_path=fiscal_calendars_path,
+            quarter_end_date_overrides=date_overrides,
+            ticker_folder=ticker_folder,
+        )
+
+    success_count = sum(1 for item in results if item.status == "success" and item.summary)
+    failed_count = sum(1 for item in results if item.status == "failed")
+    skipped_count = sum(1 for item in results if item.status == "skipped")
+    if not args.enrich_only:
+        logging.info(
+            "Batch complete: %s quarters — %s scored, %s failed (Edgar/load), "
+            "%s skipped (retry exhausted)",
+            len(results),
+            success_count,
+            failed_count,
+            skipped_count,
+        )
+    if skipped_count:
+        skipped_labels = ", ".join(
+            item.quarter_label for item in results if item.status == "skipped"
+        )
+        logging.info("Skipped: %s", skipped_labels)
+        print(f"Skipped: {skipped_labels}")
+    if failed_count:
+        failed_labels = ", ".join(
+            item.quarter_label for item in results if item.status == "failed"
+        )
+        logging.info("Failed (no retry): %s", failed_labels)
+        print(f"Failed (no retry): {failed_labels}")
+
+    if args.dry_run and not args.enrich_only:
+        for item in results:
+            cutoff = item.knowledge_cutoff.isoformat() if item.knowledge_cutoff else "n/a"
+            print(f"{item.quarter_label}: {item.status} (cutoff={cutoff})")
+        return 0
+
+    enrichment_results = None
+    if (args.enrich_transcripts or args.enrich_only) and client is not None:
+        enrichment_results = run_batch_enrichment(
+            client,
+            ticker=args.ticker,
+            quarter_labels=quarter_labels,
+            allow_web_discovery=allow_web_discovery,
+        )
+        enrichment_by_quarter = {item.quarter: item for item in enrichment_results}
+        for result in results:
+            result.enrichment = enrichment_by_quarter.get(result.quarter_label)
+
+    output_path = Path(args.output)
+    if output_path.suffix.lower() != ".xlsx":
+        output_path = output_path.with_suffix(".xlsx")
+    write_batch_excel(results, output_path, enrichment_results=enrichment_results)
+    logging.info("Wrote batch workbook to %s", output_path)
+    if client is not None:
+        logging.info(client.usage_summary())
+    return 0
+
+
 def _load_single_source_text(transcript_path: Path, quarter: str | None) -> str | None:
     assigned = resolve_transcript_files(transcript_path, quarter=quarter)
     if len(assigned) != 1:
@@ -155,6 +353,9 @@ def main() -> int:
     configure_logging()
     parser = build_parser()
     args = parser.parse_args()
+
+    if args.batch:
+        return _run_batch_mode(args)
 
     document_mode = _document_mode(args)
     if not document_mode and not args.transcripts:

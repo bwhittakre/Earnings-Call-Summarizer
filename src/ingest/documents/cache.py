@@ -57,6 +57,10 @@ def save_bundle(bundle: QuarterDocumentBundle) -> Path:
     manifest = {
         "ticker": bundle.ticker,
         "quarter_label": bundle.quarter_label,
+        "knowledge_cutoff": (
+            bundle.knowledge_cutoff.isoformat() if bundle.knowledge_cutoff else None
+        ),
+        "corpus_trimmed": bundle.corpus_trimmed,
         "documents": [],
     }
     for doc in bundle.documents:
@@ -87,6 +91,9 @@ def load_bundle_from_cache(
     if not manifest_path.exists():
         return None
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    knowledge_cutoff = None
+    if manifest.get("knowledge_cutoff"):
+        knowledge_cutoff = date.fromisoformat(manifest["knowledge_cutoff"])
     documents: list[FetchedDocument] = []
     for entry in manifest.get("documents", []):
         doc_type = DocumentType(entry["doc_type"])
@@ -114,6 +121,8 @@ def load_bundle_from_cache(
         quarter_label=quarter_label,
         cache_dir=cache_dir,
         documents=documents,
+        knowledge_cutoff=knowledge_cutoff,
+        corpus_trimmed=bool(manifest.get("corpus_trimmed")),
     )
 
 

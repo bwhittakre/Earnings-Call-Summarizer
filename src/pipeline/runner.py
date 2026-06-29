@@ -25,6 +25,7 @@ def _summarize_loaded_source(
     source_text: str,
     label: str,
     skip_rescue_judge: bool,
+    use_batch_prompt: bool = False,
     ticker: str | None,
     fiscal_calendars_path: Path,
     quarter_end_date_overrides: dict[str, date] | None,
@@ -34,7 +35,11 @@ def _summarize_loaded_source(
     transcript_file=None,
     document_bundle=None,
 ) -> ValidatedQuarterOutput:
-    quarter_summarizer = QuarterSummarizer(client, skip_rescue_judge=skip_rescue_judge)
+    quarter_summarizer = QuarterSummarizer(
+        client,
+        skip_rescue_judge=skip_rescue_judge,
+        use_batch_prompt=use_batch_prompt,
+    )
     market_context: MarketContext | None = None
     if ticker:
         if document_bundle is not None:
@@ -145,7 +150,7 @@ def run_document_pipeline(
         quarter=quarter,
         ticker_folder=ticker_folder,
     )
-    return run_document_pipeline_from_loaded(
+    output = run_document_pipeline_from_loaded(
         client,
         loaded_docs,
         ticker=ticker,
@@ -156,6 +161,7 @@ def run_document_pipeline(
         price_fetcher=price_fetcher,
         price_history_quarters=price_history_quarters,
     )
+    return [output.summary]
 
 
 def run_document_pipeline_from_loaded(
@@ -164,12 +170,13 @@ def run_document_pipeline_from_loaded(
     *,
     ticker: str,
     skip_rescue_judge: bool = False,
+    use_batch_prompt: bool = False,
     fiscal_calendars_path: Path = DEFAULT_FISCAL_CALENDARS_PATH,
     quarter_end_date_overrides: dict[str, date] | None = None,
     reported_quarter_override: str | None = None,
     price_fetcher=None,
     price_history_quarters: int | None = None,
-) -> list[QuarterSummary]:
+) -> ValidatedQuarterOutput:
     history_quarters = (
         price_history_quarters
         if price_history_quarters is not None
@@ -181,6 +188,7 @@ def run_document_pipeline_from_loaded(
         source_text=loaded.corpus_text,
         label=loaded.audit_label,
         skip_rescue_judge=skip_rescue_judge,
+        use_batch_prompt=use_batch_prompt,
         ticker=ticker,
         fiscal_calendars_path=fiscal_calendars_path,
         quarter_end_date_overrides=quarter_end_date_overrides,
@@ -190,7 +198,11 @@ def run_document_pipeline_from_loaded(
         document_bundle=loaded.bundle,
     )
     call_date = resolve_call_date(loaded.corpus_text, output.summary.call_date)
-    return [output.summary.model_copy(update={"call_date": call_date})]
+    return ValidatedQuarterOutput(
+        summary=output.summary.model_copy(update={"call_date": call_date}),
+        evidence=output.evidence,
+        backfilled_from_analysis=output.backfilled_from_analysis,
+    )
 
 
 def run_pipeline_from_loaded(

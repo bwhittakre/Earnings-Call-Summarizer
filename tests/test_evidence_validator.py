@@ -12,6 +12,7 @@ from src.schemas.models import (
     rollup_summary_from_evidence,
 )
 from src.validation.evidence_validator import (
+    ValidationResult,
     build_quarter_evidence_corpus,
     excerpt_found_in_source,
     filter_quarter_evidence,
@@ -289,11 +290,77 @@ class EvidenceValidatorTestCase(unittest.TestCase):
             negatives=[],
         )
         validation = validate_quarter_evidence(evidence, transcript)
-        filtered = filter_quarter_evidence(evidence, validation, transcript)
+        filtered, _backfilled = filter_quarter_evidence(evidence, validation, transcript)
         self.assertEqual(len(filtered.what_happened), 1)
         self.assertEqual(filtered.what_happened[0].claim, "Strong data center demand")
         summary = quarter_summary_from_evidence(filtered)
         self.assertEqual(len(summary.what_happened), 1)
+
+    def test_section_scoped_pos_neg_validation(self):
+        from src.ingest.documents.corpus import extract_corpus_sections, pos_neg_validation_source
+
+        corpus = "\n".join(
+            [
+                "--- EARNINGS PRESS RELEASE ---",
+                "Cloud revenue grew 25% year over year.",
+                "",
+                "--- 10-K ---",
+                "Cloud revenue grew twenty-five percent year over year.",
+            ]
+        )
+        pos_neg_source = pos_neg_validation_source(corpus)
+        self.assertIn("25%", pos_neg_source)
+        sections = extract_corpus_sections(corpus)
+        self.assertIn("EARNINGS PRESS RELEASE", sections)
+
+        evidence = _quarter_evidence(
+            quarter="2024-Q1",
+            positives=[
+                EvidenceClaim(
+                    claim="Cloud growth",
+                    excerpt="Cloud revenue grew 25% year over year.",
+                )
+            ],
+        )
+        result = validate_quarter_evidence(
+            evidence,
+            corpus,
+            pos_neg_source=pos_neg_source,
+        )
+        self.assertEqual([item.field for item in result.failures if item.field == "positives"], [])
+
+    def test_backfill_positives_negatives_from_analysis(self):
+        transcript = "Revenue grew strongly. Margins declined due to investment."
+        evidence = _quarter_evidence(
+            quarter="2024-Q1",
+            positives=[],
+            negatives=[],
+            analysis=[
+                EvidenceClaim(
+                    claim="+10: Revenue growth supports outlook",
+                    excerpt="Revenue grew strongly.",
+                ),
+                EvidenceClaim(
+                    claim="-5: Margin pressure",
+                    excerpt="Margins declined due to investment.",
+                ),
+                EvidenceClaim(
+                    claim="+3: Demand stable",
+                    excerpt="Revenue grew strongly.",
+                ),
+                EvidenceClaim(
+                    claim="+2: Mix improved",
+                    excerpt="Revenue grew strongly.",
+                ),
+            ],
+        )
+        validation = ValidationResult(is_valid=False, failures=[])
+        filtered, backfilled = filter_quarter_evidence(evidence, validation, transcript)
+        self.assertIn("positives", backfilled)
+        self.assertIn("negatives", backfilled)
+        self.assertGreaterEqual(len(filtered.positives), 1)
+        self.assertGreaterEqual(len(filtered.negatives), 1)
+        self.assertNotIn("+10:", filtered.positives[0].claim)
 
 
 if __name__ == "__main__":

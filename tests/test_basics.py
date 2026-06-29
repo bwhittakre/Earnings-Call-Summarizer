@@ -223,14 +223,26 @@ class BasicsTestCase(unittest.TestCase):
         self.assertGreater(len(loaded.transcripts["FY2025-Q2"]), 1000)
 
     def test_resolve_quarter_filter_from_folder(self):
-        folder = Path(__file__).resolve().parent.parent / "data" / "transcripts" / "nvidia"
-        if not folder.exists():
-            self.skipTest("Nvidia transcript folder not present")
+        source = (
+            Path(__file__).resolve().parent.parent
+            / "data"
+            / "transcripts"
+            / "nvidia"
+            / "FY2025-Q2.txt"
+        )
+        if not source.is_file():
+            self.skipTest("Nvidia FY2025-Q2 transcript fixture not present")
 
-        assigned = resolve_transcript_files(folder, quarter="FY2025-Q2")
-        self.assertEqual(len(assigned), 1)
-        self.assertEqual(assigned[0].quarter, "FY2025-Q2")
-        self.assertEqual(assigned[0].path.name, "FY2025-Q2.txt")
+        with TemporaryDirectory() as tmp:
+            folder = Path(tmp)
+            (folder / "FY2025-Q2.txt").write_text(
+                source.read_text(encoding="utf-8", errors="replace"),
+                encoding="utf-8",
+            )
+            assigned = resolve_transcript_files(folder, quarter="FY2025-Q2")
+            self.assertEqual(len(assigned), 1)
+            self.assertEqual(assigned[0].quarter, "FY2025-Q2")
+            self.assertEqual(assigned[0].path.name, "FY2025-Q2.txt")
 
     def test_normalize_quarter_label(self):
         self.assertEqual(normalize_quarter_label("FY2025-Q2"), "FY2025-Q2")

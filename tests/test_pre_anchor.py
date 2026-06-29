@@ -6,6 +6,7 @@ from unittest.mock import MagicMock
 from src.schemas.models import EvidenceBackedQuarterSummary, EvidenceClaim
 from src.validation.evidence_processor import (
     pre_anchor_quarter_failures,
+    process_quarter_evidence_strict,
     process_quarter_evidence_with_rescue,
 )
 from src.validation.evidence_validator import validate_quarter_evidence
@@ -160,6 +161,56 @@ class PreAnchorTestCase(unittest.TestCase):
         )
         self.assertEqual(len(remaining), 0)
         self.assertTrue(validate_quarter_evidence(updated, transcript).is_valid)
+
+    def test_strict_mode_auto_anchors_positives_in_press_release_section(self):
+        corpus = "\n".join(
+            [
+                "--- EARNINGS PRESS RELEASE ---",
+                "Operating income increased to $5.2 billion in the quarter.",
+                "",
+                "--- 8-K ---",
+                "See attached press release.",
+            ]
+        )
+        evidence = EvidenceBackedQuarterSummary(
+            company_name="Amazon",
+            quarter="2024-Q1",
+            what_happened=[
+                EvidenceClaim(
+                    claim="Operating income up",
+                    excerpt="Operating income increased to $5.2 billion in the quarter.",
+                )
+            ],
+            positives=[
+                EvidenceClaim(
+                    claim="Operating income up",
+                    excerpt="Operating income increased to 5.2 billion in the quarter.",
+                )
+            ],
+            negatives=[],
+            confidence_score=10,
+            analysis=[
+                EvidenceClaim(
+                    claim="+10: Operating income supports outlook",
+                    excerpt="Operating income increased to $5.2 billion in the quarter.",
+                ),
+                EvidenceClaim(
+                    claim="+5: Margin expansion",
+                    excerpt="Operating income increased to $5.2 billion in the quarter.",
+                ),
+                EvidenceClaim(
+                    claim="+3: Demand stable",
+                    excerpt="Operating income increased to $5.2 billion in the quarter.",
+                ),
+                EvidenceClaim(
+                    claim="+2: Mix improved",
+                    excerpt="Operating income increased to $5.2 billion in the quarter.",
+                ),
+            ],
+        )
+        processed = process_quarter_evidence_strict(evidence, corpus)
+        self.assertGreaterEqual(len(processed.evidence.positives), 1)
+        self.assertTrue(processed.evidence.positives[0].excerpt)
 
 
 if __name__ == "__main__":

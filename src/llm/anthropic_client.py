@@ -18,7 +18,13 @@ PROMPTS_DIR = Path(__file__).resolve().parent.parent / "prompts"
 
 
 def load_prompt(name: str) -> str:
-    return (PROMPTS_DIR / name).read_text(encoding="utf-8")
+    path = PROMPTS_DIR / name
+    raw = path.read_bytes()
+    if raw.startswith(b"\xff\xfe") or raw.startswith(b"\xfe\xff"):
+        return raw.decode("utf-16")
+    if b"\x00" in raw:
+        return raw.decode("utf-16-le")
+    return raw.decode("utf-8")
 
 
 def extract_json(text: str) -> dict:
@@ -52,10 +58,17 @@ def save_error_artifact(label: str, raw_response: str, error: Exception) -> Path
 
 
 class AnthropicClient:
-    def __init__(self, api_key: str, model: str, max_retries: int = 1):
+    def __init__(
+        self,
+        api_key: str,
+        model: str,
+        max_retries: int = 1,
+        timeout_seconds: float = 120.0,
+    ):
         self.client = anthropic.Anthropic(api_key=api_key)
         self.model = model
         self.max_retries = max_retries
+        self.timeout_seconds = timeout_seconds
         self.total_input_tokens = 0
         self.total_output_tokens = 0
 
@@ -75,6 +88,7 @@ class AnthropicClient:
                 max_tokens=4096,
                 system=system_prompt,
                 messages=[{"role": "user", "content": user_content}],
+                timeout=self.timeout_seconds,
             )
 
             raw = "".join(

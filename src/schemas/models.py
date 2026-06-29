@@ -30,6 +30,10 @@ class EvidenceBackedQuarterSummary(BaseModel):
     analysis: list[EvidenceClaim] = Field(min_length=1)
 
 
+class AnalysisRepairResponse(BaseModel):
+    analysis: list[EvidenceClaim] = Field(min_length=1)
+
+
 class EvidenceBackedRollupSummary(BaseModel):
     company_name: str
     quarter: str = "All (8Q rollup)"

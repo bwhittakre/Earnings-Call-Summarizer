@@ -78,6 +78,7 @@ class EvidenceProcessingResult:
     auto_anchored: list[AutoAnchoredEntry] = field(default_factory=list)
     rescued: list[RescuedEntry] = field(default_factory=list)
     dropped: list[DroppedEntry] = field(default_factory=list)
+    backfilled_from_analysis: list[str] = field(default_factory=list)
 
 
 def _review_key(field: str, index: int | None) -> tuple[str, int | None]:
@@ -121,7 +122,13 @@ def _anchor_sources_for_failure(
     claim: EvidenceClaim,
     transcript_text: str,
     price_block_text: str | None,
+    *,
+    pos_neg_source: str | None = None,
 ) -> list[str]:
+    if failure.field in ("positives", "negatives"):
+        from src.ingest.documents.corpus import pos_neg_validation_source
+
+        return [pos_neg_source or pos_neg_validation_source(transcript_text)]
     if failure.field != "analysis" or not price_block_text:
         return [transcript_text]
     if "[price]" in claim.claim.lower():
@@ -134,6 +141,9 @@ def pre_anchor_quarter_failures(
     failures: list[ValidationFailure],
     transcript_text: str,
     price_block_text: str | None = None,
+    *,
+    pos_neg_source: str | None = None,
+    fields: set[str] | None = None,
 ) -> tuple[EvidenceBackedQuarterSummary, list[AutoAnchoredEntry], list[ValidationFailure]]:
     if not failures:
         return evidence, [], []
@@ -143,6 +153,9 @@ def pre_anchor_quarter_failures(
     remaining: list[ValidationFailure] = []
 
     for failure in failures:
+        if fields is not None and failure.field not in fields:
+            remaining.append(failure)
+            continue
         if failure.index is None or failure.field not in claim_lists:
             remaining.append(failure)
             continue
@@ -153,6 +166,7 @@ def pre_anchor_quarter_failures(
             claim,
             transcript_text,
             price_block_text,
+            pos_neg_source=pos_neg_source,
         )
         anchored: str | None = None
         for source in sources:
@@ -609,24 +623,60 @@ def process_quarter_evidence_strict(
     transcript_text: str,
     price_block_text: str | None = None,
 ) -> EvidenceProcessingResult:
+    from src.ingest.documents.corpus import pos_neg_validation_source
+
+    pos_neg_source = pos_neg_validation_source(transcript_text)
     validation = validate_quarter_evidence(
         evidence,
         transcript_text,
         price_block_text,
+        pos_neg_source=pos_neg_source,
+    )
+    total = (
+        len(evidence.what_happened)
+        + len(evidence.positives)
+        + len(evidence.negatives)
+        + len(evidence.analysis)
     )
     if validation.is_valid:
-        total = (
-            len(evidence.what_happened)
-            + len(evidence.positives)
-            + len(evidence.negatives)
-            + len(evidence.analysis)
-        )
         return EvidenceProcessingResult(
             evidence=evidence,
             verbatim_kept=total,
         )
 
-    filtered = filter_quarter_evidence(evidence, validation, transcript_text)
+    pos_neg_failures = [
+        failure
+        for failure in validation.failures
+        if failure.field in {"positives", "negatives"}
+    ]
+    auto_anchored: list[AutoAnchoredEntry] = []
+    if pos_neg_failures:
+        evidence, auto_anchored, _ = pre_anchor_quarter_failures(
+            evidence,
+            pos_neg_failures,
+            transcript_text,
+            price_block_text,
+            pos_neg_source=pos_neg_source,
+            fields={"positives", "negatives"},
+        )
+        validation = validate_quarter_evidence(
+            evidence,
+            transcript_text,
+            price_block_text,
+            pos_neg_source=pos_neg_source,
+        )
+        if validation.is_valid:
+            return EvidenceProcessingResult(
+                evidence=evidence,
+                verbatim_kept=total,
+                auto_anchored=auto_anchored,
+            )
+
+    filtered, backfilled = filter_quarter_evidence(
+        evidence,
+        validation,
+        transcript_text,
+    )
     dropped = [
         DroppedEntry(
             field=failure.field,
@@ -637,16 +687,12 @@ def process_quarter_evidence_strict(
         )
         for failure in validation.failures
     ]
-    total = (
-        len(evidence.what_happened)
-        + len(evidence.positives)
-        + len(evidence.negatives)
-        + len(evidence.analysis)
-    )
     return EvidenceProcessingResult(
         evidence=filtered,
         verbatim_kept=total - len(validation.failures),
+        auto_anchored=auto_anchored,
         dropped=dropped,
+        backfilled_from_analysis=backfilled,
     )
 
 
@@ -724,7 +770,12 @@ def save_evidence_audit(
     label: str,
     result: EvidenceProcessingResult,
 ) -> Path | None:
-    if not result.rescued and not result.dropped and not result.auto_anchored:
+    if (
+        not result.rescued
+        and not result.dropped
+        and not result.auto_anchored
+        and not result.backfilled_from_analysis
+    ):
         return None
 
     EVIDENCE_AUDIT_DIR.mkdir(parents=True, exist_ok=True)
@@ -759,6 +810,7 @@ def save_evidence_audit(
                     for entry in result.rescued
                 ],
                 "dropped": [_serialize_dropped_entry(entry) for entry in result.dropped],
+                "backfilled_from_analysis": list(result.backfilled_from_analysis),
                 "final_claim_counts": {
                     "what_happened": len(result.evidence.what_happened),
                     "positives": len(result.evidence.positives),

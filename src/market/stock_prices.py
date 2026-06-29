@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+import logging
+import time
 from collections.abc import Callable
 from datetime import date, timedelta
 
 from src.ingest.loader import normalize_quarter_label
 from src.market.models import QuarterEndPrice
 
+logger = logging.getLogger(__name__)
 
 class StockPriceError(Exception):
     pass
@@ -14,9 +17,11 @@ class StockPriceError(Exception):
 HistoryFetcher = Callable[[str, date, date], list[tuple[date, float]]]
 
 LOOKBACK_DAYS = 14
+YFINANCE_MAX_ATTEMPTS = 3
+YFINANCE_RETRY_SLEEP_SECONDS = 0.5
 
 
-def _default_history_fetcher(
+def _fetch_yfinance_history(
     ticker: str,
     start: date,
     end: date,
@@ -34,6 +39,40 @@ def _default_history_fetcher(
     for index, row in history.iterrows():
         rows.append((index.date(), float(row["Close"])))
     return rows
+
+
+def _default_history_fetcher(
+    ticker: str,
+    start: date,
+    end: date,
+) -> list[tuple[date, float]]:
+    last_error: Exception | None = None
+    for attempt in range(1, YFINANCE_MAX_ATTEMPTS + 1):
+        try:
+            rows = _fetch_yfinance_history(ticker, start, end)
+            if rows:
+                return rows
+            last_error = StockPriceError(
+                f"No price history returned for {ticker} "
+                f"({start.isoformat()} to {end.isoformat()})."
+            )
+        except Exception as exc:
+            last_error = exc
+            logger.warning(
+                "yfinance attempt %s/%s failed for %s: %s",
+                attempt,
+                YFINANCE_MAX_ATTEMPTS,
+                ticker,
+                exc,
+            )
+        if attempt < YFINANCE_MAX_ATTEMPTS:
+            time.sleep(YFINANCE_RETRY_SLEEP_SECONDS * attempt)
+    if isinstance(last_error, StockPriceError):
+        raise last_error
+    raise StockPriceError(
+        f"Failed to fetch price history for {ticker} "
+        f"({start.isoformat()} to {end.isoformat()}): {last_error}"
+    ) from last_error
 
 
 def _last_trading_close_on_or_before_from_rows(

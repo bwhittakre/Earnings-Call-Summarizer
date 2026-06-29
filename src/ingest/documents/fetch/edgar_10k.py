@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import logging
-from datetime import timedelta
+from datetime import date, timedelta
 
 from src.ingest.documents.allocation import QuarterAllocation
 from src.ingest.documents.fetch.edgar_client import EdgarClient, filing_archive_base
-from src.ingest.documents.fetch.edgar_submissions import find_filings
+from src.ingest.documents.fetch.edgar_submissions import FilingRecord, find_filings
 from src.ingest.documents.fetch.html_text import html_to_text
 from src.ingest.documents.models import DocumentType, FetchedDocument
 
@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 def _download_filing(
     client: EdgarClient,
     cik: str,
-    record,
+    record: FilingRecord,
     doc_type: DocumentType,
 ) -> FetchedDocument:
     base = filing_archive_base(cik, record.accession_number)
@@ -37,26 +37,33 @@ def _download_filing(
 def fetch_ten_k_primary(
     client: EdgarClient,
     cik: str,
-    submissions: dict,
+    filings: list[FilingRecord],
     allocation: QuarterAllocation,
+    *,
+    knowledge_cutoff: date | None = None,
 ) -> FetchedDocument | None:
     if not allocation.needs_ten_k_primary:
         return None
+    if knowledge_cutoff is None:
+        return None
 
     exact = find_filings(
-        submissions,
+        filings,
         form="10-K",
         report_date=allocation.quarter_end,
+        filed_on_or_before=knowledge_cutoff,
     )
     if exact:
-        return _download_filing(client, cik, exact[0], DocumentType.TEN_K)
+        exact.sort(key=lambda record: record.filing_date)
+        return _download_filing(client, cik, exact[-1], DocumentType.TEN_K)
 
-    window_end = allocation.quarter_end + timedelta(days=120)
+    window_end = min(allocation.quarter_end + timedelta(days=120), knowledge_cutoff)
     candidates = find_filings(
-        submissions,
+        filings,
         form="10-K",
         start=allocation.quarter_end,
         end=window_end,
+        filed_on_or_before=knowledge_cutoff,
     )
     if not candidates:
         logger.warning("No 10-K found for fiscal year ending %s", allocation.quarter_end)
@@ -68,17 +75,27 @@ def fetch_ten_k_primary(
 def fetch_ten_k_context(
     client: EdgarClient,
     cik: str,
-    submissions: dict,
+    filings: list[FilingRecord],
     allocation: QuarterAllocation,
+    *,
+    knowledge_cutoff: date | None = None,
 ) -> FetchedDocument | None:
     if not allocation.needs_ten_k_context:
         return None
+    if knowledge_cutoff is None:
+        return None
 
-    candidates = find_filings(submissions, form="10-K")
+    candidates = find_filings(
+        filings,
+        form="10-K",
+        filed_on_or_before=knowledge_cutoff,
+    )
     prior = [
         record
         for record in candidates
-        if record.report_date and record.report_date < allocation.quarter_end
+        if record.report_date
+        and record.report_date < allocation.quarter_end
+        and record.filing_date <= knowledge_cutoff
     ]
     if not prior:
         logger.warning(

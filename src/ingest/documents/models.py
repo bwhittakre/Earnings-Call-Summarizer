@@ -29,6 +29,7 @@ DOCUMENT_FILENAMES: dict[DocumentType, str] = {
 class FetchRequest:
     ticker: str
     quarter_label: str
+    trim_corpus: bool = False
 
 
 @dataclass
@@ -47,6 +48,8 @@ class QuarterDocumentBundle:
     quarter_label: str
     cache_dir: Path
     documents: list[FetchedDocument] = field(default_factory=list)
+    knowledge_cutoff: date | None = None
+    corpus_trimmed: bool = False
 
     def get(self, doc_type: DocumentType) -> FetchedDocument | None:
         for doc in self.documents:

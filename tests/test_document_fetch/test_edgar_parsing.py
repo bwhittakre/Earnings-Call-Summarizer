@@ -6,7 +6,7 @@ from tempfile import TemporaryDirectory
 
 from src.ingest.documents.cache import load_bundle_from_cache, save_bundle
 from src.ingest.documents.fetch.edgar_8k import _classify_exhibit
-from src.ingest.documents.fetch.edgar_submissions import find_filings
+from src.ingest.documents.fetch.edgar_submissions import find_filings, iter_recent_filings
 from src.ingest.documents.models import DocumentType, FetchedDocument, QuarterDocumentBundle
 
 
@@ -30,8 +30,9 @@ SAMPLE_SUBMISSIONS = {
 
 class EdgarParsingTestCase(unittest.TestCase):
     def test_find_item_202_8k(self):
+        filings = iter_recent_filings(SAMPLE_SUBMISSIONS)
         matches = find_filings(
-            SAMPLE_SUBMISSIONS,
+            filings,
             form="8-K",
             start=date(2024, 7, 28),
             end=date(2024, 10, 1),
@@ -39,6 +40,23 @@ class EdgarParsingTestCase(unittest.TestCase):
         )
         self.assertEqual(len(matches), 1)
         self.assertEqual(matches[0].accession_number, "0001045810-24-000123")
+
+    def test_filed_on_or_before_excludes_future_filings(self):
+        filings = iter_recent_filings(SAMPLE_SUBMISSIONS)
+        matches = find_filings(
+            filings,
+            form="10-Q",
+            filed_on_or_before=date(2024, 8, 30),
+        )
+        self.assertEqual(len(matches), 1)
+        self.assertEqual(matches[0].accession_number, "0001045810-24-000200")
+
+        excluded = find_filings(
+            filings,
+            form="10-Q",
+            filed_on_or_before=date(2024, 8, 29),
+        )
+        self.assertEqual(excluded, [])
 
     def test_classify_exhibit_press_release(self):
         self.assertEqual(
@@ -80,6 +98,34 @@ class EdgarParsingTestCase(unittest.TestCase):
             self.assertEqual(len(loaded.documents), 1)
             manifest = json.loads((ticker_folder / "FY2025-Q2" / "manifest.json").read_text())
             self.assertEqual(manifest["ticker"], "NVDA")
+
+    def test_manifest_persists_knowledge_cutoff(self):
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            ticker_folder = root / "amzn"
+            bundle = QuarterDocumentBundle(
+                ticker="AMZN",
+                quarter_label="2025-Q3",
+                cache_dir=ticker_folder / "2025-Q3",
+                knowledge_cutoff=date(2025, 10, 30),
+                corpus_trimmed=True,
+                documents=[
+                    FetchedDocument(
+                        doc_type=DocumentType.EIGHT_K,
+                        text="Eight-K body",
+                        filing_date=date(2025, 10, 30),
+                    )
+                ],
+            )
+            save_bundle(bundle)
+            loaded = load_bundle_from_cache(
+                "AMZN",
+                "2025-Q3",
+                ticker_folder=ticker_folder,
+            )
+            assert loaded is not None
+            self.assertEqual(loaded.knowledge_cutoff, date(2025, 10, 30))
+            self.assertTrue(loaded.corpus_trimmed)
 
 
 if __name__ == "__main__":

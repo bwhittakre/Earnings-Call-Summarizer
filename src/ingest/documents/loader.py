@@ -86,6 +86,7 @@ def dry_run_documents_report(
         f"Document bundle: {loaded.bundle.cache_dir}",
         f"Quarter: {loaded.quarter_label}",
         f"Ticker: {loaded.bundle.ticker}",
+        f"Knowledge cutoff: {loaded.bundle.knowledge_cutoff or 'unknown'}",
         f"Sections ({len(sections)}): {', '.join(sections) if sections else 'none'}",
         f"Corpus size: {len(loaded.corpus_text)} characters",
     ]

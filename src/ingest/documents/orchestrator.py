@@ -13,10 +13,12 @@ from src.ingest.documents.cache import (
     ticker_documents_folder,
 )
 from src.ingest.documents.config import resolve_ticker_config
+from src.ingest.documents.corpus_trim import trim_document_text
 from src.ingest.documents.fetch.edgar_8k import fetch_eight_k_bundle
 from src.ingest.documents.fetch.edgar_10k import fetch_ten_k_context, fetch_ten_k_primary
 from src.ingest.documents.fetch.edgar_10q import fetch_ten_q
 from src.ingest.documents.fetch.edgar_client import EdgarClient, fetch_submissions, normalize_cik
+from src.ingest.documents.fetch.edgar_submissions import load_all_filings
 from src.ingest.documents.fetch.ir_presentations import fetch_ir_presentation
 from src.ingest.documents.models import DocumentFetchError, FetchRequest, QuarterDocumentBundle
 from src.market.fiscal_calendar import DEFAULT_FISCAL_CALENDARS_PATH
@@ -39,7 +41,7 @@ def fetch_quarter_documents(
 
     if not force and bundle_is_cached(ticker, quarter_label, ticker_folder=folder):
         cached = load_bundle_from_cache(ticker, quarter_label, ticker_folder=folder)
-        if cached:
+        if cached and (not request.trim_corpus or cached.corpus_trimmed):
             logger.info("Using cached document bundle at %s", cached.cache_dir)
             return cached
 
@@ -53,25 +55,55 @@ def fetch_quarter_documents(
         date_overrides=date_overrides,
     )
     submissions = fetch_submissions(edgar_client, cik)
+    filings = load_all_filings(submissions, edgar_client, cik)
 
-    eight_k_result = fetch_eight_k_bundle(edgar_client, cik, submissions, allocation)
+    eight_k_result = fetch_eight_k_bundle(
+        edgar_client,
+        cik,
+        filings,
+        allocation,
+    )
+    if eight_k_result.eight_k is None or eight_k_result.knowledge_cutoff is None:
+        raise DocumentFetchError(
+            f"No earnings 8-K found for {ticker} {quarter_label} "
+            f"in window ending {allocation.earnings_window_end}."
+        )
+
+    knowledge_cutoff = eight_k_result.knowledge_cutoff
     documents = []
-    if eight_k_result.eight_k:
-        documents.append(eight_k_result.eight_k)
+    documents.append(eight_k_result.eight_k)
     if eight_k_result.press_release:
         documents.append(eight_k_result.press_release)
     if eight_k_result.investor_presentation:
         documents.append(eight_k_result.investor_presentation)
 
-    ten_q = fetch_ten_q(edgar_client, cik, submissions, allocation)
+    ten_q = fetch_ten_q(
+        edgar_client,
+        cik,
+        filings,
+        allocation,
+        knowledge_cutoff=knowledge_cutoff,
+    )
     if ten_q:
         documents.append(ten_q)
 
-    ten_k = fetch_ten_k_primary(edgar_client, cik, submissions, allocation)
+    ten_k = fetch_ten_k_primary(
+        edgar_client,
+        cik,
+        filings,
+        allocation,
+        knowledge_cutoff=knowledge_cutoff,
+    )
     if ten_k:
         documents.append(ten_k)
 
-    ten_k_context = fetch_ten_k_context(edgar_client, cik, submissions, allocation)
+    ten_k_context = fetch_ten_k_context(
+        edgar_client,
+        cik,
+        filings,
+        allocation,
+        knowledge_cutoff=knowledge_cutoff,
+    )
     if ten_k_context:
         documents.append(ten_k_context)
 
@@ -88,6 +120,10 @@ def fetch_quarter_documents(
         if ir_doc:
             documents.append(ir_doc)
 
+    if request.trim_corpus:
+        for doc in documents:
+            doc.text = trim_document_text(doc)
+
     if not documents:
         raise DocumentFetchError(
             f"No documents fetched for {ticker} {quarter_label}. "
@@ -103,13 +139,16 @@ def fetch_quarter_documents(
             ticker_folder=folder,
         ),
         documents=documents,
+        knowledge_cutoff=knowledge_cutoff,
+        corpus_trimmed=request.trim_corpus,
     )
     save_bundle(bundle)
     logger.info(
-        "Saved %s documents for %s %s to %s",
+        "Saved %s documents for %s %s to %s (cutoff=%s)",
         len(documents),
         ticker,
         allocation.quarter_label,
         bundle.cache_dir,
+        knowledge_cutoff.isoformat(),
     )
     return bundle

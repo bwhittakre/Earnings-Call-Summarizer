@@ -166,11 +166,16 @@ def validate_quarter_evidence(
     evidence: EvidenceBackedQuarterSummary,
     transcript_text: str,
     price_block_text: str | None = None,
+    *,
+    pos_neg_source: str | None = None,
 ) -> ValidationResult:
+    from src.ingest.documents.corpus import pos_neg_validation_source
+
+    pos_neg_text = pos_neg_source or pos_neg_validation_source(transcript_text)
     failures: list[ValidationFailure] = []
     failures.extend(_validate_claims("what_happened", evidence.what_happened, transcript_text))
-    failures.extend(_validate_claims("positives", evidence.positives, transcript_text))
-    failures.extend(_validate_claims("negatives", evidence.negatives, transcript_text))
+    failures.extend(_validate_claims("positives", evidence.positives, pos_neg_text))
+    failures.extend(_validate_claims("negatives", evidence.negatives, pos_neg_text))
     failures.extend(
         _validate_analysis_claims(
             evidence.analysis,
@@ -289,6 +294,61 @@ def _ensure_analysis(
     ]
 
 
+def _strip_analysis_weight_prefix(claim: str) -> str:
+    from src.scoring.analysis_score import ANALYSIS_WEIGHT_PATTERN
+
+    match = ANALYSIS_WEIGHT_PATTERN.match(claim.strip())
+    if not match:
+        return claim.strip()
+    remainder = claim[match.end() :].strip()
+    if remainder.lower().startswith("[price]"):
+        remainder = remainder[7:].strip()
+    return remainder or claim.strip()
+
+
+def _analysis_claim_to_display(item: EvidenceClaim) -> EvidenceClaim | None:
+    from src.scoring.analysis_score import parse_analysis_weight
+
+    weight = parse_analysis_weight(item.claim)
+    if weight is None:
+        return None
+    return EvidenceClaim(
+        claim=_strip_analysis_weight_prefix(item.claim),
+        excerpt=item.excerpt,
+    )
+
+
+def _ensure_positives_negatives(
+    positives: list[EvidenceClaim],
+    negatives: list[EvidenceClaim],
+    analysis: list[EvidenceClaim],
+) -> tuple[list[EvidenceClaim], list[EvidenceClaim], list[str]]:
+    from src.scoring.analysis_score import parse_analysis_weight
+
+    backfilled: list[str] = []
+    if not positives:
+        positives = [
+            display
+            for item in analysis
+            if (weight := parse_analysis_weight(item.claim)) is not None
+            and weight > 0
+            and (display := _analysis_claim_to_display(item)) is not None
+        ][:4]
+        if positives:
+            backfilled.append("positives")
+    if not negatives:
+        negatives = [
+            display
+            for item in analysis
+            if (weight := parse_analysis_weight(item.claim)) is not None
+            and weight < 0
+            and (display := _analysis_claim_to_display(item)) is not None
+        ][:4]
+        if negatives:
+            backfilled.append("negatives")
+    return positives, negatives, backfilled
+
+
 def _resolve_confidence(
     confidence: ConfidenceEvidence,
     what_happened: list[EvidenceClaim],
@@ -313,7 +373,7 @@ def filter_quarter_evidence(
     evidence: EvidenceBackedQuarterSummary,
     validation: ValidationResult,
     transcript_text: str,
-) -> EvidenceBackedQuarterSummary:
+) -> tuple[EvidenceBackedQuarterSummary, list[str]]:
     what_happened = _filter_claim_list(
         evidence.what_happened,
         _failed_indices(validation.failures, "what_happened"),
@@ -343,6 +403,11 @@ def filter_quarter_evidence(
         negatives,
         transcript_text,
     )
+    positives, negatives, backfilled = _ensure_positives_negatives(
+        positives,
+        negatives,
+        analysis,
+    )
     return EvidenceBackedQuarterSummary(
         company_name=evidence.company_name,
         quarter=evidence.quarter,
@@ -351,7 +416,7 @@ def filter_quarter_evidence(
         negatives=negatives,
         confidence_score=evidence.confidence_score,
         analysis=analysis,
-    )
+    ), backfilled
 
 
 def filter_rollup_evidence(
