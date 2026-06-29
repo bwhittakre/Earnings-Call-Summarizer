@@ -82,9 +82,14 @@ def normalize_text(text: str) -> str:
     return normalized.strip()
 
 
-def excerpt_found_in_source(excerpt: str, source: str) -> bool:
+def excerpt_found_in_source(
+    excerpt: str,
+    source: str,
+    *,
+    min_length: int = MIN_EXCERPT_LENGTH,
+) -> bool:
     normalized_excerpt = normalize_text(excerpt).rstrip(".,;")
-    if len(normalized_excerpt) < MIN_EXCERPT_LENGTH:
+    if len(normalized_excerpt) < min_length:
         return False
     return normalized_excerpt in normalize_text(source)
 

@@ -9,6 +9,7 @@ from pathlib import Path
 class DocumentType(str, Enum):
     EIGHT_K = "eight_k"
     PRESS_RELEASE = "press_release"
+    CFO_COMMENTARY = "cfo_commentary"
     TEN_Q = "ten_q"
     TEN_K = "ten_k"
     TEN_K_CONTEXT = "ten_k_context"
@@ -18,6 +19,7 @@ class DocumentType(str, Enum):
 DOCUMENT_FILENAMES: dict[DocumentType, str] = {
     DocumentType.EIGHT_K: "eight_k.txt",
     DocumentType.PRESS_RELEASE: "press_release.txt",
+    DocumentType.CFO_COMMENTARY: "cfo_commentary.txt",
     DocumentType.TEN_Q: "ten_q.txt",
     DocumentType.TEN_K: "ten_k.txt",
     DocumentType.TEN_K_CONTEXT: "ten_k_context.txt",

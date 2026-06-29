@@ -15,6 +15,10 @@ class EnrichmentResult(BaseModel):
     key_quotes: list[EvidenceClaim] = Field(default_factory=list)
     availability: Literal["found", "missing"] = "missing"
     notes: str = ""
+    validation_status: str = ""
+    kept_count: int = 0
+    dropped_count: int = 0
+    audit_path: str | None = None
 
 
 @dataclass

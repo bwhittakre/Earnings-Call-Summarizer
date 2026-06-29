@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import re
+import threading
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import TypeVar
@@ -71,6 +72,7 @@ class AnthropicClient:
         self.timeout_seconds = timeout_seconds
         self.total_input_tokens = 0
         self.total_output_tokens = 0
+        self._usage_lock = threading.Lock()
 
     def complete_json(
         self,
@@ -100,8 +102,9 @@ class AnthropicClient:
                 input_tokens=response.usage.input_tokens,
                 output_tokens=response.usage.output_tokens,
             )
-            self.total_input_tokens += usage.input_tokens
-            self.total_output_tokens += usage.output_tokens
+            with self._usage_lock:
+                self.total_input_tokens += usage.input_tokens
+                self.total_output_tokens += usage.output_tokens
 
             try:
                 payload = extract_json(raw)

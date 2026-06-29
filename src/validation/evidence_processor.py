@@ -650,14 +650,13 @@ def process_quarter_evidence_strict(
         if failure.field in {"positives", "negatives"}
     ]
     auto_anchored: list[AutoAnchoredEntry] = []
-    if pos_neg_failures:
-        evidence, auto_anchored, _ = pre_anchor_quarter_failures(
+    if validation.failures:
+        evidence, auto_anchored, remaining_failures = pre_anchor_quarter_failures(
             evidence,
-            pos_neg_failures,
+            validation.failures,
             transcript_text,
             price_block_text,
             pos_neg_source=pos_neg_source,
-            fields={"positives", "negatives"},
         )
         validation = validate_quarter_evidence(
             evidence,
@@ -671,6 +670,8 @@ def process_quarter_evidence_strict(
                 verbatim_kept=total,
                 auto_anchored=auto_anchored,
             )
+        if not remaining_failures and validation.failures:
+            pass
 
     filtered, backfilled = filter_quarter_evidence(
         evidence,

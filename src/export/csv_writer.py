@@ -11,6 +11,7 @@ from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
 
 from src.export.confidence_reference_key import write_confidence_reference_key
+from src.export.validated_factors import build_validated_factor_rows
 from src.market.quarter_labels import quarter_sort_key
 from src.schemas.models import EvidenceClaim, QuarterSummary
 
@@ -38,6 +39,15 @@ DISPLAY_HEADERS = {
     "analysis": "Analysis",
 }
 
+BATCH_EXTRA_HEADERS = ["Fetch Summary"]
+
+BATCH_CSV_COLUMNS = CSV_COLUMNS + ["fetch_summary"]
+
+BATCH_DISPLAY_HEADERS = {
+    **DISPLAY_HEADERS,
+    "fetch_summary": "Fetch Summary",
+}
+
 EXCEL_COLUMN_WIDTHS = {
     "Summary Type": 16,
     "Company Name": 18,
@@ -48,6 +58,7 @@ EXCEL_COLUMN_WIDTHS = {
     "Document-Only Score": 18,
     "Confidence Score": 16,
     "Analysis": 80,
+    "Fetch Summary": 36,
 }
 
 EXCEL_MAX_ROW_HEIGHT = 409.6
@@ -217,6 +228,10 @@ def write_csv(rows: Sequence[QuarterSummary], output_path: Path) -> None:
             writer.writerow(summary_to_row(row))
 
 
+def format_claim_bullets(items: list[EvidenceClaim]) -> str:
+    return "\n".join(f'- {item.claim} — "{item.excerpt}"' for item in items)
+
+
 def batch_result_to_excel_row(result) -> dict[str, str]:
     from src.batch.models import BatchQuarterResult
 
@@ -224,7 +239,9 @@ def batch_result_to_excel_row(result) -> dict[str, str]:
         raise TypeError("batch_result_to_excel_row expects BatchQuarterResult")
 
     if result.status == "success" and result.summary is not None:
-        return summary_to_excel_row(result.summary)
+        row = summary_to_excel_row(result.summary)
+        row["Fetch Summary"] = result.fetch_summary or ""
+        return row
 
     call_date = (
         result.knowledge_cutoff.isoformat() if result.knowledge_cutoff else None
@@ -251,6 +268,7 @@ def batch_result_to_excel_row(result) -> dict[str, str]:
         "Document-Only Score": "",
         "Confidence Score": "",
         "Analysis": analysis_note,
+        "Fetch Summary": result.fetch_summary or "",
     }
 
 
@@ -362,8 +380,10 @@ def _enrichment_to_row(result) -> dict[str, str]:
     return {
         "Quarter": result.quarter,
         "Transcript Source": source,
-        "Positives (transcript)": format_bullets([item.claim for item in result.positives]),
-        "Negatives (transcript)": format_bullets([item.claim for item in result.negatives]),
+        "Positives (transcript)": format_claim_bullets(result.positives),
+        "Negatives (transcript)": format_claim_bullets(result.negatives),
+        "Key Quotes": format_claim_bullets(result.key_quotes),
+        "Validation Status": result.validation_status or "",
         "Notes": result.notes,
     }
 
@@ -378,6 +398,8 @@ def _write_transcript_enrichment_sheet(workbook, enrichment_results) -> None:
         "Transcript Source",
         "Positives (transcript)",
         "Negatives (transcript)",
+        "Key Quotes",
+        "Validation Status",
         "Notes",
     ]
     sheet = workbook.create_sheet("Transcript Enrichment")
@@ -419,6 +441,8 @@ def populate_enrichment_sheet_body(worksheet, headers: list[str]) -> None:
             "Transcript Source": 20,
             "Positives (transcript)": 60,
             "Negatives (transcript)": 60,
+            "Key Quotes": 60,
+            "Validation Status": 22,
             "Notes": 40,
         }.get(header, 18)
         worksheet.column_dimensions[column_letter].width = width
@@ -449,7 +473,7 @@ def write_batch_excel(results, output_path: Path, enrichment_results=None) -> No
     worksheet = workbook.active
     worksheet.title = "Batch Backtest"
 
-    headers = [DISPLAY_HEADERS[column] for column in CSV_COLUMNS]
+    headers = [BATCH_DISPLAY_HEADERS[column] for column in BATCH_CSV_COLUMNS]
     _insert_sheet_note(worksheet, CONFIDENCE_LANE_NOTE, len(headers))
     worksheet.append(headers)
 
@@ -461,7 +485,12 @@ def write_batch_excel(results, output_path: Path, enrichment_results=None) -> No
         worksheet.append([row[header] for header in headers])
         result_by_row[worksheet.max_row] = result
 
-    populate_excel_sheet_body(worksheet, headers, header_row=2)
+    populate_excel_sheet_body(
+        worksheet,
+        headers,
+        header_row=2,
+        table_column_count=len(headers),
+    )
     for row_index, result in result_by_row.items():
         _apply_batch_row_highlight(
             worksheet,
@@ -478,6 +507,7 @@ def write_batch_excel(results, output_path: Path, enrichment_results=None) -> No
             key=lambda item: quarter_sort_key(item.quarter),
         )
         _write_transcript_enrichment_sheet(workbook, sorted_enrichment)
+    _write_validated_factors_sheet(workbook, sorted_results)
     workbook.save(output_path)
 
 
@@ -492,7 +522,14 @@ def populate_excel_sheet(worksheet, rows: Sequence[QuarterSummary]) -> None:
     populate_excel_sheet_body(worksheet, headers)
 
 
-def populate_excel_sheet_body(worksheet, headers: list[str], *, header_row: int = 1) -> None:
+def populate_excel_sheet_body(
+    worksheet,
+    headers: list[str],
+    *,
+    header_row: int = 1,
+    table_column_count: int | None = None,
+) -> None:
+    column_count = table_column_count or len(headers)
     header_fill = PatternFill("solid", fgColor="1F4E78")
     header_font = Font(color="FFFFFF", bold=True)
     header_alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
@@ -510,6 +547,7 @@ def populate_excel_sheet_body(worksheet, headers: list[str], *, header_row: int 
         "Quarter",
         "Document-Only Score",
         "Confidence Score",
+        "Fetch Summary",
     }
     for row in worksheet.iter_rows(min_row=header_row + 1):
         for cell in row:
@@ -523,7 +561,8 @@ def populate_excel_sheet_body(worksheet, headers: list[str], *, header_row: int 
         column_letter = get_column_letter(column_index)
         if header == "Analysis":
             continue
-        worksheet.column_dimensions[column_letter].width = EXCEL_COLUMN_WIDTHS[header]
+        width = EXCEL_COLUMN_WIDTHS.get(header, 18)
+        worksheet.column_dimensions[column_letter].width = width
 
     analysis_letter = get_column_letter(analysis_column_index)
     worksheet.column_dimensions[analysis_letter].width = compute_analysis_column_width(
@@ -537,20 +576,89 @@ def populate_excel_sheet_body(worksheet, headers: list[str], *, header_row: int 
         worksheet.row_dimensions[row_index].height = estimate_row_height(
             worksheet,
             row_index,
-            TABLE_COLUMN_COUNT,
+            column_count,
         )
 
     write_confidence_reference_key(
         worksheet,
-        start_column=REFERENCE_KEY_START_COLUMN,
+        start_column=column_count + 2,
         table_last_row=last_data_row,
-        spacer_column=REFERENCE_KEY_SPACER_COLUMN,
+        spacer_column=column_count + 1,
     )
 
     freeze_row = header_row + 1
     worksheet.freeze_panes = f"A{freeze_row}"
     worksheet.auto_filter.ref = (
-        f"A{header_row}:{get_column_letter(TABLE_COLUMN_COUNT)}{last_data_row}"
+        f"A{header_row}:{get_column_letter(column_count)}{last_data_row}"
+    )
+
+
+def _write_validated_factors_sheet(workbook, results) -> None:
+    factor_rows = build_validated_factor_rows(results)
+    if not factor_rows:
+        return
+
+    headers = ["Quarter", "Source", "Field", "Claim", "Excerpt", "In Score?"]
+    sheet = workbook.create_sheet("Validated Factors")
+    _insert_sheet_note(sheet, CONFIDENCE_LANE_NOTE, len(headers))
+    sheet.append(headers)
+
+    header_fill = PatternFill("solid", fgColor="1F4E78")
+    header_font = Font(color="FFFFFF", bold=True)
+    header_alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+    body_alignment = Alignment(vertical="top", wrap_text=True)
+    centered_alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+
+    header_row = 2
+    for cell in sheet[header_row]:
+        cell.fill = header_fill
+        cell.font = header_font
+        cell.alignment = header_alignment
+
+    centered_columns = {"Quarter", "Source", "Field", "In Score?"}
+    for row in factor_rows:
+        sheet.append(
+            [
+                row.quarter,
+                row.source,
+                row.field,
+                row.claim,
+                row.excerpt,
+                row.in_score,
+            ]
+        )
+
+    for row in sheet.iter_rows(min_row=header_row + 1):
+        for cell in row:
+            header = sheet.cell(row=header_row, column=cell.column).value
+            cell.alignment = (
+                centered_alignment if header in centered_columns else body_alignment
+            )
+
+    column_widths = {
+        "Quarter": 18,
+        "Source": 14,
+        "Field": 16,
+        "Claim": 50,
+        "Excerpt": 60,
+        "In Score?": 12,
+    }
+    for column_index, header in enumerate(headers, start=1):
+        sheet.column_dimensions[get_column_letter(column_index)].width = column_widths.get(
+            header, 18
+        )
+
+    sheet.row_dimensions[header_row].height = 28
+    last_data_row = sheet.max_row
+    for row_index in range(header_row + 1, last_data_row + 1):
+        sheet.row_dimensions[row_index].height = estimate_row_height(
+            sheet,
+            row_index,
+            len(headers),
+        )
+    sheet.freeze_panes = "A3"
+    sheet.auto_filter.ref = (
+        f"A{header_row}:{get_column_letter(len(headers))}{last_data_row}"
     )
 
 

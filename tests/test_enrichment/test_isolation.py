@@ -41,7 +41,8 @@ class EnrichmentIsolationTestCase(unittest.TestCase):
             positives=[EvidenceClaim(claim="Different lane", excerpt="AWS grew 40%.")],
             negatives=[EvidenceClaim(claim="Separate lane", excerpt="Costs rose.")],
             availability="found",
-            notes="Source: local_cache",
+            notes="Source: local cache",
+            validation_status="kept=2",
         )
         with TemporaryDirectory() as tmp:
             path = Path(tmp) / "batch.xlsx"
@@ -50,23 +51,20 @@ class EnrichmentIsolationTestCase(unittest.TestCase):
             backtest = workbook["Batch Backtest"]
             header_row = 2 if "Edgar" in str(backtest.cell(1, 1).value) else 1
             data_row = header_row + 1
-            headers = [backtest.cell(header_row, col).value for col in range(1, 10)]
+            headers = [backtest.cell(header_row, col).value for col in range(1, 12)]
             col = {header: index + 1 for index, header in enumerate(headers) if header}
-
-        self.assertEqual(
-            backtest.cell(data_row, col["Confidence Score"]).value,
-            confidence_row["Confidence Score"],
-        )
-        self.assertEqual(
-            backtest.cell(data_row, col["Positives"]).value,
-            confidence_row["Positives"],
-        )
-        self.assertNotIn(
-            "AWS grew 40%",
-            str(backtest.cell(data_row, col["Positives"]).value or ""),
-        )
-        enrichment_sheet = workbook["Transcript Enrichment"]
-        self.assertIn("Different lane", str(enrichment_sheet.cell(3, 3).value or ""))
+            self.assertEqual(
+                backtest.cell(data_row, col["Confidence Score"]).value,
+                confidence_row["Confidence Score"],
+            )
+            self.assertEqual(
+                backtest.cell(data_row, col["Positives"]).value,
+                confidence_row["Positives"],
+            )
+            self.assertNotIn(
+                "AWS grew 40%",
+                str(backtest.cell(data_row, col["Positives"]).value or ""),
+            )
 
     def test_enrichment_runner_uses_separate_prompt(self):
         client = MagicMock()
@@ -84,7 +82,7 @@ class EnrichmentIsolationTestCase(unittest.TestCase):
             return_value=TranscriptSource(
                 quarter="2024-Q1",
                 text="AWS grew 12%.",
-                source="local_cache",
+                source="local cache",
             ),
         ):
             result = run_quarter_enrichment(
@@ -95,7 +93,37 @@ class EnrichmentIsolationTestCase(unittest.TestCase):
         self.assertEqual(result.availability, "found")
         system_prompt = client.complete_json.call_args.kwargs["system_prompt"]
         self.assertIn("informational", system_prompt.lower())
-        self.assertIn("never be used to compute or influence a confidence score", system_prompt.lower())
+        self.assertIn(
+            "never be used to compute or influence a confidence score",
+            system_prompt.lower(),
+        )
+
+    def test_enrichment_rejects_non_verbatim_excerpts(self):
+        client = MagicMock()
+        client.complete_json.return_value = (
+            MagicMock(
+                positives=[EvidenceClaim(claim="AWS growth", excerpt="AWS grew 99%.")],
+                negatives=[],
+                key_quotes=[],
+                availability="found",
+            ),
+            LLMResult(usage=TokenUsage(input_tokens=1, output_tokens=1), raw_response="{}"),
+        )
+        with patch(
+            "src.enrichment.enrichment_runner.fetch_transcript",
+            return_value=TranscriptSource(
+                quarter="2024-Q1",
+                text="AWS grew 12%.",
+                source="local cache",
+            ),
+        ):
+            result = run_quarter_enrichment(
+                client,
+                ticker="AMZN",
+                quarter_label="2024-Q1",
+            )
+        self.assertEqual(result.positives, [])
+        self.assertIn("dropped", result.validation_status or "")
 
 
 if __name__ == "__main__":

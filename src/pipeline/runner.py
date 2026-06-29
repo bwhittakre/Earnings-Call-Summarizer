@@ -26,6 +26,7 @@ def _summarize_loaded_source(
     label: str,
     skip_rescue_judge: bool,
     use_batch_prompt: bool = False,
+    skip_analysis_repair: bool = False,
     ticker: str | None,
     fiscal_calendars_path: Path,
     quarter_end_date_overrides: dict[str, date] | None,
@@ -39,6 +40,7 @@ def _summarize_loaded_source(
         client,
         skip_rescue_judge=skip_rescue_judge,
         use_batch_prompt=use_batch_prompt,
+        skip_analysis_repair=skip_analysis_repair,
     )
     market_context: MarketContext | None = None
     if ticker:
@@ -170,6 +172,7 @@ def run_document_pipeline_from_loaded(
     *,
     ticker: str,
     skip_rescue_judge: bool = False,
+    skip_analysis_repair: bool = False,
     use_batch_prompt: bool = False,
     fiscal_calendars_path: Path = DEFAULT_FISCAL_CALENDARS_PATH,
     quarter_end_date_overrides: dict[str, date] | None = None,
@@ -189,6 +192,7 @@ def run_document_pipeline_from_loaded(
         label=loaded.audit_label,
         skip_rescue_judge=skip_rescue_judge,
         use_batch_prompt=use_batch_prompt,
+        skip_analysis_repair=skip_analysis_repair,
         ticker=ticker,
         fiscal_calendars_path=fiscal_calendars_path,
         quarter_end_date_overrides=quarter_end_date_overrides,
@@ -202,6 +206,7 @@ def run_document_pipeline_from_loaded(
         summary=output.summary.model_copy(update={"call_date": call_date}),
         evidence=output.evidence,
         backfilled_from_analysis=output.backfilled_from_analysis,
+        evidence_audit_path=output.evidence_audit_path,
     )
 
 

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
+from pathlib import Path
 
 from src.llm.anthropic_client import AnthropicClient, load_prompt
 from src.schemas.models import (
@@ -27,6 +28,7 @@ class ValidatedQuarterOutput:
     summary: QuarterSummary
     evidence: EvidenceBackedQuarterSummary
     backfilled_from_analysis: list[str] | None = None
+    evidence_audit_path: Path | None = None
 
 
 class QuarterSummarizer:
@@ -35,13 +37,21 @@ class QuarterSummarizer:
         client: AnthropicClient,
         skip_rescue_judge: bool = False,
         use_batch_prompt: bool = False,
+        skip_analysis_repair: bool = False,
     ):
         self.client = client
         prompt_name = "quarter_batch.txt" if use_batch_prompt else "quarter.txt"
         self.system_prompt = load_prompt(prompt_name)
         self.skip_rescue_judge = skip_rescue_judge
         self.use_batch_prompt = use_batch_prompt
-        self.rescue_judge = RescueJudge(client)
+        self.skip_analysis_repair = skip_analysis_repair
+        self._rescue_judge: RescueJudge | None = None
+
+    @property
+    def rescue_judge(self) -> RescueJudge:
+        if self._rescue_judge is None:
+            self._rescue_judge = RescueJudge(self.client)
+        return self._rescue_judge
 
     def _analysis_needs_repair(self, evidence: EvidenceBackedQuarterSummary) -> bool:
         weighted = sum(
@@ -111,7 +121,11 @@ class QuarterSummarizer:
             label,
         )
 
-        if self.use_batch_prompt and self._analysis_needs_repair(processed.evidence):
+        if (
+            self.use_batch_prompt
+            and not self.skip_analysis_repair
+            and self._analysis_needs_repair(processed.evidence)
+        ):
             dropped_lines = [
                 f"{entry.claim} ({entry.reason})"
                 for entry in processed.dropped
@@ -158,6 +172,7 @@ class QuarterSummarizer:
                 summary=summary,
                 evidence=final_evidence,
                 backfilled_from_analysis=list(processed.backfilled_from_analysis),
+                evidence_audit_path=audit_path,
             ),
             result,
         )

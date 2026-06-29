@@ -17,13 +17,24 @@ from src.ingest.documents.corpus_trim import trim_document_text
 from src.ingest.documents.fetch.edgar_8k import fetch_eight_k_bundle
 from src.ingest.documents.fetch.edgar_10k import fetch_ten_k_context, fetch_ten_k_primary
 from src.ingest.documents.fetch.edgar_10q import fetch_ten_q
-from src.ingest.documents.fetch.edgar_client import EdgarClient, fetch_submissions, normalize_cik
+from src.ingest.documents.fetch.edgar_client import EdgarClient, normalize_cik
 from src.ingest.documents.fetch.edgar_submissions import load_all_filings
+from src.ingest.documents.fetch.filings_cache import get_ticker_filings
 from src.ingest.documents.fetch.ir_presentations import fetch_ir_presentation
 from src.ingest.documents.models import DocumentFetchError, FetchRequest, QuarterDocumentBundle
 from src.market.fiscal_calendar import DEFAULT_FISCAL_CALENDARS_PATH
 
 logger = logging.getLogger(__name__)
+
+IR_PRESENTATION_FETCH_ENABLED = False
+
+
+def _apply_trim_to_bundle(bundle: QuarterDocumentBundle) -> QuarterDocumentBundle:
+    for doc in bundle.documents:
+        doc.text = trim_document_text(doc)
+    bundle.corpus_trimmed = True
+    save_bundle(bundle)
+    return bundle
 
 
 def fetch_quarter_documents(
@@ -41,7 +52,13 @@ def fetch_quarter_documents(
 
     if not force and bundle_is_cached(ticker, quarter_label, ticker_folder=folder):
         cached = load_bundle_from_cache(ticker, quarter_label, ticker_folder=folder)
-        if cached and (not request.trim_corpus or cached.corpus_trimmed):
+        if cached:
+            if request.trim_corpus and not cached.corpus_trimmed:
+                logger.info(
+                    "Trimming cached document bundle at %s (avoiding refetch)",
+                    cached.cache_dir,
+                )
+                return _apply_trim_to_bundle(cached)
             logger.info("Using cached document bundle at %s", cached.cache_dir)
             return cached
 
@@ -54,8 +71,12 @@ def fetch_quarter_documents(
         calendars_path=calendars_path,
         date_overrides=date_overrides,
     )
-    submissions = fetch_submissions(edgar_client, cik)
-    filings = load_all_filings(submissions, edgar_client, cik)
+    filings = get_ticker_filings(
+        edgar_client,
+        cik,
+        folder,
+        force_refresh=force,
+    )
 
     eight_k_result = fetch_eight_k_bundle(
         edgar_client,
@@ -74,6 +95,8 @@ def fetch_quarter_documents(
     documents.append(eight_k_result.eight_k)
     if eight_k_result.press_release:
         documents.append(eight_k_result.press_release)
+    if eight_k_result.cfo_commentary:
+        documents.append(eight_k_result.cfo_commentary)
     if eight_k_result.investor_presentation:
         documents.append(eight_k_result.investor_presentation)
 
@@ -110,7 +133,7 @@ def fetch_quarter_documents(
     if not any(
         doc.doc_type.value == "investor_presentation"
         for doc in documents
-    ):
+    ) and IR_PRESENTATION_FETCH_ENABLED:
         ir_doc = fetch_ir_presentation(
             edgar_client,
             ticker,
@@ -119,6 +142,24 @@ def fetch_quarter_documents(
         )
         if ir_doc:
             documents.append(ir_doc)
+
+    if eight_k_result.transcript_text:
+        from src.enrichment.transcript_cache import write_transcript_cache
+        from src.paths import DEFAULT_TRANSCRIPTS_ROOT
+
+        write_transcript_cache(
+            ticker,
+            allocation.quarter_label,
+            eight_k_result.transcript_text,
+            source="sec_8k_exhibit",
+            url=eight_k_result.transcript_url,
+            root=DEFAULT_TRANSCRIPTS_ROOT,
+        )
+        logger.info(
+            "Cached earnings call transcript for %s %s from 8-K exhibit",
+            ticker,
+            allocation.quarter_label,
+        )
 
     if request.trim_corpus:
         for doc in documents:

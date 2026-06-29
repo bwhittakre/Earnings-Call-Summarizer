@@ -7,6 +7,7 @@ from src.ingest.documents.models import DOCUMENT_FILENAMES, DocumentType, Quarte
 _CORPUS_SECTION_ORDER: tuple[DocumentType, ...] = (
     DocumentType.EIGHT_K,
     DocumentType.PRESS_RELEASE,
+    DocumentType.CFO_COMMENTARY,
     DocumentType.INVESTOR_PRESENTATION,
     DocumentType.TEN_Q,
     DocumentType.TEN_K,
@@ -16,13 +17,14 @@ _CORPUS_SECTION_ORDER: tuple[DocumentType, ...] = (
 _SECTION_TITLES: dict[DocumentType, str] = {
     DocumentType.EIGHT_K: "8-K",
     DocumentType.PRESS_RELEASE: "EARNINGS PRESS RELEASE",
+    DocumentType.CFO_COMMENTARY: "CFO COMMENTARY",
     DocumentType.TEN_Q: "10-Q",
     DocumentType.TEN_K: "10-K",
     DocumentType.TEN_K_CONTEXT: "10-K (PRIOR ANNUAL CONTEXT)",
     DocumentType.INVESTOR_PRESENTATION: "INVESTOR PRESENTATION",
 }
 
-_POS_NEG_SECTION_KEYS = ("EARNINGS PRESS RELEASE", "8-K")
+_POS_NEG_SECTION_KEYS = ("EARNINGS PRESS RELEASE", "CFO COMMENTARY", "8-K")
 _SECTION_HEADER_PATTERN = re.compile(r"^---\s*(.+?)\s*---\s*$", re.MULTILINE)
 
 

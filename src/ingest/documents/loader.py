@@ -34,6 +34,21 @@ def resolve_ticker_folder(documents_path: Path, ticker: str) -> Path:
     return documents_path
 
 
+def bundle_to_loaded(bundle: QuarterDocumentBundle, *, ticker: str | None = None) -> LoadedQuarterDocuments:
+    from src.ingest.documents.corpus import build_document_corpus
+
+    ticker_key = (ticker or bundle.ticker).strip().upper()
+    corpus_text = build_document_corpus(bundle)
+    if not corpus_text.strip():
+        raise DocumentLoadError(f"Document bundle for {bundle.quarter_label} is empty.")
+    return LoadedQuarterDocuments(
+        bundle=bundle,
+        corpus_text=corpus_text,
+        quarter_label=bundle.quarter_label,
+        audit_label=document_audit_label(ticker_key, bundle.quarter_label),
+    )
+
+
 def load_quarter_documents(
     documents_path: Path,
     *,
@@ -57,15 +72,7 @@ def load_quarter_documents(
         raise DocumentLoadError(
             f"No cached document bundle at {bundle_dir}. Use --fetch to download SEC filings."
         )
-    corpus_text = build_document_corpus(bundle)
-    if not corpus_text.strip():
-        raise DocumentLoadError(f"Document bundle for {normalized_quarter} is empty.")
-    return LoadedQuarterDocuments(
-        bundle=bundle,
-        corpus_text=corpus_text,
-        quarter_label=normalized_quarter,
-        audit_label=document_audit_label(ticker.upper(), normalized_quarter),
-    )
+    return bundle_to_loaded(bundle, ticker=ticker)
 
 
 def dry_run_documents_report(

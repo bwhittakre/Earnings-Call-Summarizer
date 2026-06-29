@@ -119,13 +119,13 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help=(
             "Drop paraphrased excerpts without AI rescue (strict verbatim only). "
-            "Batch mode skips rescue judge by default; use --enable-rescue-judge to opt in."
+            "Rescue judge is off by default; use --enable-rescue-judge to opt in."
         ),
     )
     parser.add_argument(
         "--enable-rescue-judge",
         action="store_true",
-        help="Enable rescue-judge LLM calls in batch mode (default: skipped for speed/reliability)",
+        help="Enable rescue-judge LLM calls (default: off for speed; pre-anchor handles most cases)",
     )
     parser.add_argument(
         "--batch",
@@ -181,6 +181,45 @@ def build_parser() -> argparse.ArgumentParser:
         "--web-discovery",
         action="store_true",
         help="Enable web-assisted transcript discovery when v2 is available",
+    )
+    trim_group = parser.add_mutually_exclusive_group()
+    trim_group.add_argument(
+        "--trim-corpus",
+        action="store_true",
+        help="Trim large 10-Q/K sections before LLM (single-quarter default: off; batch default: on)",
+    )
+    trim_group.add_argument(
+        "--no-trim-corpus",
+        action="store_true",
+        help="Disable corpus trimming (keep full 10-Q/K text in batch mode)",
+    )
+    parser.add_argument(
+        "--skip-analysis-repair",
+        action="store_true",
+        help="Skip the optional second LLM call when batch analysis has fewer than 4 weighted bullets",
+    )
+    parser.add_argument(
+        "--batch-workers",
+        type=int,
+        default=4,
+        help="Parallel workers for batch LLM scoring and deferred retry (default: 4; use 1 for sequential)",
+    )
+    parser.add_argument(
+        "--enrichment-workers",
+        type=int,
+        default=4,
+        help="Parallel workers for transcript enrichment (default: 4; use 1 for sequential)",
+    )
+    parser.add_argument(
+        "--fetch-workers",
+        type=int,
+        default=1,
+        help="Parallel workers for SEC document fetch (default: 1 sequential; use 2+ cautiously)",
+    )
+    parser.add_argument(
+        "--fast",
+        action="store_true",
+        help="Fast batch preset: skip analysis repair (keeps trim-on and rescue-off defaults)",
     )
     return parser
 
@@ -255,6 +294,16 @@ def _run_batch_mode(args: argparse.Namespace) -> int:
         calendars_path=fiscal_calendars_path,
     )
     allow_web_discovery = args.web_discovery and not args.no_web_discovery
+    trim_corpus = True
+    if args.no_trim_corpus:
+        trim_corpus = False
+    elif args.trim_corpus:
+        trim_corpus = True
+
+    skip_analysis_repair = args.skip_analysis_repair or args.fast
+    batch_workers = max(1, args.batch_workers)
+    enrichment_workers = max(1, args.enrichment_workers)
+    fetch_workers = max(1, args.fetch_workers)
 
     if args.enrich_only:
         if args.dry_run:
@@ -286,6 +335,10 @@ def _run_batch_mode(args: argparse.Namespace) -> int:
             fiscal_calendars_path=fiscal_calendars_path,
             quarter_end_date_overrides=date_overrides,
             ticker_folder=ticker_folder,
+            trim_corpus=trim_corpus,
+            skip_analysis_repair=skip_analysis_repair,
+            batch_workers=batch_workers,
+            fetch_workers=fetch_workers,
         )
 
     success_count = sum(1 for item in results if item.status == "success" and item.summary)
@@ -326,6 +379,7 @@ def _run_batch_mode(args: argparse.Namespace) -> int:
             ticker=args.ticker,
             quarter_labels=quarter_labels,
             allow_web_discovery=allow_web_discovery,
+            enrichment_workers=enrichment_workers,
         )
         enrichment_by_quarter = {item.quarter: item for item in enrichment_results}
         for result in results:
@@ -383,8 +437,13 @@ def main() -> int:
         documents_path = _resolve_documents_path(args)
         ticker_folder = _resolve_ticker_folder(args, documents_path)
         if args.fetch or args.force_fetch:
+            doc_trim = args.trim_corpus and not args.no_trim_corpus
             fetch_quarter_documents(
-                FetchRequest(ticker=args.ticker, quarter_label=args.quarter),
+                FetchRequest(
+                    ticker=args.ticker,
+                    quarter_label=args.quarter,
+                    trim_corpus=doc_trim,
+                ),
                 force=args.force_fetch,
                 ticker_folder=ticker_folder,
                 calendars_path=fiscal_calendars_path,
@@ -430,6 +489,9 @@ def main() -> int:
             return 1
 
         client = AnthropicClient(api_key=api_key, model=args.model, max_retries=1)
+        skip_rescue_judge = not args.enable_rescue_judge
+        if args.skip_rescue_judge:
+            skip_rescue_judge = True
         logging.info(
             "Starting document pipeline for %s %s at %s",
             args.ticker,
@@ -441,7 +503,7 @@ def main() -> int:
             documents_path=documents_path,
             ticker=args.ticker,
             quarter=args.quarter,
-            skip_rescue_judge=args.skip_rescue_judge,
+            skip_rescue_judge=skip_rescue_judge,
             fiscal_calendars_path=fiscal_calendars_path,
             quarter_end_date_overrides=date_overrides,
             reported_quarter_override=args.reported_quarter,
@@ -488,13 +550,16 @@ def main() -> int:
             return 1
 
         client = AnthropicClient(api_key=api_key, model=args.model, max_retries=1)
+        skip_rescue_judge = not args.enable_rescue_judge
+        if args.skip_rescue_judge:
+            skip_rescue_judge = True
         logging.info("Starting pipeline for %s", transcript_path)
         rows = run_pipeline(
             client=client,
             transcript_path=str(transcript_path),
             expected_quarters=args.quarters,
             quarter=args.quarter,
-            skip_rescue_judge=args.skip_rescue_judge,
+            skip_rescue_judge=skip_rescue_judge,
             ticker=args.ticker,
             fiscal_calendars_path=fiscal_calendars_path,
             quarter_end_date_overrides=date_overrides,

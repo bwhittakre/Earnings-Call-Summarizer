@@ -70,6 +70,16 @@ class EdgarParsingTestCase(unittest.TestCase):
             "presentation",
         )
 
+    def test_classify_exhibit_commentary(self):
+        self.assertEqual(
+            _classify_exhibit("CFO Commentary", "nvdaFY25Q2cfocommentary.htm"),
+            "commentary",
+        )
+        self.assertEqual(
+            _classify_exhibit("", "ex99-2cfocommentary.htm"),
+            "commentary",
+        )
+
     def test_cache_round_trip(self):
         with TemporaryDirectory() as tmp:
             root = Path(tmp)

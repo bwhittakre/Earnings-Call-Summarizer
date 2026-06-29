@@ -20,6 +20,9 @@ class BatchQuarterResult:
     last_error: str | None = None
     backfilled_from_analysis: list[str] = field(default_factory=list)
     enrichment: object | None = None
+    fetch_summary: str = ""
+    evidence_audit_path: Path | None = None
+    filing_evidence: object | None = None
 
 
 @dataclass

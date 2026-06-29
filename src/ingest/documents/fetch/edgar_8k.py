@@ -31,11 +31,28 @@ _TRANSCRIPT_PATTERN = re.compile(
 )
 
 
+_COMMENTARY_FILENAME_PATTERN = re.compile(
+    r"cfocommentary|commentary",
+    re.IGNORECASE,
+)
+_PRESS_RELEASE_FILENAME_PATTERN = re.compile(
+    r"(?<![a-z])pr\.htm$|press.?release|q\dfy\d+pr",
+    re.IGNORECASE,
+)
+_PRESENTATION_FILENAME_PATTERN = re.compile(
+    r"presentation|investor.?deck|slides?",
+    re.IGNORECASE,
+)
+
+
 @dataclass
 class EightKFetchResult:
     eight_k: FetchedDocument | None = None
     press_release: FetchedDocument | None = None
+    cfo_commentary: FetchedDocument | None = None
     investor_presentation: FetchedDocument | None = None
+    transcript_text: str | None = None
+    transcript_url: str | None = None
     knowledge_cutoff: date | None = None
 
 
@@ -80,12 +97,13 @@ def _download_primary_text(
 
 def _classify_exhibit(description: str, filename: str) -> str | None:
     combined = f"{description} {filename}"
-    if _PRESENTATION_PATTERN.search(combined):
+    name_lower = filename.lower()
+    if _PRESENTATION_PATTERN.search(combined) or _PRESENTATION_FILENAME_PATTERN.search(name_lower):
         return "presentation"
-    if _PRESS_RELEASE_PATTERN.search(combined):
-        return "press_release"
-    if _COMMENTARY_PATTERN.search(combined):
+    if _COMMENTARY_PATTERN.search(combined) or _COMMENTARY_FILENAME_PATTERN.search(name_lower):
         return "commentary"
+    if _PRESS_RELEASE_PATTERN.search(combined) or _PRESS_RELEASE_FILENAME_PATTERN.search(name_lower):
+        return "press_release"
     if _TRANSCRIPT_PATTERN.search(combined):
         return "transcript"
     return None
@@ -155,7 +173,10 @@ def fetch_eight_k_bundle(
     )
 
     press_release: FetchedDocument | None = None
+    cfo_commentary: FetchedDocument | None = None
     presentation: FetchedDocument | None = None
+    transcript_text: str | None = None
+    transcript_url: str | None = None
     index_items = _load_filing_index(client, cik, record)
     for item in index_items:
         name = str(item.get("name", ""))
@@ -179,6 +200,15 @@ def fetch_eight_k_bundle(
                 source_url=url,
                 exhibit_name=name,
             )
+        elif kind == "commentary" and cfo_commentary is None:
+            cfo_commentary = FetchedDocument(
+                doc_type=DocumentType.CFO_COMMENTARY,
+                text=text,
+                accession_number=record.accession_number,
+                filing_date=record.filing_date,
+                source_url=url,
+                exhibit_name=name,
+            )
         elif kind == "presentation" and presentation is None:
             presentation = FetchedDocument(
                 doc_type=DocumentType.INVESTOR_PRESENTATION,
@@ -188,15 +218,22 @@ def fetch_eight_k_bundle(
                 source_url=url,
                 exhibit_name=name,
             )
+        elif kind == "transcript" and transcript_text is None:
+            transcript_text = text
+            transcript_url = url
 
     if press_release is None:
         for item in index_items:
             name = str(item.get("name", ""))
             description = str(item.get("description", ""))
-            if "99.1" in name or _PRESS_RELEASE_PATTERN.search(description):
+            if not name.lower().endswith((".htm", ".html", ".txt")):
+                continue
+            if "99.1" in name or _PRESS_RELEASE_PATTERN.search(description) or _PRESS_RELEASE_FILENAME_PATTERN.search(name):
                 try:
                     text, url = _download_exhibit_text(client, cik, record, name)
                 except Exception:
+                    continue
+                if _COMMENTARY_FILENAME_PATTERN.search(name):
                     continue
                 press_release = FetchedDocument(
                     doc_type=DocumentType.PRESS_RELEASE,
@@ -208,10 +245,38 @@ def fetch_eight_k_bundle(
                 )
                 break
 
+    if cfo_commentary is None:
+        for item in index_items:
+            name = str(item.get("name", ""))
+            description = str(item.get("description", ""))
+            if not name.lower().endswith((".htm", ".html", ".txt")):
+                continue
+            if not (
+                _COMMENTARY_PATTERN.search(description)
+                or _COMMENTARY_FILENAME_PATTERN.search(name)
+            ):
+                continue
+            try:
+                text, url = _download_exhibit_text(client, cik, record, name)
+            except Exception:
+                continue
+            cfo_commentary = FetchedDocument(
+                doc_type=DocumentType.CFO_COMMENTARY,
+                text=text,
+                accession_number=record.accession_number,
+                filing_date=record.filing_date,
+                source_url=url,
+                exhibit_name=name,
+            )
+            break
+
     return EightKFetchResult(
         eight_k=eight_k,
         press_release=press_release,
+        cfo_commentary=cfo_commentary,
         investor_presentation=presentation,
+        transcript_text=transcript_text,
+        transcript_url=transcript_url,
         knowledge_cutoff=cutoff,
     )
 

@@ -3,8 +3,9 @@ from __future__ import annotations
 import logging
 import os
 import re
+import threading
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Callable
 
 import httpx
@@ -22,6 +23,7 @@ class EdgarClient:
     min_interval_seconds: float = 0.2
     _last_request_at: float = 0.0
     _get: Callable[..., httpx.Response] | None = None
+    _request_lock: threading.Lock = field(default_factory=threading.Lock, repr=False)
 
     @classmethod
     def from_env(cls) -> EdgarClient:
@@ -34,16 +36,17 @@ class EdgarClient:
             time.sleep(self.min_interval_seconds - elapsed)
 
     def get(self, url: str, *, timeout: float = 60.0) -> httpx.Response:
-        self._throttle()
-        headers = {
-            "User-Agent": self.user_agent,
-            "Accept-Encoding": "gzip, deflate",
-        }
-        if self._get is not None:
-            response = self._get(url, headers=headers, timeout=timeout)
-        else:
-            response = httpx.get(url, headers=headers, timeout=timeout, follow_redirects=True)
-        self._last_request_at = time.monotonic()
+        with self._request_lock:
+            self._throttle()
+            headers = {
+                "User-Agent": self.user_agent,
+                "Accept-Encoding": "gzip, deflate",
+            }
+            if self._get is not None:
+                response = self._get(url, headers=headers, timeout=timeout)
+            else:
+                response = httpx.get(url, headers=headers, timeout=timeout, follow_redirects=True)
+            self._last_request_at = time.monotonic()
         response.raise_for_status()
         return response
 

@@ -4,7 +4,6 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 from src.batch.historical_runner import run_historical_batch
-from src.batch.models import BatchQuarterResult
 from src.llm.quarter_summarizer import ValidatedQuarterOutput
 from src.schemas.models import EvidenceClaim, QuarterSummary
 
@@ -32,14 +31,24 @@ def _fake_output(quarter: str) -> ValidatedQuarterOutput:
     )
 
 
+def _mock_loaded(quarter: str):
+    bundle = MagicMock()
+    bundle.knowledge_cutoff = date(2020, 1, 30)
+    bundle.cache_dir = Path(f"data/documents/amzn/{quarter}")
+    loaded = MagicMock()
+    loaded.quarter_label = quarter
+    loaded.bundle = bundle
+    loaded.audit_label = f"AMZN_{quarter}_documents"
+    return loaded
+
+
 class DeferRetryTestCase(unittest.TestCase):
-    @patch("src.batch.historical_runner._run_quarter_pipeline")
+    @patch("src.batch.historical_runner.run_document_pipeline_from_loaded")
+    @patch("src.batch.historical_runner.bundle_to_loaded")
     @patch("src.batch.historical_runner._load_or_fetch_bundle")
-    def test_retry_succeeds_on_second_pass(self, mock_load, mock_pipeline):
-        bundle = MagicMock()
-        bundle.knowledge_cutoff = date(2020, 1, 30)
-        bundle.cache_dir = Path("data/documents/amzn/2020-Q1")
-        mock_load.return_value = bundle
+    def test_retry_succeeds_on_second_pass(self, mock_load, mock_bundle_to_loaded, mock_pipeline):
+        mock_load.return_value = MagicMock()
+        mock_bundle_to_loaded.return_value = _mock_loaded("2020-Q1")
 
         mock_pipeline.side_effect = [
             RuntimeError("transient API error"),
@@ -52,19 +61,19 @@ class DeferRetryTestCase(unittest.TestCase):
             ticker="AMZN",
             quarter_count=1,
             end_quarter="2020-Q1",
+            batch_workers=1,
         )
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0].status, "success")
         self.assertEqual(results[0].attempts, 2)
         self.assertEqual(mock_pipeline.call_count, 2)
 
-    @patch("src.batch.historical_runner._run_quarter_pipeline")
+    @patch("src.batch.historical_runner.run_document_pipeline_from_loaded")
+    @patch("src.batch.historical_runner.bundle_to_loaded")
     @patch("src.batch.historical_runner._load_or_fetch_bundle")
-    def test_second_failure_marks_skipped(self, mock_load, mock_pipeline):
-        bundle = MagicMock()
-        bundle.knowledge_cutoff = date(2020, 4, 30)
-        bundle.cache_dir = Path("data/documents/amzn/2020-Q2")
-        mock_load.return_value = bundle
+    def test_second_failure_marks_skipped(self, mock_load, mock_bundle_to_loaded, mock_pipeline):
+        mock_load.return_value = MagicMock()
+        mock_bundle_to_loaded.return_value = _mock_loaded("2020-Q2")
         mock_pipeline.side_effect = [
             RuntimeError("first failure"),
             RuntimeError("second failure"),
@@ -75,6 +84,7 @@ class DeferRetryTestCase(unittest.TestCase):
             ticker="AMZN",
             quarter_count=1,
             end_quarter="2020-Q2",
+            batch_workers=1,
         )
         self.assertEqual(results[0].status, "skipped")
         self.assertEqual(results[0].attempts, 2)

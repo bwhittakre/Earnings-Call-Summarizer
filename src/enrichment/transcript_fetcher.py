@@ -8,8 +8,8 @@ from src.enrichment.transcript_cache import read_cached_transcript, write_transc
 from src.ingest.documents.cache import ticker_documents_folder
 from src.ingest.documents.config import resolve_ticker_config
 from src.ingest.documents.fetch.edgar_8k import fetch_transcript_exhibit
-from src.ingest.documents.fetch.edgar_client import EdgarClient, fetch_submissions, normalize_cik
-from src.ingest.documents.fetch.edgar_submissions import load_all_filings
+from src.ingest.documents.fetch.edgar_client import EdgarClient, normalize_cik
+from src.ingest.documents.fetch.filings_cache import get_ticker_filings
 from src.ingest.documents.loader import load_quarter_documents
 from src.ingest.documents.models import DocumentType
 from src.paths import DEFAULT_TRANSCRIPTS_ROOT
@@ -47,8 +47,7 @@ def _fetch_from_sec_exhibits(
     client = EdgarClient.from_env()
     ticker_config = resolve_ticker_config(ticker_key)
     cik = normalize_cik(str(ticker_config["cik"]))
-    submissions = fetch_submissions(client, cik)
-    filings = load_all_filings(submissions, client, cik)
+    filings = get_ticker_filings(client, cik, folder)
     record = next(
         (
             filing

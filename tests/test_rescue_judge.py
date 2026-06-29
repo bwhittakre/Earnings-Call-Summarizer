@@ -283,7 +283,7 @@ class RescueJudgeTestCase(unittest.TestCase):
         rescue_judge.review_single_failure.assert_called_once()
         self.assertEqual(augmented.reviews[0].canonical_excerpt, retry_review.canonical_excerpt)
 
-    def test_strict_mode_drops_paraphrase_without_rescue(self):
+    def test_strict_mode_anchors_what_happened_without_rescue(self):
         evidence = _quarter_evidence(
             what_happened=[
                 EvidenceClaim(
@@ -297,8 +297,9 @@ class RescueJudgeTestCase(unittest.TestCase):
             ]
         )
         processed = process_quarter_evidence_strict(evidence, TRANSCRIPT)
-        self.assertEqual(len(processed.evidence.what_happened), 1)
-        self.assertEqual(len(processed.dropped), 1)
+        self.assertEqual(len(processed.evidence.what_happened), 2)
+        self.assertGreaterEqual(len(processed.auto_anchored), 1)
+        self.assertEqual(len(processed.dropped), 0)
 
     def test_apply_rescue_reviews_rescues_analysis(self):
         evidence = _quarter_evidence(
