@@ -55,7 +55,7 @@ class ValidationResult:
 
     def error_message(self) -> str:
         lines = [
-            "Evidence validation failed. Every excerpt must be a verbatim contiguous quote from the allowed source text.",
+            "Evidence validation failed. Every excerpt must be a verbatim contiguous quote from the allowed source text (document corpus or price block).",
         ]
         for failure in self.failures:
             location = failure.field
@@ -139,7 +139,7 @@ def _validate_analysis_claims(
                 index=index,
                 claim=item.claim,
                 excerpt=item.excerpt,
-                reason="excerpt not found in transcript or price block",
+                reason="excerpt not found in document corpus or price block",
             )
         )
     return failures

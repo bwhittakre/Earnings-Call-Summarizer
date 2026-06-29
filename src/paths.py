@@ -3,6 +3,8 @@ from __future__ import annotations
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
+DOCUMENTS_ROOT = PROJECT_ROOT / "data" / "documents"
+DEFAULT_DOCUMENTS_ROOT = DOCUMENTS_ROOT
 OUTPUT_ROOT = PROJECT_ROOT / "output_confidence"
 
 ERRORS_DIR = OUTPUT_ROOT / "errors"

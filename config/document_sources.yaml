@@ -1,0 +1,6 @@
+NVDA:
+  cik: "0001045810"
+  ir_provider: nvidia
+AMZN:
+  cik: "0001018724"
+  ir_provider: amazon

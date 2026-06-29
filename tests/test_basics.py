@@ -151,7 +151,7 @@ class BasicsTestCase(unittest.TestCase):
         self.assertEqual(row["Summary Type"], "Quarter")
         self.assertEqual(row["What Happened"], "- Strong data center demand\n- Raised guidance")
         self.assertEqual(row["Confidence Score"], "72")
-        self.assertEqual(row["Transcript-Only Score"], "72")
+        self.assertEqual(row["Document-Only Score"], "72")
         self.assertIn('"We are raising full-year revenue guidance across every segment."', row["Analysis"])
 
     def test_write_excel(self):
@@ -162,7 +162,7 @@ class BasicsTestCase(unittest.TestCase):
             workbook = load_workbook(output_path)
             worksheet = workbook["Nvidia"]
             self.assertEqual(worksheet["A1"].value, "Summary Type")
-            self.assertEqual(worksheet["G1"].value, "Transcript-Only Score")
+            self.assertEqual(worksheet["G1"].value, "Document-Only Score")
             self.assertEqual(worksheet["H1"].value, "Confidence Score")
             self.assertEqual(worksheet["I1"].value, "Analysis")
             self.assertEqual(worksheet["D2"].value, "- Strong data center demand\n- Raised guidance")

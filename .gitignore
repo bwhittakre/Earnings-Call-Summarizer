@@ -9,10 +9,13 @@ __pycache__/
 venv/
 AMZN/
 NVDA/
-data/transcripts/*
 !data/
+data/transcripts/*
 !data/transcripts/
 !data/transcripts/.gitkeep
+data/documents/*
+!data/documents/
+!data/documents/.gitkeep
 output/*
 !output/
 !output/.gitkeep

@@ -94,7 +94,7 @@ class QuarterSummarizerTestCase(unittest.TestCase):
         user_content = client.complete_json.call_args.kwargs["user_content"]
         self.assertIn("PRIOR QUARTER STOCK PRICES", user_content)
         self.assertIn(price_block, user_content)
-        self.assertIn("--- TRANSCRIPT ---", user_content)
+        self.assertIn("--- DOCUMENT CORPUS ---", user_content)
 
 
 if __name__ == "__main__":

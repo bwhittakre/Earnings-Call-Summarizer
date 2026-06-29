@@ -31,17 +31,37 @@ class MarketContext:
     price_block_text: str
 
 
-def resolve_call_date_value(transcript_text: str) -> date:
+def resolve_call_date_value(
+    transcript_text: str,
+    *,
+    fallback_date: date | None = None,
+) -> date:
     call_date_text = resolve_call_date(transcript_text)
     if not call_date_text:
+        if fallback_date is not None:
+            return fallback_date
         raise ReportedQuarterError(
-            "Could not extract call date from transcript. "
-            "Market data requires a call date in IR opening remarks."
+            "Could not extract call date from source text. "
+            "Market data requires a call date in the documents or a filing date fallback."
         )
     parsed = parse_call_date_format(call_date_text)
     if parsed is None:
+        if fallback_date is not None:
+            return fallback_date
         raise ReportedQuarterError(f"Invalid call date format: {call_date_text!r}")
     return parsed
+
+
+def resolve_event_date_from_bundle(corpus_text: str, bundle) -> date:
+    from src.ingest.documents.models import DocumentType
+
+    fallback: date | None = None
+    for doc_type in (DocumentType.PRESS_RELEASE, DocumentType.EIGHT_K):
+        doc = bundle.get(doc_type)
+        if doc and doc.filing_date:
+            fallback = doc.filing_date
+            break
+    return resolve_call_date_value(corpus_text, fallback_date=fallback)
 
 
 def build_market_context(

@@ -1,11 +1,11 @@
 What Confidence Score means
 The Confidence Score is confidence in how the company's stock is likely to move in the NEXT QUARTER ONLY — not a multi-quarter or long-term view.
-It is based solely on this earnings report and conference call transcript (reported results, guidance, demand commentary, risks, and Q&A tone). No news feeds, analyst models, or macro data are used unless management discusses them on the call.
-When your run includes a ticker symbol, the model may also use ending stock prices at each of the eight fiscal quarter-ends spanning approximately two years before the quarter being reported on this call. Those prices are fetched independently as of the call date — they are not taken from the transcript. They provide trend context only; they are not a separate forecast model.
+It is based solely on the SEC/IR document corpus for the quarter (8-K filings, earnings press releases, 10-Q, 10-K, and investor presentations when available). No news feeds, analyst models, or macro data are used unless disclosed in those documents.
+When your run includes a ticker symbol, the model may also use ending stock prices at each of the eight fiscal quarter-ends spanning approximately two years before the quarter being reported. Those prices are fetched independently — they are not taken from the filings. They provide trend context only; they are not a separate forecast model.
 Scores range from -100 (worst reasonably achievable next quarter) to +100 (best reasonably achievable next quarter).
 
 How the final number is calculated
-Transcript-Only Score = the sum of analysis bullet weights from transcript-backed bullets only; it excludes optional [price] bullets when prior-quarter prices were provided.
+Document-Only Score = the sum of analysis bullet weights from document-backed bullets only; it excludes optional [price] bullets when prior-quarter prices were provided.
 Confidence Score = the sum of all Analysis bullet weights.
 Each Analysis bullet begins with a signed integer and colon, for example +25: or -10:.
 The application adds those weights together and clamps the total to the range [-100, 100]. The number in the Confidence Score column always reflects that sum — it is not a separate holistic judgment.
@@ -23,12 +23,12 @@ Per-factor weight calibration (typical ranges)
 When many factors are listed, individual weights should be smaller so the set reflects relative importance without every bullet using the maximum band. The pipeline sums all weights and clamps to [-100, 100].
 
 At least half of the Analysis bullets should address industry-specific metrics that typically move the stock next quarter for that sector (for example data center revenue for semiconductors, comp sales for retail, or subscription growth for software).
-Generic boilerplate (legal disclaimers, conference logistics, and similar) should not receive large weights.
+Generic boilerplate (legal disclaimers, safe harbor, and similar) should not receive large weights.
 
 How to read the Analysis column
-Each transcript-backed bullet follows this format:
-• +25: headline describing the factor — "verbatim excerpt from the transcript"
-The excerpt is copied from the earnings call transcript and validated before export, so you can trace each weighted factor back to what management actually said.
+Each document-backed bullet follows this format:
+• +25: headline describing the factor — "verbatim excerpt from the document corpus"
+The excerpt is copied from the fetched SEC/IR documents and validated before export, so you can trace each weighted factor back to disclosed text.
 
 Optional [price] bullets (when prior-quarter prices were provided at run time)
 When prior-quarter stock prices are included in the run (up to eight quarter-ends spanning approximately two years), the model may add any number of [price] bullets that synthesize multi-quarter momentum or trend from those fetched prices, for example:
@@ -43,4 +43,4 @@ Score interpretation bands
 -100: Worst reasonably achievable next quarter
 
 Other columns
-What Happened, Positives, and Negatives summarize factual themes from the call with supporting excerpts. Analysis is different: those bullets are the scored building blocks behind the Confidence Score. Read Analysis to see which factors drove the final number and by how much.
+What Happened, Positives, and Negatives summarize factual themes from the documents with supporting excerpts. Analysis is different: those bullets are the scored building blocks behind the Confidence Score. Read Analysis to see which factors drove the final number and by how much.
