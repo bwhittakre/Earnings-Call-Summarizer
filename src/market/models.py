@@ -11,9 +11,13 @@ class QuarterEndPrice:
     price_date: date
     adjusted_close: float
     ticker: str
+    adjusted: bool = True
+    cap_applied: date | None = None
 
     def format_line(self) -> str:
+        price_kind = "adjusted close" if self.adjusted else "close"
         return (
             f"{self.quarter_label} end ({self.quarter_end_date.isoformat()}, "
-            f"traded {self.price_date.isoformat()}): ${self.adjusted_close:.2f}"
+            f"traded {self.price_date.isoformat()}, {price_kind}): "
+            f"${self.adjusted_close:.2f}"
         )

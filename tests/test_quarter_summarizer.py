@@ -96,6 +96,54 @@ class QuarterSummarizerTestCase(unittest.TestCase):
         self.assertIn(price_block, user_content)
         self.assertIn("--- TRANSCRIPT ---", user_content)
 
+    def test_injects_knowledge_cutoff_header_in_point_in_time_mode(self):
+        evidence = EvidenceBackedQuarterSummary(
+            company_name="Amazon",
+            quarter="2025-Q4",
+            what_happened=[
+                EvidenceClaim(
+                    claim="Results",
+                    excerpt="Hello, and welcome to our Q4 2025 financial results conference call.",
+                )
+            ],
+            positives=[],
+            negatives=[],
+            confidence_score=10,
+            analysis=[
+                EvidenceClaim(
+                    claim="+10: Solid quarter",
+                    excerpt="Hello, and welcome to our Q4 2025 financial results conference call.",
+                )
+            ],
+        )
+        client = MagicMock()
+        client.complete_json.return_value = (
+            evidence,
+            LLMResult(usage=TokenUsage(input_tokens=10, output_tokens=5), raw_response="{}"),
+        )
+
+        from datetime import date
+
+        from src.pipeline.point_in_time import PointInTimeConfig
+
+        summarizer = QuarterSummarizer(
+            client,
+            skip_rescue_judge=True,
+            point_in_time=PointInTimeConfig.transcript_only(),
+        )
+        summarizer.summarize(
+            quarter="2025-Q4",
+            transcript_text=(
+                "Hello, and welcome to our Q4 2025 financial results conference call. "
+                "Our comments reflect management's views as of today, February 5, 2026, only."
+            ),
+            label="2025-Q4_quarter",
+            call_date=date(2026, 2, 5),
+        )
+
+        user_content = client.complete_json.call_args.kwargs["user_content"]
+        self.assertIn("KNOWLEDGE CUTOFF: Treat (02,05,2026) as today.", user_content)
+
 
 if __name__ == "__main__":
     unittest.main()

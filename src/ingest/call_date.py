@@ -21,11 +21,11 @@ _NUMERIC_DATE_PATTERNS = (
 _NAMED_DATE_PATTERNS = (
     re.compile(
         r"(?:as of today|views as of today|made as of today),?\s*"
-        r"([A-Za-z]+)\s+(\d{1,2}),?\s+(\d{4})",
+        r"([A-Za-z]+)\s+(\d{1,2})(?:st|nd|rd|th)?,?\s+(\d{4})",
         re.IGNORECASE,
     ),
     re.compile(
-        r"([A-Za-z]+)\s+(\d{1,2}),?\s+(\d{4})\s+Financial Results",
+        r"([A-Za-z]+)\s+(\d{1,2})(?:st|nd|rd|th)?,?\s+(\d{4})\s+Financial Results",
         re.IGNORECASE,
     ),
 )
@@ -108,3 +108,18 @@ def resolve_call_date(transcript_text: str, llm_call_date: str | None = None) ->
     if llm_call_date and is_valid_call_date_format(llm_call_date):
         return llm_call_date.strip()
     return None
+
+
+def resolve_call_date_value(transcript_text: str) -> date:
+    from src.ingest.reported_quarter import ReportedQuarterError
+
+    call_date_text = resolve_call_date(transcript_text)
+    if not call_date_text:
+        raise ReportedQuarterError(
+            "Could not extract call date from transcript. "
+            "Market data requires a call date in IR opening remarks."
+        )
+    parsed = parse_call_date_format(call_date_text)
+    if parsed is None:
+        raise ReportedQuarterError(f"Invalid call date format: {call_date_text!r}")
+    return parsed

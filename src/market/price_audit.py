@@ -20,6 +20,9 @@ def save_price_audit(
     call_date: date,
     reported_quarter: str,
     prior_labels: list[str],
+    mode: str = "default",
+    strict: bool = False,
+    adjusted: bool = True,
 ) -> Path:
     PRICE_AUDIT_DIR.mkdir(parents=True, exist_ok=True)
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
@@ -31,8 +34,12 @@ def save_price_audit(
                 "label": label,
                 "ticker": ticker,
                 "call_date": format_call_date(call_date),
+                "as_of_date": call_date.isoformat(),
                 "reported_quarter": reported_quarter,
                 "prior_labels": prior_labels,
+                "mode": mode,
+                "strict": strict,
+                "adjusted": adjusted,
                 "fetched_at": timestamp,
                 "prices": [
                     {
@@ -40,6 +47,11 @@ def save_price_audit(
                         "quarter_end_date": price.quarter_end_date.isoformat(),
                         "price_date": price.price_date.isoformat(),
                         "adjusted_close": price.adjusted_close,
+                        "cap_applied": (
+                            price.cap_applied.isoformat()
+                            if price.cap_applied
+                            else min(price.quarter_end_date, call_date).isoformat()
+                        ),
                     }
                     for price in prices
                 ],

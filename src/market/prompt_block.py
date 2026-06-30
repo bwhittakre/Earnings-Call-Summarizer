@@ -5,9 +5,13 @@ from datetime import date
 from src.ingest.call_date import format_call_date
 from src.market.models import QuarterEndPrice
 
-PRICE_BLOCK_HEADER = (
+ADJUSTED_PRICE_BLOCK_HEADER = (
     "--- PRIOR QUARTER STOCK PRICES "
     "(source: yfinance adjusted close; not from transcript) ---"
+)
+UNADJUSTED_PRICE_BLOCK_HEADER = (
+    "--- PRIOR QUARTER STOCK PRICES "
+    "(source: yfinance close; not from transcript) ---"
 )
 
 
@@ -18,12 +22,24 @@ def format_price_block(
     call_date: date,
     reported_quarter: str,
     prior_labels: list[str],
+    transcript_validated: bool = False,
 ) -> str:
+    adjusted = prices[0].adjusted if prices else True
+    header = (
+        ADJUSTED_PRICE_BLOCK_HEADER
+        if adjusted
+        else UNADJUSTED_PRICE_BLOCK_HEADER
+    )
+    reported_source = (
+        "Reported quarter (transcript-validated)"
+        if transcript_validated
+        else "Reported quarter (from transcript)"
+    )
     lines = [
-        PRICE_BLOCK_HEADER,
+        header,
         f"Ticker: {ticker.strip().upper()}",
         f"Call date: {format_call_date(call_date)}",
-        f"Reported quarter (from transcript): {reported_quarter}",
+        f"{reported_source}: {reported_quarter}",
         f"Prior quarters priced: {', '.join(prior_labels)}",
     ]
     lines.extend(price.format_line() for price in prices)

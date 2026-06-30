@@ -4,13 +4,14 @@ import logging
 from datetime import date
 from pathlib import Path
 
-from src.ingest.call_date import resolve_call_date
+from src.ingest.call_date import format_call_date, resolve_call_date
 from src.ingest.loader import LoadedTranscripts, load_transcripts, transcript_audit_label
-from src.ingest.reported_quarter import resolve_reported_quarter
 from src.llm.anthropic_client import AnthropicClient
 from src.llm.quarter_summarizer import QuarterSummarizer, ValidatedQuarterOutput
 from src.market.fiscal_calendar import DEFAULT_FISCAL_CALENDARS_PATH
-from src.market.pipeline import MarketContext, build_market_context, resolve_call_date_value
+from src.market.pipeline import MarketContext, build_market_context
+from src.pipeline.point_in_time import PointInTimeConfig
+from src.pipeline.strict_anchoring import resolve_strict_anchoring
 from src.schemas.models import QuarterSummary
 
 logger = logging.getLogger(__name__)
@@ -27,6 +28,7 @@ def run_pipeline(
     quarter_end_date_overrides: dict[str, date] | None = None,
     reported_quarter_override: str | None = None,
     price_fetcher=None,
+    point_in_time: PointInTimeConfig | None = None,
 ) -> list[QuarterSummary]:
     loaded = load_transcripts(
         transcript_path=Path(transcript_path),
@@ -42,6 +44,7 @@ def run_pipeline(
         quarter_end_date_overrides=quarter_end_date_overrides,
         reported_quarter_override=reported_quarter_override,
         price_fetcher=price_fetcher,
+        point_in_time=point_in_time,
     )
 
 
@@ -54,10 +57,26 @@ def run_pipeline_from_loaded(
     quarter_end_date_overrides: dict[str, date] | None = None,
     reported_quarter_override: str | None = None,
     price_fetcher=None,
+    point_in_time: PointInTimeConfig | None = None,
 ) -> list[QuarterSummary]:
+    pit = point_in_time or PointInTimeConfig.disabled()
+    if pit.active:
+        skip_rescue_judge = True
+        if not pit.include_prices:
+            if ticker:
+                logger.warning(
+                    "Ignoring --ticker in point-in-time mode (transcript-only)."
+                )
+            ticker = None
+        elif not ticker:
+            raise ValueError(
+                "Point-in-time-with-prices mode requires --ticker."
+            )
+
     quarter_summarizer = QuarterSummarizer(
         client,
         skip_rescue_judge=skip_rescue_judge,
+        point_in_time=pit,
     )
 
     quarter_outputs: list[ValidatedQuarterOutput] = []
@@ -65,13 +84,18 @@ def run_pipeline_from_loaded(
         quarter = item.quarter
         label = transcript_audit_label(item)
         transcript_text = loaded.transcripts[quarter]
-        market_context: MarketContext | None = None
-        if ticker:
-            call_date = resolve_call_date_value(transcript_text)
-            reported_quarter = resolve_reported_quarter(
-                transcript_text,
-                cli_override=reported_quarter_override,
+        call_date: date | None = None
+        reported_quarter: str | None = None
+        if pit.active or ticker:
+            call_date, reported_quarter = resolve_strict_anchoring(
+                transcript_text=transcript_text,
+                filename_quarter=item.quarter,
+                point_in_time=pit,
+                reported_quarter_override=reported_quarter_override,
+                require_call_date=bool(ticker),
             )
+        market_context: MarketContext | None = None
+        if ticker and reported_quarter is not None and call_date is not None:
             market_context = build_market_context(
                 ticker=ticker,
                 transcript_text=transcript_text,
@@ -81,6 +105,7 @@ def run_pipeline_from_loaded(
                 calendars_path=fiscal_calendars_path,
                 date_overrides=quarter_end_date_overrides,
                 fetcher=price_fetcher,
+                point_in_time=pit,
             )
             logger.info(
                 "Fetched %s prior-quarter prices for %s "
@@ -89,6 +114,14 @@ def run_pipeline_from_loaded(
                 market_context.ticker,
                 market_context.reported_quarter,
                 market_context.call_date.isoformat(),
+            )
+
+        if pit.active:
+            logger.info(
+                "Point-in-time mode: call_date=%s reported=%s prices=%s rescue=off",
+                call_date.isoformat(),
+                reported_quarter,
+                bool(market_context),
             )
 
         logger.info(
@@ -103,6 +136,7 @@ def run_pipeline_from_loaded(
             price_block_text=(
                 market_context.price_block_text if market_context else None
             ),
+            call_date=call_date,
         )
         logger.info(
             "Detected company: %s",
@@ -121,11 +155,11 @@ def run_pipeline_from_loaded(
         sorted(loaded.files, key=lambda file: file.quarter),
         quarter_outputs,
     ):
-        call_date = resolve_call_date(
+        call_date_text = resolve_call_date(
             loaded.transcripts[item.quarter],
             output.summary.call_date,
         )
         summaries.append(
-            output.summary.model_copy(update={"call_date": call_date})
+            output.summary.model_copy(update={"call_date": call_date_text})
         )
     return summaries

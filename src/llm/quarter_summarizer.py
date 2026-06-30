@@ -2,8 +2,11 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
+from datetime import date
 
+from src.ingest.call_date import format_call_date
 from src.llm.anthropic_client import AnthropicClient, load_prompt
+from src.pipeline.point_in_time import PointInTimeConfig
 from src.schemas.models import (
     EvidenceBackedQuarterSummary,
     LLMResult,
@@ -27,15 +30,27 @@ class ValidatedQuarterOutput:
     evidence: EvidenceBackedQuarterSummary
 
 
+def format_knowledge_cutoff_header(call_date: date) -> str:
+    formatted = format_call_date(call_date)
+    return (
+        f"KNOWLEDGE CUTOFF: Treat {formatted} as today.\n"
+        "Use ONLY the transcript and PRIOR QUARTER STOCK PRICES block below.\n"
+        "Do not use information from after this date, including general world knowledge.\n"
+        "If uncertain, omit rather than infer from later events."
+    )
+
+
 class QuarterSummarizer:
     def __init__(
         self,
         client: AnthropicClient,
         skip_rescue_judge: bool = False,
+        point_in_time: PointInTimeConfig | None = None,
     ):
         self.client = client
         self.system_prompt = load_prompt("quarter.txt")
         self.skip_rescue_judge = skip_rescue_judge
+        self.point_in_time = point_in_time or PointInTimeConfig.disabled()
         self.rescue_judge = RescueJudge(client)
 
     def summarize(
@@ -44,8 +59,11 @@ class QuarterSummarizer:
         transcript_text: str,
         label: str,
         price_block_text: str | None = None,
+        call_date: date | None = None,
     ) -> tuple[ValidatedQuarterOutput, LLMResult]:
-        sections = [f"Quarter: {quarter}"]
+        sections: list[str] = [f"Quarter: {quarter}"]
+        if self.point_in_time.active and call_date is not None:
+            sections.extend(["", format_knowledge_cutoff_header(call_date)])
         if price_block_text:
             sections.extend(["", price_block_text])
         sections.extend(["", "--- TRANSCRIPT ---", transcript_text])

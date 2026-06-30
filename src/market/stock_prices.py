@@ -18,13 +18,15 @@ def _default_history_fetcher(
     ticker: str,
     start: date,
     end: date,
+    *,
+    adjusted: bool = True,
 ) -> list[tuple[date, float]]:
     import yfinance as yf
 
     history = yf.Ticker(ticker).history(
         start=start.isoformat(),
         end=(end + timedelta(days=1)).isoformat(),
-        auto_adjust=True,
+        auto_adjust=adjusted,
     )
     if history.empty:
         return []
@@ -34,13 +36,20 @@ def _default_history_fetcher(
     return rows
 
 
+def make_default_history_fetcher(*, adjusted: bool = True) -> HistoryFetcher:
+    def fetcher(ticker: str, start: date, end: date) -> list[tuple[date, float]]:
+        return _default_history_fetcher(ticker, start, end, adjusted=adjusted)
+
+    return fetcher
+
+
 def _last_trading_close_on_or_before(
     ticker: str,
     target: date,
     fetcher: HistoryFetcher,
     *,
     as_of_date: date | None = None,
-) -> tuple[date, float]:
+) -> tuple[date, float, date]:
     cap = as_of_date or date.today()
     effective_target = min(target, cap)
     start = effective_target - timedelta(days=14)
@@ -51,7 +60,19 @@ def _last_trading_close_on_or_before(
             f"No trading data for {ticker} on or before {effective_target.isoformat()}."
         )
     day, close = eligible[-1]
-    return day, close
+    return day, close, effective_target
+
+
+def validate_prices_point_in_time(
+    prices: list[QuarterEndPrice],
+    call_date: date,
+) -> None:
+    for price in prices:
+        if price.price_date > call_date:
+            raise StockPriceError(
+                f"Price date {price.price_date.isoformat()} for "
+                f"{price.quarter_label} exceeds call date {call_date.isoformat()}."
+            )
 
 
 def fetch_quarter_end_prices(
@@ -61,8 +82,10 @@ def fetch_quarter_end_prices(
     ordered_labels: list[str] | None = None,
     fetcher: HistoryFetcher | None = None,
     as_of_date: date | None = None,
+    adjusted: bool = True,
+    strict: bool = False,
 ) -> list[QuarterEndPrice]:
-    history_fetcher = fetcher or _default_history_fetcher
+    history_fetcher = fetcher or make_default_history_fetcher(adjusted=adjusted)
     ticker_key = ticker.strip().upper()
     labels = ordered_labels or list(quarter_dates.keys())
     prices: list[QuarterEndPrice] = []
@@ -73,7 +96,7 @@ def fetch_quarter_end_prices(
                 f"Missing quarter-end date for {normalized!r}."
             )
         quarter_end_date = quarter_dates[normalized]
-        price_date, adjusted_close = _last_trading_close_on_or_before(
+        price_date, close, cap_applied = _last_trading_close_on_or_before(
             ticker_key,
             quarter_end_date,
             history_fetcher,
@@ -84,8 +107,12 @@ def fetch_quarter_end_prices(
                 quarter_label=normalized,
                 quarter_end_date=quarter_end_date,
                 price_date=price_date,
-                adjusted_close=adjusted_close,
+                adjusted_close=close,
                 ticker=ticker_key,
+                adjusted=adjusted,
+                cap_applied=cap_applied,
             )
         )
+    if strict and as_of_date is not None:
+        validate_prices_point_in_time(prices, as_of_date)
     return prices
