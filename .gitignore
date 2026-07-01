@@ -9,6 +9,7 @@ __pycache__/
 venv/
 AMZN/
 NVDA/
+TSLA/
 data/transcripts/*
 !data/
 !data/transcripts/

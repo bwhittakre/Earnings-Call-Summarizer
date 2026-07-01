@@ -2,3 +2,5 @@ NVDA:
   type: nvidia_fiscal
 AMZN:
   type: calendar_fiscal
+TSLA:
+  type: calendar_fiscal

@@ -78,7 +78,20 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--ticker",
-        help="Stock ticker for prior-quarter price lookup (defaults to each company ticker when set once)",
+        help=(
+            "Stock ticker for prior-quarter price lookup on single-company runs. "
+            "Use --with-prices for multi-company runs (each package ticker)."
+        ),
+    )
+    parser.add_argument(
+        "--with-prices",
+        action="store_true",
+        help="Include prior-quarter stock prices using each company's ticker",
+    )
+    parser.add_argument(
+        "--single-sheet",
+        action="store_true",
+        help="Write all companies to one Excel worksheet (default: one sheet per company)",
     )
     parser.add_argument(
         "--quarter-end-dates",
@@ -249,12 +262,25 @@ def main() -> int:
         print(report)
         return 0
 
-    if point_in_time.include_prices and not args.ticker:
+    if point_in_time.include_prices and not args.ticker and not args.with_prices:
         print(
             "Error: --point-in-time-with-prices requires --ticker.",
             file=sys.stderr,
         )
         return 1
+
+    if args.with_prices and args.ticker and "," in args.companies:
+        logging.warning(
+            "Ignoring --ticker for multi-company run; using each company's ticker."
+        )
+        effective_ticker = None
+    elif args.with_prices and not args.ticker:
+        effective_ticker = None
+    else:
+        effective_ticker = args.ticker
+    if point_in_time.active and not point_in_time.include_prices and args.ticker:
+        logging.warning("Ignoring --ticker in point-in-time mode (documents-only).")
+        effective_ticker = None
 
     api_key = os.getenv("ANTHROPIC_API_KEY")
     if not api_key:
@@ -265,10 +291,6 @@ def main() -> int:
         return 1
 
     skip_rescue = args.skip_rescue_judge or point_in_time.active
-    effective_ticker = args.ticker
-    if point_in_time.active and not point_in_time.include_prices and args.ticker:
-        logging.warning("Ignoring --ticker in point-in-time mode (documents-only).")
-        effective_ticker = None
 
     if point_in_time.active:
         mode = (
@@ -297,6 +319,7 @@ def main() -> int:
             quarter=args.quarter,
             skip_rescue_judge=skip_rescue,
             ticker=effective_ticker,
+            with_prices=args.with_prices or bool(effective_ticker),
             fiscal_calendars_path=fiscal_calendars_path,
             quarter_end_date_overrides=date_overrides,
             point_in_time=point_in_time,
@@ -308,7 +331,7 @@ def main() -> int:
         return 1
 
     output_path = Path(args.output)
-    write_output(rows, output_path)
+    write_output(rows, output_path, single_sheet=args.single_sheet)
     logging.info("Wrote %s rows to %s", len(rows), output_path)
     logging.info(client.usage_summary())
     return 0

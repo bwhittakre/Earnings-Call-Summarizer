@@ -302,28 +302,43 @@ def group_rows_by_company(rows: Sequence[QuarterSummary]) -> dict[str, list[Quar
     return grouped
 
 
-def write_excel(rows: Sequence[QuarterSummary], output_path: Path) -> None:
+def write_excel(
+    rows: Sequence[QuarterSummary],
+    output_path: Path,
+    *,
+    single_sheet: bool = False,
+) -> None:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     workbook = Workbook()
     default_sheet = workbook.active
     workbook.remove(default_sheet)
 
-    existing_titles: set[str] = set()
-    grouped_rows = group_rows_by_company(rows)
-    if not grouped_rows:
+    sorted_rows = sort_quarter_summaries(rows)
+    if single_sheet:
         worksheet = workbook.create_sheet("Earnings Summary")
-        populate_excel_sheet(worksheet, [])
+        populate_excel_sheet(worksheet, sorted_rows)
     else:
-        for company_name, company_rows in grouped_rows.items():
-            sheet_title = sanitize_sheet_title(company_name, existing_titles)
-            worksheet = workbook.create_sheet(sheet_title)
-            populate_excel_sheet(worksheet, company_rows)
+        existing_titles: set[str] = set()
+        grouped_rows = group_rows_by_company(rows)
+        if not grouped_rows:
+            worksheet = workbook.create_sheet("Earnings Summary")
+            populate_excel_sheet(worksheet, [])
+        else:
+            for company_name, company_rows in grouped_rows.items():
+                sheet_title = sanitize_sheet_title(company_name, existing_titles)
+                worksheet = workbook.create_sheet(sheet_title)
+                populate_excel_sheet(worksheet, company_rows)
 
     workbook.save(output_path)
 
 
-def write_output(rows: Sequence[QuarterSummary], output_path: Path) -> None:
+def write_output(
+    rows: Sequence[QuarterSummary],
+    output_path: Path,
+    *,
+    single_sheet: bool = False,
+) -> None:
     if output_path.suffix.lower() == ".xlsx":
-        write_excel(rows, output_path)
+        write_excel(rows, output_path, single_sheet=single_sheet)
         return
     write_csv(rows, output_path)

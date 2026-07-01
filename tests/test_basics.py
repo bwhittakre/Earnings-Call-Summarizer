@@ -179,6 +179,31 @@ class BasicsTestCase(unittest.TestCase):
             self.assertEqual(worksheet["H5"].value, "90")
             self.assertEqual(worksheet.auto_filter.ref, "A1:I5")
 
+    def test_write_excel_single_sheet_combines_companies(self):
+        rows = [
+            _sample_summary(company_name="Nvidia", quarter="FY2026-Q2"),
+            _sample_summary(
+                company_name="Amazon",
+                quarter="FY2026-Q2",
+                confidence_score=10,
+            ),
+            _sample_summary(
+                company_name="Tesla",
+                quarter="FY2026-Q2",
+                confidence_score=20,
+            ),
+        ]
+        with TemporaryDirectory() as tmp_dir:
+            output_path = Path(tmp_dir) / "summary.xlsx"
+            write_excel(rows, output_path, single_sheet=True)
+            workbook = load_workbook(output_path)
+            self.assertEqual(workbook.sheetnames, ["Earnings Summary"])
+            worksheet = workbook["Earnings Summary"]
+            self.assertEqual(worksheet["B2"].value, "Amazon")
+            self.assertEqual(worksheet["B3"].value, "Nvidia")
+            self.assertEqual(worksheet["B4"].value, "Tesla")
+            self.assertEqual(worksheet.auto_filter.ref, "A1:I4")
+
     def test_format_quarter_cell(self):
         self.assertEqual(format_quarter_cell("FY2025-Q2"), "FY2025-Q2")
         self.assertEqual(

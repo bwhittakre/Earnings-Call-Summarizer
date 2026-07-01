@@ -29,6 +29,7 @@ def run_pipeline(
     quarter: str,
     skip_rescue_judge: bool = False,
     ticker: str | None = None,
+    with_prices: bool = False,
     fiscal_calendars_path: Path = DEFAULT_FISCAL_CALENDARS_PATH,
     quarter_end_date_overrides: dict[str, date] | None = None,
     price_fetcher=None,
@@ -55,6 +56,7 @@ def run_pipeline(
                 packages,
                 skip_rescue_judge=skip_rescue_judge,
                 ticker=ticker,
+                with_prices=with_prices,
                 fiscal_calendars_path=fiscal_calendars_path,
                 quarter_end_date_overrides=quarter_end_date_overrides,
                 price_fetcher=price_fetcher,
@@ -70,6 +72,7 @@ def run_pipeline_from_packages(
     packages: list[FilingPackage],
     skip_rescue_judge: bool = False,
     ticker: str | None = None,
+    with_prices: bool = False,
     fiscal_calendars_path: Path = DEFAULT_FISCAL_CALENDARS_PATH,
     quarter_end_date_overrides: dict[str, date] | None = None,
     price_fetcher=None,
@@ -97,6 +100,7 @@ def run_pipeline_from_packages(
     )
 
     quarter_outputs: list[ValidatedQuarterOutput] = []
+    include_prices = with_prices or bool(ticker)
     for package in packages:
         label = package.audit_label()
         as_of_date = package.as_of_date
@@ -106,8 +110,11 @@ def run_pipeline_from_packages(
             )
 
         market_context: MarketContext | None = None
-        effective_ticker = ticker or package.ticker
-        if ticker and as_of_date is not None:
+        if include_prices and as_of_date is not None:
+            if len(packages) == 1 and ticker:
+                effective_ticker = ticker.strip().upper()
+            else:
+                effective_ticker = package.ticker
             manifest_overrides = resolve_quarter_end_overrides(
                 package.folder,
                 quarter=package.quarter,
