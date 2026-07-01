@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from datetime import date, timedelta
 
-from src.ingest.loader import normalize_quarter_label
+from src.ingest.filings.fiscal import normalize_quarter_label
 from src.market.models import QuarterEndPrice
 
 

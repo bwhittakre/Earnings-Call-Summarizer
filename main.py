@@ -9,8 +9,11 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 from src.export.csv_writer import write_output
-from src.ingest.loader import dry_run_report, resolve_transcript_files
-from src.ingest.reported_quarter import ReportedQuarterError
+from src.ingest.filings import FilingLoadError, dry_run_report, load_filing_packages
+from src.ingest.filings.fiscal import parse_quarters_list
+from src.ingest.filings.corpus import DEFAULT_MAX_CORPUS_CHARS
+from src.ingest.filings.excerpt_puller import DEFAULT_MAX_ANALYSIS_CHARS
+from src.ingest.filings.loader import ExcerptConfig, normalize_excerpt_mode
 from src.llm.anthropic_client import AnthropicClient
 from src.market.fiscal_calendar import (
     DEFAULT_FISCAL_CALENDARS_PATH,
@@ -26,28 +29,42 @@ DEFAULT_MODEL = "claude-sonnet-4-6"
 DEFAULT_OUTPUT = str(DEFAULT_SUMMARY_OUTPUT)
 
 PIT_EPILOG = """
-Point-in-time modes reduce data leakage by capping inputs at the earnings call date.
+Point-in-time modes reduce data leakage by capping inputs at the filing as-of date.
 Instructions reduce but do not eliminate LLM training-knowledge leakage; for research
-backtests requiring maximum purity, prefer transcript-only mode and historically frozen
+backtests requiring maximum purity, prefer documents-only mode and historically frozen
 price snapshots.
 
 Examples:
-  py -3 main.py --transcripts file.txt --point-in-time --output out.xlsx
-  py -3 main.py --transcripts file.txt --ticker NVDA --point-in-time-with-prices --output out.xlsx
+  py -3 main.py --filings-root data/filings --companies NVDA --quarter FY2026-Q1 --point-in-time --output out.xlsx
+  py -3 main.py --filings-root data/filings --companies NVDA --quarter FY2026-Q1 --ticker NVDA --point-in-time-with-prices --output out.xlsx
   py -3 main.py ... --point-in-time-with-prices --unadjusted-prices
 """
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Summarize earnings call transcripts with auto-detected company labeling.",
+        description="Analyze SEC filings for next-quarter confidence scores.",
         epilog=PIT_EPILOG,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument(
-        "--transcripts",
+        "--filings-root",
         required=True,
-        help="Transcript folder or single transcript file",
+        help="Root folder containing {TICKER}/{quarter}/ filing trees",
+    )
+    parser.add_argument(
+        "--companies",
+        required=True,
+        help="Comma-separated tickers (e.g. NVDA,AMZN)",
+    )
+    parser.add_argument(
+        "--quarter",
+        required=True,
+        help=(
+            "Quarter label for all companies (e.g. FY2026-Q1). "
+            "Comma-separated for multiple quarters in one export "
+            "(e.g. FY2026-Q1,FY2026-Q2,FY2026-Q3,FY2026-Q4)."
+        ),
     )
     parser.add_argument(
         "--output",
@@ -60,23 +77,8 @@ def build_parser() -> argparse.ArgumentParser:
         help=f"Anthropic model ID (default: {DEFAULT_MODEL})",
     )
     parser.add_argument(
-        "--quarters",
-        type=int,
-        default=1,
-        help="Expected number of quarterly transcripts (default: 1)",
-    )
-    parser.add_argument(
-        "--quarter",
-        help="Load only this quarter from a folder (e.g. FY2025-Q2). Ignored for single-file paths unless checking a match.",
-    )
-    parser.add_argument(
         "--ticker",
-        help="Stock ticker for prior-quarter price lookup (e.g. NVDA). Enables market data input.",
-    )
-    parser.add_argument(
-        "--reported-quarter",
-        help="Override reported quarter parsed from transcript (e.g. 2025-Q4 or FY2025-Q4). "
-        "Not allowed with point-in-time modes.",
+        help="Stock ticker for prior-quarter price lookup (defaults to each company ticker when set once)",
     )
     parser.add_argument(
         "--quarter-end-dates",
@@ -90,7 +92,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="Validate transcript paths without calling the API",
+        help="Validate filing folders without calling the API",
     )
     parser.add_argument(
         "--skip-rescue-judge",
@@ -98,14 +100,43 @@ def build_parser() -> argparse.ArgumentParser:
         help="Drop paraphrased excerpts without AI rescue (strict verbatim only)",
     )
     parser.add_argument(
+        "--max-corpus-chars",
+        type=int,
+        default=DEFAULT_MAX_CORPUS_CHARS,
+        help=(
+            "Final hard cap on characters sent to the LLM after excerpt pull "
+            f"(default: {DEFAULT_MAX_CORPUS_CHARS:,})"
+        ),
+    )
+    parser.add_argument(
+        "--excerpt-mode",
+        default="smart",
+        choices=["smart", "full", "off"],
+        help="Excerpt pull mode: smart (default), full/off send entire sanitized corpus",
+    )
+    parser.add_argument(
+        "--max-analysis-chars",
+        type=int,
+        default=DEFAULT_MAX_ANALYSIS_CHARS,
+        help=(
+            "Max characters in the analysis corpus per company when excerpt-mode=smart "
+            f"(default: {DEFAULT_MAX_ANALYSIS_CHARS:,})"
+        ),
+    )
+    parser.add_argument(
+        "--write-excerpt-audit",
+        action="store_true",
+        help="Write pulled excerpt corpus to output_confidence/excerpt_audit/",
+    )
+    parser.add_argument(
         "--point-in-time",
         action="store_true",
-        help="Strict transcript-only scoring: no prices, no rescue judge, temporal prompt",
+        help="Strict documents-only scoring: no prices, no rescue judge, temporal prompt",
     )
     parser.add_argument(
         "--point-in-time-with-prices",
         action="store_true",
-        help="Strict mode with 4 prior quarter-end prices capped at call date",
+        help="Strict mode with 4 prior quarter-end prices capped at as-of date",
     )
     parser.add_argument(
         "--unadjusted-prices",
@@ -122,11 +153,12 @@ def configure_logging() -> None:
     )
 
 
-def _load_single_transcript_text(transcript_path: Path, quarter: str | None) -> str | None:
-    assigned = resolve_transcript_files(transcript_path, quarter=quarter)
-    if len(assigned) != 1:
-        return None
-    return assigned[0].path.read_text(encoding="utf-8", errors="replace")
+def _build_excerpt_config(args: argparse.Namespace) -> ExcerptConfig:
+    return ExcerptConfig(
+        mode=normalize_excerpt_mode(args.excerpt_mode),
+        max_analysis_chars=args.max_analysis_chars,
+        write_audit=args.write_excerpt_audit,
+    )
 
 
 def _resolve_point_in_time_config(args: argparse.Namespace) -> PointInTimeConfig:
@@ -141,7 +173,7 @@ def _resolve_point_in_time_config(args: argparse.Namespace) -> PointInTimeConfig
     if args.point_in_time_with_prices:
         return PointInTimeConfig.with_prices(unadjusted=args.unadjusted_prices)
     if args.point_in_time:
-        return PointInTimeConfig.transcript_only()
+        return PointInTimeConfig.document_only()
     return PointInTimeConfig.disabled()
 
 
@@ -157,55 +189,60 @@ def main() -> int:
         print(exc, file=sys.stderr)
         return 1
 
-    if point_in_time.active and args.reported_quarter:
-        print(
-            "Error: --reported-quarter is not allowed in point-in-time mode.",
-            file=sys.stderr,
-        )
-        return 1
-
-    transcript_path = Path(args.transcripts)
+    filings_root = Path(args.filings_root)
     date_overrides = (
         parse_quarter_end_dates_override(args.quarter_end_dates)
         if args.quarter_end_dates
         else None
     )
     fiscal_calendars_path = Path(args.fiscal_calendars)
+    excerpt_config = _build_excerpt_config(args)
 
     if args.dry_run:
-        report = dry_run_report(transcript_path, args.quarters, args.quarter)
-        assigned = resolve_transcript_files(transcript_path, quarter=args.quarter)
-        transcript_text = (
-            assigned[0].path.read_text(encoding="utf-8", errors="replace")
-            if len(assigned) == 1
-            else None
+        report = dry_run_report(
+            filings_root,
+            companies=args.companies,
+            quarter=args.quarter,
+            require_as_of_date=point_in_time.active,
+            excerpt_config=excerpt_config,
         )
-        filename_quarter = assigned[0].quarter if len(assigned) == 1 else None
-
         extra_lines: list[str] = []
-        if point_in_time.active and transcript_text and filename_quarter:
-            extra_lines = format_point_in_time_dry_run_lines(
-                transcript_text=transcript_text,
-                filename_quarter=filename_quarter,
-                point_in_time=point_in_time,
-                ticker=args.ticker,
-                reported_quarter_override=args.reported_quarter,
-                calendars_path=fiscal_calendars_path,
-                date_overrides=date_overrides,
-            )
-        elif args.ticker and transcript_text:
-            extra_lines = format_market_dry_run_lines(
-                ticker=args.ticker,
-                transcript_text=transcript_text,
-                filename_quarter=filename_quarter,
-                reported_quarter=args.reported_quarter,
-                calendars_path=fiscal_calendars_path,
-                date_overrides=date_overrides,
-            )
-        elif args.ticker:
-            extra_lines = [
-                "Market data: SKIPPED (select exactly one transcript for date preview)"
-            ]
+        try:
+            packages = []
+            for normalized_quarter in parse_quarters_list(args.quarter):
+                packages.extend(
+                    load_filing_packages(
+                        filings_root,
+                        companies=args.companies,
+                        quarter=normalized_quarter,
+                        require_as_of_date=point_in_time.active,
+                        excerpt_config=excerpt_config,
+                    )
+                )
+        except FilingLoadError:
+            packages = []
+
+        if packages and point_in_time.active:
+            package = packages[0]
+            if package.as_of_date is not None:
+                extra_lines = format_point_in_time_dry_run_lines(
+                    as_of_date=package.as_of_date,
+                    reported_quarter=package.quarter,
+                    point_in_time=point_in_time,
+                    ticker=args.ticker or package.ticker,
+                    calendars_path=fiscal_calendars_path,
+                    date_overrides=date_overrides,
+                )
+        elif packages and args.ticker:
+            package = packages[0]
+            if package.as_of_date is not None:
+                extra_lines = format_market_dry_run_lines(
+                    ticker=args.ticker,
+                    as_of_date=package.as_of_date,
+                    reported_quarter=package.quarter,
+                    calendars_path=fiscal_calendars_path,
+                    date_overrides=date_overrides,
+                )
 
         if extra_lines:
             report = "\n".join([report, "", *extra_lines])
@@ -230,14 +267,14 @@ def main() -> int:
     skip_rescue = args.skip_rescue_judge or point_in_time.active
     effective_ticker = args.ticker
     if point_in_time.active and not point_in_time.include_prices and args.ticker:
-        logging.warning("Ignoring --ticker in point-in-time mode (transcript-only).")
+        logging.warning("Ignoring --ticker in point-in-time mode (documents-only).")
         effective_ticker = None
 
     if point_in_time.active:
         mode = (
             "point-in-time-with-prices"
             if point_in_time.include_prices
-            else "point-in-time (transcript-only)"
+            else "point-in-time (documents-only)"
         )
         logging.info(
             "Point-in-time mode: %s (rescue=off, prices=%s)",
@@ -246,21 +283,27 @@ def main() -> int:
         )
 
     client = AnthropicClient(api_key=api_key, model=args.model, max_retries=1)
-    logging.info("Starting pipeline for %s", transcript_path)
+    logging.info(
+        "Starting pipeline for %s companies=%s quarter=%s",
+        filings_root,
+        args.companies,
+        args.quarter,
+    )
     try:
         rows = run_pipeline(
             client=client,
-            transcript_path=str(transcript_path),
-            expected_quarters=args.quarters,
+            filings_root=filings_root,
+            companies=args.companies,
             quarter=args.quarter,
             skip_rescue_judge=skip_rescue,
             ticker=effective_ticker,
             fiscal_calendars_path=fiscal_calendars_path,
             quarter_end_date_overrides=date_overrides,
-            reported_quarter_override=args.reported_quarter,
             point_in_time=point_in_time,
+            max_corpus_chars=args.max_corpus_chars,
+            excerpt_config=excerpt_config,
         )
-    except (PointInTimeError, ValueError, ReportedQuarterError, StockPriceError) as exc:
+    except (PointInTimeError, ValueError, FilingLoadError, StockPriceError) as exc:
         print(f"Error: {exc}", file=sys.stderr)
         return 1
 

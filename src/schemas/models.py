@@ -22,7 +22,7 @@ class ConfidenceEvidence(BaseModel):
 class EvidenceBackedQuarterSummary(BaseModel):
     company_name: str
     quarter: str
-    call_date: str | None = None
+    as_of_date: str | None = None
     what_happened: list[EvidenceClaim] = Field(min_length=1)
     positives: list[EvidenceClaim]
     negatives: list[EvidenceClaim]
@@ -42,11 +42,11 @@ class EvidenceBackedRollupSummary(BaseModel):
 class QuarterSummary(BaseModel):
     company_name: str
     quarter: str
-    call_date: str | None = None
+    as_of_date: str | None = None
     what_happened: list[str] = Field(min_length=1)
     positives: list[str]
     negatives: list[str]
-    transcript_only_confidence_score: int = Field(ge=-100, le=100)
+    document_only_confidence_score: int = Field(ge=-100, le=100)
     confidence_score: int = Field(ge=-100, le=100)
     analysis: list[EvidenceClaim] = Field(min_length=1)
     summary_type: SummaryType = "quarter"
@@ -80,6 +80,10 @@ class RescueJudgeResult(BaseModel):
     reviews: list[RescueReview]
 
 
+class PriceAnalysisBullets(BaseModel):
+    analysis: list[EvidenceClaim] = Field(default_factory=list)
+
+
 class TokenUsage(BaseModel):
     input_tokens: int
     output_tokens: int
@@ -95,19 +99,19 @@ def quarter_summary_from_evidence(
 ) -> QuarterSummary:
     from src.scoring.analysis_score import (
         apply_confidence_score_from_analysis,
-        compute_transcript_only_confidence_score,
+        compute_document_only_confidence_score,
     )
 
     evidence = apply_confidence_score_from_analysis(evidence)
     return QuarterSummary(
         company_name=evidence.company_name,
         quarter=evidence.quarter,
-        call_date=evidence.call_date,
+        as_of_date=evidence.as_of_date,
         what_happened=[item.claim for item in evidence.what_happened],
         positives=[item.claim for item in evidence.positives],
         negatives=[item.claim for item in evidence.negatives],
         confidence_score=evidence.confidence_score,
-        transcript_only_confidence_score=compute_transcript_only_confidence_score(
+        document_only_confidence_score=compute_document_only_confidence_score(
             evidence.analysis
         ),
         analysis=evidence.analysis,

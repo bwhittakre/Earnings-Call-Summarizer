@@ -6,7 +6,7 @@ from pathlib import Path
 
 import yaml
 
-from src.ingest.loader import normalize_quarter_label
+from src.ingest.filings.fiscal import normalize_quarter_label
 from src.market.quarter_labels import parse_quarter_label
 
 DEFAULT_FISCAL_CALENDARS_PATH = (

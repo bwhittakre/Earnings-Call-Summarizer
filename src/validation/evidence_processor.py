@@ -119,20 +119,20 @@ def _total_quarter_claims(evidence: EvidenceBackedQuarterSummary) -> int:
 def _anchor_sources_for_failure(
     failure: ValidationFailure,
     claim: EvidenceClaim,
-    transcript_text: str,
+    corpus_text: str,
     price_block_text: str | None,
 ) -> list[str]:
     if failure.field != "analysis" or not price_block_text:
-        return [transcript_text]
+        return [corpus_text]
     if "[price]" in claim.claim.lower():
-        return [price_block_text, transcript_text]
-    return [transcript_text, price_block_text]
+        return [price_block_text, corpus_text]
+    return [corpus_text, price_block_text]
 
 
 def pre_anchor_quarter_failures(
     evidence: EvidenceBackedQuarterSummary,
     failures: list[ValidationFailure],
-    transcript_text: str,
+    corpus_text: str,
     price_block_text: str | None = None,
 ) -> tuple[EvidenceBackedQuarterSummary, list[AutoAnchoredEntry], list[ValidationFailure]]:
     if not failures:
@@ -151,7 +151,7 @@ def pre_anchor_quarter_failures(
         sources = _anchor_sources_for_failure(
             failure,
             claim,
-            transcript_text,
+            corpus_text,
             price_block_text,
         )
         anchored: str | None = None
@@ -196,7 +196,7 @@ def pre_anchor_quarter_failures(
 
 def process_quarter_evidence_with_rescue(
     evidence: EvidenceBackedQuarterSummary,
-    transcript_text: str,
+    corpus_text: str,
     rescue_judge: RescueJudge,
     label: str,
     price_block_text: str | None = None,
@@ -205,7 +205,7 @@ def process_quarter_evidence_with_rescue(
 
     validation = validate_quarter_evidence(
         evidence,
-        transcript_text,
+        corpus_text,
         price_block_text,
     )
     total_claims = _total_quarter_claims(evidence)
@@ -219,7 +219,7 @@ def process_quarter_evidence_with_rescue(
     evidence, auto_anchored, remaining_failures = pre_anchor_quarter_failures(
         evidence,
         validation.failures,
-        transcript_text,
+        corpus_text,
         price_block_text,
     )
 
@@ -236,21 +236,21 @@ def process_quarter_evidence_with_rescue(
     )
     rescue_result, _ = rescue_judge.review_failures(
         remaining_failures,
-        transcript_text,
+        corpus_text,
         label,
     )
     rescue_result = augment_rescue_reviews_with_retries(
         rescue_judge,
         remaining_failures,
         rescue_result,
-        transcript_text,
+        corpus_text,
         label,
     )
     processed = apply_rescue_reviews_to_quarter(
         evidence,
         remaining_validation,
         rescue_result,
-        transcript_text,
+        corpus_text,
         price_block_text,
     )
     processed.verbatim_kept = initial_verbatim_kept
@@ -507,6 +507,7 @@ def apply_rescue_reviews_to_quarter(
     filtered = EvidenceBackedQuarterSummary(
         company_name=evidence.company_name,
         quarter=evidence.quarter,
+        as_of_date=evidence.as_of_date,
         what_happened=what_happened,
         positives=positives,
         negatives=negatives,
@@ -606,12 +607,12 @@ def apply_rescue_reviews_to_rollup(
 
 def process_quarter_evidence_strict(
     evidence: EvidenceBackedQuarterSummary,
-    transcript_text: str,
+    corpus_text: str,
     price_block_text: str | None = None,
 ) -> EvidenceProcessingResult:
     validation = validate_quarter_evidence(
         evidence,
-        transcript_text,
+        corpus_text,
         price_block_text,
     )
     if validation.is_valid:
@@ -626,7 +627,7 @@ def process_quarter_evidence_strict(
             verbatim_kept=total,
         )
 
-    filtered = filter_quarter_evidence(evidence, validation, transcript_text)
+    filtered = filter_quarter_evidence(evidence, validation, corpus_text)
     dropped = [
         DroppedEntry(
             field=failure.field,

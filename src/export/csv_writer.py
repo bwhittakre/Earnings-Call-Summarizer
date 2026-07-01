@@ -11,6 +11,7 @@ from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
 
 from src.export.confidence_reference_key import write_confidence_reference_key
+from src.ingest.filings.fiscal import quarter_sort_key
 from src.schemas.models import EvidenceClaim, QuarterSummary
 
 CSV_COLUMNS = [
@@ -20,7 +21,7 @@ CSV_COLUMNS = [
     "what_happened",
     "positives",
     "negatives",
-    "transcript_only_confidence_score",
+    "document_only_confidence_score",
     "confidence_score",
     "analysis",
 ]
@@ -32,7 +33,7 @@ DISPLAY_HEADERS = {
     "what_happened": "What Happened",
     "positives": "Positives",
     "negatives": "Negatives",
-    "transcript_only_confidence_score": "Transcript-Only Score",
+    "document_only_confidence_score": "Document-Only Score",
     "confidence_score": "Confidence Score",
     "analysis": "Analysis",
 }
@@ -44,7 +45,7 @@ EXCEL_COLUMN_WIDTHS = {
     "What Happened": 42,
     "Positives": 60,
     "Negatives": 60,
-    "Transcript-Only Score": 18,
+    "Document-Only Score": 18,
     "Confidence Score": 16,
     "Analysis": 80,
 }
@@ -60,9 +61,9 @@ REFERENCE_KEY_SPACER_COLUMN = TABLE_COLUMN_COUNT + 1
 REFERENCE_KEY_START_COLUMN = TABLE_COLUMN_COUNT + 2
 
 
-def format_quarter_cell(quarter: str, call_date: str | None = None) -> str:
-    if call_date:
-        return f"{quarter}\nCall Date: {call_date}"
+def format_quarter_cell(quarter: str, as_of_date: str | None = None) -> str:
+    if as_of_date:
+        return f"{quarter}\nAs-of Date: {as_of_date}"
     return quarter
 
 
@@ -90,11 +91,11 @@ def summary_to_row(summary: QuarterSummary) -> dict[str, str]:
     return {
         "summary_type": summary.summary_type,
         "company_name": summary.company_name,
-        "quarter": format_quarter_cell(summary.quarter, summary.call_date),
+        "quarter": format_quarter_cell(summary.quarter, summary.as_of_date),
         "what_happened": format_what_happened(summary.what_happened),
         "positives": format_list(summary.positives),
         "negatives": format_list(summary.negatives),
-        "transcript_only_confidence_score": str(summary.transcript_only_confidence_score),
+        "document_only_confidence_score": str(summary.document_only_confidence_score),
         "confidence_score": str(summary.confidence_score),
         "analysis": format_analysis_csv(summary.analysis),
     }
@@ -104,11 +105,11 @@ def summary_to_excel_row(summary: QuarterSummary) -> dict[str, str]:
     return {
         "Summary Type": summary.summary_type.title(),
         "Company Name": summary.company_name,
-        "Quarter": format_quarter_cell(summary.quarter, summary.call_date),
+        "Quarter": format_quarter_cell(summary.quarter, summary.as_of_date),
         "What Happened": format_bullets(summary.what_happened),
         "Positives": format_bullets(summary.positives),
         "Negatives": format_bullets(summary.negatives),
-        "Transcript-Only Score": str(summary.transcript_only_confidence_score),
+        "Document-Only Score": str(summary.document_only_confidence_score),
         "Confidence Score": str(summary.confidence_score),
         "Analysis": format_analysis_bullets(summary.analysis),
     }
@@ -239,7 +240,7 @@ def populate_excel_sheet(worksheet, rows: Sequence[QuarterSummary]) -> None:
         "Summary Type",
         "Company Name",
         "Quarter",
-        "Transcript-Only Score",
+        "Document-Only Score",
         "Confidence Score",
     }
     for row in worksheet.iter_rows(min_row=2):
@@ -284,9 +285,19 @@ def populate_excel_sheet(worksheet, rows: Sequence[QuarterSummary]) -> None:
     )
 
 
+def sort_quarter_summaries(rows: Sequence[QuarterSummary]) -> list[QuarterSummary]:
+    return sorted(
+        rows,
+        key=lambda row: (
+            row.company_name.lower(),
+            *quarter_sort_key(row.quarter),
+        ),
+    )
+
+
 def group_rows_by_company(rows: Sequence[QuarterSummary]) -> dict[str, list[QuarterSummary]]:
     grouped: dict[str, list[QuarterSummary]] = {}
-    for row in rows:
+    for row in sort_quarter_summaries(rows):
         grouped.setdefault(row.company_name, []).append(row)
     return grouped
 

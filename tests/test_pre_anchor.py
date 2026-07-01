@@ -3,6 +3,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import MagicMock
 
+from src.ingest.filings import load_filing_packages
 from src.schemas.models import EvidenceBackedQuarterSummary, EvidenceClaim
 from src.validation.evidence_processor import (
     pre_anchor_quarter_failures,
@@ -13,6 +14,7 @@ from src.validation.quote_anchor import find_verbatim_quote
 from src.validation.rescue_judge import RescueJudge
 
 FIXTURES_PATH = Path(__file__).parent / "fixtures" / "amazon_audit_cases.json"
+FILINGS_ROOT = Path(__file__).parent / "fixtures" / "filings"
 
 
 class PreAnchorTestCase(unittest.TestCase):
@@ -100,13 +102,12 @@ class PreAnchorTestCase(unittest.TestCase):
                 self.assertIsNotNone(quote, case["name"])
 
     def test_amazon_audit_failures_mostly_pre_anchor_without_rescue_judge(self):
-        from src.ingest.loader import load_transcripts
-
-        loaded = load_transcripts(
-            Path("data/transcripts/amazon/FY2026-Q2.txt"),
-            expected_quarters=1,
+        packages = load_filing_packages(
+            FILINGS_ROOT,
+            companies="AMZN",
+            quarter="FY2026-Q2",
         )
-        transcript = next(iter(loaded.transcripts.values()))
+        corpus_text = packages[0].corpus_text
         audit_excerpts = [
             (
                 "what_happened",
@@ -146,7 +147,7 @@ class PreAnchorTestCase(unittest.TestCase):
                 EvidenceClaim(claim=audit_excerpts[3][1], excerpt=audit_excerpts[3][2])
             ],
         )
-        validation = validate_quarter_evidence(evidence, transcript)
+        validation = validate_quarter_evidence(evidence, corpus_text)
         self.assertFalse(validation.is_valid)
         self.assertLessEqual(
             len(validation.failures),
@@ -156,10 +157,10 @@ class PreAnchorTestCase(unittest.TestCase):
         updated, auto_anchored, remaining = pre_anchor_quarter_failures(
             evidence,
             validation.failures,
-            transcript,
+            corpus_text,
         )
         self.assertEqual(len(remaining), 0)
-        self.assertTrue(validate_quarter_evidence(updated, transcript).is_valid)
+        self.assertTrue(validate_quarter_evidence(updated, corpus_text).is_valid)
 
 
 if __name__ == "__main__":

@@ -25,7 +25,7 @@ from src.validation.rescue_orchestrator import augment_rescue_reviews_with_retri
 
 FIXTURES_PATH = Path(__file__).parent / "fixtures" / "rescue_golden_cases.json"
 
-TRANSCRIPT = (
+CORPUS = (
     "We saw strong demand in data center and raised our full-year outlook. "
     "Margins expanded due to mix. FX remained a headwind."
 )
@@ -71,7 +71,7 @@ class RescueJudgeTestCase(unittest.TestCase):
                 ),
             ]
         )
-        validation = validate_quarter_evidence(evidence, TRANSCRIPT)
+        validation = validate_quarter_evidence(evidence, CORPUS)
         self.assertFalse(validation.is_valid)
 
         rescue_result = RescueJudgeResult(
@@ -89,7 +89,7 @@ class RescueJudgeTestCase(unittest.TestCase):
             evidence,
             validation,
             rescue_result,
-            TRANSCRIPT,
+            CORPUS,
         )
         self.assertEqual(len(processed.evidence.what_happened), 2)
         self.assertEqual(len(processed.rescued), 1)
@@ -105,7 +105,7 @@ class RescueJudgeTestCase(unittest.TestCase):
                 )
             ]
         )
-        validation = validate_quarter_evidence(evidence, TRANSCRIPT)
+        validation = validate_quarter_evidence(evidence, CORPUS)
         rescue_result = RescueJudgeResult(
             reviews=[
                 RescueReview(
@@ -121,7 +121,7 @@ class RescueJudgeTestCase(unittest.TestCase):
             evidence,
             validation,
             rescue_result,
-            TRANSCRIPT,
+            CORPUS,
         )
         self.assertEqual(len(processed.dropped), 1)
         self.assertEqual(processed.dropped[0].drop_stage, "judge_rejected")
@@ -190,7 +190,7 @@ class RescueJudgeTestCase(unittest.TestCase):
                 )
             ]
         )
-        validation = validate_quarter_evidence(evidence, TRANSCRIPT)
+        validation = validate_quarter_evidence(evidence, CORPUS)
         rescue_result = RescueJudgeResult(
             reviews=[
                 RescueReview(
@@ -206,7 +206,7 @@ class RescueJudgeTestCase(unittest.TestCase):
             evidence,
             validation,
             rescue_result,
-            TRANSCRIPT,
+            CORPUS,
         )
         self.assertEqual(len(processed.dropped), 1)
         self.assertEqual(processed.dropped[0].drop_stage, "canonical_failed_verbatim")
@@ -296,7 +296,7 @@ class RescueJudgeTestCase(unittest.TestCase):
                 ),
             ]
         )
-        processed = process_quarter_evidence_strict(evidence, TRANSCRIPT)
+        processed = process_quarter_evidence_strict(evidence, CORPUS)
         self.assertEqual(len(processed.evidence.what_happened), 1)
         self.assertEqual(len(processed.dropped), 1)
 
@@ -309,7 +309,7 @@ class RescueJudgeTestCase(unittest.TestCase):
                 )
             ]
         )
-        validation = validate_quarter_evidence(evidence, TRANSCRIPT)
+        validation = validate_quarter_evidence(evidence, CORPUS)
         self.assertFalse(validation.is_valid)
 
         rescue_result = RescueJudgeResult(
@@ -327,7 +327,7 @@ class RescueJudgeTestCase(unittest.TestCase):
             evidence,
             validation,
             rescue_result,
-            TRANSCRIPT,
+            CORPUS,
         )
         self.assertEqual(len(processed.evidence.analysis), 1)
         self.assertEqual(len(processed.rescued), 1)
@@ -373,7 +373,7 @@ class RescueJudgeTestCase(unittest.TestCase):
         summarizer = QuarterSummarizer(client, skip_rescue_judge=False)
         output, _ = summarizer.summarize(
             quarter="FY2026-Q1",
-            transcript_text=TRANSCRIPT,
+            corpus_text=CORPUS,
             label="FY2026-Q1_quarter",
         )
 
@@ -396,7 +396,7 @@ class RescueJudgeTestCase(unittest.TestCase):
         summarizer = QuarterSummarizer(client, skip_rescue_judge=False)
         output, _ = summarizer.summarize(
             quarter="FY2026-Q1",
-            transcript_text=TRANSCRIPT,
+            corpus_text=CORPUS,
             label="FY2026-Q1_quarter",
         )
 

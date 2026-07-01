@@ -1,0 +1,28 @@
+<SEC-DOCUMENT>
+<TYPE>10-Q
+<TEXT>
+<html><body>
+xbrli:shares xbrli:pure
+<div>Table of Contents</div>
+<div>Forward-looking statements involve risks and uncertainties.</div>
+<div>Exhibit 31.1 Certification pursuant to Rule 13a-14(a)</div>
+
+Item 2. Management's Discussion and Analysis of Financial Condition and Results of Operations
+
+Revenue grew 78% year over year to $39.3 billion in the fourth quarter.
+Data center revenue was $35.6 billion, up 93% year over year.
+We expect first quarter revenue of $43.0 billion, plus or minus 2%.
+
+Item 1A. Risk Factors
+
+Export controls may materially affect our ability to sell products in China.
+
+Item 1. Financial Statements
+
+Consolidated revenue was $39.3 billion for the quarter ended April 27, 2025.
+
+<div>Signatures</div>
+<div>Pursuant to Section 906 of the Sarbanes-Oxley Act</div>
+</body></html>
+</TEXT>
+</SEC-DOCUMENT>

@@ -5,7 +5,7 @@ import re
 from datetime import date, datetime, timezone
 from pathlib import Path
 
-from src.ingest.call_date import format_call_date
+from src.ingest.dates import format_as_of_date
 from src.market.models import QuarterEndPrice
 from src.paths import OUTPUT_ROOT
 
@@ -33,8 +33,8 @@ def save_price_audit(
             {
                 "label": label,
                 "ticker": ticker,
-                "call_date": format_call_date(call_date),
-                "as_of_date": call_date.isoformat(),
+                "as_of_date": format_as_of_date(call_date),
+                "as_of_date_iso": call_date.isoformat(),
                 "reported_quarter": reported_quarter,
                 "prior_labels": prior_labels,
                 "mode": mode,

@@ -4,14 +4,18 @@ import logging
 from datetime import date
 from pathlib import Path
 
-from src.ingest.call_date import format_call_date, resolve_call_date
-from src.ingest.loader import LoadedTranscripts, load_transcripts, transcript_audit_label
+from src.export.csv_writer import sort_quarter_summaries
+from src.ingest.dates import resolve_as_of_date_text
+from src.ingest.filings import FilingPackage, load_filing_packages
+from src.ingest.filings.fiscal import parse_quarters_list
+from src.ingest.filings.corpus import DEFAULT_MAX_CORPUS_CHARS, truncate_corpus_for_llm
+from src.ingest.filings.loader import ExcerptConfig
+from src.ingest.filings.manifest import resolve_quarter_end_overrides
 from src.llm.anthropic_client import AnthropicClient
 from src.llm.quarter_summarizer import QuarterSummarizer, ValidatedQuarterOutput
 from src.market.fiscal_calendar import DEFAULT_FISCAL_CALENDARS_PATH
 from src.market.pipeline import MarketContext, build_market_context
 from src.pipeline.point_in_time import PointInTimeConfig
-from src.pipeline.strict_anchoring import resolve_strict_anchoring
 from src.schemas.models import QuarterSummary
 
 logger = logging.getLogger(__name__)
@@ -19,45 +23,58 @@ logger = logging.getLogger(__name__)
 
 def run_pipeline(
     client: AnthropicClient,
-    transcript_path: str,
-    expected_quarters: int = 1,
-    quarter: str | None = None,
+    filings_root: Path,
+    *,
+    companies: str,
+    quarter: str,
     skip_rescue_judge: bool = False,
     ticker: str | None = None,
     fiscal_calendars_path: Path = DEFAULT_FISCAL_CALENDARS_PATH,
     quarter_end_date_overrides: dict[str, date] | None = None,
-    reported_quarter_override: str | None = None,
     price_fetcher=None,
     point_in_time: PointInTimeConfig | None = None,
+    max_corpus_chars: int = DEFAULT_MAX_CORPUS_CHARS,
+    excerpt_config: ExcerptConfig | None = None,
 ) -> list[QuarterSummary]:
-    loaded = load_transcripts(
-        transcript_path=Path(transcript_path),
-        expected_quarters=expected_quarters,
-        quarter=quarter,
-    )
-    return run_pipeline_from_loaded(
-        client,
-        loaded,
-        skip_rescue_judge=skip_rescue_judge,
-        ticker=ticker,
-        fiscal_calendars_path=fiscal_calendars_path,
-        quarter_end_date_overrides=quarter_end_date_overrides,
-        reported_quarter_override=reported_quarter_override,
-        price_fetcher=price_fetcher,
-        point_in_time=point_in_time,
-    )
+    pit = point_in_time or PointInTimeConfig.disabled()
+    quarters = parse_quarters_list(quarter)
+    summaries: list[QuarterSummary] = []
+    for normalized_quarter in quarters:
+        if len(quarters) > 1:
+            logger.info("Processing quarter %s", normalized_quarter)
+        packages = load_filing_packages(
+            filings_root,
+            companies=companies,
+            quarter=normalized_quarter,
+            require_as_of_date=pit.active,
+            excerpt_config=excerpt_config,
+        )
+        summaries.extend(
+            run_pipeline_from_packages(
+                client,
+                packages,
+                skip_rescue_judge=skip_rescue_judge,
+                ticker=ticker,
+                fiscal_calendars_path=fiscal_calendars_path,
+                quarter_end_date_overrides=quarter_end_date_overrides,
+                price_fetcher=price_fetcher,
+                point_in_time=pit,
+                max_corpus_chars=max_corpus_chars,
+            )
+        )
+    return sort_quarter_summaries(summaries)
 
 
-def run_pipeline_from_loaded(
+def run_pipeline_from_packages(
     client: AnthropicClient,
-    loaded: LoadedTranscripts,
+    packages: list[FilingPackage],
     skip_rescue_judge: bool = False,
     ticker: str | None = None,
     fiscal_calendars_path: Path = DEFAULT_FISCAL_CALENDARS_PATH,
     quarter_end_date_overrides: dict[str, date] | None = None,
-    reported_quarter_override: str | None = None,
     price_fetcher=None,
     point_in_time: PointInTimeConfig | None = None,
+    max_corpus_chars: int = DEFAULT_MAX_CORPUS_CHARS,
 ) -> list[QuarterSummary]:
     pit = point_in_time or PointInTimeConfig.disabled()
     if pit.active:
@@ -65,7 +82,7 @@ def run_pipeline_from_loaded(
         if not pit.include_prices:
             if ticker:
                 logger.warning(
-                    "Ignoring --ticker in point-in-time mode (transcript-only)."
+                    "Ignoring --ticker in point-in-time mode (documents-only)."
                 )
             ticker = None
         elif not ticker:
@@ -80,63 +97,74 @@ def run_pipeline_from_loaded(
     )
 
     quarter_outputs: list[ValidatedQuarterOutput] = []
-    for item in sorted(loaded.files, key=lambda file: file.quarter):
-        quarter = item.quarter
-        label = transcript_audit_label(item)
-        transcript_text = loaded.transcripts[quarter]
-        call_date: date | None = None
-        reported_quarter: str | None = None
-        if pit.active or ticker:
-            call_date, reported_quarter = resolve_strict_anchoring(
-                transcript_text=transcript_text,
-                filename_quarter=item.quarter,
-                point_in_time=pit,
-                reported_quarter_override=reported_quarter_override,
-                require_call_date=bool(ticker),
+    for package in packages:
+        label = package.audit_label()
+        as_of_date = package.as_of_date
+        if pit.active and as_of_date is None:
+            raise ValueError(
+                f"Point-in-time mode requires as_of_date in manifest for {label}."
             )
+
         market_context: MarketContext | None = None
-        if ticker and reported_quarter is not None and call_date is not None:
+        effective_ticker = ticker or package.ticker
+        if ticker and as_of_date is not None:
+            manifest_overrides = resolve_quarter_end_overrides(
+                package.folder,
+                quarter=package.quarter,
+                as_of_date=as_of_date,
+            )
+            merged_overrides = {**(quarter_end_date_overrides or {}), **manifest_overrides}
             market_context = build_market_context(
-                ticker=ticker,
-                transcript_text=transcript_text,
-                call_date=call_date,
-                reported_quarter=reported_quarter,
-                transcript_file=item,
+                ticker=effective_ticker,
+                as_of_date=as_of_date,
+                reported_quarter=package.quarter,
+                audit_label=label,
                 calendars_path=fiscal_calendars_path,
-                date_overrides=quarter_end_date_overrides,
+                date_overrides=merged_overrides,
                 fetcher=price_fetcher,
                 point_in_time=pit,
             )
             logger.info(
                 "Fetched %s prior-quarter prices for %s "
-                "(reported=%s, call_date=%s)",
+                "(reported=%s, as_of_date=%s)",
                 len(market_context.prices),
                 market_context.ticker,
                 market_context.reported_quarter,
-                market_context.call_date.isoformat(),
+                market_context.as_of_date.isoformat(),
             )
 
         if pit.active:
             logger.info(
-                "Point-in-time mode: call_date=%s reported=%s prices=%s rescue=off",
-                call_date.isoformat(),
-                reported_quarter,
+                "Point-in-time mode: as_of_date=%s reported=%s prices=%s rescue=off",
+                as_of_date.isoformat() if as_of_date else None,
+                package.quarter,
                 bool(market_context),
             )
 
+        corpus_text, trunc_warnings = truncate_corpus_for_llm(
+            package.analysis_corpus_text,
+            max_corpus_chars,
+        )
+        for warning in trunc_warnings:
+            logger.warning("%s: %s", label, warning)
+
         logger.info(
-            "Summarizing %s (%s chars)",
-            quarter,
-            len(transcript_text),
+            "Summarizing %s (%s analysis chars, raw %s%s)",
+            label,
+            len(corpus_text),
+            len(package.raw_corpus_text),
+            f", truncated from {len(package.analysis_corpus_text):,}" if trunc_warnings else "",
         )
         output, result = quarter_summarizer.summarize(
-            quarter=quarter,
-            transcript_text=transcript_text,
+            quarter=package.quarter,
+            corpus_text=corpus_text,
             label=label,
             price_block_text=(
                 market_context.price_block_text if market_context else None
             ),
-            call_date=call_date,
+            as_of_date=as_of_date,
+            company_name=package.company_name,
+            is_q4=package.is_q4,
         )
         logger.info(
             "Detected company: %s",
@@ -151,15 +179,12 @@ def run_pipeline_from_loaded(
         quarter_outputs.append(output)
 
     summaries: list[QuarterSummary] = []
-    for item, output in zip(
-        sorted(loaded.files, key=lambda file: file.quarter),
-        quarter_outputs,
-    ):
-        call_date_text = resolve_call_date(
-            loaded.transcripts[item.quarter],
-            output.summary.call_date,
+    for package, output in zip(packages, quarter_outputs):
+        as_of_date_text = resolve_as_of_date_text(
+            package.as_of_date_text,
+            output.summary.as_of_date,
         )
         summaries.append(
-            output.summary.model_copy(update={"call_date": call_date_text})
+            output.summary.model_copy(update={"as_of_date": as_of_date_text})
         )
     return summaries

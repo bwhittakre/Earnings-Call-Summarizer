@@ -82,22 +82,48 @@ def normalize_text(text: str) -> str:
     return normalized.strip()
 
 
-def excerpt_found_in_source(excerpt: str, source: str) -> bool:
+@dataclass(frozen=True)
+class NormalizedSource:
+    text: str
+    normalized: str
+
+    @classmethod
+    def from_text(cls, text: str) -> NormalizedSource:
+        return cls(text=text, normalized=normalize_text(text))
+
+
+def excerpt_found_in_source(
+    excerpt: str,
+    source: str,
+    *,
+    normalized_source: NormalizedSource | None = None,
+) -> bool:
+    cache = normalized_source or NormalizedSource.from_text(source)
     normalized_excerpt = normalize_text(excerpt).rstrip(".,;")
     if len(normalized_excerpt) < MIN_EXCERPT_LENGTH:
         return False
-    return normalized_excerpt in normalize_text(source)
+    return normalized_excerpt in cache.normalized
 
 
-def excerpt_found_in_any_source(excerpt: str, sources: list[str]) -> bool:
+def excerpt_found_in_any_source(
+    excerpt: str,
+    sources: list[str],
+    *,
+    normalized_sources: list[NormalizedSource] | None = None,
+) -> bool:
+    if normalized_sources is not None:
+        return any(
+            excerpt_found_in_source(excerpt, cache.text, normalized_source=cache)
+            for cache in normalized_sources
+        )
     return any(excerpt_found_in_source(excerpt, source) for source in sources)
 
 
 def analysis_validation_sources(
-    transcript_text: str,
+    corpus_text: str,
     price_block_text: str | None = None,
 ) -> list[str]:
-    sources = [transcript_text]
+    sources = [corpus_text]
     if price_block_text:
         sources.append(price_block_text)
     return sources
@@ -106,11 +132,15 @@ def analysis_validation_sources(
 def _validate_claims(
     field_name: str,
     claims: list[EvidenceClaim],
-    source: str,
+    normalized_source: NormalizedSource,
 ) -> list[ValidationFailure]:
     failures: list[ValidationFailure] = []
     for index, item in enumerate(claims):
-        if not excerpt_found_in_source(item.excerpt, source):
+        if not excerpt_found_in_source(
+            item.excerpt,
+            normalized_source.text,
+            normalized_source=normalized_source,
+        ):
             failures.append(
                 ValidationFailure(
                     field=field_name,
@@ -125,13 +155,19 @@ def _validate_claims(
 
 def _validate_analysis_claims(
     claims: list[EvidenceClaim],
-    transcript_text: str,
-    price_block_text: str | None = None,
+    corpus_source: NormalizedSource,
+    price_source: NormalizedSource | None = None,
 ) -> list[ValidationFailure]:
     failures: list[ValidationFailure] = []
-    sources = analysis_validation_sources(transcript_text, price_block_text)
+    normalized_sources = [corpus_source]
+    if price_source is not None:
+        normalized_sources.insert(0, price_source)
     for index, item in enumerate(claims):
-        if excerpt_found_in_any_source(item.excerpt, sources):
+        if excerpt_found_in_any_source(
+            item.excerpt,
+            [source.text for source in normalized_sources],
+            normalized_sources=normalized_sources,
+        ):
             continue
         failures.append(
             ValidationFailure(
@@ -139,7 +175,7 @@ def _validate_analysis_claims(
                 index=index,
                 claim=item.claim,
                 excerpt=item.excerpt,
-                reason="excerpt not found in transcript or price block",
+                reason="excerpt not found in corpus or price block",
             )
         )
     return failures
@@ -147,9 +183,13 @@ def _validate_analysis_claims(
 
 def _validate_confidence(
     confidence: ConfidenceEvidence,
-    source: str,
+    normalized_source: NormalizedSource,
 ) -> list[ValidationFailure]:
-    if excerpt_found_in_source(confidence.excerpt, source):
+    if excerpt_found_in_source(
+        confidence.excerpt,
+        normalized_source.text,
+        normalized_source=normalized_source,
+    ):
         return []
     return [
         ValidationFailure(
@@ -164,18 +204,24 @@ def _validate_confidence(
 
 def validate_quarter_evidence(
     evidence: EvidenceBackedQuarterSummary,
-    transcript_text: str,
+    corpus_text: str,
     price_block_text: str | None = None,
 ) -> ValidationResult:
+    corpus_source = NormalizedSource.from_text(corpus_text)
+    price_source = (
+        NormalizedSource.from_text(price_block_text) if price_block_text else None
+    )
     failures: list[ValidationFailure] = []
-    failures.extend(_validate_claims("what_happened", evidence.what_happened, transcript_text))
-    failures.extend(_validate_claims("positives", evidence.positives, transcript_text))
-    failures.extend(_validate_claims("negatives", evidence.negatives, transcript_text))
+    failures.extend(
+        _validate_claims("what_happened", evidence.what_happened, corpus_source)
+    )
+    failures.extend(_validate_claims("positives", evidence.positives, corpus_source))
+    failures.extend(_validate_claims("negatives", evidence.negatives, corpus_source))
     failures.extend(
         _validate_analysis_claims(
             evidence.analysis,
-            transcript_text,
-            price_block_text,
+            corpus_source,
+            price_source,
         )
     )
     return ValidationResult(is_valid=not failures, failures=failures)
@@ -201,11 +247,14 @@ def validate_rollup_evidence(
     quarter_summaries: list[EvidenceBackedQuarterSummary],
 ) -> ValidationResult:
     source = build_quarter_evidence_corpus(quarter_summaries)
+    normalized_source = NormalizedSource.from_text(source)
     failures: list[ValidationFailure] = []
-    failures.extend(_validate_claims("what_happened", evidence.what_happened, source))
-    failures.extend(_validate_claims("positives", evidence.positives, source))
-    failures.extend(_validate_claims("negatives", evidence.negatives, source))
-    failures.extend(_validate_confidence(evidence.confidence, source))
+    failures.extend(
+        _validate_claims("what_happened", evidence.what_happened, normalized_source)
+    )
+    failures.extend(_validate_claims("positives", evidence.positives, normalized_source))
+    failures.extend(_validate_claims("negatives", evidence.negatives, normalized_source))
+    failures.extend(_validate_confidence(evidence.confidence, normalized_source))
     return ValidationResult(is_valid=not failures, failures=failures)
 
 
@@ -234,7 +283,7 @@ def _first_valid_claim_excerpt(
     return None
 
 
-def _fallback_transcript_excerpt(source: str) -> str:
+def _fallback_corpus_excerpt(source: str) -> str:
     collapsed = re.sub(r"\s+", " ", source.strip())
     if len(collapsed) >= MIN_EXCERPT_LENGTH:
         return collapsed[: max(MIN_EXCERPT_LENGTH, min(120, len(collapsed)))]
@@ -257,7 +306,7 @@ def _ensure_what_happened(
     return [
         EvidenceClaim(
             claim="Limited validated summary",
-            excerpt=_fallback_transcript_excerpt(source),
+            excerpt=_fallback_corpus_excerpt(source),
         )
     ]
 
@@ -284,7 +333,7 @@ def _ensure_analysis(
     return [
         EvidenceClaim(
             claim="Limited validated analysis",
-            excerpt=_fallback_transcript_excerpt(source),
+            excerpt=_fallback_corpus_excerpt(source),
         )
     ]
 
@@ -305,14 +354,14 @@ def _resolve_confidence(
         source,
     )
     if fallback_excerpt is None:
-        fallback_excerpt = _fallback_transcript_excerpt(source)
+        fallback_excerpt = _fallback_corpus_excerpt(source)
     return ConfidenceEvidence(level=confidence.level, excerpt=fallback_excerpt)
 
 
 def filter_quarter_evidence(
     evidence: EvidenceBackedQuarterSummary,
     validation: ValidationResult,
-    transcript_text: str,
+    corpus_text: str,
 ) -> EvidenceBackedQuarterSummary:
     what_happened = _filter_claim_list(
         evidence.what_happened,
@@ -334,18 +383,19 @@ def filter_quarter_evidence(
         what_happened,
         positives,
         negatives,
-        transcript_text,
+        corpus_text,
     )
     analysis = _ensure_analysis(
         analysis,
         what_happened,
         positives,
         negatives,
-        transcript_text,
+        corpus_text,
     )
     return EvidenceBackedQuarterSummary(
         company_name=evidence.company_name,
         quarter=evidence.quarter,
+        as_of_date=evidence.as_of_date,
         what_happened=what_happened,
         positives=positives,
         negatives=negatives,

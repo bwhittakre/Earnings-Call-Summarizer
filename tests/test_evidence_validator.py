@@ -110,23 +110,23 @@ class EvidenceValidatorTestCase(unittest.TestCase):
         )
 
     def test_validate_quarter_evidence_passes(self):
-        transcript = (
+        corpus_text = (
             "We saw strong demand in data center and raised our full-year outlook. "
             "Margins expanded due to mix. FX remained a headwind."
         )
-        result = validate_quarter_evidence(_quarter_evidence(), transcript)
+        result = validate_quarter_evidence(_quarter_evidence(), corpus_text)
         self.assertTrue(result.is_valid)
         self.assertEqual(result.failures, [])
 
     def test_validate_analysis_accepts_price_block_excerpt(self):
-        transcript = (
+        corpus_text = (
             "We saw strong demand in data center and raised our full-year outlook. "
             "Margins expanded due to mix. FX remained a headwind."
         )
         price_line = "FY2025-Q2 end (2024-07-28, traded 2024-07-26): $123.45"
         price_block = "\n".join(
             [
-                "--- PRIOR QUARTER STOCK PRICES (source: yfinance adjusted close; not from transcript) ---",
+                "--- PRIOR QUARTER STOCK PRICES (source: yfinance adjusted close; not from filings) ---",
                 "Ticker: NVDA",
                 price_line,
             ]
@@ -145,13 +145,13 @@ class EvidenceValidatorTestCase(unittest.TestCase):
         )
         result = validate_quarter_evidence(
             evidence,
-            transcript,
+            corpus_text,
             price_block,
         )
         self.assertTrue(result.is_valid)
 
     def test_validate_analysis_rejects_price_block_without_prices(self):
-        transcript = (
+        corpus_text = (
             "We saw strong demand in data center and raised our full-year outlook. "
             "Margins expanded due to mix. FX remained a headwind."
         )
@@ -168,11 +168,11 @@ class EvidenceValidatorTestCase(unittest.TestCase):
                 ),
             ]
         )
-        result = validate_quarter_evidence(evidence, transcript)
+        result = validate_quarter_evidence(evidence, corpus_text)
         self.assertFalse(result.is_valid)
 
     def test_validate_quarter_evidence_fails_on_missing_excerpt(self):
-        transcript = "We saw strong demand in data center."
+        corpus_text = "We saw strong demand in data center."
         evidence = _quarter_evidence(
             what_happened=[
                 EvidenceClaim(
@@ -184,23 +184,23 @@ class EvidenceValidatorTestCase(unittest.TestCase):
             negatives=[],
             analysis=SAMPLE_ANALYSIS,
         )
-        result = validate_quarter_evidence(evidence, transcript)
+        result = validate_quarter_evidence(evidence, corpus_text)
         self.assertFalse(result.is_valid)
         self.assertEqual(result.failures[0].field, "what_happened")
 
     def test_validate_quarter_evidence_validates_analysis(self):
-        transcript = "We saw strong demand in data center and raised our full-year outlook."
+        corpus_text = "We saw strong demand in data center and raised our full-year outlook."
         evidence = _quarter_evidence(
             positives=[],
             negatives=[],
             analysis=[
                 EvidenceClaim(
                     claim="+10: Demand commentary",
-                    excerpt="This quote is not in the transcript at all.",
+                    excerpt="This quote is not in the corpus at all.",
                 )
             ],
         )
-        result = validate_quarter_evidence(evidence, transcript)
+        result = validate_quarter_evidence(evidence, corpus_text)
         self.assertFalse(result.is_valid)
         self.assertEqual(result.failures[0].field, "analysis")
 
@@ -263,13 +263,13 @@ class EvidenceValidatorTestCase(unittest.TestCase):
                 what_happened=["Strong demand"],
                 positives=[],
                 negatives=[],
-                transcript_only_confidence_score=50,
+                document_only_confidence_score=50,
                 confidence_score=101,
                 analysis=SAMPLE_ANALYSIS,
             )
 
     def test_filter_quarter_evidence_drops_invalid_bullets(self):
-        transcript = (
+        corpus_text = (
             "We saw strong demand in data center and raised our full-year outlook. "
             "Margins expanded due to mix."
         )
@@ -288,8 +288,8 @@ class EvidenceValidatorTestCase(unittest.TestCase):
             positives=[],
             negatives=[],
         )
-        validation = validate_quarter_evidence(evidence, transcript)
-        filtered = filter_quarter_evidence(evidence, validation, transcript)
+        validation = validate_quarter_evidence(evidence, corpus_text)
+        filtered = filter_quarter_evidence(evidence, validation, corpus_text)
         self.assertEqual(len(filtered.what_happened), 1)
         self.assertEqual(filtered.what_happened[0].claim, "Strong data center demand")
         summary = quarter_summary_from_evidence(filtered)

@@ -22,14 +22,6 @@ from src.export.csv_writer import (
     summary_to_row,
     write_excel,
 )
-from src.ingest.loader import (
-    assign_quarters,
-    dry_run_report,
-    load_transcripts,
-    normalize_quarter_label,
-    parse_quarter_from_filename,
-    resolve_transcript_files,
-)
 from src.schemas.models import EvidenceClaim, QuarterSummary
 
 SAMPLE_ANALYSIS = [
@@ -48,7 +40,7 @@ def _sample_summary(**overrides) -> QuarterSummary:
         "positives": ["Blackwell ramp", "Margin recovery"],
         "negatives": ["China restrictions"],
         "confidence_score": 72,
-        "transcript_only_confidence_score": 72,
+        "document_only_confidence_score": 72,
         "analysis": list(SAMPLE_ANALYSIS),
     }
     payload.update(overrides)
@@ -56,46 +48,6 @@ def _sample_summary(**overrides) -> QuarterSummary:
 
 
 class BasicsTestCase(unittest.TestCase):
-    def test_parse_quarter_from_filename(self):
-        self.assertEqual(parse_quarter_from_filename(Path("2024-Q1.txt")), "2024-Q1")
-        self.assertEqual(
-            parse_quarter_from_filename(Path("MSFT_2025-Q3_transcript.pdf")),
-            "2025-Q3",
-        )
-        self.assertEqual(
-            parse_quarter_from_filename(Path("NVDA_FY2025-Q2_earnings.txt")),
-            "FY2025-Q2",
-        )
-        self.assertEqual(
-            parse_quarter_from_filename(Path("FY2027-Q1.pdf")),
-            "FY2027-Q1",
-        )
-        self.assertIsNone(parse_quarter_from_filename(Path("transcript.txt")))
-
-    def test_assign_quarters_fiscal_sorted(self):
-        files = [
-            Path("FY2027-Q1.txt"),
-            Path("FY2025-Q2.txt"),
-            Path("FY2026-Q4.txt"),
-        ]
-        assigned = assign_quarters(files)
-        self.assertEqual(
-            [item.quarter for item in assigned],
-            ["FY2025-Q2", "FY2026-Q4", "FY2027-Q1"],
-        )
-
-    def test_assign_quarters_sorted(self):
-        files = [
-            Path("2024-Q2.txt"),
-            Path("2024-Q1.txt"),
-            Path("2024-Q3.txt"),
-        ]
-        assigned = assign_quarters(files)
-        self.assertEqual(
-            [item.quarter for item in assigned],
-            ["2024-Q1", "2024-Q2", "2024-Q3"],
-        )
-
     def test_csv_row_formatting(self):
         summary = _sample_summary(company_name="Microsoft", quarter="2024-Q3")
         row = summary_to_row(summary)
@@ -151,18 +103,18 @@ class BasicsTestCase(unittest.TestCase):
         self.assertEqual(row["Summary Type"], "Quarter")
         self.assertEqual(row["What Happened"], "- Strong data center demand\n- Raised guidance")
         self.assertEqual(row["Confidence Score"], "72")
-        self.assertEqual(row["Transcript-Only Score"], "72")
+        self.assertEqual(row["Document-Only Score"], "72")
         self.assertIn('"We are raising full-year revenue guidance across every segment."', row["Analysis"])
 
     def test_write_excel(self):
-        summary = _sample_summary(call_date="(08,28,2024)")
+        summary = _sample_summary(as_of_date="(08,28,2024)")
         with TemporaryDirectory() as tmp_dir:
             output_path = Path(tmp_dir) / "summary.xlsx"
             write_excel([summary], output_path)
             workbook = load_workbook(output_path)
             worksheet = workbook["Nvidia"]
             self.assertEqual(worksheet["A1"].value, "Summary Type")
-            self.assertEqual(worksheet["G1"].value, "Transcript-Only Score")
+            self.assertEqual(worksheet["G1"].value, "Document-Only Score")
             self.assertEqual(worksheet["H1"].value, "Confidence Score")
             self.assertEqual(worksheet["I1"].value, "Analysis")
             self.assertEqual(worksheet["D2"].value, "- Strong data center demand\n- Raised guidance")
@@ -170,7 +122,7 @@ class BasicsTestCase(unittest.TestCase):
             self.assertEqual(worksheet["H2"].value, "72")
             self.assertEqual(
                 worksheet["C2"].value,
-                "FY2025-Q2\nCall Date: (08,28,2024)",
+                "FY2025-Q2\nAs-of Date: (08,28,2024)",
             )
             self.assertEqual(worksheet["K1"].value, REFERENCE_KEY_TITLE)
             self.assertIn(
@@ -201,56 +153,38 @@ class BasicsTestCase(unittest.TestCase):
             output_path = Path(tmp_dir) / "summary.xlsx"
             write_excel([nvidia, amazon], output_path)
             workbook = load_workbook(output_path)
-            self.assertEqual(workbook.sheetnames, ["Nvidia", "Amazon"])
+            self.assertEqual(workbook.sheetnames, ["Amazon", "Nvidia"])
             self.assertEqual(workbook["Nvidia"]["B2"].value, "Nvidia")
             self.assertEqual(workbook["Amazon"]["B2"].value, "Amazon")
             self.assertEqual(workbook["Nvidia"]["K1"].value, REFERENCE_KEY_TITLE)
             self.assertEqual(workbook["Amazon"]["K1"].value, REFERENCE_KEY_TITLE)
 
-    def test_load_single_transcript_file(self):
-        transcript_path = (
-            Path(__file__).resolve().parent.parent
-            / "data"
-            / "transcripts"
-            / "nvidia"
-            / "FY2025-Q2.txt"
+    def test_write_excel_consolidates_multiple_quarters_on_one_sheet(self):
+        rows = [
+            _sample_summary(quarter="FY2026-Q1", confidence_score=42),
+            _sample_summary(quarter="FY2026-Q2", confidence_score=46),
+            _sample_summary(quarter="FY2026-Q3", confidence_score=67),
+            _sample_summary(quarter="FY2026-Q4", confidence_score=90),
+        ]
+        with TemporaryDirectory() as tmp_dir:
+            output_path = Path(tmp_dir) / "summary.xlsx"
+            write_excel(rows, output_path)
+            workbook = load_workbook(output_path)
+            self.assertEqual(workbook.sheetnames, ["Nvidia"])
+            worksheet = workbook["Nvidia"]
+            self.assertEqual(worksheet["C2"].value, "FY2026-Q1")
+            self.assertEqual(worksheet["C3"].value, "FY2026-Q2")
+            self.assertEqual(worksheet["C4"].value, "FY2026-Q3")
+            self.assertEqual(worksheet["C5"].value, "FY2026-Q4")
+            self.assertEqual(worksheet["H5"].value, "90")
+            self.assertEqual(worksheet.auto_filter.ref, "A1:I5")
+
+    def test_format_quarter_cell(self):
+        self.assertEqual(format_quarter_cell("FY2025-Q2"), "FY2025-Q2")
+        self.assertEqual(
+            format_quarter_cell("FY2025-Q2", "(08,28,2024)"),
+            "FY2025-Q2\nAs-of Date: (08,28,2024)",
         )
-        if not transcript_path.exists():
-            self.skipTest("Nvidia FY2025-Q2 transcript fixture not present")
-
-        loaded = load_transcripts(transcript_path)
-        self.assertEqual(list(loaded.transcripts.keys()), ["FY2025-Q2"])
-        self.assertGreater(len(loaded.transcripts["FY2025-Q2"]), 1000)
-
-    def test_resolve_quarter_filter_from_folder(self):
-        folder = Path(__file__).resolve().parent.parent / "data" / "transcripts" / "nvidia"
-        if not folder.exists():
-            self.skipTest("Nvidia transcript folder not present")
-
-        assigned = resolve_transcript_files(folder, quarter="FY2025-Q2")
-        self.assertEqual(len(assigned), 1)
-        self.assertEqual(assigned[0].quarter, "FY2025-Q2")
-        self.assertEqual(assigned[0].path.name, "FY2025-Q2.txt")
-
-    def test_normalize_quarter_label(self):
-        self.assertEqual(normalize_quarter_label("FY2025-Q2"), "FY2025-Q2")
-        self.assertEqual(normalize_quarter_label("2025-Q2"), "2025-Q2")
-
-    def test_dry_run_single_file(self):
-        transcript_path = (
-            Path(__file__).resolve().parent.parent
-            / "data"
-            / "transcripts"
-            / "nvidia"
-            / "FY2025-Q2.txt"
-        )
-        if not transcript_path.exists():
-            self.skipTest("Nvidia FY2025-Q2 transcript fixture not present")
-
-        report = dry_run_report(transcript_path)
-        self.assertIn("Validation: OK", report)
-        self.assertIn("auto-detect from transcript", report)
-        self.assertIn("FY2025-Q2.txt", report)
 
 
 if __name__ == "__main__":

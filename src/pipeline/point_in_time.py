@@ -18,8 +18,12 @@ class PointInTimeConfig:
         return cls()
 
     @classmethod
-    def transcript_only(cls) -> PointInTimeConfig:
+    def document_only(cls) -> PointInTimeConfig:
         return cls(strict=True, with_prices=False)
+
+    @classmethod
+    def transcript_only(cls) -> PointInTimeConfig:
+        return cls.document_only()
 
     @classmethod
     def with_prices(cls, *, unadjusted: bool = False) -> PointInTimeConfig:
