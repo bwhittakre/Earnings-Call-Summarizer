@@ -21,20 +21,29 @@ def load_prompt(name: str) -> str:
     return (PROMPTS_DIR / name).read_text(encoding="utf-8")
 
 
+def _loads_json(raw: str) -> dict:
+    try:
+        return json.loads(raw)
+    except json.JSONDecodeError:
+        import json_repair
+
+        return json_repair.loads(raw)
+
+
 def extract_json(text: str) -> dict:
     text = text.strip()
     try:
-        return json.loads(text)
+        return _loads_json(text)
     except json.JSONDecodeError:
         pass
 
-    fence_match = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", text, re.DOTALL)
+    fence_match = re.search(r"```(?:json)?\s*(\{.*\})\s*```", text, re.DOTALL)
     if fence_match:
-        return json.loads(fence_match.group(1))
+        return _loads_json(fence_match.group(1))
 
     brace_match = re.search(r"\{.*\}", text, re.DOTALL)
     if brace_match:
-        return json.loads(brace_match.group(0))
+        return _loads_json(brace_match.group(0))
 
     raise ValueError("No valid JSON object found in model response")
 

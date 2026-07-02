@@ -21,3 +21,4 @@ output_confidence/*
 !output_confidence/
 !output_confidence/.gitkeep
 .pytest_cache/
+batch_*.log

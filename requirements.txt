@@ -7,3 +7,4 @@ lxml
 openpyxl
 pyyaml
 yfinance
+json-repair
