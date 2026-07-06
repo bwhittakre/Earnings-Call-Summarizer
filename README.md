@@ -13,6 +13,12 @@ py -3 main.py --filings-root . --companies TSLA,AMZN,NVDA,MSFT --quarter FY2027-
 # Calendar-aligned multi-company run (same period end, per-company fiscal labels)
 py -3 main.py --filings-root . --companies Microsoft,Amazon --quarter-end 2025-06-30 --fetch-missing --with-prices --single-sheet --output output_confidence/qe_2025_06_30.xlsx
 
+# Sector batch (curated ticker list under config/sectors/)
+py -3 main.py --filings-root . --sector mega_cap_tech --quarter-end 2025-09-30 --fetch-missing --with-prices --single-sheet --output output_confidence/qe_2025_09_30_mega_cap_tech.xlsx
+
+# Custom ticker list file (one ticker or company name per line)
+py -3 main.py --filings-root . --companies-file config/sectors/mega_cap_tech.txt --quarter FY2026-Q3 --fetch-missing --dry-run
+
 # Company names resolve via SEC company_tickers.json
 py -3 main.py --filings-root . --companies "Microsoft,Amazon" --quarter FY2026-Q1 --fetch-missing --output output_confidence/summary.xlsx
 
@@ -124,6 +130,23 @@ v1 fetches **10-Q / 10-K + earnings 8-K** only. Press releases and investor deck
 
 **Git hygiene:** Fetched filing trees are not meant for version control. After a successful EDGAR fetch (`--fetch-missing` or `scripts/fetch_edgar.py`), the pipeline auto-updates `.gitignore` for new tickers when `--filings-root` is the repo root (`.`), or ignores all of `data/filings/` when you use that path (recommended). Outputs stay under `output_confidence/` (also gitignored).
 
+## Sector / batch company lists
+
+Run many tickers without a long `--companies` string. Provide **exactly one** of:
+
+| Source | Example |
+|--------|---------|
+| `--companies` | `MSFT,AMZN,NVDA,TSLA` |
+| `--companies-file` | `config/sectors/my_watchlist.txt` |
+| `--sector` | `mega_cap_tech` → loads `config/sectors/mega_cap_tech.txt` |
+
+List file format: one ticker or company name per line; `#` starts a comment. Built-in sector lists:
+
+- `mega_cap_tech` — MSFT, AMZN, NVDA, TSLA, GOOGL, META, AAPL
+- `semiconductors` — NVDA, AMD, AVGO, INTC, QCOM, MRVL, MU
+
+Add your own lists under [`config/sectors/`](config/sectors/) (e.g. `config/sectors/financials.txt`) and pass `--sector financials` or `--companies-file config/sectors/financials.txt`.
+
 ## Pipeline
 
 ```mermaid
@@ -156,7 +179,9 @@ flowchart TD
 | Flag | Purpose |
 |------|---------|
 | `--filings-root` | Root with `{TICKER}/{quarter}/` trees |
-| `--companies` | Comma-separated tickers or company names (e.g. `MSFT` or `Microsoft`) |
+| `--companies` | Comma-separated tickers or company names (e.g. `MSFT` or `Microsoft`). Mutually exclusive with `--companies-file` and `--sector`. |
+| `--companies-file` | Text file with one ticker or company name per line (`#` comments allowed) |
+| `--sector` | Curated list from `config/sectors/{name}.txt` (e.g. `mega_cap_tech`, `semiconductors`) |
 | `--quarter` | Fiscal quarter label for all companies (e.g. `FY2026-Q1`). Mutually exclusive with `--quarter-end`. |
 | `--quarter-end` | Calendar quarter-end date (`YYYY-MM-DD`). Resolves per-company fiscal labels so every company uses the same period end (e.g. `2025-06-30` → MSFT `FY2025-Q4`, AMZN `FY2026-Q2`). When a company resolves to Q4, `--fetch-missing` also prefetches that fiscal year's Q1–Q3 10-Qs for 10-K cross-reference. |
 | `--fetch-missing` | Fetch missing SEC packages from EDGAR before load/analysis |

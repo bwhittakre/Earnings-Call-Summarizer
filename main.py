@@ -9,6 +9,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 from src.export.csv_writer import write_output
+from src.ingest.company_lists import CompanyListError, resolve_companies_argument
 from src.ingest.edgar.cik_lookup import normalize_companies_to_tickers
 from src.ingest.edgar.client import EdgarClient, make_json_fetcher
 from src.ingest.edgar.config import load_edgar_config
@@ -68,10 +69,21 @@ def build_parser() -> argparse.ArgumentParser:
         required=True,
         help="Root folder containing {TICKER}/{quarter}/ filing trees",
     )
-    parser.add_argument(
+    company_group = parser.add_mutually_exclusive_group(required=True)
+    company_group.add_argument(
         "--companies",
-        required=True,
         help="Comma-separated tickers or company names (e.g. NVDA,AMZN or Microsoft,Amazon)",
+    )
+    company_group.add_argument(
+        "--companies-file",
+        help="Path to a text file with one ticker or company name per line (# comments allowed)",
+    )
+    company_group.add_argument(
+        "--sector",
+        help=(
+            "Curated sector list from config/sectors/{name}.txt "
+            "(e.g. mega_cap_tech, semiconductors)"
+        ),
     )
     period_group = parser.add_mutually_exclusive_group(required=True)
     period_group.add_argument(
@@ -243,6 +255,16 @@ def main() -> int:
     fiscal_calendars_path = Path(args.fiscal_calendars)
     excerpt_config = _build_excerpt_config(args)
 
+    try:
+        companies_raw = resolve_companies_argument(
+            companies=args.companies,
+            companies_file=args.companies_file,
+            sector=args.sector,
+        )
+    except CompanyListError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        return 1
+
     quarter_end_run = None
     if args.quarter_end:
         try:
@@ -251,24 +273,28 @@ def main() -> int:
             print(f"Error: {exc}", file=sys.stderr)
             return 1
 
-    companies_arg = args.companies
+    companies_arg = companies_raw
     edgar_client: EdgarClient | None = None
     if (
         args.fetch_missing
         or args.quarter_end
-        or _needs_company_resolution(args.companies)
+        or _needs_company_resolution(companies_raw)
     ):
         try:
             edgar_client = EdgarClient(load_edgar_config())
             companies_arg = normalize_companies_to_tickers(
-                args.companies,
+                companies_raw,
                 fetcher=make_json_fetcher(edgar_client),
             )
-            if companies_arg != args.companies.upper().replace(" ", ""):
+            if companies_arg != companies_raw.upper().replace(" ", ""):
                 logging.info("Resolved companies to tickers: %s", companies_arg)
         except EdgarFetchError as exc:
             print(f"Error: {exc}", file=sys.stderr)
             return 1
+    elif args.sector:
+        logging.info("Sector %s companies: %s", args.sector, companies_arg)
+    elif args.companies_file:
+        logging.info("Companies file resolved to: %s", companies_arg)
 
     if args.quarter_end:
         try:
@@ -403,7 +429,7 @@ def main() -> int:
         )
         return 1
 
-    if args.with_prices and args.ticker and "," in args.companies:
+    if args.with_prices and args.ticker and "," in companies_arg:
         logging.warning(
             "Ignoring --ticker for multi-company run; using each company's ticker."
         )

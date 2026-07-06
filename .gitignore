@@ -8,7 +8,10 @@ __pycache__/
 .venv/
 venv/
 # AUTO: fetched filing roots
+AAPL/
 AMZN/
+GOOGL/
+META/
 MSFT/
 NVDA/
 TSLA/

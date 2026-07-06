@@ -1,0 +1,8 @@
+# Mega-cap US technology (curated for batch runs)
+MSFT
+AMZN
+NVDA
+TSLA
+GOOGL
+META
+AAPL

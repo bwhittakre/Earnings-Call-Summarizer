@@ -1,0 +1,8 @@
+# US semiconductor names (curated for batch runs)
+NVDA
+AMD
+AVGO
+INTC
+QCOM
+MRVL
+MU
