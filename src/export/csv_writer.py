@@ -76,7 +76,7 @@ def format_list(items: list[str]) -> str:
 
 
 def format_bullets(items: list[str]) -> str:
-    return "\n".join(f"- {item}" for item in items)
+    return "\n".join(f"• {item}" for item in items)
 
 
 def format_analysis_bullets(items: list[EvidenceClaim]) -> str:

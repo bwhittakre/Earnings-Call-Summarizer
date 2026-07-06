@@ -2,7 +2,7 @@
 
 Analyze public SEC filings (10-K, 10-Q, 8-K, earnings press releases, investor presentations) to produce next-quarter **confidence scores** with evidence-backed Excel output. Optional prior-quarter stock prices and point-in-time modes support backtest hygiene.
 
-No EDGAR automation in v1 — drop files manually from SEC EDGAR into the folder layout below.
+Filings can be dropped manually or fetched programmatically from SEC EDGAR (see **EDGAR fetch** below).
 
 ## Quick start
 
@@ -83,6 +83,28 @@ Use `_` or `-` after `8-K` in the filename stem. Files inside `8-K/` can use any
 | Q1–Q3 | `10-Q.txt` (or at least one of 10-Q, 8-K, press_release) | Standard single-quarter package |
 | Q4 | `10-K.txt` | Loader pulls prior `10-Q.txt` from sibling Q1–Q3 folders for cross-reference |
 
+## EDGAR fetch
+
+Programmatically download SEC filings into the folder layout above, then run the normal pipeline.
+
+Configure SEC fair access in [`config/edgar.yaml`](config/edgar.yaml) (`user_agent` must identify your organization/contact).
+
+```powershell
+# Preview resolved accessions (no download)
+py -3 scripts/fetch_edgar.py --ticker AMZN --quarter FY2019-Q3 --filings-root . --dry-run
+
+# Fetch one quarter and validate loader/prices dry-run
+py -3 scripts/fetch_edgar.py --ticker AMZN --quarter FY2019-Q3 --filings-root . --validate
+
+# Backfill a quarter range (skips complete folders by default)
+py -3 scripts/fetch_edgar.py --ticker AMZN --from FY2017-Q1 --to FY2026-Q4 --filings-root .
+
+# Force re-download
+py -3 scripts/fetch_edgar.py --ticker AMZN --quarter FY2019-Q3 --filings-root . --overwrite
+```
+
+v1 fetches **10-Q / 10-K + earnings 8-K** only. Press releases and investor decks remain optional manual files. Cached SEC responses live under `output_confidence/edgar_cache/` (gitignored).
+
 ## Pipeline
 
 ```mermaid
@@ -103,6 +125,7 @@ flowchart TD
 | Stage | Module | Role |
 |-------|--------|------|
 | Ingest | `src/ingest/filings/` | Discover folders, Q4 sibling 10-Qs, sanitize filings |
+| EDGAR fetch | `src/ingest/edgar/`, `scripts/fetch_edgar.py` | Resolve CIK, select filings, download + write quarter folders |
 | Excerpt pull | `excerpt_puller.py`, `sec_sanitize.py`, `sec_sections.py` | Build small analysis corpus from high-signal verbatim spans |
 | Summarize | `src/llm/quarter_summarizer.py` | Filing prompt + LLM JSON |
 | Validate | `src/validation/` | Verbatim excerpt check against analysis corpus, optional rescue judge |

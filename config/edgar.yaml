@@ -1,0 +1,11 @@
+user_agent: "CassiusCapital EarningsCallSummarizer bobby@cassiuscap.com"
+rate_limit_rps: 8
+earnings_8k_window_days: 45
+company_folders:
+  AMZN: Amazon
+  NVDA: NVDA
+  TSLA: Tesla
+company_names:
+  AMZN: Amazon
+  NVDA: Nvidia
+  TSLA: Tesla

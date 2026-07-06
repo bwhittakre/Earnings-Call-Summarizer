@@ -57,7 +57,7 @@ class BasicsTestCase(unittest.TestCase):
         self.assertIn("We are raising full-year revenue guidance", row["analysis"])
         self.assertEqual(format_what_happened(["A", "B"]), "A & B")
         self.assertEqual(format_list(["X", "Y"]), "X, Y")
-        self.assertEqual(format_bullets(["X", "Y"]), "- X\n- Y")
+        self.assertEqual(format_bullets(["X", "Y"]), "• X\n• Y")
 
     def test_analysis_bullet_formatting_includes_excerpt(self):
         formatted = format_analysis_bullets(SAMPLE_ANALYSIS)
@@ -101,7 +101,7 @@ class BasicsTestCase(unittest.TestCase):
         summary = _sample_summary()
         row = summary_to_excel_row(summary)
         self.assertEqual(row["Summary Type"], "Quarter")
-        self.assertEqual(row["What Happened"], "- Strong data center demand\n- Raised guidance")
+        self.assertEqual(row["What Happened"], "• Strong data center demand\n• Raised guidance")
         self.assertEqual(row["Confidence Score"], "72")
         self.assertEqual(row["Document-Only Score"], "72")
         self.assertIn('"We are raising full-year revenue guidance across every segment."', row["Analysis"])
@@ -117,7 +117,7 @@ class BasicsTestCase(unittest.TestCase):
             self.assertEqual(worksheet["G1"].value, "Document-Only Score")
             self.assertEqual(worksheet["H1"].value, "Confidence Score")
             self.assertEqual(worksheet["I1"].value, "Analysis")
-            self.assertEqual(worksheet["D2"].value, "- Strong data center demand\n- Raised guidance")
+            self.assertEqual(worksheet["D2"].value, "• Strong data center demand\n• Raised guidance")
             self.assertEqual(worksheet["G2"].value, "72")
             self.assertEqual(worksheet["H2"].value, "72")
             self.assertEqual(
