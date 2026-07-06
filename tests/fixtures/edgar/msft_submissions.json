@@ -1,0 +1,19 @@
+{
+  "fiscalYearEnd": "0630",
+  "filings": {
+    "recent": {
+      "accessionNumber": [
+        "0000789019-24-000045",
+        "0000789019-24-000032"
+      ],
+      "form": ["10-Q", "10-Q"],
+      "filingDate": ["2024-10-30", "2024-07-30"],
+      "reportDate": ["2024-09-30", "2024-06-30"],
+      "primaryDocument": [
+        "msft-20240930.htm",
+        "msft-20240630.htm"
+      ]
+    },
+    "files": []
+  }
+}

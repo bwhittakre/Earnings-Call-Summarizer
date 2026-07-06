@@ -1,17 +1,21 @@
 from __future__ import annotations
 
 from datetime import date, timedelta
-from typing import Iterable
+from typing import TYPE_CHECKING, Iterable
 
 from src.ingest.edgar.client import EdgarClient
 from src.ingest.edgar.config import EdgarConfig
 from src.ingest.edgar.models import EdgarFetchError, FilingRef, PlannedDocument, QuarterFetchPlan
-from src.ingest.edgar.period import (
+from src.ingest.edgar.submissions import iter_all_filings
+from src.market.fiscal_resolver import (
     expected_period_end_date,
     fiscal_year_end_date,
     manifest_as_of_date_text,
 )
 from src.ingest.filings.fiscal import fiscal_year_prefix, is_q4_quarter, normalize_quarter_label
+
+if TYPE_CHECKING:
+    from src.ingest.edgar.fiscal_profile import FiscalProfile
 
 
 def _parse_iso_date(value: str | None) -> date | None:
@@ -21,44 +25,6 @@ def _parse_iso_date(value: str | None) -> date | None:
         return date.fromisoformat(str(value)[:10])
     except ValueError:
         return None
-
-
-def _columnar_filings(payload: dict) -> list[dict[str, str]]:
-    keys = (
-        "accessionNumber",
-        "form",
-        "filingDate",
-        "reportDate",
-        "primaryDocument",
-    )
-    columns = {key: payload.get(key, []) for key in keys}
-    count = max((len(values) for values in columns.values()), default=0)
-    rows: list[dict[str, str]] = []
-    for index in range(count):
-        row = {
-            key: columns[key][index]
-            for key in keys
-            if index < len(columns[key])
-        }
-        if row.get("accessionNumber"):
-            rows.append(row)
-    return rows
-
-
-def iter_all_filings(client: EdgarClient, submissions: dict) -> Iterable[dict[str, str]]:
-    filings = submissions.get("filings", {})
-    recent = filings.get("recent")
-    if isinstance(recent, dict):
-        yield from _columnar_filings(recent)
-
-    for file_info in filings.get("files", []) or []:
-        if not isinstance(file_info, dict):
-            continue
-        name = file_info.get("name")
-        if not name:
-            continue
-        payload = client.fetch_submissions_file(str(name))
-        yield from _columnar_filings(payload)
 
 
 def _build_filing_ref(cik: int, row: dict[str, str], client: EdgarClient) -> FilingRef:
@@ -167,10 +133,26 @@ def build_quarter_fetch_plan(
     client: EdgarClient,
     submissions: dict,
     cik: int,
+    fiscal_profile: FiscalProfile | None = None,
+    period_end_override: date | None = None,
 ) -> QuarterFetchPlan:
     normalized = normalize_quarter_label(quarter)
     ticker_key = ticker.strip().upper()
-    period_end = expected_period_end_date(ticker_key, normalized)
+    period_end = period_end_override or expected_period_end_date(
+        ticker_key,
+        normalized,
+        fiscal_profile=fiscal_profile,
+    )
+    if period_end_override is not None:
+        as_of_date_text = (
+            f"({period_end.month:02d},{period_end.day:02d},{period_end.year})"
+        )
+    else:
+        as_of_date_text = manifest_as_of_date_text(
+            ticker_key,
+            normalized,
+            fiscal_profile=fiscal_profile,
+        )
     fiscal_year = fiscal_year_prefix(normalized)
     company_folder = config.company_folders.get(ticker_key, ticker_key)
     company_name = config.company_names.get(ticker_key, ticker_key)
@@ -180,12 +162,17 @@ def build_quarter_fetch_plan(
     documents: list[PlannedDocument] = []
 
     if is_q4_quarter(normalized):
+        ten_k_target = period_end_override or fiscal_year_end_date(
+            ticker_key,
+            normalized,
+            fiscal_profile=fiscal_profile,
+        )
         ten_k = _select_period_form(
             all_filings,
             cik=cik,
             client=client,
             form_prefix="10-K",
-            target_date=fiscal_year_end_date(ticker_key, normalized),
+            target_date=ten_k_target,
         )
         documents.append(
             PlannedDocument(doc_type="10-K", filename="10-K.txt", filing=ten_k)
@@ -218,7 +205,7 @@ def build_quarter_fetch_plan(
         quarter=normalized,
         fiscal_year=fiscal_year,
         period_end=period_end,
-        as_of_date_text=manifest_as_of_date_text(ticker_key, normalized),
+        as_of_date_text=as_of_date_text,
         company_name=company_name,
         folder=folder,
         documents=tuple(documents),

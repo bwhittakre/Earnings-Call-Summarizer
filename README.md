@@ -7,6 +7,15 @@ Filings can be dropped manually or fetched programmatically from SEC EDGAR (see 
 ## Quick start
 
 ```powershell
+# One command: fetch missing SEC filings, run analysis, include prices
+py -3 main.py --filings-root . --companies TSLA,AMZN,NVDA,MSFT --quarter FY2027-Q1 --fetch-missing --with-prices --single-sheet --output output_confidence/fy2027_q1.xlsx
+
+# Calendar-aligned multi-company run (same period end, per-company fiscal labels)
+py -3 main.py --filings-root . --companies Microsoft,Amazon --quarter-end 2025-06-30 --fetch-missing --with-prices --single-sheet --output output_confidence/qe_2025_06_30.xlsx
+
+# Company names resolve via SEC company_tickers.json
+py -3 main.py --filings-root . --companies "Microsoft,Amazon" --quarter FY2026-Q1 --fetch-missing --output output_confidence/summary.xlsx
+
 py -3 main.py --filings-root data/filings --companies NVDA,AMZN --quarter FY2026-Q1 --output output_confidence/summary.xlsx
 py -3 main.py --filings-root data/filings --companies NVDA --quarter FY2026-Q1 --dry-run
 py -3 main.py --filings-root data/filings --companies NVDA --quarter FY2026-Q1 --ticker NVDA --output out.xlsx
@@ -14,7 +23,7 @@ py -3 main.py --filings-root data/filings --companies NVDA --quarter FY2026-Q1 -
 py -3 main.py --filings-root data/filings --companies NVDA --quarter FY2026-Q1,FY2026-Q2,FY2026-Q3,FY2026-Q4 --ticker NVDA --output output_confidence/nvda_fy2026.xlsx
 ```
 
-Set `ANTHROPIC_API_KEY` in `.env` before running (not needed for `--dry-run`).
+Set `ANTHROPIC_API_KEY` in `.env` before running (not needed for `--dry-run`). SEC EDGAR fetch requires a valid `user_agent` in [`config/edgar.yaml`](config/edgar.yaml).
 
 ## Folder layout
 
@@ -37,7 +46,7 @@ data/filings/
       ...
 ```
 
-**manifest.json** (recommended):
+**manifest.json** is **auto-generated** when you fetch from EDGAR (`--fetch-missing` or `scripts/fetch_edgar.py`). Manual manifests are optional for hand-dropped filing folders:
 
 ```json
 {
@@ -48,6 +57,8 @@ data/filings/
   "as_of_date": "(05,28,2025)"
 }
 ```
+
+New tickers do **not** require a manifest or an entry in `config/fiscal_calendars.yaml`. On first EDGAR fetch, the pipeline bootstraps a fiscal profile from SEC submissions (`fiscalYearEnd` + `reportDate`) and caches it under `output_confidence/edgar_cache/fiscal_profiles/`. Legacy tickers (AMZN, TSLA, NVDA) still use [`config/fiscal_calendars.yaml`](config/fiscal_calendars.yaml) when present.
 
 Supported document extensions: `.txt`, `.html`, `.pdf`.
 
@@ -81,15 +92,21 @@ Use `_` or `-` after `8-K` in the filename stem. Files inside `8-K/` can use any
 | Quarter | Required periodic filing | Notes |
 |---------|-------------------------|-------|
 | Q1–Q3 | `10-Q.txt` (or at least one of 10-Q, 8-K, press_release) | Standard single-quarter package |
-| Q4 | `10-K.txt` | Loader pulls prior `10-Q.txt` from sibling Q1–Q3 folders for cross-reference |
+| Q4 | `10-K.txt` | Loader pulls prior `10-Q.txt` from sibling Q1–Q3 folders for cross-reference. With `--fetch-missing`, Q4 fetches (including `--quarter-end` when resolved to Q4) automatically prefetch those sibling 10-Q packages from EDGAR. |
 
 ## EDGAR fetch
 
-Programmatically download SEC filings into the folder layout above, then run the normal pipeline.
+Programmatically download SEC filings into the folder layout above. Use `--fetch-missing` on `main.py` for a single-command workflow, or run `scripts/fetch_edgar.py` standalone.
 
 Configure SEC fair access in [`config/edgar.yaml`](config/edgar.yaml) (`user_agent` must identify your organization/contact).
 
 ```powershell
+# Integrated with main pipeline (recommended)
+py -3 main.py --filings-root . --companies MSFT,GOOG --quarter FY2026-Q1 --fetch-missing --dry-run
+
+# Standalone fetch CLI (ticker or company name)
+py -3 scripts/fetch_edgar.py --ticker Microsoft --quarter FY2019-Q3 --filings-root . --dry-run
+
 # Preview resolved accessions (no download)
 py -3 scripts/fetch_edgar.py --ticker AMZN --quarter FY2019-Q3 --filings-root . --dry-run
 
@@ -103,7 +120,9 @@ py -3 scripts/fetch_edgar.py --ticker AMZN --from FY2017-Q1 --to FY2026-Q4 --fil
 py -3 scripts/fetch_edgar.py --ticker AMZN --quarter FY2019-Q3 --filings-root . --overwrite
 ```
 
-v1 fetches **10-Q / 10-K + earnings 8-K** only. Press releases and investor decks remain optional manual files. Cached SEC responses live under `output_confidence/edgar_cache/` (gitignored).
+v1 fetches **10-Q / 10-K + earnings 8-K** only. Press releases and investor decks remain optional manual files. Cached SEC responses live under `output_confidence/edgar_cache/` (gitignored), including per-ticker fiscal profiles.
+
+**Git hygiene:** Fetched filing trees are not meant for version control. After a successful EDGAR fetch (`--fetch-missing` or `scripts/fetch_edgar.py`), the pipeline auto-updates `.gitignore` for new tickers when `--filings-root` is the repo root (`.`), or ignores all of `data/filings/` when you use that path (recommended). Outputs stay under `output_confidence/` (also gitignored).
 
 ## Pipeline
 
@@ -137,8 +156,11 @@ flowchart TD
 | Flag | Purpose |
 |------|---------|
 | `--filings-root` | Root with `{TICKER}/{quarter}/` trees |
-| `--companies` | Comma-separated tickers |
-| `--quarter` | Quarter label for all companies. Comma-separated values run multiple quarters into one export (one row per quarter on each company sheet). |
+| `--companies` | Comma-separated tickers or company names (e.g. `MSFT` or `Microsoft`) |
+| `--quarter` | Fiscal quarter label for all companies (e.g. `FY2026-Q1`). Mutually exclusive with `--quarter-end`. |
+| `--quarter-end` | Calendar quarter-end date (`YYYY-MM-DD`). Resolves per-company fiscal labels so every company uses the same period end (e.g. `2025-06-30` → MSFT `FY2025-Q4`, AMZN `FY2026-Q2`). When a company resolves to Q4, `--fetch-missing` also prefetches that fiscal year's Q1–Q3 10-Qs for 10-K cross-reference. |
+| `--fetch-missing` | Fetch missing SEC packages from EDGAR before load/analysis |
+| `--fetch-overwrite` | Re-download EDGAR packages even when folders are complete |
 | `--ticker` | Prior-quarter prices (required for `--point-in-time-with-prices`). Filing analysis runs documents-only first; `[price]` bullets are added in a separate pass so document weights stay unchanged. |
 | `--point-in-time` | Documents-only strict mode; no prices, no rescue |
 | `--point-in-time-with-prices` | PIT + 4 prior quarter-end prices capped at as-of date |

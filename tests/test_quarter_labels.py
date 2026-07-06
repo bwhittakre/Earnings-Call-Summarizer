@@ -31,7 +31,7 @@ class QuarterLabelsTestCase(unittest.TestCase):
         )
         self.assertEqual(
             labels,
-            ["FY2024-Q2", "FY2024-Q3", "FY2024-Q4", "FY2025-Q1"],
+            ["FY2025-Q1", "FY2025-Q2", "FY2025-Q3", "FY2025-Q4"],
         )
 
     def test_prior_quarter_labels_for_price_lookup_fy2026_q2(self):
@@ -45,7 +45,7 @@ class QuarterLabelsTestCase(unittest.TestCase):
         )
         self.assertEqual(
             labels,
-            ["FY2024-Q4", "FY2025-Q1", "FY2025-Q2", "FY2026-Q1"],
+            ["FY2025-Q2", "FY2025-Q3", "FY2025-Q4", "FY2026-Q1"],
         )
 
 

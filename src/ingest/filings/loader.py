@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import date
 from pathlib import Path
 
 from src.ingest.dates import resolve_as_of_date_value
@@ -311,6 +312,37 @@ def load_filing_packages(
     return sorted(packages, key=lambda pkg: pkg.ticker)
 
 
+def load_filing_packages_by_company_quarters(
+    filings_root: Path,
+    *,
+    company_quarters: dict[str, str],
+    require_as_of_date: bool = False,
+    excerpt_config: ExcerptConfig | None = None,
+) -> list[FilingPackage]:
+    if not filings_root.is_dir():
+        raise FilingLoadError(f"Filings root not found: {filings_root}")
+
+    packages: list[FilingPackage] = []
+    for ticker, quarter in sorted(company_quarters.items()):
+        ticker_key = ticker.strip().upper()
+        normalized_quarter = normalize_quarter_label(quarter)
+        ticker_root = filings_root / ticker_key
+        if not ticker_root.is_dir():
+            raise FilingLoadError(f"Ticker folder not found: {ticker_root}")
+        folder = _quarter_folder(ticker_root, normalized_quarter)
+        packages.append(
+            build_filing_package(
+                ticker=ticker_key,
+                quarter=normalized_quarter,
+                folder=folder,
+                ticker_root=ticker_root,
+                require_as_of_date=require_as_of_date,
+                excerpt_config=excerpt_config,
+            )
+        )
+    return sorted(packages, key=lambda pkg: pkg.ticker)
+
+
 def dry_run_report(
     filings_root: Path,
     *,
@@ -366,6 +398,58 @@ def dry_run_report(
             for doc in eight_k_docs:
                 tag = section_tag(doc.doc_type, section_label=doc.section_label)
                 lines.append(f"        - {doc.path.name} -> === {tag} ===")
+        for warning in package.warnings:
+            lines.append(f"      warning: {warning}")
+    lines.append("Validation: OK")
+    return "\n".join(lines)
+
+
+def dry_run_report_for_quarter_end(
+    filings_root: Path,
+    *,
+    company_quarters: dict[str, str],
+    anchor_date: date,
+    require_as_of_date: bool = False,
+    excerpt_config: ExcerptConfig | None = None,
+) -> str:
+    from src.ingest.dates import format_as_of_date
+
+    lines = [
+        f"Filings root: {filings_root}",
+        f"Quarter-end anchor: {anchor_date.isoformat()}",
+    ]
+    for ticker, quarter in sorted(company_quarters.items()):
+        lines.append(f"  {ticker}: {quarter}")
+    config = excerpt_config or ExcerptConfig()
+    lines.append(f"Excerpt mode: {config.mode}")
+
+    try:
+        packages = load_filing_packages_by_company_quarters(
+            filings_root,
+            company_quarters=company_quarters,
+            require_as_of_date=require_as_of_date,
+            excerpt_config=config,
+        )
+    except FilingLoadError as exc:
+        lines.append(f"Validation: FAILED - {exc}")
+        return "\n".join(lines)
+
+    lines.append(f"Packages: {len(packages)}")
+    for package in packages:
+        lines.append(
+            f"  - {package.ticker} {package.quarter} "
+            f"({'Q4/10-K' if package.is_q4 else 'Q1–Q3'}) "
+            f"path={package.folder} "
+            f"docs={len(package.documents)} "
+            f"raw_corpus_chars={len(package.raw_corpus_text)} "
+            f"analysis_corpus_chars={len(package.analysis_corpus_text)} "
+            f"excerpt_count={package.excerpt_stats.get('excerpt_count', 0)}"
+        )
+        if package.company_name:
+            lines.append(f"      company: {package.company_name}")
+        lines.append(f"      anchor_as_of_date: {format_as_of_date(anchor_date)}")
+        if package.as_of_date_text:
+            lines.append(f"      manifest_as_of_date: {package.as_of_date_text}")
         for warning in package.warnings:
             lines.append(f"      warning: {warning}")
     lines.append("Validation: OK")

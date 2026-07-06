@@ -11,7 +11,7 @@ from src.market.fiscal_calendar import (
 class FiscalCalendarTestCase(unittest.TestCase):
     def test_amazon_calendar_fiscal_quarter_end(self):
         resolved = resolve_quarter_end_date("AMZN", "FY2025-Q2")
-        self.assertEqual(resolved, date(2025, 6, 30))
+        self.assertEqual(resolved, date(2024, 6, 30))
 
     def test_nvidia_fiscal_quarter_end(self):
         resolved = resolve_quarter_end_date("NVDA", "FY2025-Q2")

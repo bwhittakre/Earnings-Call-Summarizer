@@ -7,6 +7,7 @@ from pathlib import Path
 from src.export.csv_writer import sort_quarter_summaries
 from src.ingest.dates import resolve_as_of_date_text
 from src.ingest.filings import FilingPackage, load_filing_packages
+from src.ingest.filings.loader import load_filing_packages_by_company_quarters
 from src.ingest.filings.fiscal import parse_quarters_list
 from src.ingest.filings.corpus import DEFAULT_MAX_CORPUS_CHARS, truncate_corpus_for_llm
 from src.ingest.filings.loader import ExcerptConfig
@@ -15,6 +16,7 @@ from src.llm.anthropic_client import AnthropicClient
 from src.llm.quarter_summarizer import QuarterSummarizer, ValidatedQuarterOutput
 from src.market.fiscal_calendar import DEFAULT_FISCAL_CALENDARS_PATH
 from src.market.pipeline import MarketContext, build_market_context
+from src.market.quarter_end_mode import QuarterEndRun
 from src.pipeline.point_in_time import PointInTimeConfig
 from src.schemas.models import QuarterSummary
 
@@ -36,8 +38,36 @@ def run_pipeline(
     point_in_time: PointInTimeConfig | None = None,
     max_corpus_chars: int = DEFAULT_MAX_CORPUS_CHARS,
     excerpt_config: ExcerptConfig | None = None,
+    quarter_end_run: QuarterEndRun | None = None,
 ) -> list[QuarterSummary]:
     pit = point_in_time or PointInTimeConfig.disabled()
+    if quarter_end_run is not None:
+        packages = load_filing_packages_by_company_quarters(
+            filings_root,
+            company_quarters=quarter_end_run.company_quarters,
+            require_as_of_date=pit.active,
+            excerpt_config=excerpt_config,
+        )
+        merged_overrides = {
+            **(quarter_end_date_overrides or {}),
+            **quarter_end_run.date_overrides(),
+        }
+        return sort_quarter_summaries(
+            run_pipeline_from_packages(
+                client,
+                packages,
+                skip_rescue_judge=skip_rescue_judge,
+                ticker=ticker,
+                with_prices=with_prices,
+                fiscal_calendars_path=fiscal_calendars_path,
+                quarter_end_date_overrides=merged_overrides,
+                price_fetcher=price_fetcher,
+                point_in_time=pit,
+                max_corpus_chars=max_corpus_chars,
+                anchor_date=quarter_end_run.anchor_date,
+            )
+        )
+
     quarters = parse_quarters_list(quarter)
     summaries: list[QuarterSummary] = []
     for normalized_quarter in quarters:
@@ -78,6 +108,7 @@ def run_pipeline_from_packages(
     price_fetcher=None,
     point_in_time: PointInTimeConfig | None = None,
     max_corpus_chars: int = DEFAULT_MAX_CORPUS_CHARS,
+    anchor_date: date | None = None,
 ) -> list[QuarterSummary]:
     pit = point_in_time or PointInTimeConfig.disabled()
     if pit.active:
@@ -103,7 +134,7 @@ def run_pipeline_from_packages(
     include_prices = with_prices or bool(ticker)
     for package in packages:
         label = package.audit_label()
-        as_of_date = package.as_of_date
+        as_of_date = anchor_date or package.as_of_date
         if pit.active and as_of_date is None:
             raise ValueError(
                 f"Point-in-time mode requires as_of_date in manifest for {label}."

@@ -9,7 +9,17 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 from src.export.csv_writer import write_output
+from src.ingest.edgar.cik_lookup import normalize_companies_to_tickers
+from src.ingest.edgar.client import EdgarClient, make_json_fetcher
+from src.ingest.edgar.config import load_edgar_config
+from src.ingest.edgar.models import EdgarFetchError
+from src.ingest.edgar.resolver import (
+    ensure_filing_packages,
+    ensure_filing_packages_for_quarter_end,
+    resolve_quarter_end_run_for_companies,
+)
 from src.ingest.filings import FilingLoadError, dry_run_report, load_filing_packages
+from src.ingest.filings.loader import dry_run_report_for_quarter_end
 from src.ingest.filings.fiscal import parse_quarters_list
 from src.ingest.filings.corpus import DEFAULT_MAX_CORPUS_CHARS
 from src.ingest.filings.excerpt_puller import DEFAULT_MAX_ANALYSIS_CHARS
@@ -17,7 +27,13 @@ from src.ingest.filings.loader import ExcerptConfig, normalize_excerpt_mode
 from src.llm.anthropic_client import AnthropicClient
 from src.market.fiscal_calendar import (
     DEFAULT_FISCAL_CALENDARS_PATH,
+    FiscalCalendarError,
     parse_quarter_end_dates_override,
+)
+from src.market.quarter_end_mode import (
+    QuarterEndModeError,
+    format_quarter_end_resolution,
+    parse_quarter_end_anchor,
 )
 from src.market.pipeline import format_market_dry_run_lines, format_point_in_time_dry_run_lines
 from src.market.stock_prices import StockPriceError
@@ -55,15 +71,21 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--companies",
         required=True,
-        help="Comma-separated tickers (e.g. NVDA,AMZN)",
+        help="Comma-separated tickers or company names (e.g. NVDA,AMZN or Microsoft,Amazon)",
     )
-    parser.add_argument(
+    period_group = parser.add_mutually_exclusive_group(required=True)
+    period_group.add_argument(
         "--quarter",
-        required=True,
         help=(
-            "Quarter label for all companies (e.g. FY2026-Q1). "
-            "Comma-separated for multiple quarters in one export "
-            "(e.g. FY2026-Q1,FY2026-Q2,FY2026-Q3,FY2026-Q4)."
+            "Fiscal quarter label for all companies (e.g. FY2026-Q1). "
+            "Comma-separated for multiple quarters in one export."
+        ),
+    )
+    period_group.add_argument(
+        "--quarter-end",
+        help=(
+            "Calendar quarter-end date (ISO YYYY-MM-DD, e.g. 2025-06-30). "
+            "Resolves per-company fiscal labels so all companies share the same period end."
         ),
     )
     parser.add_argument(
@@ -156,6 +178,16 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Fetch raw closes instead of adjusted (only with --point-in-time-with-prices)",
     )
+    parser.add_argument(
+        "--fetch-missing",
+        action="store_true",
+        help="Fetch missing SEC filing packages from EDGAR before loading the pipeline",
+    )
+    parser.add_argument(
+        "--fetch-overwrite",
+        action="store_true",
+        help="Re-download EDGAR packages even when local folders are complete",
+    )
     return parser
 
 
@@ -211,10 +243,112 @@ def main() -> int:
     fiscal_calendars_path = Path(args.fiscal_calendars)
     excerpt_config = _build_excerpt_config(args)
 
+    quarter_end_run = None
+    if args.quarter_end:
+        try:
+            anchor_date = parse_quarter_end_anchor(args.quarter_end)
+        except QuarterEndModeError as exc:
+            print(f"Error: {exc}", file=sys.stderr)
+            return 1
+
+    companies_arg = args.companies
+    edgar_client: EdgarClient | None = None
+    if (
+        args.fetch_missing
+        or args.quarter_end
+        or _needs_company_resolution(args.companies)
+    ):
+        try:
+            edgar_client = EdgarClient(load_edgar_config())
+            companies_arg = normalize_companies_to_tickers(
+                args.companies,
+                fetcher=make_json_fetcher(edgar_client),
+            )
+            if companies_arg != args.companies.upper().replace(" ", ""):
+                logging.info("Resolved companies to tickers: %s", companies_arg)
+        except EdgarFetchError as exc:
+            print(f"Error: {exc}", file=sys.stderr)
+            return 1
+
+    if args.quarter_end:
+        try:
+            quarter_end_run = resolve_quarter_end_run_for_companies(
+                companies_arg,
+                anchor_date,
+                calendars_path=fiscal_calendars_path,
+                client=edgar_client,
+            )
+            logging.info("%s", format_quarter_end_resolution(quarter_end_run))
+        except (EdgarFetchError, QuarterEndModeError, FiscalCalendarError) as exc:
+            print(f"Error: {exc}", file=sys.stderr)
+            return 1
+
+    if args.fetch_missing:
+        try:
+            if quarter_end_run is not None:
+                summary = ensure_filing_packages_for_quarter_end(
+                    filings_root=filings_root,
+                    companies=companies_arg,
+                    quarter_end_run=quarter_end_run,
+                    overwrite=args.fetch_overwrite,
+                    dry_run=args.dry_run,
+                    client=edgar_client,
+                    calendars_path=fiscal_calendars_path,
+                )
+            else:
+                summary = ensure_filing_packages(
+                    filings_root=filings_root,
+                    companies=companies_arg,
+                    quarter=args.quarter,
+                    overwrite=args.fetch_overwrite,
+                    dry_run=args.dry_run,
+                    calendars_path=fiscal_calendars_path,
+                )
+            logging.info(
+                "EDGAR fetch: fetched=%s skipped=%s",
+                len(summary.fetched),
+                len(summary.skipped),
+            )
+            if summary.fetched:
+                logging.info("EDGAR fetch planned/fetched: %s", ", ".join(summary.fetched))
+            if summary.skipped:
+                logging.info("EDGAR fetch skipped: %s", ", ".join(summary.skipped))
+        except EdgarFetchError as exc:
+            print(f"Error: {exc}", file=sys.stderr)
+            return 1
+
     if args.dry_run:
+        if quarter_end_run is not None:
+            report = dry_run_report_for_quarter_end(
+                filings_root,
+                company_quarters=quarter_end_run.company_quarters,
+                anchor_date=quarter_end_run.anchor_date,
+                require_as_of_date=point_in_time.active,
+                excerpt_config=excerpt_config,
+            )
+            extra_lines: list[str] = []
+            if args.with_prices:
+                for ticker, quarter in sorted(
+                    quarter_end_run.company_quarters.items()
+                ):
+                    extra_lines.extend(
+                        format_market_dry_run_lines(
+                            ticker=ticker,
+                            as_of_date=quarter_end_run.anchor_date,
+                            reported_quarter=quarter,
+                            calendars_path=fiscal_calendars_path,
+                            date_overrides=quarter_end_run.date_overrides(),
+                        )
+                    )
+                    extra_lines.append("")
+            if extra_lines:
+                report = "\n".join([report, "", *extra_lines])
+            print(report)
+            return 0
+
         report = dry_run_report(
             filings_root,
-            companies=args.companies,
+            companies=companies_arg,
             quarter=args.quarter,
             require_as_of_date=point_in_time.active,
             excerpt_config=excerpt_config,
@@ -226,7 +360,7 @@ def main() -> int:
                 packages.extend(
                     load_filing_packages(
                         filings_root,
-                        companies=args.companies,
+                        companies=companies_arg,
                         quarter=normalized_quarter,
                         require_as_of_date=point_in_time.active,
                         excerpt_config=excerpt_config,
@@ -305,18 +439,26 @@ def main() -> int:
         )
 
     client = AnthropicClient(api_key=api_key, model=args.model, max_retries=1)
-    logging.info(
-        "Starting pipeline for %s companies=%s quarter=%s",
-        filings_root,
-        args.companies,
-        args.quarter,
-    )
+    if quarter_end_run is not None:
+        logging.info(
+            "Starting pipeline for %s companies=%s quarter_end=%s",
+            filings_root,
+            companies_arg,
+            quarter_end_run.anchor_date.isoformat(),
+        )
+    else:
+        logging.info(
+            "Starting pipeline for %s companies=%s quarter=%s",
+            filings_root,
+            companies_arg,
+            args.quarter,
+        )
     try:
         rows = run_pipeline(
             client=client,
             filings_root=filings_root,
-            companies=args.companies,
-            quarter=args.quarter,
+            companies=companies_arg,
+            quarter=args.quarter or "",
             skip_rescue_judge=skip_rescue,
             ticker=effective_ticker,
             with_prices=args.with_prices or bool(effective_ticker),
@@ -325,8 +467,16 @@ def main() -> int:
             point_in_time=point_in_time,
             max_corpus_chars=args.max_corpus_chars,
             excerpt_config=excerpt_config,
+            quarter_end_run=quarter_end_run,
         )
-    except (PointInTimeError, ValueError, FilingLoadError, StockPriceError) as exc:
+    except (
+        PointInTimeError,
+        ValueError,
+        FilingLoadError,
+        StockPriceError,
+        QuarterEndModeError,
+        FiscalCalendarError,
+    ) as exc:
         print(f"Error: {exc}", file=sys.stderr)
         return 1
 
@@ -335,6 +485,17 @@ def main() -> int:
     logging.info("Wrote %s rows to %s", len(rows), output_path)
     logging.info(client.usage_summary())
     return 0
+
+
+def _needs_company_resolution(companies: str) -> bool:
+    import re
+
+    ticker_pattern = re.compile(r"^[A-Z]{1,5}(?:[.-][A-Z])?$")
+    for part in companies.split(","):
+        part = part.strip()
+        if part and not ticker_pattern.match(part.upper()):
+            return True
+    return False
 
 
 if __name__ == "__main__":

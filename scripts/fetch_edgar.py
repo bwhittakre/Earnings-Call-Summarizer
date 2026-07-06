@@ -7,6 +7,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from src.ingest.edgar.models import EdgarFetchError
+from src.ingest.edgar.cik_lookup import resolve_companies_list
+from src.ingest.edgar.client import EdgarClient, make_json_fetcher
+from src.ingest.edgar.config import load_edgar_config
 from src.ingest.edgar.resolver import fetch_quarter_package, fetch_quarter_range
 from src.ingest.filings import dry_run_report, load_filing_packages
 from src.ingest.filings.loader import ExcerptConfig
@@ -55,7 +58,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(
         description="Fetch SEC EDGAR filings into the local quarter folder layout."
     )
-    parser.add_argument("--ticker", required=True, help="Ticker symbol, e.g. AMZN")
+    parser.add_argument("--ticker", required=True, help="Ticker symbol or company name, e.g. AMZN")
     parser.add_argument("--quarter", help="Single quarter label, e.g. FY2019-Q3")
     parser.add_argument("--from", dest="from_quarter", help="Range start quarter")
     parser.add_argument("--to", dest="to_quarter", help="Range end quarter")
@@ -88,9 +91,19 @@ def main() -> int:
         parser.error("Use either --quarter or a --from/--to range, not both.")
 
     try:
+        edgar_client = EdgarClient(load_edgar_config())
+        ticker_key, _, _ = resolve_companies_list(
+            args.ticker,
+            fetcher=make_json_fetcher(edgar_client),
+        )[0]
+    except EdgarFetchError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        return 1
+
+    try:
         if args.quarter:
             result = fetch_quarter_package(
-                ticker=args.ticker,
+                ticker=ticker_key,
                 quarter=args.quarter,
                 filings_root=filings_root,
                 overwrite=args.overwrite,
@@ -98,11 +111,11 @@ def main() -> int:
             )
             print(_format_plan(result))
             if args.validate and not args.dry_run:
-                return _validate_package(args.ticker, args.quarter, filings_root)
+                return _validate_package(ticker_key, args.quarter, filings_root)
             return 0
 
         results = fetch_quarter_range(
-            ticker=args.ticker,
+            ticker=ticker_key,
             from_quarter=args.from_quarter,
             to_quarter=args.to_quarter,
             filings_root=filings_root,
@@ -115,7 +128,7 @@ def main() -> int:
         if args.validate and not args.dry_run:
             for result in results:
                 code = _validate_package(
-                    args.ticker,
+                    ticker_key,
                     result.plan.quarter,
                     filings_root,
                 )

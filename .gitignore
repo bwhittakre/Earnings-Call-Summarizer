@@ -7,9 +7,15 @@ __pycache__/
 *.egg-info/
 .venv/
 venv/
+# AUTO: fetched filing roots
 AMZN/
+MSFT/
 NVDA/
 TSLA/
+# END AUTO
+data/filings/*
+!data/filings/
+!data/filings/.gitkeep
 data/transcripts/*
 !data/
 !data/transcripts/
