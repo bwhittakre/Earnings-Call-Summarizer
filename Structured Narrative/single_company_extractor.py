@@ -33,6 +33,8 @@ import pandas as pd
 from dotenv import load_dotenv
 import snowflake.connector as sc
 
+from excel_export import write_excel
+
 # ── Company constants (resolved from the raw shares in discovery) ─────────────
 TICKER    = "AMZN"
 ESTPERMID = 30064828538          # LSEG IBES estimate PermID (IBESTICKER 'AMZN')
@@ -425,6 +427,9 @@ def write_output(df: pd.DataFrame):
         print(f"Parquet write skipped ({e}); writing CSV only.")
     df.to_csv(OUT_CSV, index=False)
     print(f"Wrote {OUT_CSV}")
+    out_xlsx = os.path.splitext(OUT_PARQUET)[0] + ".xlsx"
+    write_excel(df, out_xlsx)
+    print(f"Wrote {out_xlsx}")
 
 
 if __name__ == "__main__":
