@@ -17,14 +17,13 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from src.export.csv_writer import sort_quarter_summaries, write_output
 from src.ingest.filings import FilingLoadError
 from src.llm.anthropic_client import AnthropicClient
-from src.market.stock_prices import StockPriceError
 from src.pipeline.runner import run_pipeline
 from src.schemas.models import QuarterSummary
 
 DEFAULT_MODEL = "claude-sonnet-4-6"
 ROOT = Path("AMZN/Amazon")
 CHECKPOINT = Path("output_confidence/amzn_40q_checkpoint.json")
-OUTPUT = Path("output_confidence/amzn_fy2017_2026_all_quarters_with_prices.xlsx")
+OUTPUT = Path("output_confidence/amzn_fy2017_2026_all_quarters.xlsx")
 
 
 def discover_quarters() -> list[str]:
@@ -73,10 +72,8 @@ def run_quarter_with_retries(
                 Path("."),
                 companies="AMZN",
                 quarter=quarter,
-                ticker="AMZN",
-                with_prices=True,
             )
-        except (ValueError, FilingLoadError, StockPriceError) as exc:
+        except (ValueError, FilingLoadError) as exc:
             last_error = exc
             logging.warning(
                 "Attempt %s/%s failed for %s: %s",

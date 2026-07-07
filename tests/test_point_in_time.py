@@ -5,8 +5,6 @@ from unittest.mock import MagicMock, patch
 
 from src.ingest.filings import load_filing_packages
 from src.llm.quarter_summarizer import format_knowledge_cutoff_header
-from src.market.stock_prices import StockPriceError, validate_prices_point_in_time
-from src.market.models import QuarterEndPrice
 from src.pipeline.point_in_time import PointInTimeConfig
 from src.pipeline.runner import run_pipeline_from_packages
 from src.schemas.models import (
@@ -20,21 +18,8 @@ FIXTURES_ROOT = Path(__file__).parent / "fixtures" / "filings"
 
 
 class PointInTimeTestCase(unittest.TestCase):
-    def test_validate_prices_rejects_future_price_date(self):
-        prices = [
-            QuarterEndPrice(
-                quarter_label="2025-Q3",
-                quarter_end_date=date(2025, 9, 30),
-                price_date=date(2026, 2, 6),
-                adjusted_close=100.0,
-                ticker="AMZN",
-            )
-        ]
-        with self.assertRaises(StockPriceError):
-            validate_prices_point_in_time(prices, date(2026, 2, 5))
-
     @patch("src.pipeline.runner.QuarterSummarizer")
-    def test_point_in_time_disables_ticker_path(self, summarizer_cls):
+    def test_point_in_time_runs_documents_only(self, summarizer_cls):
         from src.llm.quarter_summarizer import ValidatedQuarterOutput
         from src.schemas.models import QuarterSummary
 
@@ -64,7 +49,6 @@ class PointInTimeTestCase(unittest.TestCase):
             what_happened=["Results"],
             positives=[],
             negatives=[],
-            document_only_confidence_score=10,
             confidence_score=10,
             analysis=evidence.analysis,
         )
@@ -82,14 +66,11 @@ class PointInTimeTestCase(unittest.TestCase):
             require_as_of_date=True,
         )
 
-        with patch("src.pipeline.runner.build_market_context") as build_ctx:
-            run_pipeline_from_packages(
-                MagicMock(),
-                packages,
-                ticker="AMZN",
-                point_in_time=PointInTimeConfig.document_only(),
-            )
-            build_ctx.assert_not_called()
+        run_pipeline_from_packages(
+            MagicMock(),
+            packages,
+            point_in_time=PointInTimeConfig.document_only(),
+        )
 
         init_kwargs = summarizer_cls.call_args.kwargs
         self.assertTrue(init_kwargs["skip_rescue_judge"])
@@ -98,12 +79,13 @@ class PointInTimeTestCase(unittest.TestCase):
         summarize_kwargs = mock_summarizer.summarize.call_args.kwargs
         self.assertIn("corpus_text", summarize_kwargs)
         self.assertEqual(summarize_kwargs["as_of_date"], date(2026, 2, 5))
+        self.assertNotIn("price_block_text", summarize_kwargs)
 
     def test_knowledge_cutoff_header_format(self):
         header = format_knowledge_cutoff_header(date(2026, 2, 5))
         self.assertIn("KNOWLEDGE CUTOFF: Treat (02,05,2026) as today.", header)
-        self.assertIn("PRIOR QUARTER STOCK PRICES", header)
         self.assertIn("filing corpus", header)
+        self.assertNotIn("PRIOR QUARTER STOCK PRICES", header)
 
 
 if __name__ == "__main__":

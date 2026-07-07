@@ -36,25 +36,23 @@ from src.market.quarter_end_mode import (
     format_quarter_end_resolution,
     parse_quarter_end_anchor,
 )
-from src.market.pipeline import format_market_dry_run_lines, format_point_in_time_dry_run_lines
-from src.market.stock_prices import StockPriceError
 from src.paths import DEFAULT_SUMMARY_OUTPUT
-from src.pipeline.point_in_time import PointInTimeConfig, PointInTimeError
+from src.pipeline.point_in_time import (
+    PointInTimeConfig,
+    PointInTimeError,
+    format_point_in_time_dry_run_lines,
+)
 from src.pipeline.runner import run_pipeline
 
 DEFAULT_MODEL = "claude-sonnet-4-6"
 DEFAULT_OUTPUT = str(DEFAULT_SUMMARY_OUTPUT)
 
 PIT_EPILOG = """
-Point-in-time modes reduce data leakage by capping inputs at the filing as-of date.
-Instructions reduce but do not eliminate LLM training-knowledge leakage; for research
-backtests requiring maximum purity, prefer documents-only mode and historically frozen
-price snapshots.
+Point-in-time mode reduces data leakage by capping inputs at the filing as-of date.
+Instructions reduce but do not eliminate LLM training-knowledge leakage.
 
-Examples:
+Example:
   py -3 main.py --filings-root data/filings --companies NVDA --quarter FY2026-Q1 --point-in-time --output out.xlsx
-  py -3 main.py --filings-root data/filings --companies NVDA --quarter FY2026-Q1 --ticker NVDA --point-in-time-with-prices --output out.xlsx
-  py -3 main.py ... --point-in-time-with-prices --unadjusted-prices
 """
 
 
@@ -109,18 +107,6 @@ def build_parser() -> argparse.ArgumentParser:
         "--model",
         default=DEFAULT_MODEL,
         help=f"Anthropic model ID (default: {DEFAULT_MODEL})",
-    )
-    parser.add_argument(
-        "--ticker",
-        help=(
-            "Stock ticker for prior-quarter price lookup on single-company runs. "
-            "Use --with-prices for multi-company runs (each package ticker)."
-        ),
-    )
-    parser.add_argument(
-        "--with-prices",
-        action="store_true",
-        help="Include prior-quarter stock prices using each company's ticker",
     )
     parser.add_argument(
         "--single-sheet",
@@ -178,17 +164,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--point-in-time",
         action="store_true",
-        help="Strict documents-only scoring: no prices, no rescue judge, temporal prompt",
-    )
-    parser.add_argument(
-        "--point-in-time-with-prices",
-        action="store_true",
-        help="Strict mode with 4 prior quarter-end prices capped at as-of date",
-    )
-    parser.add_argument(
-        "--unadjusted-prices",
-        action="store_true",
-        help="Fetch raw closes instead of adjusted (only with --point-in-time-with-prices)",
+        help="Strict documents-only scoring: no rescue judge, temporal prompt",
     )
     parser.add_argument(
         "--fetch-missing",
@@ -219,16 +195,6 @@ def _build_excerpt_config(args: argparse.Namespace) -> ExcerptConfig:
 
 
 def _resolve_point_in_time_config(args: argparse.Namespace) -> PointInTimeConfig:
-    if args.point_in_time and args.point_in_time_with_prices:
-        raise SystemExit(
-            "Error: --point-in-time and --point-in-time-with-prices are mutually exclusive."
-        )
-    if args.unadjusted_prices and not args.point_in_time_with_prices:
-        raise SystemExit(
-            "Error: --unadjusted-prices requires --point-in-time-with-prices."
-        )
-    if args.point_in_time_with_prices:
-        return PointInTimeConfig.with_prices(unadjusted=args.unadjusted_prices)
     if args.point_in_time:
         return PointInTimeConfig.document_only()
     return PointInTimeConfig.disabled()
@@ -240,11 +206,7 @@ def main() -> int:
     parser = build_parser()
     args = parser.parse_args()
 
-    try:
-        point_in_time = _resolve_point_in_time_config(args)
-    except SystemExit as exc:
-        print(exc, file=sys.stderr)
-        return 1
+    point_in_time = _resolve_point_in_time_config(args)
 
     filings_root = Path(args.filings_root)
     date_overrides = (
@@ -352,23 +314,6 @@ def main() -> int:
                 require_as_of_date=point_in_time.active,
                 excerpt_config=excerpt_config,
             )
-            extra_lines: list[str] = []
-            if args.with_prices:
-                for ticker, quarter in sorted(
-                    quarter_end_run.company_quarters.items()
-                ):
-                    extra_lines.extend(
-                        format_market_dry_run_lines(
-                            ticker=ticker,
-                            as_of_date=quarter_end_run.anchor_date,
-                            reported_quarter=quarter,
-                            calendars_path=fiscal_calendars_path,
-                            date_overrides=quarter_end_run.date_overrides(),
-                        )
-                    )
-                    extra_lines.append("")
-            if extra_lines:
-                report = "\n".join([report, "", *extra_lines])
             print(report)
             return 0
 
@@ -401,46 +346,12 @@ def main() -> int:
                 extra_lines = format_point_in_time_dry_run_lines(
                     as_of_date=package.as_of_date,
                     reported_quarter=package.quarter,
-                    point_in_time=point_in_time,
-                    ticker=args.ticker or package.ticker,
-                    calendars_path=fiscal_calendars_path,
-                    date_overrides=date_overrides,
-                )
-        elif packages and args.ticker:
-            package = packages[0]
-            if package.as_of_date is not None:
-                extra_lines = format_market_dry_run_lines(
-                    ticker=args.ticker,
-                    as_of_date=package.as_of_date,
-                    reported_quarter=package.quarter,
-                    calendars_path=fiscal_calendars_path,
-                    date_overrides=date_overrides,
                 )
 
         if extra_lines:
             report = "\n".join([report, "", *extra_lines])
         print(report)
         return 0
-
-    if point_in_time.include_prices and not args.ticker and not args.with_prices:
-        print(
-            "Error: --point-in-time-with-prices requires --ticker.",
-            file=sys.stderr,
-        )
-        return 1
-
-    if args.with_prices and args.ticker and "," in companies_arg:
-        logging.warning(
-            "Ignoring --ticker for multi-company run; using each company's ticker."
-        )
-        effective_ticker = None
-    elif args.with_prices and not args.ticker:
-        effective_ticker = None
-    else:
-        effective_ticker = args.ticker
-    if point_in_time.active and not point_in_time.include_prices and args.ticker:
-        logging.warning("Ignoring --ticker in point-in-time mode (documents-only).")
-        effective_ticker = None
 
     api_key = os.getenv("ANTHROPIC_API_KEY")
     if not api_key:
@@ -453,16 +364,7 @@ def main() -> int:
     skip_rescue = args.skip_rescue_judge or point_in_time.active
 
     if point_in_time.active:
-        mode = (
-            "point-in-time-with-prices"
-            if point_in_time.include_prices
-            else "point-in-time (documents-only)"
-        )
-        logging.info(
-            "Point-in-time mode: %s (rescue=off, prices=%s)",
-            mode,
-            point_in_time.include_prices,
-        )
+        logging.info("Point-in-time mode: documents-only (rescue=off)")
 
     client = AnthropicClient(api_key=api_key, model=args.model, max_retries=1)
     if quarter_end_run is not None:
@@ -486,9 +388,6 @@ def main() -> int:
             companies=companies_arg,
             quarter=args.quarter or "",
             skip_rescue_judge=skip_rescue,
-            ticker=effective_ticker,
-            with_prices=args.with_prices or bool(effective_ticker),
-            fiscal_calendars_path=fiscal_calendars_path,
             quarter_end_date_overrides=date_overrides,
             point_in_time=point_in_time,
             max_corpus_chars=args.max_corpus_chars,
@@ -499,7 +398,6 @@ def main() -> int:
         PointInTimeError,
         ValueError,
         FilingLoadError,
-        StockPriceError,
         QuarterEndModeError,
         FiscalCalendarError,
     ) as exc:

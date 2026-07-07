@@ -1,20 +1,20 @@
 # SEC Filing Confidence Analyzer
 
-Analyze public SEC filings (10-K, 10-Q, 8-K, earnings press releases, investor presentations) to produce next-quarter **confidence scores** with evidence-backed Excel output. Optional prior-quarter stock prices and point-in-time modes support backtest hygiene.
+Analyze public SEC filings (10-K, 10-Q, 8-K, earnings press releases, investor presentations) to produce next-quarter **confidence scores** with evidence-backed Excel output. Optional point-in-time mode supports backtest hygiene.
 
 Filings can be dropped manually or fetched programmatically from SEC EDGAR (see **EDGAR fetch** below).
 
 ## Quick start
 
 ```powershell
-# One command: fetch missing SEC filings, run analysis, include prices
-py -3 main.py --filings-root . --companies TSLA,AMZN,NVDA,MSFT --quarter FY2027-Q1 --fetch-missing --with-prices --single-sheet --output output_confidence/fy2027_q1.xlsx
+# One command: fetch missing SEC filings and run analysis
+py -3 main.py --filings-root . --companies TSLA,AMZN,NVDA,MSFT --quarter FY2027-Q1 --fetch-missing --single-sheet --output output_confidence/fy2027_q1.xlsx
 
 # Calendar-aligned multi-company run (same period end, per-company fiscal labels)
-py -3 main.py --filings-root . --companies Microsoft,Amazon --quarter-end 2025-06-30 --fetch-missing --with-prices --single-sheet --output output_confidence/qe_2025_06_30.xlsx
+py -3 main.py --filings-root . --companies Microsoft,Amazon --quarter-end 2025-06-30 --fetch-missing --single-sheet --output output_confidence/qe_2025_06_30.xlsx
 
 # Sector batch (curated ticker list under config/sectors/)
-py -3 main.py --filings-root . --sector mega_cap_tech --quarter-end 2025-09-30 --fetch-missing --with-prices --single-sheet --output output_confidence/qe_2025_09_30_mega_cap_tech.xlsx
+py -3 main.py --filings-root . --sector mega_cap_tech --quarter-end 2025-09-30 --fetch-missing --single-sheet --output output_confidence/qe_2025_09_30_mega_cap_tech.xlsx
 
 # Custom ticker list file (one ticker or company name per line)
 py -3 main.py --filings-root . --companies-file config/sectors/mega_cap_tech.txt --quarter FY2026-Q3 --fetch-missing --dry-run
@@ -24,9 +24,8 @@ py -3 main.py --filings-root . --companies "Microsoft,Amazon" --quarter FY2026-Q
 
 py -3 main.py --filings-root data/filings --companies NVDA,AMZN --quarter FY2026-Q1 --output output_confidence/summary.xlsx
 py -3 main.py --filings-root data/filings --companies NVDA --quarter FY2026-Q1 --dry-run
-py -3 main.py --filings-root data/filings --companies NVDA --quarter FY2026-Q1 --ticker NVDA --output out.xlsx
 py -3 main.py --filings-root data/filings --companies NVDA --quarter FY2026-Q1 --point-in-time --output out.xlsx
-py -3 main.py --filings-root data/filings --companies NVDA --quarter FY2026-Q1,FY2026-Q2,FY2026-Q3,FY2026-Q4 --ticker NVDA --output output_confidence/nvda_fy2026.xlsx
+py -3 main.py --filings-root data/filings --companies NVDA --quarter FY2026-Q1,FY2026-Q2,FY2026-Q3,FY2026-Q4 --output output_confidence/nvda_fy2026.xlsx
 ```
 
 Set `ANTHROPIC_API_KEY` in `.env` before running (not needed for `--dry-run`). SEC EDGAR fetch requires a valid `user_agent` in [`config/edgar.yaml`](config/edgar.yaml).
@@ -116,7 +115,7 @@ py -3 scripts/fetch_edgar.py --ticker Microsoft --quarter FY2019-Q3 --filings-ro
 # Preview resolved accessions (no download)
 py -3 scripts/fetch_edgar.py --ticker AMZN --quarter FY2019-Q3 --filings-root . --dry-run
 
-# Fetch one quarter and validate loader/prices dry-run
+# Fetch one quarter and validate loader dry-run
 py -3 scripts/fetch_edgar.py --ticker AMZN --quarter FY2019-Q3 --filings-root . --validate
 
 # Backfill a quarter range (skips complete folders by default)
@@ -156,7 +155,6 @@ flowchart TD
   Sanitize --> Excerpt[pull_excerpts deterministic]
   Excerpt --> AnalysisCorpus[analysis_corpus_text]
   AnalysisCorpus --> Runner[run_pipeline per ticker+quarter]
-  Runner --> Market[optional build_market_context]
   Runner --> Summ[QuarterSummarizer.summarize]
   Summ --> LLM[Anthropic JSON]
   LLM --> Validate[evidence validate + rescue]
@@ -186,9 +184,7 @@ flowchart TD
 | `--quarter-end` | Calendar quarter-end date (`YYYY-MM-DD`). Resolves per-company fiscal labels so every company uses the same period end (e.g. `2025-06-30` → MSFT `FY2025-Q4`, AMZN `FY2026-Q2`). When a company resolves to Q4, `--fetch-missing` also prefetches that fiscal year's Q1–Q3 10-Qs for 10-K cross-reference. |
 | `--fetch-missing` | Fetch missing SEC packages from EDGAR before load/analysis |
 | `--fetch-overwrite` | Re-download EDGAR packages even when folders are complete |
-| `--ticker` | Prior-quarter prices (required for `--point-in-time-with-prices`). Filing analysis runs documents-only first; `[price]` bullets are added in a separate pass so document weights stay unchanged. |
-| `--point-in-time` | Documents-only strict mode; no prices, no rescue |
-| `--point-in-time-with-prices` | PIT + 4 prior quarter-end prices capped at as-of date |
+| `--point-in-time` | Strict documents-only mode: temporal prompt, no rescue judge |
 | `--dry-run` | Validate folders/manifests; reports raw vs analysis corpus sizes; no API |
 | `--skip-rescue-judge` | Drop paraphrased excerpts without rescue |
 | `--excerpt-mode` | `smart` (default): deterministic excerpt pull; `full`/`off`: entire sanitized corpus |
@@ -198,8 +194,8 @@ flowchart TD
 
 ## Output
 
-Excel workbook with columns: Summary Type, Company Name, Quarter (with as-of date), What Happened, Positives, Negatives, Document-Only Score, Confidence Score, Analysis.
+Excel workbook with columns: Summary Type, Company Name, Quarter (with as-of date), What Happened, Positives, Negatives, Confidence Score, Analysis.
 
 When `--quarter` lists multiple values (comma-separated), each company gets one sheet with one row per quarter, sorted chronologically.
 
-Audit artifacts (when triggered): `output_confidence/evidence_audit/`, `output_confidence/price_audit/`, `output_confidence/excerpt_audit/`.
+Audit artifacts (when triggered): `output_confidence/evidence_audit/`, `output_confidence/excerpt_audit/`.

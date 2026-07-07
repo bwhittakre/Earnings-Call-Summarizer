@@ -1,11 +1,9 @@
 What Confidence Score means
 The Confidence Score is confidence in how the company's stock is likely to move in the NEXT QUARTER ONLY — not a multi-quarter or long-term view.
 It is based solely on the filing package for the reported quarter: periodic SEC filings (10-Q or 10-K), related 8-Ks, earnings press releases, and investor presentations when present. Reported results, guidance, segment metrics, MD&A commentary, and disclosed risks are drawn from those documents. No news feeds, analyst models, or macro data are used unless they appear in the filings.
-When your run includes stock prices, the model may also use ending stock prices for each of the four fiscal quarters immediately before the reported quarter, capped at the package as-of date. Those prices are fetched independently — they are not taken from the filings. They provide trend context only; they are not a separate forecast model.
 Scores range from -100 (worst reasonably achievable next quarter) to +100 (best reasonably achievable next quarter).
 
 How the final number is calculated
-Document-Only Score = the sum of analysis bullet weights from filing-backed bullets only; it excludes optional [price] bullets when prior-quarter prices were provided.
 Confidence Score = the sum of all Analysis bullet weights.
 Each Analysis bullet begins with a signed integer and colon, for example +25: or -10:.
 The application adds those weights together and clamps the total to the range [-100, 100]. The number in the Confidence Score column always reflects that sum — it is not a separate holistic judgment.
@@ -29,11 +27,6 @@ How to read the Analysis column
 Each filing-backed bullet follows this format:
 • +25: headline describing the factor — "verbatim excerpt from the filing corpus"
 The excerpt is copied from the loaded filings (10-K, 10-Q, 8-K, press release, or investor presentation text) and validated before export, so you can trace each weighted factor back to disclosed source text.
-
-Optional [price] bullets (when prior-quarter prices were provided at run time)
-When prior-quarter stock prices are included in the run, the model may add any number of [price] bullets that cite prior-quarter momentum or trend from those fetched prices, for example:
-• +10: [price] Four-quarter upward momentum supports positive setup — "FY2025-Q2 end (...): $123.45"
-These bullets use the same per-factor weight ranges and are included in the Confidence Score sum. Omit [price] bullets when price action is uninformative or mixed.
 
 Score interpretation bands
 +100: Best reasonably achievable next quarter

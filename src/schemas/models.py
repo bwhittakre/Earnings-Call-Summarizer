@@ -46,7 +46,6 @@ class QuarterSummary(BaseModel):
     what_happened: list[str] = Field(min_length=1)
     positives: list[str]
     negatives: list[str]
-    document_only_confidence_score: int = Field(ge=-100, le=100)
     confidence_score: int = Field(ge=-100, le=100)
     analysis: list[EvidenceClaim] = Field(min_length=1)
     summary_type: SummaryType = "quarter"
@@ -80,10 +79,6 @@ class RescueJudgeResult(BaseModel):
     reviews: list[RescueReview]
 
 
-class PriceAnalysisBullets(BaseModel):
-    analysis: list[EvidenceClaim] = Field(default_factory=list)
-
-
 class TokenUsage(BaseModel):
     input_tokens: int
     output_tokens: int
@@ -97,10 +92,7 @@ class LLMResult(BaseModel):
 def quarter_summary_from_evidence(
     evidence: EvidenceBackedQuarterSummary,
 ) -> QuarterSummary:
-    from src.scoring.analysis_score import (
-        apply_confidence_score_from_analysis,
-        compute_document_only_confidence_score,
-    )
+    from src.scoring.analysis_score import apply_confidence_score_from_analysis
 
     evidence = apply_confidence_score_from_analysis(evidence)
     return QuarterSummary(
@@ -111,9 +103,6 @@ def quarter_summary_from_evidence(
         positives=[item.claim for item in evidence.positives],
         negatives=[item.claim for item in evidence.negatives],
         confidence_score=evidence.confidence_score,
-        document_only_confidence_score=compute_document_only_confidence_score(
-            evidence.analysis
-        ),
         analysis=evidence.analysis,
         summary_type="quarter",
     )

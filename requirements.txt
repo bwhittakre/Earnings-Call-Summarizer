@@ -6,5 +6,4 @@ beautifulsoup4
 lxml
 openpyxl
 pyyaml
-yfinance
 json-repair

@@ -118,39 +118,7 @@ class EvidenceValidatorTestCase(unittest.TestCase):
         self.assertTrue(result.is_valid)
         self.assertEqual(result.failures, [])
 
-    def test_validate_analysis_accepts_price_block_excerpt(self):
-        corpus_text = (
-            "We saw strong demand in data center and raised our full-year outlook. "
-            "Margins expanded due to mix. FX remained a headwind."
-        )
-        price_line = "FY2025-Q2 end (2024-07-28, traded 2024-07-26): $123.45"
-        price_block = "\n".join(
-            [
-                "--- PRIOR QUARTER STOCK PRICES (source: yfinance adjusted close; not from filings) ---",
-                "Ticker: NVDA",
-                price_line,
-            ]
-        )
-        evidence = _quarter_evidence(
-            analysis=[
-                EvidenceClaim(
-                    claim="+20: Raised outlook supports next-quarter momentum",
-                    excerpt="We saw strong demand in data center and raised our full-year outlook.",
-                ),
-                EvidenceClaim(
-                    claim="+10: [price] Upward momentum across prior quarters",
-                    excerpt=price_line,
-                ),
-            ]
-        )
-        result = validate_quarter_evidence(
-            evidence,
-            corpus_text,
-            price_block,
-        )
-        self.assertTrue(result.is_valid)
-
-    def test_validate_analysis_rejects_price_block_without_prices(self):
+    def test_validate_analysis_rejects_excerpt_not_in_corpus(self):
         corpus_text = (
             "We saw strong demand in data center and raised our full-year outlook. "
             "Margins expanded due to mix. FX remained a headwind."
@@ -163,7 +131,7 @@ class EvidenceValidatorTestCase(unittest.TestCase):
                     excerpt="We saw strong demand in data center and raised our full-year outlook.",
                 ),
                 EvidenceClaim(
-                    claim="+10: [price] Upward momentum across prior quarters",
+                    claim="+10: Price trend not in filings",
                     excerpt=price_line,
                 ),
             ]
@@ -263,7 +231,6 @@ class EvidenceValidatorTestCase(unittest.TestCase):
                 what_happened=["Strong demand"],
                 positives=[],
                 negatives=[],
-                document_only_confidence_score=50,
                 confidence_score=101,
                 analysis=SAMPLE_ANALYSIS,
             )

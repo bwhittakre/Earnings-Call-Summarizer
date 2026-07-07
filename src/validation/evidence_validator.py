@@ -119,14 +119,8 @@ def excerpt_found_in_any_source(
     return any(excerpt_found_in_source(excerpt, source) for source in sources)
 
 
-def analysis_validation_sources(
-    corpus_text: str,
-    price_block_text: str | None = None,
-) -> list[str]:
-    sources = [corpus_text]
-    if price_block_text:
-        sources.append(price_block_text)
-    return sources
+def analysis_validation_sources(corpus_text: str) -> list[str]:
+    return [corpus_text]
 
 
 def _validate_claims(
@@ -156,17 +150,13 @@ def _validate_claims(
 def _validate_analysis_claims(
     claims: list[EvidenceClaim],
     corpus_source: NormalizedSource,
-    price_source: NormalizedSource | None = None,
 ) -> list[ValidationFailure]:
     failures: list[ValidationFailure] = []
-    normalized_sources = [corpus_source]
-    if price_source is not None:
-        normalized_sources.insert(0, price_source)
     for index, item in enumerate(claims):
-        if excerpt_found_in_any_source(
+        if excerpt_found_in_source(
             item.excerpt,
-            [source.text for source in normalized_sources],
-            normalized_sources=normalized_sources,
+            corpus_source.text,
+            normalized_source=corpus_source,
         ):
             continue
         failures.append(
@@ -175,7 +165,7 @@ def _validate_analysis_claims(
                 index=index,
                 claim=item.claim,
                 excerpt=item.excerpt,
-                reason="excerpt not found in corpus or price block",
+                reason="excerpt not found in corpus",
             )
         )
     return failures
@@ -205,12 +195,8 @@ def _validate_confidence(
 def validate_quarter_evidence(
     evidence: EvidenceBackedQuarterSummary,
     corpus_text: str,
-    price_block_text: str | None = None,
 ) -> ValidationResult:
     corpus_source = NormalizedSource.from_text(corpus_text)
-    price_source = (
-        NormalizedSource.from_text(price_block_text) if price_block_text else None
-    )
     failures: list[ValidationFailure] = []
     failures.extend(
         _validate_claims("what_happened", evidence.what_happened, corpus_source)
@@ -221,7 +207,6 @@ def validate_quarter_evidence(
         _validate_analysis_claims(
             evidence.analysis,
             corpus_source,
-            price_source,
         )
     )
     return ValidationResult(is_valid=not failures, failures=failures)

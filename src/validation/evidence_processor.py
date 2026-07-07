@@ -116,24 +116,10 @@ def _total_quarter_claims(evidence: EvidenceBackedQuarterSummary) -> int:
     )
 
 
-def _anchor_sources_for_failure(
-    failure: ValidationFailure,
-    claim: EvidenceClaim,
-    corpus_text: str,
-    price_block_text: str | None,
-) -> list[str]:
-    if failure.field != "analysis" or not price_block_text:
-        return [corpus_text]
-    if "[price]" in claim.claim.lower():
-        return [price_block_text, corpus_text]
-    return [corpus_text, price_block_text]
-
-
 def pre_anchor_quarter_failures(
     evidence: EvidenceBackedQuarterSummary,
     failures: list[ValidationFailure],
     corpus_text: str,
-    price_block_text: str | None = None,
 ) -> tuple[EvidenceBackedQuarterSummary, list[AutoAnchoredEntry], list[ValidationFailure]]:
     if not failures:
         return evidence, [], []
@@ -148,24 +134,12 @@ def pre_anchor_quarter_failures(
             continue
 
         claim = claim_lists[failure.field][failure.index]
-        sources = _anchor_sources_for_failure(
-            failure,
-            claim,
+        anchored = find_verbatim_quote(
+            claim.claim,
             corpus_text,
-            price_block_text,
+            hint_excerpt=claim.excerpt,
         )
-        anchored: str | None = None
-        for source in sources:
-            anchored = find_verbatim_quote(
-                claim.claim,
-                source,
-                hint_excerpt=claim.excerpt,
-            )
-            if anchored and excerpt_found_in_source(anchored, source):
-                break
-            anchored = None
-
-        if anchored:
+        if anchored and excerpt_found_in_source(anchored, corpus_text):
             claim_lists[failure.field][failure.index] = EvidenceClaim(
                 claim=claim.claim,
                 excerpt=anchored,
@@ -199,14 +173,12 @@ def process_quarter_evidence_with_rescue(
     corpus_text: str,
     rescue_judge: RescueJudge,
     label: str,
-    price_block_text: str | None = None,
 ) -> EvidenceProcessingResult:
     from src.validation.rescue_orchestrator import augment_rescue_reviews_with_retries
 
     validation = validate_quarter_evidence(
         evidence,
         corpus_text,
-        price_block_text,
     )
     total_claims = _total_quarter_claims(evidence)
     if validation.is_valid:
@@ -220,7 +192,6 @@ def process_quarter_evidence_with_rescue(
         evidence,
         validation.failures,
         corpus_text,
-        price_block_text,
     )
 
     if not remaining_failures:
@@ -251,7 +222,6 @@ def process_quarter_evidence_with_rescue(
         remaining_validation,
         rescue_result,
         corpus_text,
-        price_block_text,
     )
     processed.verbatim_kept = initial_verbatim_kept
     processed.auto_anchored = auto_anchored
@@ -442,7 +412,6 @@ def apply_rescue_reviews_to_quarter(
     validation: ValidationResult,
     rescue_result: RescueJudgeResult,
     source: str,
-    price_block_text: str | None = None,
 ) -> EvidenceProcessingResult:
     review_map = _build_review_map(rescue_result.reviews)
     rescued: list[RescuedEntry] = []
@@ -486,7 +455,6 @@ def apply_rescue_reviews_to_quarter(
         review_map,
         rescued,
         dropped,
-        secondary_source=price_block_text,
     )
     verbatim_kept += kept
 
@@ -608,12 +576,10 @@ def apply_rescue_reviews_to_rollup(
 def process_quarter_evidence_strict(
     evidence: EvidenceBackedQuarterSummary,
     corpus_text: str,
-    price_block_text: str | None = None,
 ) -> EvidenceProcessingResult:
     validation = validate_quarter_evidence(
         evidence,
         corpus_text,
-        price_block_text,
     )
     if validation.is_valid:
         total = (

@@ -40,7 +40,6 @@ def _sample_summary(**overrides) -> QuarterSummary:
         "positives": ["Blackwell ramp", "Margin recovery"],
         "negatives": ["China restrictions"],
         "confidence_score": 72,
-        "document_only_confidence_score": 72,
         "analysis": list(SAMPLE_ANALYSIS),
     }
     payload.update(overrides)
@@ -92,7 +91,7 @@ class BasicsTestCase(unittest.TestCase):
             workbook = load_workbook(output_path)
             worksheet = workbook["Nvidia"]
             self.assertGreater(
-                worksheet.column_dimensions["I"].width,
+                worksheet.column_dimensions["H"].width,
                 EXCEL_COLUMN_WIDTHS["Analysis"],
             )
             self.assertLessEqual(worksheet.row_dimensions[2].height, EXCEL_MAX_ROW_HEIGHT)
@@ -103,7 +102,6 @@ class BasicsTestCase(unittest.TestCase):
         self.assertEqual(row["Summary Type"], "Quarter")
         self.assertEqual(row["What Happened"], "• Strong data center demand\n• Raised guidance")
         self.assertEqual(row["Confidence Score"], "72")
-        self.assertEqual(row["Document-Only Score"], "72")
         self.assertIn('"We are raising full-year revenue guidance across every segment."', row["Analysis"])
 
     def test_write_excel(self):
@@ -114,22 +112,20 @@ class BasicsTestCase(unittest.TestCase):
             workbook = load_workbook(output_path)
             worksheet = workbook["Nvidia"]
             self.assertEqual(worksheet["A1"].value, "Summary Type")
-            self.assertEqual(worksheet["G1"].value, "Document-Only Score")
-            self.assertEqual(worksheet["H1"].value, "Confidence Score")
-            self.assertEqual(worksheet["I1"].value, "Analysis")
+            self.assertEqual(worksheet["G1"].value, "Confidence Score")
+            self.assertEqual(worksheet["H1"].value, "Analysis")
             self.assertEqual(worksheet["D2"].value, "• Strong data center demand\n• Raised guidance")
             self.assertEqual(worksheet["G2"].value, "72")
-            self.assertEqual(worksheet["H2"].value, "72")
             self.assertEqual(
                 worksheet["C2"].value,
                 "FY2025-Q2\nAs-of Date: (08,28,2024)",
             )
-            self.assertEqual(worksheet["K1"].value, REFERENCE_KEY_TITLE)
+            self.assertEqual(worksheet["J1"].value, REFERENCE_KEY_TITLE)
             self.assertIn(
                 "sum of all Analysis bullet weights",
-                str(worksheet["K2"].value),
+                str(worksheet["J2"].value),
             )
-            self.assertEqual(worksheet.auto_filter.ref, "A1:I2")
+            self.assertEqual(worksheet.auto_filter.ref, "A1:H2")
 
     def test_load_reference_key_text(self):
         text = load_reference_key_text()
@@ -137,9 +133,10 @@ class BasicsTestCase(unittest.TestCase):
         self.assertIn("no fixed maximum", text)
         self.assertIn("Strong stock-moving drivers: ±20 to ±25", text)
         self.assertIn("NEXT QUARTER ONLY", text)
-        self.assertIn("four fiscal quarters immediately before", text)
-        self.assertIn("Document-Only Score", text)
         self.assertIn("10-K", text)
+        self.assertNotIn("Document-Only Score", text)
+        self.assertNotIn("document-only", text.lower())
+        self.assertNotIn("[price]", text.lower())
         self.assertNotIn("conference call transcript", text.lower())
         self.assertGreater(len(text), 100)
 
@@ -159,8 +156,8 @@ class BasicsTestCase(unittest.TestCase):
             self.assertEqual(workbook.sheetnames, ["Amazon", "Nvidia"])
             self.assertEqual(workbook["Nvidia"]["B2"].value, "Nvidia")
             self.assertEqual(workbook["Amazon"]["B2"].value, "Amazon")
-            self.assertEqual(workbook["Nvidia"]["K1"].value, REFERENCE_KEY_TITLE)
-            self.assertEqual(workbook["Amazon"]["K1"].value, REFERENCE_KEY_TITLE)
+            self.assertEqual(workbook["Nvidia"]["J1"].value, REFERENCE_KEY_TITLE)
+            self.assertEqual(workbook["Amazon"]["J1"].value, REFERENCE_KEY_TITLE)
 
     def test_write_excel_consolidates_multiple_quarters_on_one_sheet(self):
         rows = [
@@ -179,8 +176,8 @@ class BasicsTestCase(unittest.TestCase):
             self.assertEqual(worksheet["C3"].value, "FY2026-Q2")
             self.assertEqual(worksheet["C4"].value, "FY2026-Q3")
             self.assertEqual(worksheet["C5"].value, "FY2026-Q4")
-            self.assertEqual(worksheet["H5"].value, "90")
-            self.assertEqual(worksheet.auto_filter.ref, "A1:I5")
+            self.assertEqual(worksheet["G5"].value, "90")
+            self.assertEqual(worksheet.auto_filter.ref, "A1:H5")
 
     def test_write_excel_single_sheet_combines_companies(self):
         rows = [
@@ -205,7 +202,7 @@ class BasicsTestCase(unittest.TestCase):
             self.assertEqual(worksheet["B2"].value, "Amazon")
             self.assertEqual(worksheet["B3"].value, "Nvidia")
             self.assertEqual(worksheet["B4"].value, "Tesla")
-            self.assertEqual(worksheet.auto_filter.ref, "A1:I4")
+            self.assertEqual(worksheet.auto_filter.ref, "A1:H4")
 
     def test_format_quarter_cell(self):
         self.assertEqual(format_quarter_cell("FY2025-Q2"), "FY2025-Q2")
