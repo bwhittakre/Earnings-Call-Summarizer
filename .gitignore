@@ -1,4 +1,10 @@
 .env
+.env.txt
+*.env.txt
+# Structured Narrative secrets & data outputs
+Structured Narrative/.env.txt
+Structured Narrative/Unified/
+*.parquet
 *.docx
 *.xlsx
 *.csv
