@@ -1,0 +1,6 @@
+# Structured Narrative extractor + reporting stack
+snowflake-connector-python
+pandas
+pyarrow
+python-dotenv
+reportlab

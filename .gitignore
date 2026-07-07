@@ -38,3 +38,5 @@ output_confidence/*
 .pytest_cache/
 batch_*.log
 output_confidence/edgar_cache/
+# Structured Narrative generated outputs — anchored so it beats the generic `!output/` rule above
+/Structured Narrative/output/
