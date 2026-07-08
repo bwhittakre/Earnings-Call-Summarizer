@@ -1,0 +1,60 @@
+What the Narrative Delta (Focus 2) means
+The Narrative Delta measures how each business dimension CHANGED from one earnings call to the next, rather than its absolute level. The premise is that markets react to changes in the narrative more than to absolute statements: a company that is "very strong again" moves the stock less than one whose guidance just turned, whose growth just reaccelerated, or that just introduced a new risk. This layer sits on top of the per-quarter Dimension Scores (see dimension_reference_key.txt) and is still feature extraction, not a forecast and not a view on the share price.
+
+How a delta is produced (hybrid method)
+For each consecutive pair of quarters (a "transition", e.g. FY2024-Q1 -> FY2024-Q2), the model is given:
+  1. the PRIOR quarter's already-extracted summary (its dimension scores, one-line rationales, and key evidence claims) as the baseline of what management said last quarter, and
+  2. the CURRENT quarter's full earnings-call transcript.
+It then reports, per dimension, what changed. We combine two kinds of signal:
+  - LLM change read (primary): change_direction and change_magnitude, plus a change-focused rationale and verbatim evidence from the current transcript.
+  - Deterministic numeric anchors (secondary): the raw difference of the level scores, and the change in the quant z-score, computed directly from the existing outputs.
+
+The two quarters must both exist in output/AMZN_dimension_view.json. The first quarter has no prior within the FY2024 pilot, so it gets no delta (a Q1 delta would require sourcing FY2023-Q4). Deltas are therefore produced for Q2 vs Q1, Q3 vs Q2, and Q4 vs Q3.
+
+change_direction
+One of:
+  improved       the narrative on this dimension got better vs the prior quarter (accelerating trends, raised guidance, new positive disclosures, more confident tone, easing risk).
+  deteriorated   the narrative got worse (decelerating trends, cut/softened guidance, new/heightened risks, more hedged tone).
+  steady         no meaningful change vs the prior quarter.
+For macro_regulatory_risk, "improved" means risk is EASING and "deteriorated" means risk is INTENSIFYING.
+
+change_magnitude (-2.0 to +2.0, one decimal) - the PRIMARY signal
+The sign matches the direction (positive = improved, negative = deteriorated) and the magnitude conveys how big and important the shift is:
+  magnitude near 2.0  = a major, clearly articulated shift (guidance materially raised or cut, a new material risk, a decisive tone change)
+  magnitude ~1.0-1.5  = a clear but moderate shift, or a strong shift with offsetting points
+  magnitude ~0.1-0.7  = a slight or tentative shift, or only lightly touched on
+  exactly 0.0         = genuinely no change (pairs with "steady")
+This is the primary change signal. It is deliberately NOT the same as the raw level difference: because the level scores saturate near +2 for a consistently strong operator, the raw difference is often tiny even when something genuinely shifted (e.g. tone hardened, a risk was added). The magnitude is calibrated to the CHANGE in the language, so it can be meaningful even when the level barely moved.
+
+The numeric anchors (secondary / confirmation)
+  score_delta    = current level score - prior level score (one decimal). A blunt arithmetic check on the LLM change; small by construction when levels are saturated.
+  quant_z_delta  = current quant z - prior quant z, for the five quant-comparable dimensions only (demand, margins, earnings_power, capital_allocation, guidance). This is the change in the standardized surprise/estimate-revision vs AMZN's own history - i.e. did the beat-vs-expectations get bigger or smaller than last quarter.
+
+agrees_with_numbers / numbers agree|diverge
+A flag comparing the SIGN of the LLM change_magnitude with the sign of score_delta (and separately quant_z_delta):
+  numbers agree    the narrative change and the level delta point the same way - the change is corroborated by the numbers.
+  numbers diverge  they point opposite ways - the narrative moved one way while the level/surprise moved the other. This divergence is itself interesting and is a lead-in to Focus 3 (narrative surprise vs consensus).
+It is shown only when both signals are directional; if either is flat (steady / zero) it is omitted.
+
+Evidence and verification
+Every change is backed by 1-3 excerpts quoted from the CURRENT quarter's transcript (never the prior summary). Each excerpt is checked with the SAME layered cascade as the level scorer: verbatim -> composite (ellipsis-stitched, every fragment verbatim) -> anchored (a supporting verbatim span located for the claim) -> paraphrased (the rescue judge confirms a faithful paraphrase and returns a verbatim quote) -> unverified. In the report, verbatim/composite/anchored/paraphrased all count as supported and carry a neutral chip (plain quotes are exact verbatim); only unverified is a red flag. The rescue step honors the DIMENSION_RESCUE toggle.
+
+Point-in-time
+The delta for a transition is dated at the CURRENT quarter's call date and uses only the current transcript plus the prior-quarter summary (which was itself known earlier). No post-call knowledge is used, so there is no look-ahead.
+
+How to read the HTML report (AMZN_delta_report.html)
+- Use the buttons at the top to filter to one transition (e.g. "FY2024-Q1 -> FY2024-Q2") or view All.
+- Each transition is a table: Dimension | Level (prior -> current) | delta score | Change | Quant delta-z | What changed.
+  * Level shows both level scores so you can see the absolute context.
+  * delta score is the raw arithmetic difference, tinted green/red.
+  * Change shows the LLM direction (with an up/down marker) and magnitude, tinted by magnitude, with a small "numbers agree/diverge" badge underneath.
+  * Quant delta-z is shown for the five comparable dimensions only.
+- Read the "What changed" bullets for the reasoning; click a superscript number to jump to the current-quarter excerpt in the Notes section (and the back-link to return). Status chips follow the same key as the level report.
+
+How this ties into the roadmap
+- Focus 1 (levels) answered "how did each dimension look this quarter." Focus 2 (this) answers "what changed vs last quarter." Focus 3 will add "how did that compare to what the market expected" (consensus vs management), where the "numbers diverge" cases here are the natural starting point for narrative surprise.
+
+Caveats at this stage
+- Single-company, four-quarter pilot -> three transitions. These are for building and validating the change pipeline, not yet for statistical inference.
+- change_magnitude is a model judgment of the shift; treat direction and rank across transitions as more reliable than the exact tenths.
+- Q1 has no in-pilot prior, so it does not appear in the delta report.

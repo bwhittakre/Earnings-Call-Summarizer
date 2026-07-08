@@ -176,6 +176,109 @@ def _build_user_content(transcript: Transcript, company_name: str) -> str:
     return "\n".join(parts)
 
 
+def _deterministic_status(
+    claim: str, excerpt: str, source: NormalizedSource
+) -> tuple[str, str | None]:
+    """Return (status, canonical) using only non-LLM checks.
+
+    Falls back to STATUS_UNVERIFIED (caller may then try the LLM rescue judge).
+    """
+    if excerpt_found_in_source(excerpt, source.text, normalized_source=source):
+        return STATUS_VERBATIM, None
+
+    # Composite: an ellipsis-stitched quote whose every (non-trivial) fragment
+    # is itself verbatim in the transcript. Each piece is a real quote; the
+    # model merely joined non-adjacent spans with "...".
+    fragments = [
+        frag.strip()
+        for frag in _ELLIPSIS_RE.split(excerpt)
+        if len(frag.strip()) >= _MIN_FRAGMENT_CHARS
+    ]
+    if len(fragments) >= 2 and all(
+        excerpt_found_in_source(frag, source.text, normalized_source=source)
+        for frag in fragments
+    ):
+        return STATUS_COMPOSITE, None
+
+    # Anchored: programmatically locate a supporting contiguous verbatim span
+    # for the claim (same pre-rescue step the confidence pipeline uses).
+    anchored = find_verbatim_quote(claim, source.text, hint_excerpt=excerpt)
+    if anchored:
+        return STATUS_ANCHORED, anchored
+
+    return STATUS_UNVERIFIED, None
+
+
+def _apply_rescue(
+    scored: list[ScoredExcerpt],
+    pending: list[int],
+    source: NormalizedSource,
+    label: str,
+    rescue: RescueJudge,
+) -> None:
+    """Batch remaining failures through the LLM RescueJudge (paraphrase check).
+
+    The judge uses `field` to carry the index into `scored`; a `rescued`
+    verdict whose canonical_excerpt verifies verbatim promotes the excerpt to
+    STATUS_PARAPHRASED. Best-effort: any failure leaves items as unverified.
+    """
+    failures = [
+        ValidationFailure(
+            field=str(idx),
+            index=0,
+            claim=scored[idx].claim,
+            excerpt=scored[idx].excerpt,
+            reason="not a contiguous verbatim quote",
+        )
+        for idx in pending
+    ]
+    try:
+        rescue_result, _ = rescue.review_failures(failures, source.text, label)
+    except Exception:
+        return
+
+    review_map = {r.field: r for r in rescue_result.reviews}
+    for idx in pending:
+        review = review_map.get(str(idx))
+        if not review or review.verdict != "rescued":
+            continue
+        canonical = review.canonical_excerpt
+        if canonical and excerpt_found_in_source(
+            canonical, source.text, normalized_source=source
+        ):
+            scored[idx].status = STATUS_PARAPHRASED
+            scored[idx].canonical = canonical
+
+
+def verify_excerpts(
+    pairs: list[tuple[str, str]],
+    source_text: str,
+    rescue: RescueJudge | None = None,
+    label: str = "",
+) -> list[ScoredExcerpt]:
+    """Verify (claim, excerpt) pairs against a source with the layered cascade.
+
+    Runs the deterministic checks (verbatim -> composite -> anchored) on every
+    pair, then batches all remaining failures through the LLM RescueJudge in a
+    single call (paraphrase check). Returns one ScoredExcerpt per input pair,
+    in order. Shared by the level scorer and the delta scorer so both label
+    evidence identically.
+    """
+    source = NormalizedSource.from_text(source_text)
+    scored: list[ScoredExcerpt] = []
+    pending: list[int] = []
+    for claim, excerpt in pairs:
+        status, canonical = _deterministic_status(claim, excerpt, source)
+        if status == STATUS_UNVERIFIED:
+            pending.append(len(scored))
+        scored.append(
+            ScoredExcerpt(claim=claim, excerpt=excerpt, status=status, canonical=canonical)
+        )
+    if rescue and pending:
+        _apply_rescue(scored, pending, source, label, rescue)
+    return scored
+
+
 class DimensionScorer:
     def __init__(
         self,
@@ -204,70 +307,19 @@ class DimensionScorer:
             summary=summary, dimensions=dimensions, llm_result=result
         )
 
-    @staticmethod
-    def _deterministic_status(
-        claim: str, excerpt: str, source: NormalizedSource
-    ) -> tuple[str, str | None]:
-        """Return (status, canonical) using only non-LLM checks.
-
-        Falls back to STATUS_UNVERIFIED (caller may then try the LLM rescue judge).
-        """
-        if excerpt_found_in_source(excerpt, source.text, normalized_source=source):
-            return STATUS_VERBATIM, None
-
-        # Composite: an ellipsis-stitched quote whose every (non-trivial) fragment
-        # is itself verbatim in the transcript. Each piece is a real quote; the
-        # model merely joined non-adjacent spans with "...".
-        fragments = [
-            frag.strip()
-            for frag in _ELLIPSIS_RE.split(excerpt)
-            if len(frag.strip()) >= _MIN_FRAGMENT_CHARS
-        ]
-        if len(fragments) >= 2 and all(
-            excerpt_found_in_source(frag, source.text, normalized_source=source)
-            for frag in fragments
-        ):
-            return STATUS_COMPOSITE, None
-
-        # Anchored: programmatically locate a supporting contiguous verbatim span
-        # for the claim (same pre-rescue step the confidence pipeline uses).
-        anchored = find_verbatim_quote(claim, source.text, hint_excerpt=excerpt)
-        if anchored:
-            return STATUS_ANCHORED, anchored
-
-        return STATUS_UNVERIFIED, None
-
     def _verify(
         self,
         summary: TranscriptDimensionSummary,
         source_text: str,
         label: str,
     ) -> list[ScoredDimension]:
-        source = NormalizedSource.from_text(source_text)
         comparable = set(QUANT_COMPARABLE_DIMENSIONS)
-
-        scored: list[ScoredExcerpt] = []
-        # (index into `scored`) for excerpts still unverified after deterministic checks.
-        pending: list[int] = []
+        pairs: list[tuple[str, str]] = []
         dim_spans: list[tuple[str, float, str, bool, int, int]] = []
-
         for dim in summary.dimensions:
-            start = len(scored)
+            start = len(pairs)
             for ev in dim.evidence:
-                status, canonical = self._deterministic_status(
-                    ev.claim, ev.excerpt, source
-                )
-                idx = len(scored)
-                scored.append(
-                    ScoredExcerpt(
-                        claim=ev.claim,
-                        excerpt=ev.excerpt,
-                        status=status,
-                        canonical=canonical,
-                    )
-                )
-                if status == STATUS_UNVERIFIED:
-                    pending.append(idx)
+                pairs.append((ev.claim, ev.excerpt))
             dim_spans.append(
                 (
                     dim.dimension,
@@ -275,62 +327,19 @@ class DimensionScorer:
                     dim.rationale,
                     dim.dimension in comparable,
                     start,
-                    len(scored),
+                    len(pairs),
                 )
             )
 
-        if self.rescue and pending:
-            self._apply_rescue(scored, pending, source, label)
+        scored = verify_excerpts(pairs, source_text, rescue=self.rescue, label=label)
 
-        out: list[ScoredDimension] = []
-        for name, score, rationale, is_comp, start, end in dim_spans:
-            out.append(
-                ScoredDimension(
-                    dimension=name,
-                    score=score,
-                    rationale=rationale,
-                    is_quant_comparable=is_comp,
-                    evidence=scored[start:end],
-                )
+        return [
+            ScoredDimension(
+                dimension=name,
+                score=score,
+                rationale=rationale,
+                is_quant_comparable=is_comp,
+                evidence=scored[start:end],
             )
-        return out
-
-    def _apply_rescue(
-        self,
-        scored: list[ScoredExcerpt],
-        pending: list[int],
-        source: NormalizedSource,
-        label: str,
-    ) -> None:
-        """Batch remaining failures through the LLM RescueJudge (paraphrase check).
-
-        The judge uses `field` to carry the index into `scored`; a `rescued`
-        verdict whose canonical_excerpt verifies verbatim promotes the excerpt to
-        STATUS_PARAPHRASED. Best-effort: any failure leaves items as unverified.
-        """
-        failures = [
-            ValidationFailure(
-                field=str(idx),
-                index=0,
-                claim=scored[idx].claim,
-                excerpt=scored[idx].excerpt,
-                reason="not a contiguous verbatim quote",
-            )
-            for idx in pending
+            for name, score, rationale, is_comp, start, end in dim_spans
         ]
-        try:
-            rescue_result, _ = self.rescue.review_failures(failures, source.text, label)
-        except Exception:
-            return
-
-        review_map = {r.field: r for r in rescue_result.reviews}
-        for idx in pending:
-            review = review_map.get(str(idx))
-            if not review or review.verdict != "rescued":
-                continue
-            canonical = review.canonical_excerpt
-            if canonical and excerpt_found_in_source(
-                canonical, source.text, normalized_source=source
-            ):
-                scored[idx].status = STATUS_PARAPHRASED
-                scored[idx].canonical = canonical
