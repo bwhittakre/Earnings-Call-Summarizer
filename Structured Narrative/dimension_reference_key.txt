@@ -1,0 +1,65 @@
+What the Dimension Scores mean
+The Dimension Scores are a structured, evidence-backed read of WHAT MANAGEMENT COMMUNICATED on a single earnings call. They are feature-extraction outputs, not a forecast and not a view on the stock price. Each score describes how one business dimension looked THAT quarter, based solely on the disclosed results and management commentary in the earnings-call transcript. No price action, analyst models, news, or post-call knowledge is used.
+The LLM is used as a feature extractor. A separate quantitative layer (the z-scores described below) provides the "versus expectations / versus history" context. The two are kept separate on purpose.
+
+The eight dimensions
+Five dimensions have a direct quantitative counterpart in the AMZN quant spine (dim_*_z), so they appear side by side in the report:
+- demand: End-market demand, revenue growth, volumes/units, bookings/backlog, customer activity.
+- margins: Profitability trajectory: gross/operating margin, cost efficiency, unit economics.
+- earnings_power: Bottom-line strength: EPS, net income, operating income, overall profitability.
+- capital_allocation: Capex, buybacks, dividends, free-cash-flow deployment, investment discipline, M&A.
+- guidance: Forward outlook and guidance tone relative to prior expectations.
+Three dimensions are narrative-only (no quant counterpart; the Quant z column is blank):
+- management_confidence: Tone, conviction, and directness of management (hedging vs confident language).
+- competitive_position: Market share, competitive dynamics, differentiation, pricing power.
+- macro_regulatory_risk: Macro, FX, regulatory and legal risk. Scored +2 when such risks are EASING and -2 when they are INTENSIFYING.
+
+The scoring scale (-2.0 to +2.0, one decimal)
+Each dimension is scored on a continuous scale from -2.0 to +2.0, reported to one decimal place.
+Whole-number anchors:
++2  materially positive / strong
++1  modestly positive
+ 0  neutral, in-line, mixed, or not meaningfully discussed
+-1  modestly negative
+-2  materially negative / weak
+The DECIMAL (the tenths) encodes the degree and confidence of the tone, i.e. how emphatic vs hedged management was:
+- magnitude near 2.0  = emphatic, unqualified, strongly and repeatedly evidenced
+- magnitude ~1.0-1.5  = clearly directional but with hedges, caveats, or mixed sub-points
+- magnitude ~0.1-0.7  = marginal, tentative, or only lightly discussed
+- exactly 0.0         = genuinely neutral / balanced / not discussed
+So a +1.3 on demand means "clearly positive, but with some qualifiers," while a +1.9 means "emphatically strong, little hedging." The tenths are calibrated to the language, not to the magnitude of the reported numbers.
+
+Evidence and verification
+Every dimension score is anchored to one or more short evidence items. Each item is a headline "claim" (the model's paraphrased point) plus an "excerpt" copied from the transcript.
+In the HTML report, the claims are shown as bulleted rationale under each dimension, and each bullet carries a superscript note number. The matching note in the per-quarter Notes section shows the excerpt that supports it.
+
+Rather than a single pass/fail verbatim test, each excerpt goes through a layered verification cascade (the same idea used by the main confidence pipeline). Text is normalized first (case, smart quotes, $ signs, and thousands separators) before any matching. The cascade assigns one of five statuses, from strongest to weakest support:
+- verbatim: the excerpt is an exact contiguous substring of the transcript. Shown as a plain quote with no chip.
+- composite: the excerpt is an ellipsis-stitched quote (two or more passages joined by "..."), and EVERY fragment is itself verbatim in the transcript. This is the case that used to be mislabeled "unverified"; each piece is a real quote, the model just joined non-adjacent spans.
+- anchored: the excerpt itself was not found contiguously, but a supporting contiguous verbatim span was located in the transcript for the claim (programmatic quote anchor, no LLM). The exact located span is shown under the note as "verbatim: ...".
+- paraphrased: a faithful paraphrase or shortening. When the deterministic checks fail, the excerpt is sent to the rescue judge (an LLM reviewer, reused from the confidence pipeline) with ONLY the transcript. If it rules the claim supported, it returns the shortest contiguous verbatim quote from the transcript, which is shown as "verbatim: ...". If it rules the claim unsupported/contradicted/hallucinated, the excerpt stays unverified.
+- unverified: none of the above found any supporting span. This is now a genuine red flag, not just a formatting artifact.
+Nothing is ever dropped; every claim and excerpt is kept and its status recorded. In the report, verbatim / composite / anchored / paraphrased all count as "supported" and carry a neutral chip (except plain verbatim); only true "unverified" is styled as a red warning. The "excerpts supported %" in each quarter header counts everything except unverified.
+The paraphrase (rescue) step is on by default and can be disabled by setting DIMENSION_RESCUE=0 before running run_dimension_scoring.py; with it off, excerpts that fail the deterministic checks simply remain unverified. Its tokens are included in the run's usage summary. The per-quarter status counts (n_verbatim / n_composite / n_anchored / n_paraphrased / n_unverified) are written to AMZN_transcript_coverage_FY2024.
+
+The Quant z column (for the five comparable dimensions)
+The Quant z value is the standardized surprise/revision for that dimension, measured against AMZN's OWN history:
+- For demand, margins, earnings_power, capital_allocation it is the average z-score of the reported-quarter earnings SURPRISE across that dimension's member measures (actual vs pre-announcement consensus, standardized over AMZN's history).
+- For guidance it is the average z-score of the forward ESTIMATE REVISION (how analysts moved forward estimates in the days after the call).
+0 means an AMZN-typical quarter; +1.0 means about one standard deviation stronger than AMZN normally prints; negative means the beat/reaction was smaller than AMZN's norm.
+
+Why the LLM score and the Quant z often diverge (narrative surprise)
+The LLM score reads ABSOLUTE tone: for a company that executes well, management almost always sounds strong, so the LLM score tends to sit high (+1 to +2). The Quant z strips out "how AMZN normally does" and keeps only the residual: did results beat expectations by more or less than usual? A quarter can therefore read +2 on the narrative but slightly negative on the quant, meaning "genuinely strong, but the beat vs expectations was a touch below AMZN's own standard." That gap is the "narrative surprise" and is often more informative than either number alone.
+Because the two use different scales (bounded -2..+2 vs an unbounded z-score), compare DIRECTION and RANK across quarters, not the raw values.
+
+How to read the HTML report (AMZN_dimension_report.html)
+- Use the quarter buttons at the top to filter to a single quarter or view All.
+- Each quarter is a table: Dimension | LLM score | Quant z | Rationale. Score cells are tinted green (positive) or red (negative), with stronger color for larger magnitude.
+- Read the rationale bullets for the reasoning; click a superscript number to jump to the excerpt in the Notes section (and the back-link to return). Each note carries a status chip (composite / anchored / paraphrased / unverified) per the cascade above; plain quotes are exact verbatim matches. Only "unverified" is a red flag. The legend under the quarter buttons summarizes the chips.
+
+Sourcing and point-in-time
+Transcripts are supplied through a swappable provider layer (currently local files; an FMP API provider is also available). The score's as-of date is the earnings-call date, and the model sees only the transcript text, so there is no look-ahead: the read reflects only what was known on the call.
+
+Caveats at this stage
+- Absolute-tone scores saturate near the top for a consistently strong operator, so cross-quarter variance is small. This is expected and is the motivation for the planned narrative-change (delta vs prior quarter) and consensus-vs-management steps.
+- This is a single-company, four-quarter pilot; the numbers are for building and validating the pipeline, not yet for statistical inference.

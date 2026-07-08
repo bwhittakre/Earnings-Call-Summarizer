@@ -4,3 +4,9 @@ pandas
 pyarrow
 python-dotenv
 reportlab
+openpyxl
+# Transcript dimension-scoring pilot
+requests
+anthropic
+pydantic
+json-repair

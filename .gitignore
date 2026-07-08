@@ -40,3 +40,5 @@ batch_*.log
 output_confidence/edgar_cache/
 # Structured Narrative generated outputs — anchored so it beats the generic `!output/` rule above
 /Structured Narrative/output/
+# Raw earnings-call transcripts (manual paste / local provider) — not committed (licensing)
+/Structured Narrative/transcripts_raw/
