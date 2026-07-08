@@ -1,0 +1,31 @@
+{
+  "mcpServers": {
+    "zettelkasten": {
+      "command": "C:\\Users\\BobbyWhittaker\\OneDrive - Cassius Capital\\Desktop\\Earnings Call Summarizer\\.venv\\Scripts\\angelo-zettelkasten.exe",
+      "env": {
+        "ANGELO_WORKSPACE": "${workspaceFolder}",
+        "ZETTELKASTEN_PATH": "${workspaceFolder}/.zettelkasten"
+      }
+    },
+    "coordinator": {
+      "command": "C:\\Users\\BobbyWhittaker\\OneDrive - Cassius Capital\\Desktop\\Earnings Call Summarizer\\.venv\\Scripts\\angelo-coordinator.exe",
+      "env": {
+        "ANGELO_WORKSPACE": "${workspaceFolder}",
+        "ANGELO_ZETTELKASTEN": "1"
+      }
+    },
+    "memory": {
+      "command": "C:\\Users\\BobbyWhittaker\\OneDrive - Cassius Capital\\Desktop\\Earnings Call Summarizer\\.venv\\Scripts\\angelo-memory.exe",
+      "env": {
+        "ANGELO_WORKSPACE": "${workspaceFolder}",
+        "MEMORY_FILE_PATH": "${workspaceFolder}/.angelo/memory.kgl"
+      }
+    },
+    "memory-artifacts": {
+      "command": "C:\\Users\\BobbyWhittaker\\OneDrive - Cassius Capital\\Desktop\\Earnings Call Summarizer\\.venv\\Scripts\\angelo-memory-artifacts.exe",
+      "env": {
+        "ANGELO_WORKSPACE": "${workspaceFolder}"
+      }
+    }
+  }
+}

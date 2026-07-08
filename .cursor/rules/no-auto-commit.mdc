@@ -1,0 +1,27 @@
+---
+alwaysApply: true
+---
+
+# No Automatic Git Commits
+
+The user controls all git commits manually. Angelo must not trigger or perform
+automatic git commits in this repo.
+
+## Rules
+
+1. **Never run `git commit` or `git push` unless the user explicitly asks.**
+2. **Never run `angelo memory commit` or `angelo zettelkasten commit`.**
+3. **When calling memory `record()`, do not pass the `files` parameter** unless
+   the user explicitly asks to git-pin an entry to specific files. Omitting
+   `files` prevents Angelo's file-pinning logic from auto-committing source code.
+4. **Memory and zettelkasten writes are fine** — they create/update files under
+   `.memory/` and `.zettelkasten/` on disk. Those directories are gitignored so
+   Angelo's debounced committers will not commit them.
+5. **When the user asks to commit**, stage and commit only what they specify.
+   Do not bundle Angelo memory/zettelkasten files unless they ask.
+
+## Note
+
+If `.memory/` or `.zettelkasten/` files are ever manually tracked with
+`git add -f`, Angelo may resume auto-committing those tracked paths. Keep them
+untracked and rely on manual `git add -f` when committing.
