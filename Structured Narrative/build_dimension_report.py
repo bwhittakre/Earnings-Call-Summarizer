@@ -30,6 +30,10 @@ OUT_DIR = HERE / "output"
 VIEW_FILE = OUT_DIR / "AMZN_dimension_view.json"
 HTML_FILE = OUT_DIR / "AMZN_dimension_report.html"
 
+if str(HERE) not in sys.path:
+    sys.path.insert(0, str(HERE))
+from pilot_config import is_output_quarter  # noqa: E402
+
 DIM_LABELS = {
     "demand": "Demand",
     "margins": "Margins",
@@ -188,7 +192,10 @@ def render_quarter(qi: int, q: dict, dim_order: list[str]) -> str:
 
 def build_html(view: dict) -> str:
     dim_order = view.get("dimension_order", list(DIM_LABELS.keys()))
-    quarters = view.get("quarters", [])
+    quarters = [
+        q for q in view.get("quarters", [])
+        if q.get("output_scope", is_output_quarter(q["fiscal_period"]))
+    ]
     ticker = view.get("ticker", "")
     company = view.get("company_name", "")
 
@@ -310,7 +317,10 @@ def main() -> int:
         return 1
     view = json.loads(VIEW_FILE.read_text(encoding="utf-8"))
     HTML_FILE.write_text(build_html(view), encoding="utf-8")
-    n_q = len(view.get("quarters", []))
+    n_q = len([
+        q for q in view.get("quarters", [])
+        if q.get("output_scope", is_output_quarter(q["fiscal_period"]))
+    ])
     print(f"Wrote {HTML_FILE}  ({n_q} quarters)")
     return 0
 

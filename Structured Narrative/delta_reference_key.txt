@@ -9,7 +9,7 @@ It then reports, per dimension, what changed. We combine two kinds of signal:
   - LLM change read (primary): change_direction and change_magnitude, plus a change-focused rationale and verbatim evidence from the current transcript.
   - Deterministic numeric anchors (secondary): the raw difference of the level scores, and the change in the quant z-score, computed directly from the existing outputs.
 
-The two quarters must both exist in output/AMZN_dimension_view.json. The first quarter has no prior within the FY2024 pilot, so it gets no delta (a Q1 delta would require sourcing FY2023-Q4). Deltas are therefore produced for Q2 vs Q1, Q3 vs Q2, and Q4 vs Q3.
+The two quarters must both exist in output/AMZN_dimension_view.json. FY2023-Q4 is scored as a prior-only baseline (not in published level outputs) so FY2024-Q1 can be compared to the previous quarter. Deltas are produced for FY2023-Q4 -> FY2024-Q1 and each consecutive FY2024 pair.
 
 change_direction
 One of:

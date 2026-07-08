@@ -55,12 +55,11 @@ from delta_scorer import (  # noqa: E402
     CONTEXT_BOTH_TRANSCRIPTS,
     VALID_CONTEXTS,
 )
+from pilot_config import TICKER, COMPANY_NAME, is_output_quarter  # noqa: E402
 
 sys.path.insert(0, str(REPO_ROOT))
 from src.llm.anthropic_client import AnthropicClient  # noqa: E402
 
-TICKER = "AMZN"
-COMPANY_NAME = "Amazon.com, Inc."
 DEFAULT_MODEL = "claude-sonnet-4-6"
 
 
@@ -167,7 +166,8 @@ def main() -> int:
 
     print(f"Provider: {provider.name} | Model: {model} | delta context: {delta_context} "
           f"| paraphrase rescue: {'on' if use_rescue else 'off'}")
-    print(f"Computing {len(quarters) - 1} quarter-over-quarter transitions "
+    print(f"Computing {sum(1 for i in range(1, len(quarters)) if is_output_quarter(quarters[i]['fiscal_period']))} "
+          f"quarter-over-quarter transitions "
           f"across {len(ALL_DIMENSIONS)} dimensions.\n")
 
     rows: list[dict] = []
@@ -177,6 +177,8 @@ def main() -> int:
         prior_q, current_q = quarters[i - 1], quarters[i]
         prior_period = prior_q["fiscal_period"]
         current_period = current_q["fiscal_period"]
+        if not is_output_quarter(current_period):
+            continue
         print(f"[{prior_period} -> {current_period}] fetching transcripts…")
         try:
             prior_transcript = provider.fetch(TICKER, prior_period)

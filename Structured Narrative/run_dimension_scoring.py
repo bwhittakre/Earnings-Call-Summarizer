@@ -52,13 +52,18 @@ from dimension_scorer import (  # noqa: E402
     ALL_DIMENSIONS,
     QUANT_COMPARABLE_DIMENSIONS,
 )
+from pilot_config import (  # noqa: E402
+    TICKER,
+    COMPANY_NAME,
+    OUTPUT_QUARTERS,
+    is_output_quarter,
+    scoring_quarters,
+)
 
 sys.path.insert(0, str(REPO_ROOT))
 from src.llm.anthropic_client import AnthropicClient  # noqa: E402
 
-TICKER = "AMZN"
-COMPANY_NAME = "Amazon.com, Inc."
-QUARTERS = ["FY2024-Q1", "FY2024-Q2", "FY2024-Q3", "FY2024-Q4"]
+QUARTERS = scoring_quarters()
 DEFAULT_MODEL = "claude-sonnet-4-6"
 QUANT_FILE = OUT_DIR / "AMZN_dimension_scores.csv"
 VIEW_FILE = OUT_DIR / "AMZN_dimension_view.json"
@@ -154,7 +159,8 @@ def main() -> int:
 
     print(f"Provider: {provider.name} | Model: {model} | paraphrase rescue: "
           f"{'on' if use_rescue else 'off'}")
-    print(f"Scoring {len(QUARTERS)} AMZN quarters across {len(ALL_DIMENSIONS)} dimensions.\n")
+    print(f"Scoring {len(QUARTERS)} AMZN quarters ({len(OUTPUT_QUARTERS)} in output scope) "
+          f"across {len(ALL_DIMENSIONS)} dimensions.\n")
 
     score_rows: list[dict] = []
     coverage_rows: list[dict] = []
@@ -177,26 +183,30 @@ def main() -> int:
         print(f"[{fp}] scoring dimensions…")
         scored = scorer.score(transcript, COMPANY_NAME)
 
-        for d in scored.dimensions:
-            score_rows.append({
-                "ticker": TICKER,
-                "fiscal_period": fp,
-                "as_of_date": transcript.call_date,
-                "dimension": d.dimension,
-                "score": d.score,
-                "is_quant_comparable": d.is_quant_comparable,
-                "rationale": d.rationale,
-                "n_evidence": d.n_evidence,
-                "n_evidence_verified": d.n_evidence_verified,
-                "evidence_verified": d.evidence_verified,
-                "excerpts": " || ".join(d.excerpts),
-                "source": transcript.source_name,
-            })
+        in_output = is_output_quarter(fp)
+        if in_output:
+            for d in scored.dimensions:
+                score_rows.append({
+                    "ticker": TICKER,
+                    "fiscal_period": fp,
+                    "as_of_date": transcript.call_date,
+                    "dimension": d.dimension,
+                    "score": d.score,
+                    "is_quant_comparable": d.is_quant_comparable,
+                    "rationale": d.rationale,
+                    "n_evidence": d.n_evidence,
+                    "n_evidence_verified": d.n_evidence_verified,
+                    "evidence_verified": d.evidence_verified,
+                    "excerpts": " || ".join(d.excerpts),
+                    "source": transcript.source_name,
+                })
 
         ed = quant_dates.get(fp)
         ed_str = ed.strftime("%Y-%m-%d") if ed is not None and pd.notna(ed) else None
         view_quarters.append({
             "fiscal_period": fp,
+            "output_scope": in_output,
+            "prior_only": not in_output,
             "as_of_date": transcript.call_date,
             "earnings_date": ed_str,
             "source": transcript.source_name,
@@ -255,7 +265,8 @@ def main() -> int:
             "input_tokens": scored.llm_result.usage.input_tokens,
             "output_tokens": scored.llm_result.usage.output_tokens,
         })
-        coverage_rows.append(cov)
+        if in_output:
+            coverage_rows.append(cov)
 
         audit = {
             "summary": scored.summary.model_dump(),

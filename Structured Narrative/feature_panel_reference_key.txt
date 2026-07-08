@@ -1,0 +1,87 @@
+What the Unified Feature Panel is
+The feature panel merges all three narrative layers (Focus 1 level, Focus 2 delta, Focus 3 surprise) with the quantitative spine and alpha labels into one long-format table: one row per (ticker, fiscal_period, dimension). It is the primary research dataset for cross-layer analysis and eventual modeling — not a forecast.
+
+Run
+  python "Structured Narrative/build_feature_panel.py"
+  python "Structured Narrative/build_feature_panel.py" --ticker AMZN
+  python "Structured Narrative/build_feature_panel.py" --full-spine
+
+Default scope: quarters where at least one LLM layer exists (pilot = 32 rows). --full-spine emits all historical quarters from the quant spine with sparse LLM columns.
+
+Join keys
+  ticker, fiscal_period, dimension
+Delta joins on fiscal_period as the CURRENT quarter (prior_period is metadata only). Q1 has null delta columns when no in-pilot prior exists.
+
+The eight dimensions
+  demand, margins, earnings_power, capital_allocation, guidance,
+  management_confidence, competitive_position, macro_regulatory_risk
+
+Quant z mapping (five comparable dimensions only)
+  demand              -> dim_demand_z / dim_demand_z_pit
+  margins             -> dim_margins_z / dim_margins_z_pit
+  earnings_power      -> dim_earnings_power_z / dim_earnings_power_z_pit
+  capital_allocation  -> dim_capital_allocation_z / dim_capital_allocation_z_pit
+  guidance            -> dim_guidance_z / dim_guidance_z_pit
+Narrative-only dimensions (management_confidence, competitive_position, macro_regulatory_risk) have null quant_z and quant_z_pit.
+
+Column dictionary
+
+Keys
+  ticker              Security identifier (e.g. AMZN).
+  fiscal_period       Fiscal quarter label (e.g. FY2024-Q3).
+  dimension           One of the eight dimensions above.
+
+Metadata
+  as_of_date          Point-in-time date for the row (call date when available).
+  earnings_date       Earnings announcement date from the quant spine.
+
+Quant / labels (from AMZN_dimension_scores)
+  quant_z             Standardized results/revision surprise vs AMZN history (dim_*_z).
+  quant_z_pit         Point-in-time variant of quant_z where available (dim_*_z_pit).
+  alpha_spec_0_90     Realized 90-day alpha (specification 0) — eval label only.
+  alpha_spec_0_90_z   Z-scored alpha label vs AMZN history.
+  alpha_spec_0_90_complete  True when the alpha label is fully observed.
+
+Focus 1 — Level (from AMZN_llm_dimension_scores)
+  llm_level           Narrative health score -2..+2 (was "score" in source CSV).
+  level_rationale     One-paragraph reasoning for the level score.
+  level_evidence_supported_pct  Fraction of level evidence items verified (1.0 = all supported).
+
+Focus 2 — Delta (from AMZN_dimension_delta)
+  prior_period        Baseline quarter for the transition (null when no delta).
+  change_direction    improved | steady | deteriorated.
+  change_magnitude    Primary change signal -2..+2 (sign = direction).
+  score_delta         Deterministic: current llm_level minus prior llm_level.
+  quant_z_delta       Change in quant_z vs prior quarter (comparable dims only).
+  delta_rationale     Reasoning for the change read.
+  delta_evidence_supported_pct  Fraction of delta evidence verified.
+
+Focus 3 — Surprise (from AMZN_dimension_surprise)
+  surprise_direction  more_bullish_than_expected | in_line | more_bearish_than_expected.
+  surprise_magnitude  Primary surprise signal -2..+2 vs pre-call consensus.
+  agrees_with_quant   True when surprise and quant_z point the same way; False = diverges.
+  narrative_quant_gap surprise_magnitude minus quant_z (from surprise scorer; not recomputed).
+  surprise_rationale  Reasoning for the surprise read.
+  surprise_evidence_supported_pct  Fraction of surprise evidence verified.
+
+Derived (computed by build_feature_panel.py)
+  has_level           True when Focus 1 data exists for this row.
+  has_delta           True when Focus 2 data exists for this row.
+  has_surprise        True when Focus 3 data exists for this row.
+  level_quant_sign_match   True/False when llm_level and quant_z share sign; null if either missing/flat.
+  delta_quant_sign_match   True/False when change_magnitude and quant_z_delta share sign.
+  is_divergence       True when agrees_with_quant is False (narrative vs quant diverge).
+  signal_stack        Pipe-delimited tags for quick filtering, e.g. bullish_level|delta_up|quant_diverges.
+
+Outputs
+  output/{TICKER}_feature_panel.csv
+  output/{TICKER}_feature_panel.parquet
+  output/{TICKER}_feature_panel_summary.json
+  output/{TICKER}_feature_panel_report.html
+
+How to read the HTML report
+  Filter by quarter or "Diverges only". Each row shows Level | Delta | Surprise | Quant z | Gap | Flags.
+  Click a row to expand rationales. See dimension_reference_key.txt, delta_reference_key.txt, and surprise_reference_key.txt for layer-specific detail.
+
+Relationship to build_comparison.py
+  build_comparison.py is a narrow wide-format sanity check (level vs quant only). The feature panel supersedes it for multi-layer analysis.
