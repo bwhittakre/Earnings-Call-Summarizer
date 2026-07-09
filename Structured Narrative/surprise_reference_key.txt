@@ -1,7 +1,7 @@
 What the Narrative Surprise (Focus 3) means
 The Narrative Surprise layer measures whether management's earnings-call commentary was MORE BULLISH, MORE BEARISH, or IN LINE with what the market (consensus) expected going into the call. It sits on top of Focus 1 (absolute narrative level) and Focus 2 (quarter-over-quarter change), and uses the quantitative spine for the "what the street expected" anchor.
 
-This is not a stock forecast. The LLM compares the transcript to a point-in-time CONSENSUS CONTEXT block (pre-call consensus, reported actuals, earnings surprises) built from AMZN_narrative_quant, plus optional Focus 1 level scores. Post-call estimate revisions appear in the consensus block for guidance validation only — they are not used as LLM input for the primary surprise score (PIT).
+This is not a stock forecast. The LLM compares the transcript to a point-in-time CONSENSUS CONTEXT block (pre-call consensus, reported actuals, earnings surprises) built from parquet/narrative_quant, plus optional Focus 1 level scores. Post-call estimate revisions appear in the consensus block for guidance validation only — they are not used as LLM input for the primary surprise score (PIT).
 
 surprise_direction
   more_bullish_than_expected  management sounded/guided more positively than consensus implied.
@@ -12,11 +12,11 @@ surprise_magnitude (-2.0 to +2.0, one decimal)
 Primary Focus 3 signal. Sign = direction vs expectations; magnitude = how large the narrative-vs-consensus gap is. Same scale interpretation as Focus 1/2 tenths.
 
 Quant anchors (deterministic)
-  quant_z           standardized results/revision surprise vs AMZN history (dim_*_z from AMZN_dimension_scores).
+  quant_z           standardized results/revision surprise vs company history (dim_*_z from parquet/dimension_scores).
   agrees_with_quant True when surprise_magnitude and quant_z point the same way; False when they diverge; omitted when either is flat.
   narrative_quant_gap  surprise_magnitude minus quant_z (quant clamped to [-2,2]). Positive = management sounded more bullish than the quant surprise alone suggests.
 
-How to read the HTML report (AMZN_surprise_report.html)
+How to read the HTML report (reports/surprise_report.html)
   Dimension | Level (Focus 1) | Quant z | vs Consensus (surprise) | Gap | What diverged
   "quant diverges" highlights the highest-value research cases: strong tone vs weak vs-expectations beat (or the reverse).
 
@@ -32,4 +32,5 @@ Same verification cascade as Focus 1/2 (verbatim -> composite -> anchored -> par
 Run
   python "Structured Narrative/run_surprise_scoring.py"
   python "Structured Narrative/build_surprise_report.py"
-Requires AMZN_dimension_view.json, AMZN_narrative_quant, and transcripts (TRANSCRIPT_PROVIDER=local for the pilot).
+Requires json/dimension_view.json, parquet/narrative_quant, and transcripts (TRANSCRIPT_PROVIDER=local for the pilot).
+Outputs: parquet/dimension_surprise.parquet, workbooks/narrative_layers.xlsx (3 sheets), json/surprise_view.json, audit/{period}_surprise.json.

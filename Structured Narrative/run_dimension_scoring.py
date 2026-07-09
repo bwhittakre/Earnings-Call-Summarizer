@@ -35,8 +35,6 @@ from dotenv import load_dotenv
 
 HERE = Path(__file__).resolve().parent
 REPO_ROOT = HERE.parent
-OUT_DIR = HERE / "output"
-AUDIT_DIR = OUT_DIR / "llm_audit"
 
 # Load both env files: FMP_API_KEY/TRANSCRIPT_PROVIDER live in the subproject
 # .env; ANTHROPIC_API_KEY lives in the repo-root .env used by the main pipeline.
@@ -46,7 +44,11 @@ load_dotenv(REPO_ROOT / ".env")
 if str(HERE) not in sys.path:
     sys.path.insert(0, str(HERE))
 
-from excel_export import write_excel  # noqa: E402
+from output_paths import (  # noqa: E402
+    company_artifact,
+    company_layer,
+    resolve_read_parquet_or_csv,
+)
 from transcript_providers import get_provider, sync_inbox_transcripts, TranscriptNotFound  # noqa: E402
 from dimension_scorer import (  # noqa: E402
     DimensionScorer,
@@ -54,6 +56,13 @@ from dimension_scorer import (  # noqa: E402
     QUANT_COMPARABLE_DIMENSIONS,
 )
 from company_config import get_company  # noqa: E402
+from quarter_merge import (  # noqa: E402
+    load_csv_rows,
+    load_json_obj,
+    merge_quarter_views,
+    merge_rows_by_period,
+    norm_quarters,
+)
 
 sys.path.insert(0, str(REPO_ROOT))
 from src.llm.anthropic_client import AnthropicClient  # noqa: E402
@@ -62,11 +71,15 @@ DEFAULT_MODEL = "claude-sonnet-4-6"
 
 
 def load_quant_earnings_dates(ticker: str) -> dict[str, pd.Timestamp]:
-    quant_file = OUT_DIR / f"{ticker}_dimension_scores.csv"
-    if not quant_file.exists():
-        print(f"  ! {quant_file.name} not found; date-match check will be skipped.")
+    quant_file = resolve_read_parquet_or_csv(ticker, "dimension_scores", layer="parquet")
+    if quant_file is None:
+        print("  ! dimension_scores not found; date-match check will be skipped.")
         return {}
-    df = pd.read_csv(quant_file)
+    df = (
+        pd.read_parquet(quant_file)
+        if quant_file.suffix == ".parquet"
+        else pd.read_csv(quant_file)
+    )
     if "fiscal_period" not in df.columns or "earnings_date" not in df.columns:
         return {}
     df["earnings_date"] = pd.to_datetime(df["earnings_date"], errors="coerce")
@@ -74,10 +87,14 @@ def load_quant_earnings_dates(ticker: str) -> dict[str, pd.Timestamp]:
 
 
 def load_quant_z(ticker: str) -> dict[str, dict[str, float]]:
-    quant_file = OUT_DIR / f"{ticker}_dimension_scores.csv"
-    if not quant_file.exists():
+    quant_file = resolve_read_parquet_or_csv(ticker, "dimension_scores", layer="parquet")
+    if quant_file is None:
         return {}
-    df = pd.read_csv(quant_file)
+    df = (
+        pd.read_parquet(quant_file)
+        if quant_file.suffix == ".parquet"
+        else pd.read_csv(quant_file)
+    )
     if "fiscal_period" not in df.columns:
         return {}
     out: dict[str, dict[str, float]] = {}
@@ -102,36 +119,42 @@ def date_match(call_date: str | None, earnings_date) -> tuple[float | None, bool
 
 
 def write_outputs(ticker: str, score_rows: list[dict], coverage_rows: list[dict]) -> None:
-    OUT_DIR.mkdir(parents=True, exist_ok=True)
-
     scores_df = pd.DataFrame(score_rows)
     cov_df = pd.DataFrame(coverage_rows)
 
-    scores_base = OUT_DIR / f"{ticker}_llm_dimension_scores"
-    cov_base = OUT_DIR / f"{ticker}_transcript_coverage"
+    scores_csv = company_artifact(ticker, "csv", "llm_dimension_scores", "csv", mkdir=True)
+    cov_csv = company_artifact(ticker, "csv", "transcript_coverage", "csv", mkdir=True)
+    scores_df.to_csv(scores_csv, index=False)
+    cov_df.to_csv(cov_csv, index=False)
 
-    scores_df.to_csv(scores_base.with_suffix(".csv"), index=False)
-    cov_df.to_csv(cov_base.with_suffix(".csv"), index=False)
-
-    for df, base in ((scores_df, scores_base), (cov_df, cov_base)):
-        try:
-            df.to_parquet(base.with_suffix(".parquet"), index=False)
-        except Exception as exc:  # pyarrow missing etc. — CSV/XLSX still written
-            print(f"  ! parquet write skipped for {base.name}: {exc}")
-        try:
-            write_excel(df, str(base.with_suffix(".xlsx")))
-        except Exception as exc:
-            print(f"  ! xlsx write skipped for {base.name}: {exc}")
+    scores_parquet = company_artifact(ticker, "parquet", "llm_dimension_scores", "parquet", mkdir=True)
+    try:
+        scores_df.to_parquet(scores_parquet, index=False)
+    except Exception as exc:
+        print(f"  ! parquet write skipped for llm_dimension_scores: {exc}")
 
 
 def main() -> int:
     ap = argparse.ArgumentParser(description="Run Focus 1 dimension scoring.")
     ap.add_argument("--ticker", default="AMZN", help="Ticker symbol.")
+    ap.add_argument(
+        "--quarters",
+        nargs="+",
+        default=[],
+        help="Re-score only these fiscal periods and merge into existing outputs.",
+    )
     args = ap.parse_args()
     company = get_company(args.ticker)
     ticker = company.ticker
+    rerun_periods = norm_quarters(args.quarters)
     quarters = company.scoring_quarters()
-    view_file = OUT_DIR / f"{ticker}_dimension_view.json"
+    if rerun_periods:
+        quarters = [q for q in quarters if q in rerun_periods]
+        if not quarters:
+            print(f"No matching quarters in {args.quarters}", file=sys.stderr)
+            return 1
+    existing_view = load_json_obj(ticker, "dimension_view") if rerun_periods else None
+    view_file = company_artifact(ticker, "json", "dimension_view", "json", mkdir=True)
 
     api_key = os.getenv("ANTHROPIC_API_KEY")
     if not api_key:
@@ -155,13 +178,14 @@ def main() -> int:
     quant_dates = load_quant_earnings_dates(ticker)
     quant_z = load_quant_z(ticker)
 
-    AUDIT_DIR.mkdir(parents=True, exist_ok=True)
+    audit_dir = company_layer(ticker, "audit", mkdir=True)
 
     print(f"Provider: {provider.name} | Model: {model} | paraphrase rescue: "
           f"{'on' if use_rescue else 'off'}")
     print(f"Scoring {len(quarters)} {ticker} quarters "
           f"({len(company.output_quarters)} in output scope) "
-          f"across {len(ALL_DIMENSIONS)} dimensions.\n")
+          f"across {len(ALL_DIMENSIONS)} dimensions."
+          f"{'  [partial re-run]' if rerun_periods else ''}\n")
 
     score_rows: list[dict] = []
     coverage_rows: list[dict] = []
@@ -282,7 +306,7 @@ def main() -> int:
             ],
             "raw_response": scored.llm_result.raw_response,
         }
-        (AUDIT_DIR / f"{ticker}_{fp}_dimensions.json").write_text(
+        (audit_dir / f"{fp}_dimensions.json").write_text(
             json.dumps(audit, indent=2), encoding="utf-8"
         )
         vpct = (100.0 * scored.n_excerpts_verified / scored.n_excerpts
@@ -298,9 +322,22 @@ def main() -> int:
               f"{scored.n_excerpts_verified}/{scored.n_excerpts} excerpts supported "
               f"({vpct:.0f}%)  [{breakdown}]\n")
 
-    if not score_rows:
+    if not score_rows and not rerun_periods:
         print("No transcripts scored — nothing written.", file=sys.stderr)
         return 1
+
+    if rerun_periods:
+        existing_scores = load_csv_rows(ticker, "llm_dimension_scores")
+        existing_cov = load_csv_rows(ticker, "transcript_coverage")
+        score_rows = merge_rows_by_period(existing_scores, score_rows, rerun_periods)
+        coverage_rows = merge_rows_by_period(existing_cov, coverage_rows, rerun_periods)
+        if existing_view:
+            view_quarters = merge_quarter_views(
+                existing_view.get("quarters", []), view_quarters, rerun_periods
+            )
+        if not score_rows:
+            print("No transcripts scored — nothing written.", file=sys.stderr)
+            return 1
 
     write_outputs(ticker, score_rows, coverage_rows)
 
@@ -316,11 +353,10 @@ def main() -> int:
     view_file.write_text(json.dumps(view, indent=2), encoding="utf-8")
 
     print(client.usage_summary())
-    print(f"\nWrote {len(score_rows)} dimension rows to "
-          f"{OUT_DIR / f'{ticker}_llm_dimension_scores.csv'}")
+    print(f"\nWrote {len(score_rows)} dimension rows to csv/llm_dimension_scores")
     print(f"View JSON:       {view_file}")
-    print(f"Coverage report: {OUT_DIR / f'{ticker}_transcript_coverage.csv'}")
-    print(f"LLM audit JSON:  {AUDIT_DIR}")
+    print(f"Coverage report: csv/transcript_coverage.csv")
+    print(f"LLM audit JSON:  {audit_dir}")
     return 0
 
 

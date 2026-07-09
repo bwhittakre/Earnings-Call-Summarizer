@@ -26,7 +26,10 @@ import sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-OUT_DIR = HERE / "output"
+
+if str(HERE) not in sys.path:
+    sys.path.insert(0, str(HERE))
+from output_paths import company_artifact, resolve_read_required  # noqa: E402
 
 DIM_LABELS = {
     "demand": "Demand",
@@ -355,12 +358,9 @@ def main() -> int:
     ap.add_argument("--ticker", default="AMZN", help="Ticker symbol.")
     args = ap.parse_args()
     ticker = args.ticker.upper()
-    view_file = OUT_DIR / f"{ticker}_delta_view.json"
-    html_file = OUT_DIR / f"{ticker}_delta_report.html"
+    view_file = resolve_read_required(ticker, "delta_view", "json", layer="json")
+    html_file = company_artifact(ticker, "reports", "delta_report", "html", mkdir=True)
 
-    if not view_file.exists():
-        print(f"Missing {view_file}. Run run_delta_scoring.py --ticker {ticker} first.", file=sys.stderr)
-        return 1
     view = json.loads(view_file.read_text(encoding="utf-8"))
     html_file.write_text(build_html(view), encoding="utf-8")
     n_t = len(view.get("transitions", []))

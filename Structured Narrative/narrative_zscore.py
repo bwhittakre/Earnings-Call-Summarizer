@@ -59,16 +59,9 @@ import argparse
 import numpy as np
 import pandas as pd
 
-from excel_export import write_excel
+from output_paths import company_artifact, resolve_read_parquet_or_csv
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-OUT_DIR = os.path.join(HERE, "output")
-IN_PARQUET = os.path.join(OUT_DIR, "AMZN_narrative_quant.parquet")
-
-OUT_LONG_PARQUET = os.path.join(OUT_DIR, "AMZN_narrative_zscored.parquet")
-OUT_LONG_CSV = os.path.join(OUT_DIR, "AMZN_narrative_zscored.csv")
-OUT_DIM_PARQUET = os.path.join(OUT_DIR, "AMZN_dimension_scores.parquet")
-OUT_DIM_CSV = os.path.join(OUT_DIR, "AMZN_dimension_scores.csv")
 
 MIN_HISTORY = 8  # prior observations required before a PIT z is defined
 
@@ -220,18 +213,10 @@ def build_dimension_scores(df: pd.DataFrame) -> pd.DataFrame:
     return spine
 
 
-def write(df: pd.DataFrame, parquet_path: str, csv_path: str):
-    os.makedirs(OUT_DIR, exist_ok=True)
-    try:
-        df.to_parquet(parquet_path, index=False)
-        print(f"Wrote {parquet_path}  ({len(df)} rows)")
-    except Exception as e:  # pragma: no cover
-        print(f"Parquet write skipped ({e}); writing CSV only.")
-    df.to_csv(csv_path, index=False)
-    print(f"Wrote {csv_path}")
-    xlsx_path = os.path.splitext(parquet_path)[0] + ".xlsx"
-    write_excel(df, xlsx_path)
-    print(f"Wrote {xlsx_path}")
+def write_parquet(df: pd.DataFrame, path: str) -> None:
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    df.to_parquet(path, index=False)
+    print(f"Wrote {path}  ({len(df)} rows)")
 
 
 def main():
@@ -242,17 +227,17 @@ def main():
     args = ap.parse_args()
     ticker = args.ticker.upper()
 
-    in_parquet = os.path.join(OUT_DIR, f"{ticker}_narrative_quant.parquet")
-    out_long_parquet = os.path.join(OUT_DIR, f"{ticker}_narrative_zscored.parquet")
-    out_long_csv = os.path.join(OUT_DIR, f"{ticker}_narrative_zscored.csv")
-    out_dim_parquet = os.path.join(OUT_DIR, f"{ticker}_dimension_scores.parquet")
-    out_dim_csv = os.path.join(OUT_DIR, f"{ticker}_dimension_scores.csv")
+    in_path = resolve_read_parquet_or_csv(ticker, "narrative_quant", layer="parquet")
+    if in_path is None:
+        sys.exit(
+            f"Input not found for {ticker}. "
+            f"Run single_company_extractor.py --ticker {ticker} first."
+        )
+    out_long_parquet = str(company_artifact(ticker, "parquet", "narrative_zscored", "parquet", mkdir=True))
+    out_dim_parquet = str(company_artifact(ticker, "parquet", "dimension_scores", "parquet", mkdir=True))
 
-    if not os.path.exists(in_parquet):
-        sys.exit(f"Input not found: {in_parquet}. Run single_company_extractor.py --ticker {ticker} first.")
-
-    raw = pd.read_parquet(in_parquet)
-    print(f"Loaded {in_parquet}  ({len(raw)} rows, "
+    raw = pd.read_parquet(in_path) if in_path.suffix == ".parquet" else pd.read_csv(in_path)
+    print(f"Loaded {in_path}  ({len(raw)} rows, "
           f"{raw['fiscal_period'].nunique()} quarters)")
     print(f"Z method: {'robust median/MAD' if args.robust else 'mean/std'}  "
           f"(MIN_HISTORY={MIN_HISTORY} for PIT)\n")
@@ -260,8 +245,8 @@ def main():
     enriched = build_enriched(raw, args.robust)
     dims = build_dimension_scores(enriched)
 
-    write(enriched, out_long_parquet, out_long_csv)
-    write(dims, out_dim_parquet, out_dim_csv)
+    write_parquet(enriched, out_long_parquet)
+    write_parquet(dims, out_dim_parquet)
     return enriched, dims
 
 

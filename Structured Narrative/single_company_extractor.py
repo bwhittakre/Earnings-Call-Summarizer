@@ -27,6 +27,7 @@ import snowflake.connector as sc
 from company_config import get_company, resolve_company_ids
 from excel_export import write_excel
 from fiscal_period_util import company_fiscal_period
+from output_paths import company_artifact
 
 RETURN_MODEL = "EFMUSALTS"
 MIN_CONSENSUS_QUARTERS = 8
@@ -360,17 +361,15 @@ def validate(df: pd.DataFrame):
 
 
 def write_output(df: pd.DataFrame, ticker: str):
-    os.makedirs(OUT_DIR, exist_ok=True)
-    base = os.path.join(OUT_DIR, f"{ticker}_narrative_quant")
+    parquet_path = company_artifact(ticker, "parquet", "narrative_quant", "parquet", mkdir=True)
     try:
-        df.to_parquet(base + ".parquet", index=False)
-        print(f"Wrote {base}.parquet  ({len(df)} rows)")
+        df.to_parquet(parquet_path, index=False)
+        print(f"Wrote {parquet_path}  ({len(df)} rows)")
     except Exception as e:
-        print(f"Parquet write skipped ({e}); writing CSV only.")
-    df.to_csv(base + ".csv", index=False)
-    print(f"Wrote {base}.csv")
-    write_excel(df, base + ".xlsx")
-    print(f"Wrote {base}.xlsx")
+        print(f"Parquet write skipped ({e}).")
+    xlsx_path = company_artifact(ticker, "workbooks", "narrative_quant", "xlsx", mkdir=True)
+    write_excel(df, str(xlsx_path))
+    print(f"Wrote {xlsx_path}")
 
 
 def main():

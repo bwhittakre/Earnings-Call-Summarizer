@@ -11,26 +11,20 @@ import pandas as pd
 
 from dimension_scorer import QUANT_COMPARABLE_DIMENSIONS
 from narrative_zscore import DIMENSIONS, GUIDANCE_ROLES, SURPRISE_ROLE
+from output_paths import resolve_read_parquet_or_csv
 
 HERE = Path(__file__).resolve().parent
-OUT_DIR = HERE / "output"
-
-
-def quant_paths(ticker: str) -> tuple[Path, Path]:
-    t = ticker.upper()
-    return OUT_DIR / f"{t}_narrative_quant.parquet", OUT_DIR / f"{t}_narrative_quant.csv"
 
 
 def load_quant_long(ticker: str = "AMZN") -> pd.DataFrame:
-    parquet, csv = quant_paths(ticker)
-    if parquet.exists():
-        return pd.read_parquet(parquet)
-    if csv.exists():
-        return pd.read_csv(csv)
-    raise FileNotFoundError(
-        f"Quant spine not found ({parquet.name} or {csv.name}). "
-        f"Run single_company_extractor.py --ticker {ticker.upper()} first."
-    )
+    src = resolve_read_parquet_or_csv(ticker, "narrative_quant", layer="parquet")
+    if src is None:
+        t = ticker.upper()
+        raise FileNotFoundError(
+            f"Quant spine not found (parquet/narrative_quant for {t}). "
+            f"Run single_company_extractor.py --ticker {t} first."
+        )
+    return pd.read_parquet(src) if src.suffix == ".parquet" else pd.read_csv(src)
 
 
 def try_load_quant_long(ticker: str = "AMZN") -> pd.DataFrame | None:

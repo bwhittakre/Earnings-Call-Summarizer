@@ -35,8 +35,6 @@ from dotenv import load_dotenv
 
 HERE = Path(__file__).resolve().parent
 REPO_ROOT = HERE.parent
-OUT_DIR = HERE / "output"
-AUDIT_DIR = OUT_DIR / "llm_audit"
 
 load_dotenv(HERE / ".env")
 load_dotenv(REPO_ROOT / ".env")
@@ -44,7 +42,11 @@ load_dotenv(REPO_ROOT / ".env")
 if str(HERE) not in sys.path:
     sys.path.insert(0, str(HERE))
 
-from excel_export import write_excel  # noqa: E402
+from output_paths import (  # noqa: E402
+    company_artifact,
+    company_layer,
+    resolve_read_required,
+)
 from transcript_providers import get_provider, sync_inbox_transcripts, TranscriptNotFound  # noqa: E402
 from dimension_scorer import ALL_DIMENSIONS, QUANT_COMPARABLE_DIMENSIONS  # noqa: E402
 from delta_scorer import (  # noqa: E402
@@ -55,6 +57,13 @@ from delta_scorer import (  # noqa: E402
     VALID_CONTEXTS,
 )
 from company_config import get_company  # noqa: E402
+from quarter_merge import (  # noqa: E402
+    load_csv_rows,
+    load_json_obj,
+    merge_rows_by_period,
+    merge_transitions,
+    norm_quarters,
+)
 
 sys.path.insert(0, str(REPO_ROOT))
 from src.llm.anthropic_client import AnthropicClient  # noqa: E402
@@ -98,11 +107,7 @@ def _agrees(llm_mag: float, numeric_delta: float | None) -> bool | None:
 
 
 def load_view(ticker: str) -> dict:
-    view_file = OUT_DIR / f"{ticker}_dimension_view.json"
-    if not view_file.exists():
-        raise FileNotFoundError(
-            f"{view_file} not found. Run run_dimension_scoring.py --ticker {ticker} first."
-        )
+    view_file = resolve_read_required(ticker, "dimension_view", "json", layer="json")
     return json.loads(view_file.read_text(encoding="utf-8"))
 
 
@@ -117,27 +122,31 @@ def dim_maps(quarter: dict) -> tuple[dict[str, float | None], dict[str, float | 
 
 
 def write_outputs(ticker: str, rows: list[dict]) -> None:
-    OUT_DIR.mkdir(parents=True, exist_ok=True)
     df = pd.DataFrame(rows)
-    base = OUT_DIR / f"{ticker}_dimension_delta"
-    df.to_csv(base.with_suffix(".csv"), index=False)
+    csv_path = company_artifact(ticker, "csv", "dimension_delta", "csv", mkdir=True)
+    parquet_path = company_artifact(ticker, "parquet", "dimension_delta", "parquet", mkdir=True)
+    df.to_csv(csv_path, index=False)
     try:
-        df.to_parquet(base.with_suffix(".parquet"), index=False)
+        df.to_parquet(parquet_path, index=False)
     except Exception as exc:
         print(f"  ! parquet write skipped: {exc}")
-    try:
-        write_excel(df, str(base.with_suffix(".xlsx")))
-    except Exception as exc:
-        print(f"  ! xlsx write skipped: {exc}")
 
 
 def main() -> int:
     ap = argparse.ArgumentParser(description="Run Focus 2 delta scoring.")
     ap.add_argument("--ticker", default="AMZN", help="Ticker symbol.")
+    ap.add_argument(
+        "--quarters",
+        nargs="+",
+        default=[],
+        help="Re-score deltas ending in these fiscal periods and merge into existing outputs.",
+    )
     args = ap.parse_args()
     company = get_company(args.ticker)
     ticker = company.ticker
-    delta_view_file = OUT_DIR / f"{ticker}_delta_view.json"
+    rerun_periods = norm_quarters(args.quarters)
+    existing_delta_view = load_json_obj(ticker, "delta_view") if rerun_periods else None
+    delta_view_file = company_artifact(ticker, "json", "delta_view", "json", mkdir=True)
 
     api_key = os.getenv("ANTHROPIC_API_KEY")
     if not api_key:
@@ -170,7 +179,7 @@ def main() -> int:
 
     client = AnthropicClient(api_key=api_key, model=model, max_retries=1)
     scorer = DeltaScorer(client, context=delta_context, use_rescue=use_rescue)
-    AUDIT_DIR.mkdir(parents=True, exist_ok=True)
+    audit_dir = company_layer(ticker, "audit", mkdir=True)
 
     print(f"Provider: {provider.name} | Model: {model} | delta context: {delta_context} "
           f"| paraphrase rescue: {'on' if use_rescue else 'off'}")
@@ -186,6 +195,8 @@ def main() -> int:
         prior_period = prior_q["fiscal_period"]
         current_period = current_q["fiscal_period"]
         if not company.is_output_quarter(current_period):
+            continue
+        if rerun_periods and current_period not in rerun_periods:
             continue
         print(f"[{prior_period} -> {current_period}] fetching transcripts…")
         try:
@@ -331,7 +342,7 @@ def main() -> int:
             ],
             "raw_response": scored.llm_result.raw_response,
         }
-        (AUDIT_DIR / f"{ticker}_{prior_period}_to_{current_period}_delta.json").write_text(
+        (audit_dir / f"{prior_period}_to_{current_period}_delta.json").write_text(
             json.dumps(audit, indent=2), encoding="utf-8"
         )
 
@@ -345,9 +356,22 @@ def main() -> int:
               f"{scored.n_excerpts_verified}/{scored.n_excerpts} change-excerpts "
               f"supported ({vpct:.0f}%)  [{breakdown}]\n")
 
-    if not rows:
+    if not rows and not rerun_periods:
         print("No transitions produced — nothing written.", file=sys.stderr)
         return 1
+
+    if rerun_periods:
+        existing_rows = load_csv_rows(ticker, "dimension_delta")
+        rows = merge_rows_by_period(existing_rows, rows, rerun_periods)
+        if existing_delta_view:
+            transitions_view = merge_transitions(
+                existing_delta_view.get("transitions", []),
+                transitions_view,
+                rerun_periods,
+            )
+        if not rows:
+            print("No transitions produced — nothing written.", file=sys.stderr)
+            return 1
 
     write_outputs(ticker, rows)
 
@@ -364,10 +388,9 @@ def main() -> int:
     delta_view_file.write_text(json.dumps(delta_view, indent=2), encoding="utf-8")
 
     print(client.usage_summary())
-    print(f"\nWrote {len(rows)} delta rows to "
-          f"{OUT_DIR / f'{ticker}_dimension_delta.csv'}")
+    print(f"\nWrote {len(rows)} delta rows to csv/dimension_delta")
     print(f"Delta view JSON: {delta_view_file}")
-    print(f"LLM audit JSON:  {AUDIT_DIR}")
+    print(f"LLM audit JSON:  {audit_dir}")
     return 0
 
 

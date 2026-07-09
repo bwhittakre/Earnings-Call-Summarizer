@@ -74,10 +74,10 @@ Derived (computed by build_feature_panel.py)
   signal_stack        Pipe-delimited tags for quick filtering, e.g. bullish_level|delta_up|quant_diverges.
 
 Outputs
-  output/{TICKER}_feature_panel.csv
-  output/{TICKER}_feature_panel.parquet
-  output/{TICKER}_feature_panel_summary.json
-  output/{TICKER}_feature_panel_report.html
+  output/{TICKER}/csv/feature_panel.csv
+  output/{TICKER}/parquet/feature_panel.parquet
+  output/{TICKER}/json/feature_panel_summary.json
+  output/{TICKER}/reports/feature_panel_report.html
 
 How to read the HTML report
   Filter by quarter or "Diverges only". Each row shows Level | Delta | Surprise | Quant z | Gap | Flags.

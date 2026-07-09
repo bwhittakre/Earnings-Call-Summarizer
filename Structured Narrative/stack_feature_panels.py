@@ -17,18 +17,21 @@ from pathlib import Path
 import pandas as pd
 
 HERE = Path(__file__).resolve().parent
-OUT_DIR = HERE / "output"
 
 if str(HERE) not in sys.path:
     sys.path.insert(0, str(HERE))
 
 from company_config import FY2025_OUTPUT_QUARTERS, PILOT_TICKERS  # noqa: E402
+from output_paths import cross_company_artifact, resolve_read  # noqa: E402
 
 
 def load_panel(ticker: str) -> pd.DataFrame:
-    path = OUT_DIR / f"{ticker}_feature_panel.csv"
-    if not path.exists():
-        raise FileNotFoundError(f"Missing {path.name}. Run build_feature_panel.py --ticker {ticker}.")
+    path = resolve_read(ticker, "feature_panel", "csv", layer="csv")
+    if path is None:
+        raise FileNotFoundError(
+            f"Missing csv/feature_panel.csv for {ticker.upper()}. "
+            f"Run build_feature_panel.py --ticker {ticker}."
+        )
     return pd.read_csv(path)
 
 
@@ -61,8 +64,8 @@ def main() -> int:
     ap.add_argument("--tickers", nargs="+", default=list(PILOT_TICKERS), help="Tickers to stack.")
     ap.add_argument(
         "--output-prefix",
-        default="cross_company_FY2025",
-        help="Output file prefix under output/.",
+        default="FY2025",
+        help="Output file stem prefix under cross_company/.",
     )
     args = ap.parse_args()
     tickers = [t.upper() for t in args.tickers]
@@ -74,9 +77,10 @@ def main() -> int:
         print(f"Loaded {ticker}: {len(df)} rows")
 
     stacked = pd.concat(frames, ignore_index=True)
-    csv_path = OUT_DIR / f"{args.output_prefix}_feature_panel.csv"
-    parquet_path = OUT_DIR / f"{args.output_prefix}_feature_panel.parquet"
-    summary_path = OUT_DIR / f"{args.output_prefix}_feature_panel_summary.json"
+    stem = f"{args.output_prefix}_feature_panel"
+    csv_path = cross_company_artifact(stem, "csv", mkdir=True)
+    parquet_path = cross_company_artifact(stem, "parquet", mkdir=True)
+    summary_path = cross_company_artifact(f"{args.output_prefix}_feature_panel_summary", "json", mkdir=True)
     stacked.to_csv(csv_path, index=False)
     try:
         stacked.to_parquet(parquet_path, index=False)

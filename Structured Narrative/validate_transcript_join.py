@@ -15,13 +15,13 @@ from pathlib import Path
 import pandas as pd
 
 HERE = Path(__file__).resolve().parent
-OUT_DIR = HERE / "output"
 TRANSCRIPTS_DIR = HERE / "transcripts_raw"
 
 if str(HERE) not in sys.path:
     sys.path.insert(0, str(HERE))
 
 from company_config import PILOT_TICKERS, get_company  # noqa: E402
+from output_paths import resolve_read_parquet_or_csv  # noqa: E402
 from transcript_providers import LocalFileProvider, TranscriptNotFound  # noqa: E402
 
 
@@ -35,18 +35,22 @@ def transcript_path(ticker: str, fiscal_period: str) -> Path | None:
 
 def validate_ticker(ticker: str) -> int:
     company = get_company(ticker)
-    dim_file = OUT_DIR / f"{ticker}_dimension_scores.csv"
+    dim_file = resolve_read_parquet_or_csv(ticker, "dimension_scores", layer="parquet")
     issues = 0
 
     print(f"\n{ticker} ({company.company_name})")
     print("-" * 60)
 
-    if dim_file.exists():
-        quant = pd.read_csv(dim_file)
+    if dim_file is not None:
+        quant = (
+            pd.read_parquet(dim_file)
+            if dim_file.suffix == ".parquet"
+            else pd.read_csv(dim_file)
+        )
         quant_periods = sorted(quant["fiscal_period"].unique())
     else:
         quant_periods = []
-        print(f"  ! missing quant spine: {dim_file.name}")
+        print("  ! missing quant spine: parquet/dimension_scores")
 
     scoring = company.scoring_quarters()
     print(f"  Scoring quarters: {', '.join(scoring)}")

@@ -31,8 +31,6 @@ from dotenv import load_dotenv
 
 HERE = Path(__file__).resolve().parent
 REPO_ROOT = HERE.parent
-OUT_DIR = HERE / "output"
-AUDIT_DIR = OUT_DIR / "llm_audit"
 
 load_dotenv(HERE / ".env")
 load_dotenv(REPO_ROOT / ".env")
@@ -40,7 +38,8 @@ load_dotenv(REPO_ROOT / ".env")
 if str(HERE) not in sys.path:
     sys.path.insert(0, str(HERE))
 
-from excel_export import write_excel  # noqa: E402
+from excel_export import build_narrative_layers_workbook  # noqa: E402
+from output_paths import company_artifact, company_layer, resolve_read_required  # noqa: E402
 from transcript_providers import get_provider, sync_inbox_transcripts, TranscriptNotFound  # noqa: E402
 from dimension_scorer import ALL_DIMENSIONS, QUANT_COMPARABLE_DIMENSIONS  # noqa: E402
 from consensus_context import (  # noqa: E402
@@ -50,6 +49,14 @@ from consensus_context import (  # noqa: E402
 )
 from surprise_scorer import SurpriseScorer  # noqa: E402
 from company_config import get_company  # noqa: E402
+from quarter_merge import (  # noqa: E402
+    load_json_obj,
+    load_parquet_df,
+    merge_dataframes_by_period,
+    merge_quarter_views,
+    merge_rows_by_period,
+    norm_quarters,
+)
 
 sys.path.insert(0, str(REPO_ROOT))
 from src.llm.anthropic_client import AnthropicClient  # noqa: E402
@@ -81,19 +88,21 @@ def _narrative_quant_gap(surprise_mag: float, quant_z: float | None) -> float | 
 
 
 def load_view(ticker: str) -> dict:
-    view_file = OUT_DIR / f"{ticker}_dimension_view.json"
-    if not view_file.exists():
-        raise FileNotFoundError(
-            f"{view_file} not found. Run run_dimension_scoring.py --ticker {ticker} first."
-        )
+    view_file = resolve_read_required(ticker, "dimension_view", "json", layer="json")
     return json.loads(view_file.read_text(encoding="utf-8"))
 
 
 def load_quant_dim_z(ticker: str) -> dict[str, dict[str, float | None]]:
-    quant_dim_file = OUT_DIR / f"{ticker}_dimension_scores.csv"
-    if not quant_dim_file.exists():
+    from output_paths import resolve_read_parquet_or_csv
+
+    quant_dim_file = resolve_read_parquet_or_csv(ticker, "dimension_scores", layer="parquet")
+    if quant_dim_file is None:
         return {}
-    df = pd.read_csv(quant_dim_file)
+    df = (
+        pd.read_parquet(quant_dim_file)
+        if quant_dim_file.suffix == ".parquet"
+        else pd.read_csv(quant_dim_file)
+    )
     out: dict[str, dict[str, float | None]] = {}
     for _, r in df.iterrows():
         fp = str(r["fiscal_period"])
@@ -113,27 +122,35 @@ def dim_level_map(quarter: dict) -> dict[str, float | None]:
 
 
 def write_outputs(ticker: str, rows: list[dict]) -> None:
-    OUT_DIR.mkdir(parents=True, exist_ok=True)
     df = pd.DataFrame(rows)
-    base = OUT_DIR / f"{ticker}_dimension_surprise"
-    df.to_csv(base.with_suffix(".csv"), index=False)
+    parquet_path = company_artifact(ticker, "parquet", "dimension_surprise", "parquet", mkdir=True)
     try:
-        df.to_parquet(base.with_suffix(".parquet"), index=False)
+        df.to_parquet(parquet_path, index=False)
+        print(f"Wrote {parquet_path}")
     except Exception as exc:
         print(f"  ! parquet write skipped: {exc}")
     try:
-        write_excel(df, str(base.with_suffix(".xlsx")))
+        workbook = build_narrative_layers_workbook(ticker)
+        print(f"Wrote {workbook}")
     except Exception as exc:
-        print(f"  ! xlsx write skipped: {exc}")
+        print(f"  ! narrative_layers workbook skipped: {exc}")
 
 
 def main() -> int:
     ap = argparse.ArgumentParser(description="Run Focus 3 surprise scoring.")
     ap.add_argument("--ticker", default="AMZN", help="Ticker symbol.")
+    ap.add_argument(
+        "--quarters",
+        nargs="+",
+        default=[],
+        help="Re-score only these fiscal periods and merge into existing outputs.",
+    )
     args = ap.parse_args()
     company = get_company(args.ticker)
     ticker = company.ticker
-    surprise_view_file = OUT_DIR / f"{ticker}_surprise_view.json"
+    rerun_periods = norm_quarters(args.quarters)
+    existing_surprise_view = load_json_obj(ticker, "surprise_view") if rerun_periods else None
+    surprise_view_file = company_artifact(ticker, "json", "surprise_view", "json", mkdir=True)
 
     api_key = os.getenv("ANTHROPIC_API_KEY")
     if not api_key:
@@ -174,11 +191,13 @@ def main() -> int:
 
     client = AnthropicClient(api_key=api_key, model=model, max_retries=1)
     scorer = SurpriseScorer(client, use_rescue=use_rescue)
-    AUDIT_DIR.mkdir(parents=True, exist_ok=True)
+    audit_dir = company_layer(ticker, "audit", mkdir=True)
 
     print(f"Provider: {provider.name} | Model: {model} | paraphrase rescue: "
           f"{'on' if use_rescue else 'off'}")
     output_quarters = [q for q in quarters if company.is_output_quarter(q["fiscal_period"])]
+    if rerun_periods:
+        output_quarters = [q for q in output_quarters if q["fiscal_period"] in rerun_periods]
     print(f"Scoring narrative surprise for {len(output_quarters)} output quarters "
           f"across {len(ALL_DIMENSIONS)} dimensions.\n")
 
@@ -288,7 +307,7 @@ def main() -> int:
             ],
             "raw_response": scored.llm_result.raw_response,
         }
-        (AUDIT_DIR / f"{ticker}_{fp}_surprise.json").write_text(
+        (audit_dir / f"{fp}_surprise.json").write_text(
             json.dumps(audit, indent=2), encoding="utf-8"
         )
 
@@ -302,9 +321,24 @@ def main() -> int:
               f"{scored.n_excerpts_verified}/{scored.n_excerpts} excerpts supported "
               f"({vpct:.0f}%)  [{breakdown}]\n")
 
-    if not rows:
+    if not rows and not rerun_periods:
         print("No quarters scored.", file=sys.stderr)
         return 1
+
+    if rerun_periods:
+        existing_df = load_parquet_df(ticker, "dimension_surprise")
+        new_df = pd.DataFrame(rows)
+        merged_df = merge_dataframes_by_period(existing_df, new_df, rerun_periods)
+        rows = merged_df.to_dict("records")
+        if existing_surprise_view:
+            quarters_view = merge_quarter_views(
+                existing_surprise_view.get("quarters", []),
+                quarters_view,
+                rerun_periods,
+            )
+        if not rows:
+            print("No quarters scored.", file=sys.stderr)
+            return 1
 
     write_outputs(ticker, rows)
 
@@ -320,8 +354,7 @@ def main() -> int:
     surprise_view_file.write_text(json.dumps(surprise_view, indent=2), encoding="utf-8")
 
     print(client.usage_summary())
-    print(f"\nWrote {len(rows)} surprise rows to "
-          f"{OUT_DIR / f'{ticker}_dimension_surprise.csv'}")
+    print(f"\nWrote {len(rows)} surprise rows to parquet/dimension_surprise")
     print(f"Surprise view JSON: {surprise_view_file}")
     return 0
 

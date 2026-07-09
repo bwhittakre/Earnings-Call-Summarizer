@@ -18,11 +18,11 @@ from pathlib import Path
 import pandas as pd
 
 HERE = Path(__file__).resolve().parent
-OUT_DIR = HERE / "output"
 
 if str(HERE) not in sys.path:
     sys.path.insert(0, str(HERE))
 from dimension_scorer import ALL_DIMENSIONS, QUANT_COMPARABLE_DIMENSIONS  # noqa: E402
+from output_paths import company_artifact, resolve_read_parquet_or_csv  # noqa: E402
 
 DIM_LABELS = {
     "demand": "Demand",
@@ -83,17 +83,14 @@ PANEL_COLUMNS = [
 ]
 
 
-def _read(base: str) -> pd.DataFrame:
-    p_parquet = OUT_DIR / f"{base}.parquet"
-    p_csv = OUT_DIR / f"{base}.csv"
-    if p_parquet.exists():
-        try:
-            return pd.read_parquet(p_parquet)
-        except Exception:
-            pass
-    if p_csv.exists():
-        return pd.read_csv(p_csv)
-    raise FileNotFoundError(f"Missing {base}.parquet/.csv in {OUT_DIR}")
+def _read(ticker: str, stem: str, *, layer: str = "parquet") -> pd.DataFrame:
+    src = resolve_read_parquet_or_csv(ticker, stem, layer=layer)
+    if src is None:
+        raise FileNotFoundError(
+            f"Missing {layer}/{stem}.parquet/.csv for {ticker.upper()} "
+            f"(also checked legacy flat path)."
+        )
+    return pd.read_parquet(src) if src.suffix == ".parquet" else pd.read_csv(src)
 
 
 def _evidence_pct(n_verified, n_total, verified_flag) -> float | None:
@@ -193,9 +190,9 @@ def build_spine_from_level(level: pd.DataFrame, ticker: str) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def _read_optional(base: str) -> pd.DataFrame | None:
+def _read_optional(ticker: str, stem: str, *, layer: str = "parquet") -> pd.DataFrame | None:
     try:
-        return _read(base)
+        return _read(ticker, stem, layer=layer)
     except FileNotFoundError:
         return None
 
@@ -553,20 +550,21 @@ def build_html(panel: pd.DataFrame, summary: dict) -> str:
 
 
 def write_outputs(panel: pd.DataFrame, summary: dict, ticker: str) -> None:
-    base = OUT_DIR / f"{ticker}_feature_panel"
-    panel.to_csv(base.with_suffix(".csv"), index=False)
+    csv_path = company_artifact(ticker, "csv", "feature_panel", "csv", mkdir=True)
+    parquet_path = company_artifact(ticker, "parquet", "feature_panel", "parquet", mkdir=True)
+    summary_path = company_artifact(ticker, "json", "feature_panel_summary", "json", mkdir=True)
+    html_path = company_artifact(ticker, "reports", "feature_panel_report", "html", mkdir=True)
+
+    panel.to_csv(csv_path, index=False)
     try:
-        panel.to_parquet(base.with_suffix(".parquet"), index=False)
+        panel.to_parquet(parquet_path, index=False)
     except Exception as exc:
         print(f"  ! parquet write skipped: {exc}")
 
-    summary_path = OUT_DIR / f"{ticker}_feature_panel_summary.json"
     summary_path.write_text(json.dumps(summary, indent=2), encoding="utf-8")
-
-    html_path = OUT_DIR / f"{ticker}_feature_panel_report.html"
     html_path.write_text(build_html(panel, summary), encoding="utf-8")
 
-    print(f"Wrote {base.with_suffix('.csv')}")
+    print(f"Wrote {csv_path}")
     print(f"Wrote {summary_path}")
     print(f"Wrote {html_path}")
 
@@ -588,14 +586,14 @@ def main() -> int:
     ticker = args.ticker.upper()
 
     try:
-        level = _read(f"{ticker}_llm_dimension_scores")
-        delta = _read(f"{ticker}_dimension_delta")
+        level = _read(ticker, "llm_dimension_scores", layer="csv")
+        delta = _read(ticker, "dimension_delta", layer="csv")
     except FileNotFoundError as exc:
         print(f"Error: {exc}", file=sys.stderr)
         return 1
 
-    quant = _read_optional(f"{ticker}_dimension_scores")
-    surprise_df = _read_optional(f"{ticker}_dimension_surprise")
+    quant = _read_optional(ticker, "dimension_scores", layer="parquet")
+    surprise_df = _read_optional(ticker, "dimension_surprise", layer="parquet")
     if surprise_df is None:
         surprise_df = pd.DataFrame(
             columns=[
