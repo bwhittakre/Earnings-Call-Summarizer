@@ -236,15 +236,23 @@ def write(df: pd.DataFrame, parquet_path: str, csv_path: str):
 
 def main():
     ap = argparse.ArgumentParser()
+    ap.add_argument("--ticker", default="AMZN", help="Ticker symbol.")
     ap.add_argument("--robust", action="store_true",
                     help="use median/MAD z instead of mean/std")
     args = ap.parse_args()
+    ticker = args.ticker.upper()
 
-    if not os.path.exists(IN_PARQUET):
-        sys.exit(f"Input not found: {IN_PARQUET}. Run single_company_extractor.py first.")
+    in_parquet = os.path.join(OUT_DIR, f"{ticker}_narrative_quant.parquet")
+    out_long_parquet = os.path.join(OUT_DIR, f"{ticker}_narrative_zscored.parquet")
+    out_long_csv = os.path.join(OUT_DIR, f"{ticker}_narrative_zscored.csv")
+    out_dim_parquet = os.path.join(OUT_DIR, f"{ticker}_dimension_scores.parquet")
+    out_dim_csv = os.path.join(OUT_DIR, f"{ticker}_dimension_scores.csv")
 
-    raw = pd.read_parquet(IN_PARQUET)
-    print(f"Loaded {IN_PARQUET}  ({len(raw)} rows, "
+    if not os.path.exists(in_parquet):
+        sys.exit(f"Input not found: {in_parquet}. Run single_company_extractor.py --ticker {ticker} first.")
+
+    raw = pd.read_parquet(in_parquet)
+    print(f"Loaded {in_parquet}  ({len(raw)} rows, "
           f"{raw['fiscal_period'].nunique()} quarters)")
     print(f"Z method: {'robust median/MAD' if args.robust else 'mean/std'}  "
           f"(MIN_HISTORY={MIN_HISTORY} for PIT)\n")
@@ -252,8 +260,8 @@ def main():
     enriched = build_enriched(raw, args.robust)
     dims = build_dimension_scores(enriched)
 
-    write(enriched, OUT_LONG_PARQUET, OUT_LONG_CSV)
-    write(dims, OUT_DIM_PARQUET, OUT_DIM_CSV)
+    write(enriched, out_long_parquet, out_long_csv)
+    write(dims, out_dim_parquet, out_dim_csv)
     return enriched, dims
 
 

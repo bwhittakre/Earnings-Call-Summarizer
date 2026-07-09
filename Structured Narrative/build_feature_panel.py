@@ -173,6 +173,33 @@ def build_spine(quant: pd.DataFrame, ticker: str) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def build_spine_from_level(level: pd.DataFrame, ticker: str) -> pd.DataFrame:
+    """Build panel spine from LLM level rows when quant dimension_scores are unavailable."""
+    rows: list[dict] = []
+    for _, row in level.iterrows():
+        rec = {
+            "ticker": ticker,
+            "fiscal_period": row["fiscal_period"],
+            "dimension": row["dimension"],
+            "as_of_date": row.get("as_of_date"),
+            "earnings_date": row.get("as_of_date"),
+            "quant_z": None,
+            "quant_z_pit": None,
+            "alpha_spec_0_90": None,
+            "alpha_spec_0_90_z": None,
+            "alpha_spec_0_90_complete": None,
+        }
+        rows.append(rec)
+    return pd.DataFrame(rows)
+
+
+def _read_optional(base: str) -> pd.DataFrame | None:
+    try:
+        return _read(base)
+    except FileNotFoundError:
+        return None
+
+
 def prepare_level(level: pd.DataFrame) -> pd.DataFrame:
     df = level.copy()
     df["level_evidence_supported_pct"] = df.apply(
@@ -552,24 +579,60 @@ def main() -> int:
         action="store_true",
         help="Include all quant-spine quarters (sparse LLM columns).",
     )
+    parser.add_argument(
+        "--llm-only",
+        action="store_true",
+        help="Build panel from LLM scores when quant dimension_scores are missing.",
+    )
     args = parser.parse_args()
     ticker = args.ticker.upper()
 
     try:
-        quant = _read(f"{ticker}_dimension_scores")
         level = _read(f"{ticker}_llm_dimension_scores")
         delta = _read(f"{ticker}_dimension_delta")
-        surprise = _read(f"{ticker}_dimension_surprise")
     except FileNotFoundError as exc:
         print(f"Error: {exc}", file=sys.stderr)
         return 1
 
-    spine = build_spine(quant, ticker)
+    quant = _read_optional(f"{ticker}_dimension_scores")
+    surprise_df = _read_optional(f"{ticker}_dimension_surprise")
+    if surprise_df is None:
+        surprise_df = pd.DataFrame(
+            columns=[
+                "ticker",
+                "fiscal_period",
+                "dimension",
+                "as_of_date",
+                "surprise_direction",
+                "surprise_magnitude",
+                "agrees_with_quant",
+                "narrative_quant_gap",
+                "rationale",
+                "n_evidence_verified",
+                "n_evidence",
+                "evidence_verified",
+            ]
+        )
+
+    if quant is not None and not args.llm_only:
+        spine = build_spine(quant, ticker)
+    elif args.llm_only or quant is None:
+        if quant is None and not args.llm_only:
+            print(
+                f"Note: {ticker}_dimension_scores not found; building LLM-only panel "
+                "(quant/surprise columns will be sparse).",
+                file=sys.stderr,
+            )
+        spine = build_spine_from_level(prepare_level(level), ticker)
+    else:
+        print(f"Error: missing {ticker}_dimension_scores.csv", file=sys.stderr)
+        return 1
+
     panel = merge_panel(
         spine,
         prepare_level(level),
         prepare_delta(delta),
-        prepare_surprise(surprise),
+        prepare_surprise(surprise_df),
         full_spine=args.full_spine,
     )
     summary = build_summary(panel, ticker)

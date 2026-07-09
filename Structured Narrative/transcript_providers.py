@@ -11,11 +11,12 @@ know or care where the text came from. Swapping FMP for LSEG, a manual paste, or
 any other API later is a one-class change here.
 
 Providers implemented:
-  * ``FmpApiProvider``   -> Financial Modeling Prep earnings-call transcript API
   * ``LocalFileProvider`` -> reads ``transcripts_raw/{TICKER}_{fiscal_period}.txt``
-                             (zero-cost fallback / manual paste / offline re-runs)
+                             (auto-syncs from earnings-scraper inbox when missing)
+  * ``FmpApiProvider``   -> Financial Modeling Prep earnings-call transcript API
+                             (opt-in: set TRANSCRIPT_PROVIDER=fmp)
 
-Select at runtime with the ``TRANSCRIPT_PROVIDER`` env var (default ``fmp``) via
+Select at runtime with the ``TRANSCRIPT_PROVIDER`` env var (default ``local``) via
 ``get_provider()``.
 
 Raw API payloads are cached to ``output/transcripts/`` so repeated runs cost no
@@ -297,7 +298,19 @@ class FmpApiProvider(TranscriptProvider):
         )
 
 
-# ── Local file provider (fallback / manual paste / offline) ─────────────────────
+# ── Inbox bridge (earnings-scraper -> transcripts_raw) ───────────────────────
+def sync_inbox_transcripts(ticker: str | None = None, *, verbose: bool = False) -> int:
+    """Bridge earnings-scraper inbox files into transcripts_raw/. Returns export count."""
+    from export_inbox_to_transcripts_raw import bridge_inbox
+
+    tickers = [ticker.upper()] if ticker else None
+    result = bridge_inbox(tickers=tickers, verbose=verbose)
+    if verbose and result.exported:
+        print(f"Bridged {result.exported} transcript(s) from inbox -> transcripts_raw/")
+    return result.exported
+
+
+# ── Local file provider (default: inbox-bridged transcripts) ─────────────────
 class LocalFileProvider(TranscriptProvider):
     name = "local"
 
@@ -319,9 +332,13 @@ class LocalFileProvider(TranscriptProvider):
         candidates = self._candidates(ticker, fiscal_period)
         path = next((p for p in candidates if p.exists()), None)
         if path is None:
+            sync_inbox_transcripts(ticker)
+            path = next((p for p in candidates if p.exists()), None)
+        if path is None:
             locations = "\n  ".join(str(p) for p in candidates)
             raise TranscriptNotFound(
-                f"No local transcript for {ticker} {fiscal_period}. Looked in:\n  {locations}"
+                f"No local transcript for {ticker} {fiscal_period}. Looked in:\n  {locations}\n"
+                "Ensure the file exists in earnings-scraper inbox, then re-run."
             )
         content = path.read_text(encoding="utf-8", errors="replace")
         return build_transcript(
@@ -336,11 +353,11 @@ class LocalFileProvider(TranscriptProvider):
 
 # ── Factory ──────────────────────────────────────────────────────────────────
 def get_provider(name: str | None = None) -> TranscriptProvider:
-    name = (name or os.getenv("TRANSCRIPT_PROVIDER") or "fmp").strip().lower()
-    if name == "fmp":
-        return FmpApiProvider()
+    name = (name or os.getenv("TRANSCRIPT_PROVIDER") or "local").strip().lower()
     if name == "local":
         return LocalFileProvider()
+    if name == "fmp":
+        return FmpApiProvider()
     raise ValueError(
-        f"Unknown TRANSCRIPT_PROVIDER {name!r}. Use 'fmp' or 'local'."
+        f"Unknown TRANSCRIPT_PROVIDER {name!r}. Use 'local' or 'fmp'."
     )

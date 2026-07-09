@@ -161,6 +161,13 @@ def resolve_quarter_end_date(
         return _calendar_fiscal_quarter_end(fiscal_year, quarter_num)
     if calendar_type == "nvidia_fiscal":
         return _nvidia_fiscal_quarter_end(fiscal_year, quarter_num)
+    if calendar_type == "offset_fiscal":
+        return _offset_fiscal_quarter_end(
+            fiscal_year,
+            quarter_num,
+            fye_month=int(entry.get("fye_month", 12)),
+            fye_day=int(entry.get("fye_day", 31)),
+        )
 
     raise FiscalCalendarError(
         f"Unsupported fiscal calendar type {calendar_type!r} for ticker {ticker_key!r}."

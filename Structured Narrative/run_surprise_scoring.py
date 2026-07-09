@@ -19,6 +19,7 @@ Outputs (under output/):
 """
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import sys
@@ -32,9 +33,6 @@ HERE = Path(__file__).resolve().parent
 REPO_ROOT = HERE.parent
 OUT_DIR = HERE / "output"
 AUDIT_DIR = OUT_DIR / "llm_audit"
-VIEW_FILE = OUT_DIR / "AMZN_dimension_view.json"
-SURPRISE_VIEW_FILE = OUT_DIR / "AMZN_surprise_view.json"
-QUANT_DIM_FILE = OUT_DIR / "AMZN_dimension_scores.csv"
 
 load_dotenv(HERE / ".env")
 load_dotenv(REPO_ROOT / ".env")
@@ -43,15 +41,15 @@ if str(HERE) not in sys.path:
     sys.path.insert(0, str(HERE))
 
 from excel_export import write_excel  # noqa: E402
-from transcript_providers import get_provider, TranscriptNotFound  # noqa: E402
+from transcript_providers import get_provider, sync_inbox_transcripts, TranscriptNotFound  # noqa: E402
 from dimension_scorer import ALL_DIMENSIONS, QUANT_COMPARABLE_DIMENSIONS  # noqa: E402
 from consensus_context import (  # noqa: E402
     format_consensus_context,
     format_level_summary,
-    load_quant_long,
+    try_load_quant_long,
 )
 from surprise_scorer import SurpriseScorer  # noqa: E402
-from pilot_config import TICKER, COMPANY_NAME, is_output_quarter  # noqa: E402
+from company_config import get_company  # noqa: E402
 
 sys.path.insert(0, str(REPO_ROOT))
 from src.llm.anthropic_client import AnthropicClient  # noqa: E402
@@ -82,18 +80,20 @@ def _narrative_quant_gap(surprise_mag: float, quant_z: float | None) -> float | 
     return round(float(surprise_mag) - q, 2)
 
 
-def load_view() -> dict:
-    if not VIEW_FILE.exists():
+def load_view(ticker: str) -> dict:
+    view_file = OUT_DIR / f"{ticker}_dimension_view.json"
+    if not view_file.exists():
         raise FileNotFoundError(
-            f"{VIEW_FILE} not found. Run run_dimension_scoring.py first."
+            f"{view_file} not found. Run run_dimension_scoring.py --ticker {ticker} first."
         )
-    return json.loads(VIEW_FILE.read_text(encoding="utf-8"))
+    return json.loads(view_file.read_text(encoding="utf-8"))
 
 
-def load_quant_dim_z() -> dict[str, dict[str, float | None]]:
-    if not QUANT_DIM_FILE.exists():
+def load_quant_dim_z(ticker: str) -> dict[str, dict[str, float | None]]:
+    quant_dim_file = OUT_DIR / f"{ticker}_dimension_scores.csv"
+    if not quant_dim_file.exists():
         return {}
-    df = pd.read_csv(QUANT_DIM_FILE)
+    df = pd.read_csv(quant_dim_file)
     out: dict[str, dict[str, float | None]] = {}
     for _, r in df.iterrows():
         fp = str(r["fiscal_period"])
@@ -112,10 +112,10 @@ def dim_level_map(quarter: dict) -> dict[str, float | None]:
     }
 
 
-def write_outputs(rows: list[dict]) -> None:
+def write_outputs(ticker: str, rows: list[dict]) -> None:
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     df = pd.DataFrame(rows)
-    base = OUT_DIR / "AMZN_dimension_surprise"
+    base = OUT_DIR / f"{ticker}_dimension_surprise"
     df.to_csv(base.with_suffix(".csv"), index=False)
     try:
         df.to_parquet(base.with_suffix(".parquet"), index=False)
@@ -128,29 +128,44 @@ def write_outputs(rows: list[dict]) -> None:
 
 
 def main() -> int:
+    ap = argparse.ArgumentParser(description="Run Focus 3 surprise scoring.")
+    ap.add_argument("--ticker", default="AMZN", help="Ticker symbol.")
+    args = ap.parse_args()
+    company = get_company(args.ticker)
+    ticker = company.ticker
+    surprise_view_file = OUT_DIR / f"{ticker}_surprise_view.json"
+
     api_key = os.getenv("ANTHROPIC_API_KEY")
     if not api_key:
         print("Error: ANTHROPIC_API_KEY not set.", file=sys.stderr)
         return 1
 
     try:
-        view = load_view()
-        quant_df = load_quant_long()
+        view = load_view(ticker)
     except FileNotFoundError as exc:
         print(f"Error: {exc}", file=sys.stderr)
         return 1
+
+    quant_df = try_load_quant_long(ticker)
+    if quant_df is None:
+        print(
+            f"Note: {ticker}_narrative_quant not found; surprise will run without "
+            "consensus/quant context (agrees_with_quant and narrative_quant_gap will be null).",
+            file=sys.stderr,
+        )
 
     quarters = view.get("quarters", [])
     if not quarters:
         print("No quarters in dimension view.", file=sys.stderr)
         return 1
 
-    quant_z_by_fp = load_quant_dim_z()
+    quant_z_by_fp = load_quant_dim_z(ticker)
     model = os.getenv("DIMENSION_MODEL", DEFAULT_MODEL)
     use_rescue = os.getenv("DIMENSION_RESCUE", "1").strip().lower() not in (
         "0", "false", "no", "off",
     )
 
+    sync_inbox_transcripts(ticker, verbose=True)
     try:
         provider = get_provider()
     except Exception as exc:
@@ -163,7 +178,7 @@ def main() -> int:
 
     print(f"Provider: {provider.name} | Model: {model} | paraphrase rescue: "
           f"{'on' if use_rescue else 'off'}")
-    output_quarters = [q for q in quarters if is_output_quarter(q["fiscal_period"])]
+    output_quarters = [q for q in quarters if company.is_output_quarter(q["fiscal_period"])]
     print(f"Scoring narrative surprise for {len(output_quarters)} output quarters "
           f"across {len(ALL_DIMENSIONS)} dimensions.\n")
 
@@ -174,7 +189,7 @@ def main() -> int:
         fp = q["fiscal_period"]
         print(f"[{fp}] fetching transcript…")
         try:
-            transcript = provider.fetch(TICKER, fp)
+            transcript = provider.fetch(ticker, fp)
         except TranscriptNotFound as exc:
             print(f"  ! {exc}; skipping")
             continue
@@ -186,11 +201,11 @@ def main() -> int:
         )
         dim_z = quant_z_by_fp.get(fp, {})
         levels = dim_level_map(q)
-        consensus_block = format_consensus_context(fp, quant_df, dim_z)
+        consensus_block = format_consensus_context(fp, quant_df, dim_z, ticker=ticker)
         level_block = format_level_summary(q)
 
         print(f"[{fp}] scoring narrative surprise…")
-        scored = scorer.score(transcript, consensus_block, COMPANY_NAME, level_block)
+        scored = scorer.score(transcript, consensus_block, company.company_name, level_block)
 
         status_counts: dict[str, int] = {}
         surprises_view: list[dict] = []
@@ -206,7 +221,7 @@ def main() -> int:
                 status_counts[e.status] = status_counts.get(e.status, 0) + 1
 
             rows.append({
-                "ticker": TICKER,
+                "ticker": ticker,
                 "fiscal_period": fp,
                 "as_of_date": as_of,
                 "dimension": dim,
@@ -273,7 +288,7 @@ def main() -> int:
             ],
             "raw_response": scored.llm_result.raw_response,
         }
-        (AUDIT_DIR / f"{TICKER}_{fp}_surprise.json").write_text(
+        (AUDIT_DIR / f"{ticker}_{fp}_surprise.json").write_text(
             json.dumps(audit, indent=2), encoding="utf-8"
         )
 
@@ -291,23 +306,23 @@ def main() -> int:
         print("No quarters scored.", file=sys.stderr)
         return 1
 
-    write_outputs(rows)
+    write_outputs(ticker, rows)
 
     surprise_view = {
-        "ticker": TICKER,
-        "company_name": COMPANY_NAME,
+        "ticker": ticker,
+        "company_name": company.company_name,
         "model": model,
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "dimension_order": ALL_DIMENSIONS,
         "quant_comparable": QUANT_COMPARABLE_DIMENSIONS,
         "quarters": quarters_view,
     }
-    SURPRISE_VIEW_FILE.write_text(json.dumps(surprise_view, indent=2), encoding="utf-8")
+    surprise_view_file.write_text(json.dumps(surprise_view, indent=2), encoding="utf-8")
 
     print(client.usage_summary())
     print(f"\nWrote {len(rows)} surprise rows to "
-          f"{OUT_DIR / 'AMZN_dimension_surprise.csv'}")
-    print(f"Surprise view JSON: {SURPRISE_VIEW_FILE}")
+          f"{OUT_DIR / f'{ticker}_dimension_surprise.csv'}")
+    print(f"Surprise view JSON: {surprise_view_file}")
     return 0
 
 

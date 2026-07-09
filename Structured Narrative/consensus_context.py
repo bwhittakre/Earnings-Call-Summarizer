@@ -2,11 +2,6 @@
 # -*- coding: utf-8 -*-
 """
 Point-in-time consensus context formatter for Focus 3 (narrative surprise).
-
-Reads the quant spine (AMZN_narrative_quant) and renders a compact, dimension-aligned
-text block the surprise scorer feeds to the LLM. Every number is pre-call consensus
-or reported actual/surprise as of the earnings event — no post-call revisions in
-the primary context (those stay available for validation only).
 """
 from __future__ import annotations
 
@@ -19,19 +14,30 @@ from narrative_zscore import DIMENSIONS, GUIDANCE_ROLES, SURPRISE_ROLE
 
 HERE = Path(__file__).resolve().parent
 OUT_DIR = HERE / "output"
-QUANT_PARQUET = OUT_DIR / "AMZN_narrative_quant.parquet"
-QUANT_CSV = OUT_DIR / "AMZN_narrative_quant.csv"
 
 
-def load_quant_long() -> pd.DataFrame:
-    if QUANT_PARQUET.exists():
-        return pd.read_parquet(QUANT_PARQUET)
-    if QUANT_CSV.exists():
-        return pd.read_csv(QUANT_CSV)
+def quant_paths(ticker: str) -> tuple[Path, Path]:
+    t = ticker.upper()
+    return OUT_DIR / f"{t}_narrative_quant.parquet", OUT_DIR / f"{t}_narrative_quant.csv"
+
+
+def load_quant_long(ticker: str = "AMZN") -> pd.DataFrame:
+    parquet, csv = quant_paths(ticker)
+    if parquet.exists():
+        return pd.read_parquet(parquet)
+    if csv.exists():
+        return pd.read_csv(csv)
     raise FileNotFoundError(
-        f"Quant spine not found ({QUANT_PARQUET.name} or {QUANT_CSV.name}). "
-        "Run single_company_extractor.py first."
+        f"Quant spine not found ({parquet.name} or {csv.name}). "
+        f"Run single_company_extractor.py --ticker {ticker.upper()} first."
     )
+
+
+def try_load_quant_long(ticker: str = "AMZN") -> pd.DataFrame | None:
+    try:
+        return load_quant_long(ticker)
+    except FileNotFoundError:
+        return None
 
 
 def _fmt_num(v, unit: str) -> str:
@@ -77,9 +83,13 @@ def format_consensus_context(
     fiscal_period: str,
     quant_df: pd.DataFrame | None = None,
     dim_z: dict[str, float | None] | None = None,
+    *,
+    ticker: str = "AMZN",
 ) -> str:
     """Render a PIT consensus block for one quarter, grouped by business dimension."""
-    df = quant_df if quant_df is not None else load_quant_long()
+    df = quant_df if quant_df is not None else try_load_quant_long(ticker)
+    if df is None:
+        return f"Fiscal period: {fiscal_period}\n(no quant data available)"
     q = df[df["fiscal_period"] == fiscal_period]
     if q.empty:
         return f"Fiscal period: {fiscal_period}\n(no quant data found)"
@@ -94,7 +104,10 @@ def format_consensus_context(
             if z is not None and not (isinstance(z, float) and pd.isna(z)):
                 z_parts.append(f"{dim} z={float(z):+.2f}")
         if z_parts:
-            lines.append("Standardized surprise vs AMZN history (dim z): " + ", ".join(z_parts))
+            lines.append(
+                f"Standardized surprise vs {ticker.upper()} history (dim z): "
+                + ", ".join(z_parts)
+            )
     lines.append("")
 
     reported = q[q["period_role"] == SURPRISE_ROLE]
@@ -114,7 +127,6 @@ def format_consensus_context(
                 for _, row in sub.iterrows():
                     label = str(row.get("measure_label") or row.get("measure_desc") or row["measure"])
                     lines.append(_row_line(label, row))
-            # forward pre-call context for demand-type dims
             if dim != "guidance":
                 fwd_sub = forward[forward["measure"].isin(members)]
                 for _, row in fwd_sub.iterrows():
@@ -125,7 +137,6 @@ def format_consensus_context(
                     )
                     lines.append(_row_line(label, row, forward=True))
         else:
-            # guidance -> forward estimate revisions context (pre vs post as validation hint)
             sub = forward.copy()
             if not sub.empty:
                 rev = sub.dropna(subset=["fwd_estimate_revision_pct"])

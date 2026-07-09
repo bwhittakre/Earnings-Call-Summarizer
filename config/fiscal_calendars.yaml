@@ -2,5 +2,9 @@ NVDA:
   type: nvidia_fiscal
 AMZN:
   type: calendar_fiscal
+MSFT:
+  type: offset_fiscal
+  fye_month: 6
+  fye_day: 30
 TSLA:
   type: calendar_fiscal

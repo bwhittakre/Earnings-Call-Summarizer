@@ -19,6 +19,7 @@ Features:
 """
 from __future__ import annotations
 
+import argparse
 import html
 import json
 import sys
@@ -26,8 +27,6 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 OUT_DIR = HERE / "output"
-VIEW_FILE = OUT_DIR / "AMZN_delta_view.json"
-HTML_FILE = OUT_DIR / "AMZN_delta_report.html"
 
 DIM_LABELS = {
     "demand": "Demand",
@@ -352,13 +351,20 @@ def build_html(view: dict) -> str:
 
 
 def main() -> int:
-    if not VIEW_FILE.exists():
-        print(f"Missing {VIEW_FILE}. Run run_delta_scoring.py first.", file=sys.stderr)
+    ap = argparse.ArgumentParser(description="Build delta HTML report.")
+    ap.add_argument("--ticker", default="AMZN", help="Ticker symbol.")
+    args = ap.parse_args()
+    ticker = args.ticker.upper()
+    view_file = OUT_DIR / f"{ticker}_delta_view.json"
+    html_file = OUT_DIR / f"{ticker}_delta_report.html"
+
+    if not view_file.exists():
+        print(f"Missing {view_file}. Run run_delta_scoring.py --ticker {ticker} first.", file=sys.stderr)
         return 1
-    view = json.loads(VIEW_FILE.read_text(encoding="utf-8"))
-    HTML_FILE.write_text(build_html(view), encoding="utf-8")
+    view = json.loads(view_file.read_text(encoding="utf-8"))
+    html_file.write_text(build_html(view), encoding="utf-8")
     n_t = len(view.get("transitions", []))
-    print(f"Wrote {HTML_FILE}  ({n_t} transitions)")
+    print(f"Wrote {html_file}  ({n_t} transitions)")
     return 0
 
 

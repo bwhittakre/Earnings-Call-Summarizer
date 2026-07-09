@@ -20,6 +20,7 @@ Features:
 """
 from __future__ import annotations
 
+import argparse
 import html
 import json
 import sys
@@ -27,12 +28,10 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 OUT_DIR = HERE / "output"
-VIEW_FILE = OUT_DIR / "AMZN_dimension_view.json"
-HTML_FILE = OUT_DIR / "AMZN_dimension_report.html"
 
 if str(HERE) not in sys.path:
     sys.path.insert(0, str(HERE))
-from pilot_config import is_output_quarter  # noqa: E402
+from company_config import get_company  # noqa: E402
 
 DIM_LABELS = {
     "demand": "Demand",
@@ -194,7 +193,7 @@ def build_html(view: dict) -> str:
     dim_order = view.get("dimension_order", list(DIM_LABELS.keys()))
     quarters = [
         q for q in view.get("quarters", [])
-        if q.get("output_scope", is_output_quarter(q["fiscal_period"]))
+        if q.get("output_scope", False)
     ]
     ticker = view.get("ticker", "")
     company = view.get("company_name", "")
@@ -312,16 +311,23 @@ def build_html(view: dict) -> str:
 
 
 def main() -> int:
-    if not VIEW_FILE.exists():
-        print(f"Missing {VIEW_FILE}. Run run_dimension_scoring.py first.", file=sys.stderr)
+    ap = argparse.ArgumentParser(description="Build dimension HTML report.")
+    ap.add_argument("--ticker", default="AMZN", help="Ticker symbol.")
+    args = ap.parse_args()
+    ticker = args.ticker.upper()
+    view_file = OUT_DIR / f"{ticker}_dimension_view.json"
+    html_file = OUT_DIR / f"{ticker}_dimension_report.html"
+
+    if not view_file.exists():
+        print(f"Missing {view_file}. Run run_dimension_scoring.py --ticker {ticker} first.", file=sys.stderr)
         return 1
-    view = json.loads(VIEW_FILE.read_text(encoding="utf-8"))
-    HTML_FILE.write_text(build_html(view), encoding="utf-8")
+    view = json.loads(view_file.read_text(encoding="utf-8"))
+    html_file.write_text(build_html(view), encoding="utf-8")
     n_q = len([
         q for q in view.get("quarters", [])
-        if q.get("output_scope", is_output_quarter(q["fiscal_period"]))
+        if q.get("output_scope", False)
     ])
-    print(f"Wrote {HTML_FILE}  ({n_q} quarters)")
+    print(f"Wrote {html_file}  ({n_q} quarters)")
     return 0
 
 

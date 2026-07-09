@@ -23,6 +23,7 @@ quant spine in AMZN_dimension_scores.
 """
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import sys
@@ -46,47 +47,37 @@ if str(HERE) not in sys.path:
     sys.path.insert(0, str(HERE))
 
 from excel_export import write_excel  # noqa: E402
-from transcript_providers import get_provider, TranscriptNotFound  # noqa: E402
+from transcript_providers import get_provider, sync_inbox_transcripts, TranscriptNotFound  # noqa: E402
 from dimension_scorer import (  # noqa: E402
     DimensionScorer,
     ALL_DIMENSIONS,
     QUANT_COMPARABLE_DIMENSIONS,
 )
-from pilot_config import (  # noqa: E402
-    TICKER,
-    COMPANY_NAME,
-    OUTPUT_QUARTERS,
-    is_output_quarter,
-    scoring_quarters,
-)
+from company_config import get_company  # noqa: E402
 
 sys.path.insert(0, str(REPO_ROOT))
 from src.llm.anthropic_client import AnthropicClient  # noqa: E402
 
-QUARTERS = scoring_quarters()
 DEFAULT_MODEL = "claude-sonnet-4-6"
-QUANT_FILE = OUT_DIR / "AMZN_dimension_scores.csv"
-VIEW_FILE = OUT_DIR / "AMZN_dimension_view.json"
 
 
-def load_quant_earnings_dates() -> dict[str, pd.Timestamp]:
-    """fiscal_period -> earnings_date from the quant spine, for a date-match check."""
-    if not QUANT_FILE.exists():
-        print(f"  ! {QUANT_FILE.name} not found; date-match check will be skipped.")
+def load_quant_earnings_dates(ticker: str) -> dict[str, pd.Timestamp]:
+    quant_file = OUT_DIR / f"{ticker}_dimension_scores.csv"
+    if not quant_file.exists():
+        print(f"  ! {quant_file.name} not found; date-match check will be skipped.")
         return {}
-    df = pd.read_csv(QUANT_FILE)
+    df = pd.read_csv(quant_file)
     if "fiscal_period" not in df.columns or "earnings_date" not in df.columns:
         return {}
     df["earnings_date"] = pd.to_datetime(df["earnings_date"], errors="coerce")
     return dict(zip(df["fiscal_period"], df["earnings_date"]))
 
 
-def load_quant_z() -> dict[str, dict[str, float]]:
-    """fiscal_period -> {dimension -> quant z-score} for the comparable dimensions
-    (columns dim_<x>_z in the quant spine)."""
-    if not QUANT_FILE.exists():
+def load_quant_z(ticker: str) -> dict[str, dict[str, float]]:
+    quant_file = OUT_DIR / f"{ticker}_dimension_scores.csv"
+    if not quant_file.exists():
         return {}
-    df = pd.read_csv(QUANT_FILE)
+    df = pd.read_csv(quant_file)
     if "fiscal_period" not in df.columns:
         return {}
     out: dict[str, dict[str, float]] = {}
@@ -110,14 +101,14 @@ def date_match(call_date: str | None, earnings_date) -> tuple[float | None, bool
     return float(days), days <= 3
 
 
-def write_outputs(score_rows: list[dict], coverage_rows: list[dict]) -> None:
+def write_outputs(ticker: str, score_rows: list[dict], coverage_rows: list[dict]) -> None:
     OUT_DIR.mkdir(parents=True, exist_ok=True)
 
     scores_df = pd.DataFrame(score_rows)
     cov_df = pd.DataFrame(coverage_rows)
 
-    scores_base = OUT_DIR / "AMZN_llm_dimension_scores"
-    cov_base = OUT_DIR / "AMZN_transcript_coverage_FY2024"
+    scores_base = OUT_DIR / f"{ticker}_llm_dimension_scores"
+    cov_base = OUT_DIR / f"{ticker}_transcript_coverage"
 
     scores_df.to_csv(scores_base.with_suffix(".csv"), index=False)
     cov_df.to_csv(cov_base.with_suffix(".csv"), index=False)
@@ -134,6 +125,14 @@ def write_outputs(score_rows: list[dict], coverage_rows: list[dict]) -> None:
 
 
 def main() -> int:
+    ap = argparse.ArgumentParser(description="Run Focus 1 dimension scoring.")
+    ap.add_argument("--ticker", default="AMZN", help="Ticker symbol.")
+    args = ap.parse_args()
+    company = get_company(args.ticker)
+    ticker = company.ticker
+    quarters = company.scoring_quarters()
+    view_file = OUT_DIR / f"{ticker}_dimension_view.json"
+
     api_key = os.getenv("ANTHROPIC_API_KEY")
     if not api_key:
         print("Error: ANTHROPIC_API_KEY not set (checked Structured Narrative/.env "
@@ -141,6 +140,7 @@ def main() -> int:
         return 1
 
     model = os.getenv("DIMENSION_MODEL", DEFAULT_MODEL)
+    sync_inbox_transcripts(ticker, verbose=True)
     try:
         provider = get_provider()
     except Exception as exc:
@@ -152,24 +152,25 @@ def main() -> int:
     )
     client = AnthropicClient(api_key=api_key, model=model, max_retries=1)
     scorer = DimensionScorer(client, use_rescue=use_rescue)
-    quant_dates = load_quant_earnings_dates()
-    quant_z = load_quant_z()
+    quant_dates = load_quant_earnings_dates(ticker)
+    quant_z = load_quant_z(ticker)
 
     AUDIT_DIR.mkdir(parents=True, exist_ok=True)
 
     print(f"Provider: {provider.name} | Model: {model} | paraphrase rescue: "
           f"{'on' if use_rescue else 'off'}")
-    print(f"Scoring {len(QUARTERS)} AMZN quarters ({len(OUTPUT_QUARTERS)} in output scope) "
+    print(f"Scoring {len(quarters)} {ticker} quarters "
+          f"({len(company.output_quarters)} in output scope) "
           f"across {len(ALL_DIMENSIONS)} dimensions.\n")
 
     score_rows: list[dict] = []
     coverage_rows: list[dict] = []
     view_quarters: list[dict] = []
 
-    for fp in QUARTERS:
+    for fp in quarters:
         print(f"[{fp}] fetching transcript…")
         try:
-            transcript = provider.fetch(TICKER, fp)
+            transcript = provider.fetch(ticker, fp)
         except TranscriptNotFound as exc:
             print(f"  ! {exc}")
             coverage_rows.append({
@@ -181,13 +182,13 @@ def main() -> int:
         print(f"  fetched {len(transcript.raw_text):,} chars, "
               f"{transcript.n_speakers} speakers, qa_found={transcript.qa_found}")
         print(f"[{fp}] scoring dimensions…")
-        scored = scorer.score(transcript, COMPANY_NAME)
+        scored = scorer.score(transcript, company.company_name)
 
-        in_output = is_output_quarter(fp)
+        in_output = company.is_output_quarter(fp)
         if in_output:
             for d in scored.dimensions:
                 score_rows.append({
-                    "ticker": TICKER,
+                    "ticker": ticker,
                     "fiscal_period": fp,
                     "as_of_date": transcript.call_date,
                     "dimension": d.dimension,
@@ -281,7 +282,7 @@ def main() -> int:
             ],
             "raw_response": scored.llm_result.raw_response,
         }
-        (AUDIT_DIR / f"{TICKER}_{fp}_dimensions.json").write_text(
+        (AUDIT_DIR / f"{ticker}_{fp}_dimensions.json").write_text(
             json.dumps(audit, indent=2), encoding="utf-8"
         )
         vpct = (100.0 * scored.n_excerpts_verified / scored.n_excerpts
@@ -301,24 +302,24 @@ def main() -> int:
         print("No transcripts scored — nothing written.", file=sys.stderr)
         return 1
 
-    write_outputs(score_rows, coverage_rows)
+    write_outputs(ticker, score_rows, coverage_rows)
 
     view = {
-        "ticker": TICKER,
-        "company_name": COMPANY_NAME,
+        "ticker": ticker,
+        "company_name": company.company_name,
         "model": model,
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "dimension_order": ALL_DIMENSIONS,
         "quant_comparable": QUANT_COMPARABLE_DIMENSIONS,
         "quarters": view_quarters,
     }
-    VIEW_FILE.write_text(json.dumps(view, indent=2), encoding="utf-8")
+    view_file.write_text(json.dumps(view, indent=2), encoding="utf-8")
 
     print(client.usage_summary())
     print(f"\nWrote {len(score_rows)} dimension rows to "
-          f"{OUT_DIR / 'AMZN_llm_dimension_scores.csv'}")
-    print(f"View JSON:       {VIEW_FILE}")
-    print(f"Coverage report: {OUT_DIR / 'AMZN_transcript_coverage_FY2024.csv'}")
+          f"{OUT_DIR / f'{ticker}_llm_dimension_scores.csv'}")
+    print(f"View JSON:       {view_file}")
+    print(f"Coverage report: {OUT_DIR / f'{ticker}_transcript_coverage.csv'}")
     print(f"LLM audit JSON:  {AUDIT_DIR}")
     return 0
 

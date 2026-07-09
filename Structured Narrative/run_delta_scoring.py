@@ -23,6 +23,7 @@ The first quarter in the view has no prior, so no delta is produced for it.
 """
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import sys
@@ -36,8 +37,6 @@ HERE = Path(__file__).resolve().parent
 REPO_ROOT = HERE.parent
 OUT_DIR = HERE / "output"
 AUDIT_DIR = OUT_DIR / "llm_audit"
-VIEW_FILE = OUT_DIR / "AMZN_dimension_view.json"
-DELTA_VIEW_FILE = OUT_DIR / "AMZN_delta_view.json"
 
 load_dotenv(HERE / ".env")
 load_dotenv(REPO_ROOT / ".env")
@@ -46,7 +45,7 @@ if str(HERE) not in sys.path:
     sys.path.insert(0, str(HERE))
 
 from excel_export import write_excel  # noqa: E402
-from transcript_providers import get_provider, TranscriptNotFound  # noqa: E402
+from transcript_providers import get_provider, sync_inbox_transcripts, TranscriptNotFound  # noqa: E402
 from dimension_scorer import ALL_DIMENSIONS, QUANT_COMPARABLE_DIMENSIONS  # noqa: E402
 from delta_scorer import (  # noqa: E402
     DeltaScorer,
@@ -55,7 +54,7 @@ from delta_scorer import (  # noqa: E402
     CONTEXT_BOTH_TRANSCRIPTS,
     VALID_CONTEXTS,
 )
-from pilot_config import TICKER, COMPANY_NAME, is_output_quarter  # noqa: E402
+from company_config import get_company  # noqa: E402
 
 sys.path.insert(0, str(REPO_ROOT))
 from src.llm.anthropic_client import AnthropicClient  # noqa: E402
@@ -98,12 +97,13 @@ def _agrees(llm_mag: float, numeric_delta: float | None) -> bool | None:
     return ls == ns
 
 
-def load_view() -> dict:
-    if not VIEW_FILE.exists():
+def load_view(ticker: str) -> dict:
+    view_file = OUT_DIR / f"{ticker}_dimension_view.json"
+    if not view_file.exists():
         raise FileNotFoundError(
-            f"{VIEW_FILE} not found. Run run_dimension_scoring.py first."
+            f"{view_file} not found. Run run_dimension_scoring.py --ticker {ticker} first."
         )
-    return json.loads(VIEW_FILE.read_text(encoding="utf-8"))
+    return json.loads(view_file.read_text(encoding="utf-8"))
 
 
 def dim_maps(quarter: dict) -> tuple[dict[str, float | None], dict[str, float | None]]:
@@ -116,10 +116,10 @@ def dim_maps(quarter: dict) -> tuple[dict[str, float | None], dict[str, float | 
     return scores, zs
 
 
-def write_outputs(rows: list[dict]) -> None:
+def write_outputs(ticker: str, rows: list[dict]) -> None:
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     df = pd.DataFrame(rows)
-    base = OUT_DIR / "AMZN_dimension_delta"
+    base = OUT_DIR / f"{ticker}_dimension_delta"
     df.to_csv(base.with_suffix(".csv"), index=False)
     try:
         df.to_parquet(base.with_suffix(".parquet"), index=False)
@@ -132,6 +132,13 @@ def write_outputs(rows: list[dict]) -> None:
 
 
 def main() -> int:
+    ap = argparse.ArgumentParser(description="Run Focus 2 delta scoring.")
+    ap.add_argument("--ticker", default="AMZN", help="Ticker symbol.")
+    args = ap.parse_args()
+    company = get_company(args.ticker)
+    ticker = company.ticker
+    delta_view_file = OUT_DIR / f"{ticker}_delta_view.json"
+
     api_key = os.getenv("ANTHROPIC_API_KEY")
     if not api_key:
         print("Error: ANTHROPIC_API_KEY not set (checked Structured Narrative/.env "
@@ -139,7 +146,7 @@ def main() -> int:
         return 1
 
     try:
-        view = load_view()
+        view = load_view(ticker)
     except FileNotFoundError as exc:
         print(f"Error: {exc}", file=sys.stderr)
         return 1
@@ -154,6 +161,7 @@ def main() -> int:
     use_rescue = os.getenv("DIMENSION_RESCUE", "1").strip().lower() not in (
         "0", "false", "no", "off",
     )
+    sync_inbox_transcripts(ticker, verbose=True)
     try:
         provider = get_provider()
     except Exception as exc:
@@ -166,7 +174,7 @@ def main() -> int:
 
     print(f"Provider: {provider.name} | Model: {model} | delta context: {delta_context} "
           f"| paraphrase rescue: {'on' if use_rescue else 'off'}")
-    print(f"Computing {sum(1 for i in range(1, len(quarters)) if is_output_quarter(quarters[i]['fiscal_period']))} "
+    print(f"Computing {sum(1 for i in range(1, len(quarters)) if company.is_output_quarter(quarters[i]['fiscal_period']))} "
           f"quarter-over-quarter transitions "
           f"across {len(ALL_DIMENSIONS)} dimensions.\n")
 
@@ -177,12 +185,12 @@ def main() -> int:
         prior_q, current_q = quarters[i - 1], quarters[i]
         prior_period = prior_q["fiscal_period"]
         current_period = current_q["fiscal_period"]
-        if not is_output_quarter(current_period):
+        if not company.is_output_quarter(current_period):
             continue
         print(f"[{prior_period} -> {current_period}] fetching transcripts…")
         try:
-            prior_transcript = provider.fetch(TICKER, prior_period)
-            transcript = provider.fetch(TICKER, current_period)
+            prior_transcript = provider.fetch(ticker, prior_period)
+            transcript = provider.fetch(ticker, current_period)
         except TranscriptNotFound as exc:
             print(f"  ! {exc}; skipping transition")
             continue
@@ -203,14 +211,14 @@ def main() -> int:
             scored = scorer.score(
                 transcript,
                 prior_period,
-                COMPANY_NAME,
+                company.company_name,
                 prior_transcript=prior_transcript,
             )
         else:
             scored = scorer.score(
                 transcript,
                 prior_period,
-                COMPANY_NAME,
+                company.company_name,
                 prior_summary_block=prior_block,
             )
 
@@ -242,7 +250,7 @@ def main() -> int:
                 status_counts[e.status] = status_counts.get(e.status, 0) + 1
 
             rows.append({
-                "ticker": TICKER,
+                "ticker": ticker,
                 "prior_period": prior_period,
                 "fiscal_period": current_period,
                 "as_of_date": as_of,
@@ -323,7 +331,7 @@ def main() -> int:
             ],
             "raw_response": scored.llm_result.raw_response,
         }
-        (AUDIT_DIR / f"{TICKER}_{prior_period}_to_{current_period}_delta.json").write_text(
+        (AUDIT_DIR / f"{ticker}_{prior_period}_to_{current_period}_delta.json").write_text(
             json.dumps(audit, indent=2), encoding="utf-8"
         )
 
@@ -341,11 +349,11 @@ def main() -> int:
         print("No transitions produced — nothing written.", file=sys.stderr)
         return 1
 
-    write_outputs(rows)
+    write_outputs(ticker, rows)
 
     delta_view = {
-        "ticker": TICKER,
-        "company_name": COMPANY_NAME,
+        "ticker": ticker,
+        "company_name": company.company_name,
         "model": model,
         "delta_context": delta_context,
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
@@ -353,12 +361,12 @@ def main() -> int:
         "quant_comparable": QUANT_COMPARABLE_DIMENSIONS,
         "transitions": transitions_view,
     }
-    DELTA_VIEW_FILE.write_text(json.dumps(delta_view, indent=2), encoding="utf-8")
+    delta_view_file.write_text(json.dumps(delta_view, indent=2), encoding="utf-8")
 
     print(client.usage_summary())
     print(f"\nWrote {len(rows)} delta rows to "
-          f"{OUT_DIR / 'AMZN_dimension_delta.csv'}")
-    print(f"Delta view JSON: {DELTA_VIEW_FILE}")
+          f"{OUT_DIR / f'{ticker}_dimension_delta.csv'}")
+    print(f"Delta view JSON: {delta_view_file}")
     print(f"LLM audit JSON:  {AUDIT_DIR}")
     return 0
 

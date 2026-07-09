@@ -7,6 +7,7 @@ Self-contained HTML report for Focus 3 narrative surprise scores.
 """
 from __future__ import annotations
 
+import argparse
 import html
 import json
 import sys
@@ -14,8 +15,6 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 OUT_DIR = HERE / "output"
-VIEW_FILE = OUT_DIR / "AMZN_surprise_view.json"
-HTML_FILE = OUT_DIR / "AMZN_surprise_report.html"
 
 DIM_LABELS = {
     "demand": "Demand",
@@ -279,12 +278,19 @@ def build_html(view: dict) -> str:
 
 
 def main() -> int:
-    if not VIEW_FILE.exists():
-        print(f"Missing {VIEW_FILE}. Run run_surprise_scoring.py first.", file=sys.stderr)
+    ap = argparse.ArgumentParser(description="Build surprise HTML report.")
+    ap.add_argument("--ticker", default="AMZN", help="Ticker symbol.")
+    args = ap.parse_args()
+    ticker = args.ticker.upper()
+    view_file = OUT_DIR / f"{ticker}_surprise_view.json"
+    html_file = OUT_DIR / f"{ticker}_surprise_report.html"
+
+    if not view_file.exists():
+        print(f"Missing {view_file}. Run run_surprise_scoring.py --ticker {ticker} first.", file=sys.stderr)
         return 1
-    view = json.loads(VIEW_FILE.read_text(encoding="utf-8"))
-    HTML_FILE.write_text(build_html(view), encoding="utf-8")
-    print(f"Wrote {HTML_FILE}  ({len(view.get('quarters', []))} quarters)")
+    view = json.loads(view_file.read_text(encoding="utf-8"))
+    html_file.write_text(build_html(view), encoding="utf-8")
+    print(f"Wrote {html_file}  ({len(view.get('quarters', []))} quarters)")
     return 0
 
 
