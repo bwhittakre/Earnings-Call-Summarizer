@@ -16,15 +16,14 @@ every column is widened to fit its contents, so nothing ever collapses to
 ``########``. The header row is frozen for easy scanning.
 
 Used by single_company_extractor.py and narrative_zscore.py. Run directly to
-(re)generate an .xlsx next to every .parquet already in output/:
+(re)generate workbooks from every parquet under output/{TICKER}/parquet/ and
+output/cross_company/parquet/:
 
     python "Structured Narrative/excel_export.py"
 """
 from __future__ import annotations
 
 import argparse
-import glob
-import os
 import re
 from pathlib import Path
 
@@ -32,7 +31,14 @@ import pandas as pd
 from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.table import Table, TableStyleInfo
 
-from output_paths import company_artifact, cross_company_artifact, resolve_read_parquet_or_csv
+from output_paths import (
+    company_artifact,
+    cross_company_artifact,
+    cross_company_layer,
+    list_company_tickers,
+    resolve_read_parquet_or_csv,
+    ROOT,
+)
 
 DATE_FMT = "yyyy-mm-dd"
 DATETIME_FMT = "yyyy-mm-dd hh:mm"
@@ -493,7 +499,7 @@ def build_consolidated_narrative_layers_workbook(
         if sort_cols:
             out_frames[sheet] = df.sort_values(sort_cols).reset_index(drop=True)
 
-    dest = cross_company_artifact(output_stem, "xlsx", mkdir=True)
+    dest = cross_company_artifact("workbooks", output_stem, "xlsx", mkdir=True)
     write_layers_workbook(dest, out_frames)
     return dest
 
@@ -522,16 +528,34 @@ def build_narrative_layers_workbook(ticker: str) -> Path:
     return dest
 
 
-def _regen_all(out_dir: str):
-    parquets = sorted(glob.glob(os.path.join(out_dir, "*.parquet")))
-    if not parquets:
-        print(f"No .parquet files found in {out_dir}")
-        return
-    for pq in parquets:
+def _regen_layered_parquets(parquet_dir: Path, workbook_dir: Path) -> int:
+    if not parquet_dir.is_dir():
+        return 0
+    workbook_dir.mkdir(parents=True, exist_ok=True)
+    count = 0
+    for pq in sorted(parquet_dir.glob("*.parquet")):
         df = pd.read_parquet(pq)
-        xlsx = os.path.splitext(pq)[0] + ".xlsx"
-        write_excel(df, xlsx)
+        xlsx = workbook_dir / f"{pq.stem}.xlsx"
+        write_excel(df, str(xlsx))
         print(f"Wrote {xlsx}  ({len(df)} rows)")
+        count += 1
+    return count
+
+
+def _regen_all(out_dir: str | Path | None = None):
+    root = Path(out_dir) if out_dir is not None else ROOT
+    total = 0
+    for ticker in list_company_tickers():
+        total += _regen_layered_parquets(
+            root / ticker / "parquet",
+            root / ticker / "workbooks",
+        )
+    total += _regen_layered_parquets(
+        cross_company_layer("parquet"),
+        cross_company_layer("workbooks", mkdir=True),
+    )
+    if total == 0:
+        print(f"No layered .parquet files found under {root}")
 
 
 if __name__ == "__main__":
@@ -580,5 +604,4 @@ if __name__ == "__main__":
         path = build_narrative_layers_workbook(args.ticker)
         print(f"Wrote {path}")
     else:
-        OUT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "output")
-        _regen_all(OUT_DIR)
+        _regen_all()

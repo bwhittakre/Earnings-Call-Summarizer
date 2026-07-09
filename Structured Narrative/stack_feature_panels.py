@@ -22,7 +22,7 @@ if str(HERE) not in sys.path:
     sys.path.insert(0, str(HERE))
 
 from company_config import FY2025_OUTPUT_QUARTERS, PILOT_TICKERS  # noqa: E402
-from output_paths import cross_company_artifact, resolve_read  # noqa: E402
+from output_paths import cross_company_artifact, ensure_cross_company_tree, resolve_read  # noqa: E402
 
 
 def load_panel(ticker: str) -> pd.DataFrame:
@@ -65,7 +65,7 @@ def main() -> int:
     ap.add_argument(
         "--output-prefix",
         default="FY2025",
-        help="Output file stem prefix under cross_company/.",
+        help="Output file stem prefix under cross_company/{csv,parquet,json}/.",
     )
     args = ap.parse_args()
     tickers = [t.upper() for t in args.tickers]
@@ -78,9 +78,12 @@ def main() -> int:
 
     stacked = pd.concat(frames, ignore_index=True)
     stem = f"{args.output_prefix}_feature_panel"
-    csv_path = cross_company_artifact(stem, "csv", mkdir=True)
-    parquet_path = cross_company_artifact(stem, "parquet", mkdir=True)
-    summary_path = cross_company_artifact(f"{args.output_prefix}_feature_panel_summary", "json", mkdir=True)
+    ensure_cross_company_tree()
+    csv_path = cross_company_artifact("csv", stem, "csv", mkdir=True)
+    parquet_path = cross_company_artifact("parquet", stem, "parquet", mkdir=True)
+    summary_path = cross_company_artifact(
+        "json", f"{args.output_prefix}_feature_panel_summary", "json", mkdir=True
+    )
     stacked.to_csv(csv_path, index=False)
     try:
         stacked.to_parquet(parquet_path, index=False)

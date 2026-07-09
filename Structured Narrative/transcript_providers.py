@@ -19,22 +19,32 @@ Providers implemented:
 Select at runtime with the ``TRANSCRIPT_PROVIDER`` env var (default ``local``) via
 ``get_provider()``.
 
-Raw API payloads are cached to ``output/transcripts/`` so repeated runs cost no
+Raw API payloads are cached to ``output/shared/transcripts/`` so repeated runs cost no
 API calls and the pilot stays reproducible even if the subscription lapses.
+Legacy cache at ``output/transcripts/`` is still read if present.
 """
 from __future__ import annotations
 
 import json
 import os
 import re
+import sys
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field, asdict
 from datetime import datetime, timezone
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-CACHE_DIR = HERE / "output" / "transcripts"
 LOCAL_DIR = HERE / "transcripts_raw"
+
+if str(HERE) not in sys.path:
+    sys.path.insert(0, str(HERE))
+
+from output_paths import (  # noqa: E402
+    LEGACY_TRANSCRIPT_DIR,
+    ensure_shared_tree,
+    transcript_cache_path,
+)
 
 FMP_STABLE_URL = "https://financialmodelingprep.com/stable/earning-call-transcript"
 FMP_V3_URL = "https://financialmodelingprep.com/api/v3/earning_call_transcript/{symbol}"
@@ -199,26 +209,29 @@ class TranscriptNotFound(Exception):
 class FmpApiProvider(TranscriptProvider):
     name = "fmp"
 
-    def __init__(self, api_key: str | None = None, cache_dir: Path = CACHE_DIR):
+    def __init__(self, api_key: str | None = None, cache_dir: Path | None = None):
         self.api_key = api_key or os.getenv("FMP_API_KEY")
         if not self.api_key:
             raise RuntimeError(
                 "FMP_API_KEY is not set. Add it to 'Structured Narrative/.env' "
                 "or set TRANSCRIPT_PROVIDER=local to use manual transcripts."
             )
-        self.cache_dir = Path(cache_dir)
-        self.cache_dir.mkdir(parents=True, exist_ok=True)
+        ensure_shared_tree()
+        self.cache_dir = Path(cache_dir) if cache_dir is not None else None
 
     def _cache_path(self, ticker: str, fiscal_period: str) -> Path:
-        return self.cache_dir / f"{ticker.upper()}_{fiscal_period}.json"
+        return transcript_cache_path(ticker, fiscal_period, mkdir=True)
+
+    def _legacy_cache_path(self, ticker: str, fiscal_period: str) -> Path:
+        return LEGACY_TRANSCRIPT_DIR / f"{ticker.upper()}_{fiscal_period}.json"
 
     def _load_cache(self, ticker: str, fiscal_period: str) -> dict | None:
-        p = self._cache_path(ticker, fiscal_period)
-        if p.exists():
-            try:
-                return json.loads(p.read_text(encoding="utf-8"))
-            except (json.JSONDecodeError, OSError):
-                return None
+        for p in (self._cache_path(ticker, fiscal_period), self._legacy_cache_path(ticker, fiscal_period)):
+            if p.exists():
+                try:
+                    return json.loads(p.read_text(encoding="utf-8"))
+                except (json.JSONDecodeError, OSError):
+                    return None
         return None
 
     def _save_cache(self, ticker: str, fiscal_period: str, payload: dict) -> None:

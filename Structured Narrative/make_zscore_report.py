@@ -16,9 +16,11 @@ Sections:
   4. Latest-quarter evidence table (measure z-scores + provenance).
 
 Usage:  python "Structured Narrative/make_zscore_report.py"
-Output: Structured Narrative/output/AMZN_zscore_report.pdf
+Output: Structured Narrative/output/AMZN/reports/zscore_report.pdf
 """
 import os
+import sys
+
 import pandas as pd
 
 from reportlab.lib.pagesizes import letter, landscape
@@ -32,9 +34,14 @@ from reportlab.graphics.shapes import Drawing
 from reportlab.graphics.charts.barcharts import VerticalBarChart
 
 BASE = os.path.dirname(os.path.abspath(__file__))
-DIM_PARQUET = os.path.join(BASE, "output", "AMZN_dimension_scores.parquet")
-LONG_PARQUET = os.path.join(BASE, "output", "AMZN_narrative_zscored.parquet")
-PDF = os.path.join(BASE, "output", "AMZN_zscore_report.pdf")
+if BASE not in sys.path:
+    sys.path.insert(0, BASE)
+from output_paths import company_artifact, resolve_read_required  # noqa: E402
+
+TICKER = "AMZN"
+DIM_PARQUET = str(resolve_read_required(TICKER, "dimension_scores", "parquet", layer="parquet"))
+LONG_PARQUET = str(resolve_read_required(TICKER, "narrative_zscored", "parquet", layer="parquet"))
+PDF = str(company_artifact(TICKER, "reports", "zscore_report", "pdf", mkdir=True))
 
 # Dimension display order + friendly labels.
 DIM_ORDER = [

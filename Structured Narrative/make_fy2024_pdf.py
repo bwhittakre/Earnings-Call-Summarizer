@@ -6,9 +6,11 @@ directly from the extractor output (AMZN_narrative_quant.csv). This mirrors the
 Cursor canvas but as a portable, shareable PDF.
 
 Usage:  python "Structured Narrative/make_fy2024_pdf.py"
-Output: Structured Narrative/output/AMZN_FY2024_report.pdf
+Output: Structured Narrative/output/AMZN/reports/FY2024_report.pdf
 """
 import os
+import sys
+
 import pandas as pd
 
 from reportlab.lib.pagesizes import letter
@@ -24,8 +26,17 @@ from reportlab.graphics.charts.legends import Legend
 from reportlab.graphics.charts.textlabels import Label
 
 BASE = os.path.dirname(os.path.abspath(__file__))
-CSV = os.path.join(BASE, "output", "AMZN_narrative_quant.csv")
-PDF = os.path.join(BASE, "output", "AMZN_FY2024_report.pdf")
+if BASE not in sys.path:
+    sys.path.insert(0, BASE)
+from output_paths import company_artifact, resolve_read_parquet_or_csv  # noqa: E402
+
+TICKER = "AMZN"
+_QUANT_PATH = resolve_read_parquet_or_csv(TICKER, "narrative_quant", layer="parquet")
+if _QUANT_PATH is None:
+    raise FileNotFoundError(
+        f"Missing parquet/narrative_quant for {TICKER}. Run single_company_extractor.py."
+    )
+PDF = str(company_artifact(TICKER, "reports", "FY2024_report", "pdf", mkdir=True))
 
 QUARTERS = ["FY2024-Q1", "FY2024-Q2", "FY2024-Q3", "FY2024-Q4"]
 MEASURE_ORDER = [20, 6, 8, 27, 9, 237, 22, 213, 418, 431, 373]
@@ -76,7 +87,10 @@ def fmt_pct(code, v):
 
 
 def load():
-    df = pd.read_csv(CSV)
+    if _QUANT_PATH.suffix == ".parquet":
+        df = pd.read_parquet(_QUANT_PATH)
+    else:
+        df = pd.read_csv(_QUANT_PATH)
     rq = df[(df["period_role"] == "reported_q") & (df["fiscal_period"].isin(QUARTERS))]
     per_q = {}
     for qkey in QUARTERS:

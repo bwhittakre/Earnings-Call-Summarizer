@@ -7,7 +7,7 @@ Single-Company Narrative-Quant Extractor
 Builds the point-in-time (PIT) quantitative spine that the LLM narrative
 features attach to.
 
-Read-only. Output: output/{TICKER}_narrative_quant.parquet (+ .csv).
+Read-only. Output: output/{TICKER}/parquet/narrative_quant.parquet (+ workbooks/narrative_quant.xlsx).
 
     python "Structured Narrative/single_company_extractor.py" --ticker AMZN
     python "Structured Narrative/single_company_extractor.py" --ticker MSFT
@@ -36,8 +36,6 @@ MODEL_DELAY_DAYS = 7
 ALPHA_WINDOWS = [(0, 60), (60, 90), (0, 90)]
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-OUT_DIR = os.path.join(HERE, "output")
-
 
 def connect():
     load_dotenv(os.path.join(HERE, ".env"))
