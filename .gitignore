@@ -42,3 +42,23 @@ output_confidence/edgar_cache/
 /Structured Narrative/output/
 # Raw earnings-call transcripts (manual paste / local provider) — not committed (licensing)
 /Structured Narrative/transcripts_raw/
+
+# >>> angelo >>>
+# Runtime state and derived caches (source of truth is .memory/ and
+# .zettelkasten/). Gitignored here so Angelo MCP servers do not auto-commit;
+# commit these directories manually when ready.
+.angelo/
+.memory/
+.zettelkasten/
+
+# Legacy locations (pre-.angelo layouts)
+.cassius/
+.memory.kgl
+.memory.index.json
+.memory.embeddings.json
+.coordinator-state.json
+.coordinator-meta.json
+
+# Claude Code local settings (not shared)
+.claude/settings.local.json
+# <<< angelo <<<
