@@ -52,10 +52,9 @@ Why the LLM score and the Quant z often diverge (narrative surprise)
 The LLM score reads ABSOLUTE tone: for a company that executes well, management almost always sounds strong, so the LLM score tends to sit high (+1 to +2). The Quant z strips out "how AMZN normally does" and keeps only the residual: did results beat expectations by more or less than usual? A quarter can therefore read +2 on the narrative but slightly negative on the quant, meaning "genuinely strong, but the beat vs expectations was a touch below AMZN's own standard." That gap is the "narrative surprise" and is often more informative than either number alone.
 Because the two use different scales (bounded -2..+2 vs an unbounded z-score), compare DIRECTION and RANK across quarters, not the raw values.
 
-How to read the HTML report (AMZN_dimension_report.html)
-- Use the quarter buttons at the top to filter to a single quarter or view All.
-- Each quarter is a table: Dimension | LLM score | Quant z | Rationale. Score cells are tinted green (positive) or red (negative), with stronger color for larger magnitude.
-- Read the rationale bullets for the reasoning; click a superscript number to jump to the excerpt in the Notes section (and the back-link to return). Each note carries a status chip (composite / anchored / paraphrased / unverified) per the cascade above; plain quotes are exact verbatim matches. Only "unverified" is a red flag. The legend under the quarter buttons summarizes the chips.
+How to read claim + quote evidence in the HTML report
+- Open output/{TICKER}/reports/feature_panel_report.html, select a quarter filter (not All), expand a row with +, and read Focus 1 — Level for rationale bullets and linked transcript quotes in Notes.
+- Score cells in the main table are tinted green (positive) or red (negative). Each note carries a status chip (composite / anchored / paraphrased / unverified); only "unverified" is a red flag.
 
 Sourcing and point-in-time
 Transcripts are supplied through a swappable provider layer (currently local files; an FMP API provider is also available). The score's as-of date is the earnings-call date, and the model sees only the transcript text, so there is no look-ahead: the read reflects only what was known on the call.

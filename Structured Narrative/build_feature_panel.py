@@ -12,6 +12,7 @@ import argparse
 import html
 import json
 import sys
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -22,7 +23,8 @@ HERE = Path(__file__).resolve().parent
 if str(HERE) not in sys.path:
     sys.path.insert(0, str(HERE))
 from dimension_scorer import ALL_DIMENSIONS, QUANT_COMPARABLE_DIMENSIONS  # noqa: E402
-from output_paths import company_artifact, resolve_read_parquet_or_csv  # noqa: E402
+from html_evidence import EVIDENCE_CSS, render_evidence_block  # noqa: E402
+from output_paths import company_artifact, resolve_read, resolve_read_parquet_or_csv  # noqa: E402
 
 DIM_LABELS = {
     "demand": "Demand",
@@ -345,6 +347,61 @@ def build_summary(panel: pd.DataFrame, ticker: str) -> dict:
 
 # --- HTML report ---
 
+@dataclass
+class EvidenceLookups:
+    level: dict[tuple[str, str], list[dict]]
+    delta: dict[tuple[str, str], list[dict]]
+    surprise: dict[tuple[str, str], list[dict]]
+
+
+def _load_json_view(ticker: str, stem: str) -> dict | None:
+    path = resolve_read(ticker, stem, "json", layer="json")
+    if path is None:
+        return None
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def build_evidence_lookups(ticker: str) -> EvidenceLookups:
+    level_map: dict[tuple[str, str], list[dict]] = {}
+    dim_view = _load_json_view(ticker, "dimension_view")
+    if dim_view:
+        for q in dim_view.get("quarters", []):
+            fp = q["fiscal_period"]
+            for d in q.get("dimensions", []):
+                ev = d.get("evidence") or []
+                if ev:
+                    level_map[(fp, d["dimension"])] = ev
+
+    delta_map: dict[tuple[str, str], list[dict]] = {}
+    delta_view = _load_json_view(ticker, "delta_view")
+    if delta_view:
+        for t in delta_view.get("transitions", []):
+            fp = t["fiscal_period"]
+            for d in t.get("deltas", []):
+                ev = d.get("evidence") or []
+                if ev:
+                    delta_map[(fp, d["dimension"])] = ev
+
+    surprise_map: dict[tuple[str, str], list[dict]] = {}
+    surprise_view = _load_json_view(ticker, "surprise_view")
+    if surprise_view:
+        for q in surprise_view.get("quarters", []):
+            fp = q["fiscal_period"]
+            for d in q.get("surprises", []):
+                ev = d.get("evidence") or []
+                if ev:
+                    surprise_map[(fp, d["dimension"])] = ev
+
+    return EvidenceLookups(level=level_map, delta=delta_map, surprise=surprise_map)
+
+
+FOCUS_DETAIL_BLOCKS = (
+    ("level_rationale", "Focus 1 — Level", "level", "L", "Notes — transcript evidence"),
+    ("delta_rationale", "Focus 2 — Delta", "delta", "D", "Notes — current-quarter change evidence"),
+    ("surprise_rationale", "Focus 3 — Surprise", "surprise", "S", "Notes — narrative evidence"),
+)
+
+
 def esc(s) -> str:
     return html.escape(str(s if s is not None else ""))
 
@@ -374,7 +431,7 @@ def fmt_z(v) -> str:
     return f"{float(v):+.2f}"
 
 
-def render_row(row: pd.Series, row_id: int) -> str:
+def render_row(row: pd.Series, row_id: int, lookups: EvidenceLookups) -> str:
     dim = row["dimension"]
     label = DIM_LABELS.get(dim, dim.replace("_", " ").title())
     flags = []
@@ -396,17 +453,30 @@ def render_row(row: pd.Series, row_id: int) -> str:
     if pd.notna(row.get("surprise_magnitude")):
         surpr_txt = f"{SURPRISE_DIR_LABELS.get(sd, sd or '')} {fmt_score(row.get('surprise_magnitude'))}"
 
+    ev_key = (row["fiscal_period"], dim)
     details = []
-    for key, title in (
-        ("level_rationale", "Focus 1 — Level"),
-        ("delta_rationale", "Focus 2 — Delta"),
-        ("surprise_rationale", "Focus 3 — Surprise"),
-    ):
-        val = row.get(key)
-        if isinstance(val, str) and val.strip():
-            details.append(f"<div class=\"detail\"><strong>{esc(title)}</strong><p>{esc(val)}</p></div>")
+    for rationale_key, title, lookup_attr, suffix, notes_heading in FOCUS_DETAIL_BLOCKS:
+        val = row.get(rationale_key)
+        rationale_html = f"<p>{esc(val)}</p>" if isinstance(val, str) and val.strip() else ""
 
-    details_html = f"<div class=\"details\">{''.join(details)}</div>" if details else ""
+        ev_map = getattr(lookups, lookup_attr)
+        evidence = ev_map.get(ev_key, [])
+        evidence_html = ""
+        if evidence:
+            block = render_evidence_block(
+                evidence,
+                f"row-{row_id}-{suffix}",
+                notes_heading,
+            )
+            evidence_html = f'<div class="quarter-evidence" hidden>{block}</div>'
+
+        if rationale_html or evidence_html:
+            details.append(
+                f'<div class="detail"><strong>{esc(title)}</strong>'
+                f"{rationale_html}{evidence_html}</div>"
+            )
+
+    details_html = f'<div class="details">{"".join(details)}</div>' if details else ""
 
     return f"""
     <tr class="data-row" data-q="{esc(row['fiscal_period'])}" data-div="{1 if row.get('is_divergence') else 0}"
@@ -425,7 +495,7 @@ def render_row(row: pd.Series, row_id: int) -> str:
     """
 
 
-def build_html(panel: pd.DataFrame, summary: dict) -> str:
+def build_html(panel: pd.DataFrame, summary: dict, lookups: EvidenceLookups) -> str:
     ticker = summary.get("ticker", "")
     cov = summary.get("coverage", {})
     generated = esc(summary.get("generated_at", ""))
@@ -437,7 +507,7 @@ def build_html(panel: pd.DataFrame, summary: dict) -> str:
     buttons.append('<button class="fbtn" data-filter="div">Diverges only</button>')
     buttons.append('<button class="fbtn" data-filter="nodelta">Missing delta</button>')
 
-    rows_html = "".join(render_row(row, i) for i, (_, row) in enumerate(panel.iterrows()))
+    rows_html = "".join(render_row(row, i, lookups) for i, (_, row) in enumerate(panel.iterrows()))
 
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -476,6 +546,7 @@ def build_html(panel: pd.DataFrame, summary: dict) -> str:
   .detail p {{ margin: 4px 0 0; color: #333; }}
   tr.detail-row td {{ background: #fafafa; }}
   .legend {{ font-size: 11px; color: #777; margin-top: 8px; }}
+{EVIDENCE_CSS}
 </style>
 </head>
 <body>
@@ -484,7 +555,7 @@ def build_html(panel: pd.DataFrame, summary: dict) -> str:
   <div class="stats">Coverage: {cov.get('has_level', 0)} level &middot; {cov.get('has_delta', 0)} delta &middot;
     {cov.get('has_surprise', 0)} surprise &middot; {cov.get('is_divergence', 0)} diverges &middot; {summary.get('row_count', 0)} rows</div>
   <div class="controls">{''.join(buttons)}
-    <div class="legend">Click + to expand rationales. Gap = surprise magnitude minus quant z (from Focus 3 scorer).</div>
+    <div class="legend">Click + to expand rationales. Select a quarter to also show claim bullets and transcript quotes. Gap = surprise magnitude minus quant z.</div>
   </div>
   <table>
     <thead>
@@ -498,6 +569,13 @@ def build_html(panel: pd.DataFrame, summary: dict) -> str:
   var filter = 'ALL';
   var btns = document.querySelectorAll('.fbtn');
   var dataRows = document.querySelectorAll('tr.data-row');
+
+  function updateEvidenceVisibility() {{
+    var showEvidence = filter.indexOf('q:') === 0;
+    document.querySelectorAll('.quarter-evidence').forEach(function (el) {{
+      el.hidden = !showEvidence;
+    }});
+  }}
 
   function applyFilter() {{
     dataRows.forEach(function (tr) {{
@@ -520,6 +598,7 @@ def build_html(panel: pd.DataFrame, summary: dict) -> str:
     btns.forEach(function (b) {{
       b.classList.toggle('active', b.getAttribute('data-filter') === filter);
     }});
+    updateEvidenceVisibility();
   }}
 
   btns.forEach(function (b) {{
@@ -549,7 +628,12 @@ def build_html(panel: pd.DataFrame, summary: dict) -> str:
 """
 
 
-def write_outputs(panel: pd.DataFrame, summary: dict, ticker: str) -> None:
+def write_outputs(
+    panel: pd.DataFrame,
+    summary: dict,
+    ticker: str,
+    lookups: EvidenceLookups,
+) -> None:
     csv_path = company_artifact(ticker, "csv", "feature_panel", "csv", mkdir=True)
     parquet_path = company_artifact(ticker, "parquet", "feature_panel", "parquet", mkdir=True)
     summary_path = company_artifact(ticker, "json", "feature_panel_summary", "json", mkdir=True)
@@ -562,7 +646,7 @@ def write_outputs(panel: pd.DataFrame, summary: dict, ticker: str) -> None:
         print(f"  ! parquet write skipped: {exc}")
 
     summary_path.write_text(json.dumps(summary, indent=2), encoding="utf-8")
-    html_path.write_text(build_html(panel, summary), encoding="utf-8")
+    html_path.write_text(build_html(panel, summary, lookups), encoding="utf-8")
 
     print(f"Wrote {csv_path}")
     print(f"Wrote {summary_path}")
@@ -634,7 +718,8 @@ def main() -> int:
         full_spine=args.full_spine,
     )
     summary = build_summary(panel, ticker)
-    write_outputs(panel, summary, ticker)
+    lookups = build_evidence_lookups(ticker)
+    write_outputs(panel, summary, ticker, lookups)
 
     cov = summary["coverage"]
     print(f"\n{ticker} feature panel: {summary['row_count']} rows")

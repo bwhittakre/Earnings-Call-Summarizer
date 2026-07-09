@@ -81,7 +81,11 @@ Outputs
 
 How to read the HTML report
   Filter by quarter or "Diverges only". Each row shows Level | Delta | Surprise | Quant z | Gap | Flags.
-  Click a row to expand rationales. See dimension_reference_key.txt, delta_reference_key.txt, and surprise_reference_key.txt for layer-specific detail.
+  Click + to expand Focus 1/2/3 rationales. On the All filter, only rationales are shown.
+  Select a specific quarter filter to also show claim bullets and linked transcript quote footnotes
+  for each focus layer (from json/dimension_view.json, json/delta_view.json, json/surprise_view.json).
+  This unified report replaces the former per-focus HTML reports (dimension, delta, surprise).
+  See dimension_reference_key.txt, delta_reference_key.txt, and surprise_reference_key.txt for layer-specific detail.
 
 Relationship to build_comparison.py
   build_comparison.py is a narrow wide-format sanity check (level vs quant only). The feature panel supersedes it for multi-layer analysis.

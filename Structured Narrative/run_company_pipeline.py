@@ -35,7 +35,6 @@ def main() -> int:
     ap.add_argument("--ticker", required=True, help="Ticker symbol.")
     ap.add_argument("--skip-quant", action="store_true", help="Skip Snowflake quant spine.")
     ap.add_argument("--skip-llm", action="store_true", help="Skip LLM scoring steps.")
-    ap.add_argument("--skip-reports", action="store_true", help="Skip HTML report builders.")
     ap.add_argument(
         "--quarters",
         nargs="+",
@@ -63,11 +62,6 @@ def main() -> int:
         run_step("Focus 3 surprise", [PY, f"{sn}/run_surprise_scoring.py", "--ticker", ticker, *quarter_args])
 
     run_step("Feature panel", [PY, f"{sn}/build_feature_panel.py", "--ticker", ticker])
-
-    if not args.skip_reports and not args.skip_llm:
-        run_step("Dimension report", [PY, f"{sn}/build_dimension_report.py", "--ticker", ticker])
-        run_step("Delta report", [PY, f"{sn}/build_delta_report.py", "--ticker", ticker])
-        run_step("Surprise report", [PY, f"{sn}/build_surprise_report.py", "--ticker", ticker])
 
     run_step("Join validation", [PY, f"{sn}/validate_transcript_join.py", "--ticker", ticker])
     print(f"\nDone: {ticker} pipeline complete.")

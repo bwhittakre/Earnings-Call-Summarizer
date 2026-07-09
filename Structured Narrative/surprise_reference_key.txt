@@ -16,9 +16,10 @@ Quant anchors (deterministic)
   agrees_with_quant True when surprise_magnitude and quant_z point the same way; False when they diverge; omitted when either is flat.
   narrative_quant_gap  surprise_magnitude minus quant_z (quant clamped to [-2,2]). Positive = management sounded more bullish than the quant surprise alone suggests.
 
-How to read the HTML report (reports/surprise_report.html)
-  Dimension | Level (Focus 1) | Quant z | vs Consensus (surprise) | Gap | What diverged
-  "quant diverges" highlights the highest-value research cases: strong tone vs weak vs-expectations beat (or the reverse).
+How to read claim + quote evidence in the HTML report
+  Open output/{TICKER}/reports/feature_panel_report.html, select a quarter filter (not All),
+  expand a row with +, and scroll to Focus 3 — Surprise for narrative-vs-consensus claims and quotes.
+  The same pattern applies under Focus 1 and Focus 2 for level and delta evidence.
 
 Relationship to other layers
   Focus 1 answers: how did management sound?
@@ -31,6 +32,7 @@ Same verification cascade as Focus 1/2 (verbatim -> composite -> anchored -> par
 
 Run
   python "Structured Narrative/run_surprise_scoring.py"
-  python "Structured Narrative/build_surprise_report.py"
+  python "Structured Narrative/build_feature_panel.py" --ticker {TICKER}
 Requires json/dimension_view.json, parquet/narrative_quant, and transcripts (TRANSCRIPT_PROVIDER=local for the pilot).
 Outputs: parquet/dimension_surprise.parquet, workbooks/narrative_layers.xlsx (3 sheets), json/surprise_view.json, audit/{period}_surprise.json.
+HTML: claim + quote evidence appears in reports/feature_panel_report.html when a quarter filter is active.

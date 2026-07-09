@@ -42,14 +42,9 @@ Every change is backed by 1-3 excerpts quoted from the CURRENT quarter's transcr
 Point-in-time
 The delta for a transition is dated at the CURRENT quarter's call date and uses only the current transcript plus the prior-quarter summary (which was itself known earlier). No post-call knowledge is used, so there is no look-ahead.
 
-How to read the HTML report (AMZN_delta_report.html)
-- Use the buttons at the top to filter to one transition (e.g. "FY2024-Q1 -> FY2024-Q2") or view All.
-- Each transition is a table: Dimension | Level (prior -> current) | delta score | Change | Quant delta-z | What changed.
-  * Level shows both level scores so you can see the absolute context.
-  * delta score is the raw arithmetic difference, tinted green/red.
-  * Change shows the LLM direction (with an up/down marker) and magnitude, tinted by magnitude, with a small "numbers agree/diverge" badge underneath.
-  * Quant delta-z is shown for the five comparable dimensions only.
-- Read the "What changed" bullets for the reasoning; click a superscript number to jump to the current-quarter excerpt in the Notes section (and the back-link to return). Status chips follow the same key as the level report.
+How to read claim + quote evidence in the HTML report
+- Open output/{TICKER}/reports/feature_panel_report.html, select a quarter filter (not All), expand a row with +, and read Focus 2 — Delta for change rationale, claim bullets, and current-quarter excerpt footnotes.
+- The main table shows level, delta direction/magnitude, surprise, quant z, and gap. Status chips on quote footnotes follow the same key as the level scorer.
 
 How this ties into the roadmap
 - Focus 1 (levels) answered "how did each dimension look this quarter." Focus 2 (this) answers "what changed vs last quarter." Focus 3 will add "how did that compare to what the market expected" (consensus vs management), where the "numbers diverge" cases here are the natural starting point for narrative surprise.
