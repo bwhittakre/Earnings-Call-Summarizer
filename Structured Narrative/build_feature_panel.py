@@ -23,6 +23,7 @@ HERE = Path(__file__).resolve().parent
 if str(HERE) not in sys.path:
     sys.path.insert(0, str(HERE))
 from company_config import get_company  # noqa: E402
+from quarter_registry import is_quarter_complete, load_registry  # noqa: E402
 from dimension_scorer import ALL_DIMENSIONS, QUANT_COMPARABLE_DIMENSIONS  # noqa: E402
 from html_evidence import EVIDENCE_CSS, render_evidence_block  # noqa: E402
 from output_paths import company_artifact, resolve_read, resolve_read_parquet_or_csv  # noqa: E402
@@ -56,7 +57,6 @@ PANEL_COLUMNS = [
     "as_of_date",
     "earnings_date",
     "quant_z",
-    "quant_z_pit",
     "alpha_spec_0_90",
     "alpha_spec_0_90_z",
     "alpha_spec_0_90_complete",
@@ -165,10 +165,8 @@ def build_spine(quant: pd.DataFrame, ticker: str) -> pd.DataFrame:
             rec["dimension"] = dim
             if dim in QUANT_COMPARABLE_DIMENSIONS:
                 rec["quant_z"] = row.get(f"dim_{dim}_z")
-                rec["quant_z_pit"] = row.get(f"dim_{dim}_z_pit")
             else:
                 rec["quant_z"] = None
-                rec["quant_z_pit"] = None
             rows.append(rec)
     return pd.DataFrame(rows)
 
@@ -184,7 +182,6 @@ def build_spine_from_level(level: pd.DataFrame, ticker: str) -> pd.DataFrame:
             "as_of_date": row.get("as_of_date"),
             "earnings_date": row.get("as_of_date"),
             "quant_z": None,
-            "quant_z_pit": None,
             "alpha_spec_0_90": None,
             "alpha_spec_0_90_z": None,
             "alpha_spec_0_90_complete": None,
@@ -672,6 +669,11 @@ def main() -> int:
         action="store_true",
         help="Build panel from LLM scores when quant dimension_scores are missing.",
     )
+    parser.add_argument(
+        "--from-registry",
+        action="store_true",
+        help="Filter panel to output quarters marked complete in quarter_registry.json.",
+    )
     args = parser.parse_args()
     ticker = args.ticker.upper()
 
@@ -731,6 +733,17 @@ def main() -> int:
     if output_quarters is not None:
         panel = panel.loc[panel["fiscal_period"].isin(output_quarters)].copy()
         panel = panel.sort_values(["fiscal_period", "dimension"]).reset_index(drop=True)
+    elif args.from_registry:
+        reg = load_registry(ticker)
+        fps = [
+            fp
+            for fp, rec in reg.get("scored_quarters", {}).items()
+            if is_quarter_complete(reg, fp)
+            and fp not in set(reg.get("prior_only_quarters", []))
+        ]
+        if fps:
+            panel = panel.loc[panel["fiscal_period"].isin(fps)].copy()
+            panel = panel.sort_values(["fiscal_period", "dimension"]).reset_index(drop=True)
 
     summary = build_summary(panel, ticker)
     lookups = build_evidence_lookups(ticker)

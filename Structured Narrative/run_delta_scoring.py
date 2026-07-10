@@ -57,6 +57,7 @@ from delta_scorer import (  # noqa: E402
     VALID_CONTEXTS,
 )
 from company_config import get_company  # noqa: E402
+from quarter_registry import mark_delta  # noqa: E402
 from quarter_merge import (  # noqa: E402
     load_csv_rows,
     load_json_obj,
@@ -146,10 +147,17 @@ def main() -> int:
         default=[],
         help="Re-score deltas ending in these fiscal periods and merge into existing outputs.",
     )
+    ap.add_argument(
+        "--extra-output-quarters",
+        nargs="+",
+        default=[],
+        help="Treat these fiscal periods as output scope even if not in company_config.",
+    )
     args = ap.parse_args()
     company = get_company(args.ticker, scope=args.scope)
     ticker = company.ticker
     rerun_periods = norm_quarters(args.quarters)
+    extra_output = norm_quarters(args.extra_output_quarters)
     existing_delta_view = load_json_obj(ticker, "delta_view") if rerun_periods else None
     delta_view_file = company_artifact(ticker, "json", "delta_view", "json", mkdir=True)
 
@@ -199,7 +207,7 @@ def main() -> int:
         prior_q, current_q = quarters[i - 1], quarters[i]
         prior_period = prior_q["fiscal_period"]
         current_period = current_q["fiscal_period"]
-        if not company.is_output_quarter(current_period):
+        if not (company.is_output_quarter(current_period) or current_period in extra_output):
             continue
         if rerun_periods and current_period not in rerun_periods:
             continue
@@ -360,6 +368,8 @@ def main() -> int:
         print(f"  {len(scored.deltas)} dims, "
               f"{scored.n_excerpts_verified}/{scored.n_excerpts} change-excerpts "
               f"supported ({vpct:.0f}%)  [{breakdown}]\n")
+
+        mark_delta(ticker, current_period)
 
     if not rows and not rerun_periods:
         print("No transitions produced — nothing written.", file=sys.stderr)

@@ -17,16 +17,14 @@ Standardizing each measure against AMZN's history answers the shareable
 question: *how unusual was this quarter, in standard deviations, versus how
 AMZN normally prints?*  0 == AMZN-typical, +1.5 == unusually strong, etc.
 
-Two z variants are produced (per the plan's "both" decision):
+Z-score method (point-in-time only for published outputs):
 
-  * ``*_z``      full-sample:  (x - mean) / std over ALL of AMZN's events in
-                 the group. Descriptive; use for the shareable report. NOT
-                 look-ahead-safe (uses the whole panel).
-  * ``*_z_pit``  point-in-time expanding: at event t, mean/std are computed
-                 from events STRICTLY BEFORE t only (ordered by
-                 ``earnings_datetime``), requiring ``MIN_HISTORY`` prior
-                 observations. NaN until enough history exists. Look-ahead-safe;
-                 reserved for the eventual alpha / XGBoost stage.
+  * Measure-level ``*_z_pit`` is computed with an expanding window using events
+    STRICTLY BEFORE t (``MIN_HISTORY`` prior observations required).
+  * ``dim_*_z`` in ``dimension_scores`` uses these PIT values only — safe for
+    backtest and live-quarter inference.
+  * Full-sample ``*_z`` is still computed in the long enriched table for ad-hoc
+    descriptive analysis but is NOT written to ``dimension_scores``.
 
 Grouping is per ``(measure, period_role)``:
   * surprise family  -> ``earnings_surprise_pct``      on ``reported_q`` rows
@@ -205,10 +203,8 @@ def build_dimension_scores(df: pd.DataFrame) -> pd.DataFrame:
                    .groupby("fiscal_period")[col].mean())
 
     for dim, spec in DIMENSIONS.items():
-        full = dim_series(spec, "z")
         pit = dim_series(spec, "z_pit")
-        spine[f"dim_{dim}_z"] = spine["fiscal_period"].map(full)
-        spine[f"dim_{dim}_z_pit"] = spine["fiscal_period"].map(pit)
+        spine[f"dim_{dim}_z"] = spine["fiscal_period"].map(pit)
 
     return spine
 

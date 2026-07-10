@@ -35,9 +35,8 @@ Metadata
   as_of_date          Point-in-time date for the row (call date when available).
   earnings_date       Earnings announcement date from the quant spine.
 
-Quant / labels (from AMZN_dimension_scores)
-  quant_z             Standardized results/revision surprise vs AMZN history (dim_*_z).
-  quant_z_pit         Point-in-time variant of quant_z where available (dim_*_z_pit).
+Quant / labels (from dimension_scores — point-in-time expanding z)
+  quant_z             PIT standardized surprise vs company history (dim_*_z). Uses only quarters strictly before the event; NaN until MIN_HISTORY=8 prior observations.
   alpha_spec_0_90     Realized 90-day alpha (specification 0) — eval label only.
   alpha_spec_0_90_z   Z-scored alpha label vs AMZN history.
   alpha_spec_0_90_complete  True when the alpha label is fully observed.

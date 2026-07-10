@@ -79,6 +79,7 @@ def format_consensus_context(
     dim_z: dict[str, float | None] | None = None,
     *,
     ticker: str = "AMZN",
+    include_validation_revisions: bool = False,
 ) -> str:
     """Render a PIT consensus block for one quarter, grouped by business dimension."""
     df = quant_df if quant_df is not None else try_load_quant_long(ticker)
@@ -131,21 +132,24 @@ def format_consensus_context(
                     )
                     lines.append(_row_line(label, row, forward=True))
         else:
-            sub = forward.copy()
-            if not sub.empty:
-                rev = sub.dropna(subset=["fwd_estimate_revision_pct"])
-                if not rev.empty:
-                    for _, row in rev.head(6).iterrows():
-                        label = str(row.get("measure_label") or row["measure"])
-                        pct = _fmt_pct(row.get("fwd_estimate_revision_pct"))
-                        lines.append(
-                            f"    {label} ({row.get('period_role')}): "
-                            f"post-7d estimate revision {pct} [validation only]"
-                        )
+            if include_validation_revisions:
+                sub = forward.copy()
+                if not sub.empty:
+                    rev = sub.dropna(subset=["fwd_estimate_revision_pct"])
+                    if not rev.empty:
+                        for _, row in rev.head(6).iterrows():
+                            label = str(row.get("measure_label") or row["measure"])
+                            pct = _fmt_pct(row.get("fwd_estimate_revision_pct"))
+                            lines.append(
+                                f"    {label} ({row.get('period_role')}): "
+                                f"post-7d estimate revision {pct} [validation only]"
+                            )
+                    else:
+                        lines.append("    (no forward revision data yet)")
                 else:
-                    lines.append("    (no forward revision data yet)")
+                    lines.append("    (no forward consensus rows)")
             else:
-                lines.append("    (no forward consensus rows)")
+                lines.append("    (post-call revisions omitted in PIT mode)")
 
         lines.append("")
 

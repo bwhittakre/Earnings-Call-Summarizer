@@ -92,26 +92,9 @@ def load_view(ticker: str) -> dict:
     return json.loads(view_file.read_text(encoding="utf-8"))
 
 
-def load_quant_dim_z(ticker: str) -> dict[str, dict[str, float | None]]:
-    from output_paths import resolve_read_parquet_or_csv
-
-    quant_dim_file = resolve_read_parquet_or_csv(ticker, "dimension_scores", layer="parquet")
-    if quant_dim_file is None:
-        return {}
-    df = (
-        pd.read_parquet(quant_dim_file)
-        if quant_dim_file.suffix == ".parquet"
-        else pd.read_csv(quant_dim_file)
-    )
-    out: dict[str, dict[str, float | None]] = {}
-    for _, r in df.iterrows():
-        fp = str(r["fiscal_period"])
-        vals: dict[str, float | None] = {}
-        for dim in QUANT_COMPARABLE_DIMENSIONS:
-            col = f"dim_{dim}_z"
-            vals[dim] = float(r[col]) if col in df.columns and pd.notna(r[col]) else None
-        out[fp] = vals
-    return out
+from quant_loader import load_quant_dim_z  # noqa: E402
+from pit_config import is_pit_mode  # noqa: E402
+from quarter_registry import mark_surprise  # noqa: E402
 
 
 def dim_level_map(quarter: dict) -> dict[str, float | None]:
@@ -150,10 +133,17 @@ def main() -> int:
         default=[],
         help="Re-score only these fiscal periods and merge into existing outputs.",
     )
+    ap.add_argument(
+        "--extra-output-quarters",
+        nargs="+",
+        default=[],
+        help="Treat these fiscal periods as output scope even if not in company_config.",
+    )
     args = ap.parse_args()
     company = get_company(args.ticker, scope=args.scope)
     ticker = company.ticker
     rerun_periods = norm_quarters(args.quarters)
+    extra_output = norm_quarters(args.extra_output_quarters)
     existing_surprise_view = load_json_obj(ticker, "surprise_view") if rerun_periods else None
     surprise_view_file = company_artifact(ticker, "json", "surprise_view", "json", mkdir=True)
 
@@ -200,7 +190,10 @@ def main() -> int:
 
     print(f"Provider: {provider.name} | Model: {model} | paraphrase rescue: "
           f"{'on' if use_rescue else 'off'}")
-    output_quarters = [q for q in quarters if company.is_output_quarter(q["fiscal_period"])]
+    output_quarters = [
+        q for q in quarters
+        if company.is_output_quarter(q["fiscal_period"]) or q["fiscal_period"] in extra_output
+    ]
     if rerun_periods:
         output_quarters = [q for q in output_quarters if q["fiscal_period"] in rerun_periods]
     print(f"Scoring narrative surprise for {len(output_quarters)} output quarters "
@@ -225,7 +218,13 @@ def main() -> int:
         )
         dim_z = quant_z_by_fp.get(fp, {})
         levels = dim_level_map(q)
-        consensus_block = format_consensus_context(fp, quant_df, dim_z, ticker=ticker)
+        consensus_block = format_consensus_context(
+            fp,
+            quant_df,
+            dim_z,
+            ticker=ticker,
+            include_validation_revisions=not is_pit_mode(),
+        )
         level_block = format_level_summary(q)
 
         print(f"[{fp}] scoring narrative surprise…")
@@ -325,6 +324,8 @@ def main() -> int:
         print(f"  {len(scored.surprises)} dims, "
               f"{scored.n_excerpts_verified}/{scored.n_excerpts} excerpts supported "
               f"({vpct:.0f}%)  [{breakdown}]\n")
+
+        mark_surprise(ticker, fp)
 
     if not rows and not rerun_periods:
         print("No quarters scored.", file=sys.stderr)

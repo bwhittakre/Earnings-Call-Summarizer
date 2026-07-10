@@ -358,7 +358,23 @@ def validate(df: pd.DataFrame):
     print(f"Recent fiscal_period labels: {', '.join(sample)}\n")
 
 
-def write_output(df: pd.DataFrame, ticker: str):
+def write_output(df: pd.DataFrame, ticker: str, *, append_quarters: list[str] | None = None):
+    if append_quarters:
+        from output_paths import resolve_read_parquet_or_csv
+
+        existing_path = resolve_read_parquet_or_csv(ticker, "narrative_quant", layer="parquet")
+        if existing_path is not None:
+            existing = (
+                pd.read_parquet(existing_path)
+                if existing_path.suffix == ".parquet"
+                else pd.read_csv(existing_path)
+            )
+            keep = {q.strip().upper() for q in append_quarters}
+            existing = existing[~existing["fiscal_period"].isin(keep)]
+            df = pd.concat([existing, df[df["fiscal_period"].isin(keep)]], ignore_index=True)
+            df = df.sort_values(["earnings_datetime", "measure", "period_role"]).reset_index(drop=True)
+            print(f"Merged append-quarters {sorted(keep)} into existing narrative_quant ({len(df)} rows).")
+
     parquet_path = company_artifact(ticker, "parquet", "narrative_quant", "parquet", mkdir=True)
     try:
         df.to_parquet(parquet_path, index=False)
@@ -373,11 +389,22 @@ def write_output(df: pd.DataFrame, ticker: str):
 def main():
     ap = argparse.ArgumentParser(description="Build PIT quant spine for one ticker.")
     ap.add_argument("--ticker", default="AMZN", help="Ticker symbol (AMZN, MSFT, NVDA).")
+    ap.add_argument(
+        "--append-quarters",
+        nargs="+",
+        default=[],
+        help="Merge only these fiscal periods into existing narrative_quant.parquet.",
+    )
     args = ap.parse_args()
     company = get_company(args.ticker)
     df = build(company)
+    if args.append_quarters:
+        keep = {q.strip().upper() for q in args.append_quarters}
+        df = df[df["fiscal_period"].isin(keep)].copy()
+        if df.empty:
+            sys.exit(f"No rows extracted for append-quarters {sorted(keep)}")
     validate(df)
-    write_output(df, company.ticker)
+    write_output(df, company.ticker, append_quarters=args.append_quarters or None)
     return df
 
 

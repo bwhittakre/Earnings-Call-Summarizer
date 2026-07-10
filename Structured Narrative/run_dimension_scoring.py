@@ -56,6 +56,7 @@ from dimension_scorer import (  # noqa: E402
     QUANT_COMPARABLE_DIMENSIONS,
 )
 from company_config import get_company  # noqa: E402
+from quarter_registry import mark_dimensions, set_prior_only  # noqa: E402
 from quarter_merge import (  # noqa: E402
     load_csv_rows,
     load_json_obj,
@@ -63,6 +64,7 @@ from quarter_merge import (  # noqa: E402
     merge_rows_by_period,
     norm_quarters,
 )
+from quant_loader import load_quant_dim_z  # noqa: E402
 
 sys.path.insert(0, str(REPO_ROOT))
 from src.llm.anthropic_client import AnthropicClient  # noqa: E402
@@ -86,26 +88,7 @@ def load_quant_earnings_dates(ticker: str) -> dict[str, pd.Timestamp]:
     return dict(zip(df["fiscal_period"], df["earnings_date"]))
 
 
-def load_quant_z(ticker: str) -> dict[str, dict[str, float]]:
-    quant_file = resolve_read_parquet_or_csv(ticker, "dimension_scores", layer="parquet")
-    if quant_file is None:
-        return {}
-    df = (
-        pd.read_parquet(quant_file)
-        if quant_file.suffix == ".parquet"
-        else pd.read_csv(quant_file)
-    )
-    if "fiscal_period" not in df.columns:
-        return {}
-    out: dict[str, dict[str, float]] = {}
-    for _, r in df.iterrows():
-        vals: dict[str, float] = {}
-        for dim in QUANT_COMPARABLE_DIMENSIONS:
-            col = f"dim_{dim}_z"
-            if col in df.columns and pd.notna(r[col]):
-                vals[dim] = round(float(r[col]), 3)
-        out[str(r["fiscal_period"])] = vals
-    return out
+from quant_loader import load_quant_dim_z  # noqa: E402
 
 
 def date_match(call_date: str | None, earnings_date) -> tuple[float | None, bool | None]:
@@ -148,10 +131,17 @@ def main() -> int:
         default=[],
         help="Re-score only these fiscal periods and merge into existing outputs.",
     )
+    ap.add_argument(
+        "--extra-output-quarters",
+        nargs="+",
+        default=[],
+        help="Treat these fiscal periods as output scope even if not in company_config.",
+    )
     args = ap.parse_args()
     company = get_company(args.ticker, scope=args.scope)
     ticker = company.ticker
     rerun_periods = norm_quarters(args.quarters)
+    extra_output = norm_quarters(args.extra_output_quarters)
     quarters = company.scoring_quarters()
     if rerun_periods:
         quarters = [q for q in quarters if q in rerun_periods]
@@ -181,7 +171,7 @@ def main() -> int:
     client = AnthropicClient(api_key=api_key, model=model, max_retries=1)
     scorer = DimensionScorer(client, use_rescue=use_rescue)
     quant_dates = load_quant_earnings_dates(ticker)
-    quant_z = load_quant_z(ticker)
+    quant_z = load_quant_dim_z(ticker)
 
     audit_dir = company_layer(ticker, "audit", mkdir=True)
 
@@ -213,7 +203,7 @@ def main() -> int:
         print(f"[{fp}] scoring dimensions…")
         scored = scorer.score(transcript, company.company_name)
 
-        in_output = company.is_output_quarter(fp)
+        in_output = company.is_output_quarter(fp) or fp in extra_output
         if in_output:
             for d in scored.dimensions:
                 score_rows.append({
@@ -327,6 +317,14 @@ def main() -> int:
               f"{scored.n_excerpts_verified}/{scored.n_excerpts} excerpts supported "
               f"({vpct:.0f}%)  [{breakdown}]\n")
 
+        if in_output:
+            mark_dimensions(
+                ticker,
+                fp,
+                model=model,
+                as_of_date=transcript.call_date,
+            )
+
     if not score_rows and not rerun_periods:
         print("No transcripts scored — nothing written.", file=sys.stderr)
         return 1
@@ -356,6 +354,20 @@ def main() -> int:
         "quarters": view_quarters,
     }
     view_file.write_text(json.dumps(view, indent=2), encoding="utf-8")
+    if not rerun_periods and not extra_output:
+        set_prior_only(ticker, list(company.prior_quarters))
+    elif extra_output:
+        from quarter_registry import load_registry, save_registry
+
+        reg = load_registry(ticker)
+        prior = set(reg.get("prior_only_quarters", []))
+        for q in extra_output:
+            prior.discard(q)
+        for q in company.prior_quarters:
+            if q not in extra_output:
+                prior.add(q)
+        reg["prior_only_quarters"] = sorted(prior)
+        save_registry(ticker, reg)
 
     print(client.usage_summary())
     print(f"\nWrote {len(score_rows)} dimension rows to csv/llm_dimension_scores")
