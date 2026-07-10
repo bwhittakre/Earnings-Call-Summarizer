@@ -727,10 +727,13 @@ def main() -> int:
     if summary["top_divergences"]:
         print("\nTop divergences (|gap|):")
         for r in summary["top_divergences"][:5]:
-            print(
-                f"  {r['fiscal_period']} {r['dimension']}: "
-                f"level={r['llm_level']:+.1f} quant_z={r['quant_z']:+.2f} gap={r['narrative_quant_gap']:+.2f}"
-            )
+            ll = r.get("llm_level")
+            qz = r.get("quant_z")
+            gap = r.get("narrative_quant_gap")
+            ll_s = f"{float(ll):+.1f}" if ll is not None and pd.notna(ll) else "—"
+            qz_s = f"{float(qz):+.2f}" if qz is not None and pd.notna(qz) else "—"
+            gap_s = f"{float(gap):+.2f}" if gap is not None and pd.notna(gap) else "—"
+            print(f"  {r['fiscal_period']} {r['dimension']}: level={ll_s} quant_z={qz_s} gap={gap_s}")
     return 0
 
 
