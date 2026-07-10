@@ -80,10 +80,10 @@ def main() -> int:
             [PY, f"{sn}/run_surprise_scoring.py", "--ticker", ticker, *scope_args, *quarter_args],
         )
 
-    feature_panel_args = [PY, f"{sn}/build_feature_panel.py", "--ticker", ticker, *scope_args]
-    if args.scope == "five_year":
-        feature_panel_args.append("--full-spine")
-    run_step("Feature panel", feature_panel_args)
+    run_step(
+        "Feature panel",
+        [PY, f"{sn}/build_feature_panel.py", "--ticker", ticker, *scope_args],
+    )
 
     run_step(
         "Join validation",

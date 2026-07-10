@@ -22,6 +22,7 @@ HERE = Path(__file__).resolve().parent
 
 if str(HERE) not in sys.path:
     sys.path.insert(0, str(HERE))
+from company_config import get_company  # noqa: E402
 from dimension_scorer import ALL_DIMENSIONS, QUANT_COMPARABLE_DIMENSIONS  # noqa: E402
 from html_evidence import EVIDENCE_CSS, render_evidence_block  # noqa: E402
 from output_paths import company_artifact, resolve_read, resolve_read_parquet_or_csv  # noqa: E402
@@ -715,13 +716,22 @@ def main() -> int:
         print(f"Error: missing {ticker}_dimension_scores.csv", file=sys.stderr)
         return 1
 
+    company = get_company(ticker, scope=args.scope) if args.scope else None
+    output_quarters = set(company.output_quarters) if company else None
+    # Scoped runs emit only scored output quarters (prior-only quarters stay delta-only inputs).
+    full_spine = args.full_spine and output_quarters is None
+
     panel = merge_panel(
         spine,
         prepare_level(level),
         prepare_delta(delta),
         prepare_surprise(surprise_df),
-        full_spine=args.full_spine,
+        full_spine=full_spine,
     )
+    if output_quarters is not None:
+        panel = panel.loc[panel["fiscal_period"].isin(output_quarters)].copy()
+        panel = panel.sort_values(["fiscal_period", "dimension"]).reset_index(drop=True)
+
     summary = build_summary(panel, ticker)
     lookups = build_evidence_lookups(ticker)
     write_outputs(panel, summary, ticker, lookups)
