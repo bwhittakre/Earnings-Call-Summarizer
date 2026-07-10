@@ -136,13 +136,18 @@ def main() -> int:
     ap = argparse.ArgumentParser(description="Run Focus 2 delta scoring.")
     ap.add_argument("--ticker", default="AMZN", help="Ticker symbol.")
     ap.add_argument(
+        "--scope",
+        choices=("five_year",),
+        help="Quarter scope preset (five_year: AMZN FY2019-Q2 prior, FY2019-Q3..FY2024-Q3 output).",
+    )
+    ap.add_argument(
         "--quarters",
         nargs="+",
         default=[],
         help="Re-score deltas ending in these fiscal periods and merge into existing outputs.",
     )
     args = ap.parse_args()
-    company = get_company(args.ticker)
+    company = get_company(args.ticker, scope=args.scope)
     ticker = company.ticker
     rerun_periods = norm_quarters(args.quarters)
     existing_delta_view = load_json_obj(ticker, "delta_view") if rerun_periods else None

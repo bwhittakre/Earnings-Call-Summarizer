@@ -33,8 +33,8 @@ def transcript_path(ticker: str, fiscal_period: str) -> Path | None:
     return None
 
 
-def validate_ticker(ticker: str) -> int:
-    company = get_company(ticker)
+def validate_ticker(ticker: str, *, scope: str | None = None) -> int:
+    company = get_company(ticker, scope=scope)
     dim_file = resolve_read_parquet_or_csv(ticker, "dimension_scores", layer="parquet")
     issues = 0
 
@@ -96,12 +96,17 @@ def validate_ticker(ticker: str) -> int:
 def main() -> int:
     ap = argparse.ArgumentParser(description="Validate quant/transcript fiscal_period alignment.")
     ap.add_argument("--ticker", action="append", default=[], help="Ticker(s) to check.")
+    ap.add_argument(
+        "--scope",
+        choices=("five_year",),
+        help="Quarter scope preset (five_year: AMZN FY2019-Q2 prior, FY2019-Q3..FY2024-Q3 output).",
+    )
     args = ap.parse_args()
     tickers = [t.upper() for t in args.ticker] or list(PILOT_TICKERS)
 
     total_issues = 0
     for ticker in tickers:
-        total_issues += validate_ticker(ticker)
+        total_issues += validate_ticker(ticker, scope=args.scope)
 
     print(f"\nDone: {total_issues} issue(s) across {len(tickers)} ticker(s).")
     return 1 if total_issues else 0

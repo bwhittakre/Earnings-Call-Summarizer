@@ -3,7 +3,7 @@
 """Per-ticker registry for the Structured Narrative multi-company pilot."""
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 
 
 FY2025_OUTPUT_QUARTERS = (
@@ -15,6 +15,33 @@ FY2025_OUTPUT_QUARTERS = (
 
 FY2024_PRIOR_QUARTERS = (
     "FY2024-Q4",
+)
+
+# AMZN 5-year historical run: transcripts in Structured Narrative/AMZN/
+# FY2019-Q2 is prior-only (delta baseline for FY2019-Q3); not in published outputs.
+AMZN_FIVE_YEAR_PRIOR_QUARTERS = ("FY2019-Q2",)
+AMZN_FIVE_YEAR_OUTPUT_QUARTERS = (
+    "FY2019-Q3",
+    "FY2019-Q4",
+    "FY2020-Q1",
+    "FY2020-Q2",
+    "FY2020-Q3",
+    "FY2020-Q4",
+    "FY2021-Q1",
+    "FY2021-Q2",
+    "FY2021-Q3",
+    "FY2021-Q4",
+    "FY2022-Q1",
+    "FY2022-Q2",
+    "FY2022-Q3",
+    "FY2022-Q4",
+    "FY2023-Q1",
+    "FY2023-Q2",
+    "FY2023-Q3",
+    "FY2023-Q4",
+    "FY2024-Q1",
+    "FY2024-Q2",
+    "FY2024-Q3",
 )
 
 PILOT_TICKERS = ("AMZN", "MSFT", "NVDA")
@@ -95,12 +122,23 @@ COMPANIES: dict[str, CompanyProfile] = {
 }
 
 
-def get_company(ticker: str | None = None) -> CompanyProfile:
+def get_company(ticker: str | None = None, *, scope: str | None = None) -> CompanyProfile:
     key = (ticker or DEFAULT_TICKER).strip().upper()
     if key not in COMPANIES:
         known = ", ".join(sorted(COMPANIES))
         raise KeyError(f"Unknown ticker {key!r}. Known: {known}")
-    return COMPANIES[key]
+    profile = COMPANIES[key]
+    if scope == "five_year":
+        if key != "AMZN":
+            raise ValueError(f"scope 'five_year' is only defined for AMZN (got {key}).")
+        return replace(
+            profile,
+            prior_quarters=AMZN_FIVE_YEAR_PRIOR_QUARTERS,
+            output_quarters=AMZN_FIVE_YEAR_OUTPUT_QUARTERS,
+        )
+    if scope:
+        raise ValueError(f"Unknown company scope {scope!r}.")
+    return profile
 
 
 def lookup_ids_from_snowflake(cur, ticker: str) -> dict[str, str | int]:

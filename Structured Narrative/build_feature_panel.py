@@ -657,6 +657,11 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Build unified narrative feature panel.")
     parser.add_argument("--ticker", default="AMZN", help="Ticker prefix for input/output files.")
     parser.add_argument(
+        "--scope",
+        choices=("five_year",),
+        help="Quarter scope preset (five_year: AMZN FY2019-Q2 prior, FY2019-Q3..FY2024-Q3 output).",
+    )
+    parser.add_argument(
         "--full-spine",
         action="store_true",
         help="Include all quant-spine quarters (sparse LLM columns).",
