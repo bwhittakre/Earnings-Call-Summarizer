@@ -36,6 +36,21 @@ Disable PIT guardrails (not recommended for production): `--no-pit`
 | Research CSV | `output/{TICKER}/csv/feature_panel.csv` |
 | Quarter registry | `output/{TICKER}/json/quarter_registry.json` |
 | Cross-company modeling spine | `output/cross_company/csv/modeling_spine.csv` |
+| **Consolidated comparison report** | `output/cross_company/reports/consolidated_feature_panel.html` |
+
+### Cross-company comparison report
+
+Build an interactive HTML report to compare feature panels across tickers. Two modes:
+
+- **Compare by quarter** — align tickers on the same fiscal period; expand **+** to see dimension-level detail
+- **Browse by company** — one row per ticker; expand **+** to see the full quarter × dimension panel
+
+```powershell
+python "Structured Narrative/build_consolidated_panel_report.py" --tickers AMZN MSFT NVDA AAPL
+python "Structured Narrative/build_consolidated_panel_report.py" --sector mega_cap_tech --quarter FY2025-Q4
+```
+
+Summary JSON (including scale hooks for future lazy-load sidecars): `output/cross_company/json/consolidated_feature_panel_summary.json`
 
 ## Incremental workflow (new earnings call)
 

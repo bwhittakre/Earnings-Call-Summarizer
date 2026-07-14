@@ -236,6 +236,10 @@ def main() -> int:
                     "dimension": d.dimension,
                     "score": d.score,
                     "is_quant_comparable": d.is_quant_comparable,
+                    "quant_z": (
+                        quant_z.get(fp, {}).get(d.dimension)
+                        if d.is_quant_comparable else None
+                    ),
                     "rationale": d.rationale,
                     "n_evidence": d.n_evidence,
                     "n_evidence_verified": d.n_evidence_verified,

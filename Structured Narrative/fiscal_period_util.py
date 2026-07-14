@@ -45,3 +45,10 @@ def normalize_fiscal_period(fiscal_period: str) -> str:
     if not m:
         raise ValueError(f"Invalid fiscal period label: {fiscal_period!r}")
     return f"FY{m.group(1)}-Q{m.group(2)}"
+
+
+def fiscal_period_sort_key(fiscal_period: str) -> tuple[int, int]:
+    m = _QUARTER.match(str(fiscal_period).strip().upper())
+    if not m:
+        return (0, 0)
+    return (int(m.group(1)), int(m.group(2)))

@@ -1,9 +1,11 @@
-"""Tests for quarter registry skip helpers."""
+"""Tests for quarter registry skip helpers and panel quant consistency."""
 from __future__ import annotations
 
 import sys
 import unittest
 from pathlib import Path
+
+import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[1]
 SN = ROOT / "Structured Narrative"
@@ -16,6 +18,8 @@ from quarter_registry import (  # noqa: E402
     has_surprise,
     is_quarter_complete,
 )
+from quant_panel import apply_derived_features  # noqa: E402
+from validate_panel_quant import validate_panel_quant  # noqa: E402
 
 
 class QuarterRegistrySkipTests(unittest.TestCase):
@@ -46,6 +50,36 @@ class QuarterRegistrySkipTests(unittest.TestCase):
         reg = ensure_registry("MSFT")
         self.assertTrue(reg.get("scored_quarters"))
         self.assertTrue(has_dimensions(reg, "FY2025-Q1"))
+
+
+class PanelQuantTests(unittest.TestCase):
+    def test_apply_derived_features_adds_divergence_flags(self):
+        panel = pd.DataFrame(
+            [
+                {
+                    "ticker": "TST",
+                    "fiscal_period": "FY2025-Q1",
+                    "dimension": "demand",
+                    "quant_z": 0.5,
+                    "llm_level": -0.4,
+                    "change_magnitude": 0.2,
+                    "quant_z_delta": -0.1,
+                    "surprise_magnitude": 0.6,
+                    "agrees_with_quant": False,
+                    "narrative_quant_gap": 0.1,
+                }
+            ]
+        )
+        out = apply_derived_features(panel)
+        self.assertIn("any_quant_divergence", out.columns)
+        self.assertTrue(bool(out.iloc[0]["any_quant_divergence"]))
+
+    def test_msft_panel_quant_matches_spine_if_present(self):
+        panel_path = SN / "output" / "MSFT" / "csv" / "feature_panel.csv"
+        if not panel_path.exists():
+            self.skipTest("MSFT feature panel not present")
+        errors = validate_panel_quant("MSFT")
+        self.assertEqual(errors, [], msg="\n".join(errors[:5]))
 
 
 if __name__ == "__main__":

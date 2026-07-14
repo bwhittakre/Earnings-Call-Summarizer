@@ -21,7 +21,7 @@ PY = sys.executable
 if str(HERE) not in sys.path:
     sys.path.insert(0, str(HERE))
 from fiscal_period_util import normalize_fiscal_period, prior_fiscal_period  # noqa: E402
-from output_paths import ensure_company_tree, resolve_read_parquet_or_csv  # noqa: E402
+from output_paths import ensure_company_tree, resolve_read, resolve_read_parquet_or_csv  # noqa: E402
 from pit_config import apply_pit_env, is_pit_mode  # noqa: E402
 from quarter_registry import (  # noqa: E402
     ensure_registry,
@@ -151,11 +151,6 @@ def main() -> int:
     if not args.skip_quant:
         run_step("Quant extract", quant_cmd)
         run_step("Quant z-score", [PY, f"{sn}/narrative_zscore.py", "--ticker", ticker])
-        if not args.skip_llm:
-            run_step(
-                "Refresh quant anchors",
-                [PY, f"{sn}/refresh_quant_anchors.py", "--ticker", ticker],
-            )
 
     if not args.skip_llm:
         ensure_registry(ticker)
@@ -178,11 +173,21 @@ def main() -> int:
             [PY, f"{sn}/run_surprise_scoring.py", "--ticker", ticker, *scope_args, *force_args, *quarter_args],
         )
 
+    if resolve_read_parquet_or_csv(ticker, "dimension_scores", layer="parquet") is not None:
+        run_step(
+            "Refresh quant anchors",
+            [PY, f"{sn}/refresh_quant_anchors.py", "--ticker", ticker],
+        )
+
     run_step("Feature panel", panel_args)
 
     run_step(
         "Join validation",
         [PY, f"{sn}/validate_transcript_join.py", "--ticker", ticker, *scope_args],
+    )
+    run_step(
+        "Panel quant validation",
+        [PY, f"{sn}/validate_panel_quant.py", "--ticker", ticker],
     )
     print(f"\nDone: {ticker} pipeline complete.")
     return 0

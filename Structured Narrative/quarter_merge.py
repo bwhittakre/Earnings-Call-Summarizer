@@ -9,6 +9,7 @@ from typing import Any
 
 import pandas as pd
 
+from fiscal_period_util import fiscal_period_sort_key
 from output_paths import company_artifact, resolve_read, resolve_read_parquet_or_csv
 
 
@@ -54,7 +55,7 @@ def merge_quarter_views(
         if fp not in seen:
             out.append(q)
             seen.add(fp)
-    return out
+    return sorted(out, key=lambda q: fiscal_period_sort_key(str(q.get(period_key))))
 
 
 def merge_transitions(

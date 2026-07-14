@@ -30,26 +30,7 @@ from output_paths import (  # noqa: E402
 from quant_loader import load_quant_dim_z  # noqa: E402
 
 
-def _sign(x, eps: float = 1e-9):
-    if x is None or (isinstance(x, float) and pd.isna(x)):
-        return None
-    if abs(float(x)) < eps:
-        return 0
-    return 1 if float(x) > 0 else -1
-
-
-def _agrees(a, b):
-    sa, sb = _sign(a), _sign(b)
-    if sa in (None, 0) or sb in (None, 0):
-        return None
-    return sa == sb
-
-
-def _gap(surprise_mag, quant_z):
-    if quant_z is None or (isinstance(quant_z, float) and pd.isna(quant_z)):
-        return None
-    q = max(-2.0, min(2.0, float(quant_z)))
-    return round(float(surprise_mag) - q, 2)
+from quant_panel import agrees, narrative_quant_gap  # noqa: E402
 
 
 def refresh_dimension_view(ticker: str, quant_z: dict[str, dict[str, float | None]]) -> dict:
@@ -65,6 +46,35 @@ def refresh_dimension_view(ticker: str, quant_z: dict[str, dict[str, float | Non
     out.write_text(json.dumps(view, indent=2), encoding="utf-8")
     print(f"Updated {out}")
     return view
+
+
+def refresh_level_csv(ticker: str, quant_z: dict[str, dict[str, float | None]]) -> None:
+    csv_path = resolve_read(ticker, "llm_dimension_scores", "csv", layer="csv")
+    if csv_path is None:
+        print("  ! llm_dimension_scores.csv not found; skipping level CSV refresh")
+        return
+    df = pd.read_csv(csv_path)
+    if df.empty:
+        return
+
+    def row_update(r):
+        dim = r["dimension"]
+        fp = str(r["fiscal_period"])
+        if r.get("is_quant_comparable", True) and dim in QUANT_COMPARABLE_DIMENSIONS:
+            r["quant_z"] = quant_z.get(fp, {}).get(dim)
+        else:
+            r["quant_z"] = None
+        return r
+
+    df = df.apply(row_update, axis=1)
+    csv_out = company_artifact(ticker, "csv", "llm_dimension_scores", "csv", mkdir=True)
+    df.to_csv(csv_out, index=False)
+    pq_out = company_artifact(ticker, "parquet", "llm_dimension_scores", "parquet", mkdir=True)
+    try:
+        df.to_parquet(pq_out, index=False)
+    except Exception as exc:
+        print(f"  ! level parquet skipped: {exc}")
+    print(f"Updated {csv_out}")
 
 
 def refresh_delta(ticker: str, quant_z: dict[str, dict[str, float | None]]) -> None:
@@ -88,7 +98,7 @@ def refresh_delta(ticker: str, quant_z: dict[str, dict[str, float | None]]) -> N
         r["quant_z_current"] = cz
         if pz is not None and cz is not None and not pd.isna(pz) and not pd.isna(cz):
             r["quant_z_delta"] = round(float(cz) - float(pz), 3)
-            r["quant_agrees"] = _agrees(r.get("change_magnitude"), r["quant_z_delta"])
+            r["quant_agrees"] = agrees(r.get("change_magnitude"), r["quant_z_delta"])
         else:
             r["quant_z_delta"] = None
             r["quant_agrees"] = None
@@ -144,8 +154,8 @@ def refresh_surprise(ticker: str, quant_z: dict[str, dict[str, float | None]]) -
         qz = quant_z.get(fp, {}).get(dim)
         r["quant_z"] = qz
         mag = r.get("surprise_magnitude")
-        r["agrees_with_quant"] = _agrees(mag, qz)
-        r["narrative_quant_gap"] = _gap(mag, qz)
+        r["agrees_with_quant"] = agrees(mag, qz)
+        r["narrative_quant_gap"] = narrative_quant_gap(mag, qz)
         return r
 
     df = df.apply(row_update, axis=1)
@@ -188,7 +198,11 @@ def main() -> int:
     if not quant_z:
         print(f"Error: no dimension_scores for {ticker}", file=sys.stderr)
         return 1
+    if resolve_read(ticker, "dimension_view", "json", layer="json") is None:
+        print(f"  ! No dimension_view.json for {ticker}; skipping anchor refresh.")
+        return 0
     refresh_dimension_view(ticker, quant_z)
+    refresh_level_csv(ticker, quant_z)
     refresh_delta(ticker, quant_z)
     refresh_surprise(ticker, quant_z)
     print(f"\nDone: refreshed PIT quant anchors for {ticker}.")

@@ -16,6 +16,7 @@ FY2025_OUTPUT_QUARTERS = (
 FY2026_OUTPUT = (
     "FY2026-Q1",
     "FY2026-Q2",
+    "FY2026-Q3",
 )
 
 PILOT_OUTPUT_QUARTERS = FY2025_OUTPUT_QUARTERS + FY2026_OUTPUT
@@ -50,6 +51,11 @@ AMZN_FIVE_YEAR_OUTPUT_QUARTERS = (
     "FY2024-Q2",
     "FY2024-Q3",
 )
+
+# AMZN published panel: five-year history + FY2024-Q4 bridge + pilot FY2025–FY2026.
+AMZN_FULL_OUTPUT_QUARTERS = AMZN_FIVE_YEAR_OUTPUT_QUARTERS + (
+    "FY2024-Q4",
+) + PILOT_OUTPUT_QUARTERS + ("FY2026-Q4",)
 
 PILOT_TICKERS = ("AMZN", "MSFT", "NVDA")
 DEFAULT_TICKER = "AMZN"
@@ -110,6 +116,8 @@ COMPANIES: dict[str, CompanyProfile] = {
         estpermid=30064828538,
         isin="US0231351067",
         barra_id="USAXO31",
+        output_quarters=AMZN_FULL_OUTPUT_QUARTERS,
+        prior_quarters=AMZN_FIVE_YEAR_PRIOR_QUARTERS,
         candidate_measures=dict(AMZN_CANDIDATE_MEASURES),
     ),
     "MSFT": CompanyProfile(
@@ -125,6 +133,15 @@ COMPANIES: dict[str, CompanyProfile] = {
         estpermid=30064850531,
         isin="US67066G1040",
         barra_id="USA2HB1",
+    ),
+    "AAPL": CompanyProfile(
+        ticker="AAPL",
+        company_name="Apple Inc.",
+        estpermid=30064826814,
+        isin="US0378331005",
+        barra_id="USAB1X1",
+        output_quarters=FY2025_OUTPUT_QUARTERS,
+        prior_quarters=FY2024_PRIOR_QUARTERS,
     ),
 }
 

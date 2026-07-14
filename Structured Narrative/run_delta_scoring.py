@@ -57,6 +57,7 @@ from delta_scorer import (  # noqa: E402
     VALID_CONTEXTS,
 )
 from company_config import get_company  # noqa: E402
+from quant_loader import load_quant_dim_z  # noqa: E402
 from quarter_registry import mark_delta, ensure_registry, has_delta  # noqa: E402
 from quarter_merge import (  # noqa: E402
     load_csv_rows,
@@ -112,14 +113,12 @@ def load_view(ticker: str) -> dict:
     return json.loads(view_file.read_text(encoding="utf-8"))
 
 
-def dim_maps(quarter: dict) -> tuple[dict[str, float | None], dict[str, float | None]]:
-    """dimension -> level score, and dimension -> quant z, for one view quarter."""
+def dim_maps(quarter: dict) -> dict[str, float | None]:
+    """dimension -> level score for one view quarter."""
     scores: dict[str, float | None] = {}
-    zs: dict[str, float | None] = {}
     for d in quarter.get("dimensions", []):
         scores[d["dimension"]] = d.get("score")
-        zs[d["dimension"]] = d.get("quant_z")
-    return scores, zs
+    return scores
 
 
 def write_outputs(ticker: str, rows: list[dict]) -> None:
@@ -234,6 +233,7 @@ def main() -> int:
 
     rows: list[dict] = []
     transitions_view: list[dict] = []
+    quant_z_by_fp = load_quant_dim_z(ticker)
 
     for prior_q, current_q, prior_period, current_period in transitions_to_score:
         print(f"[{prior_period} -> {current_period}] fetching transcripts…")
@@ -251,8 +251,10 @@ def main() -> int:
             or current_q.get("as_of_date")
             or current_q.get("earnings_date")
         )
-        prior_scores, prior_zs = dim_maps(prior_q)
-        current_scores, current_zs = dim_maps(current_q)
+        prior_scores = dim_maps(prior_q)
+        current_scores = dim_maps(current_q)
+        prior_zs = quant_z_by_fp.get(str(prior_period), {})
+        current_zs = quant_z_by_fp.get(str(current_period), {})
         prior_block = format_prior_summary(prior_q)
 
         print(f"[{prior_period} -> {current_period}] scoring narrative change…")
