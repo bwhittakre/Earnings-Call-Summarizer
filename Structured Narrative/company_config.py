@@ -13,6 +13,13 @@ FY2025_OUTPUT_QUARTERS = (
     "FY2025-Q4",
 )
 
+FY2026_OUTPUT = (
+    "FY2026-Q1",
+    "FY2026-Q2",
+)
+
+PILOT_OUTPUT_QUARTERS = FY2025_OUTPUT_QUARTERS + FY2026_OUTPUT
+
 FY2024_PRIOR_QUARTERS = (
     "FY2024-Q4",
 )
@@ -77,7 +84,7 @@ class CompanyProfile:
     estpermid: int | None = None
     isin: str | None = None
     barra_id: str | None = None
-    output_quarters: tuple[str, ...] = FY2025_OUTPUT_QUARTERS
+    output_quarters: tuple[str, ...] = PILOT_OUTPUT_QUARTERS
     prior_quarters: tuple[str, ...] = FY2024_PRIOR_QUARTERS
     candidate_measures: dict[int, str] = field(default_factory=dict)
 

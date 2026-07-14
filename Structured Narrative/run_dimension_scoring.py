@@ -56,7 +56,7 @@ from dimension_scorer import (  # noqa: E402
     QUANT_COMPARABLE_DIMENSIONS,
 )
 from company_config import get_company  # noqa: E402
-from quarter_registry import mark_dimensions, set_prior_only  # noqa: E402
+from quarter_registry import mark_dimensions, set_prior_only, ensure_registry, has_dimensions  # noqa: E402
 from quarter_merge import (  # noqa: E402
     load_csv_rows,
     load_json_obj,
@@ -137,6 +137,11 @@ def main() -> int:
         default=[],
         help="Treat these fiscal periods as output scope even if not in company_config.",
     )
+    ap.add_argument(
+        "--force",
+        action="store_true",
+        help="Re-score quarters even when the registry marks them complete.",
+    )
     args = ap.parse_args()
     company = get_company(args.ticker, scope=args.scope)
     ticker = company.ticker
@@ -144,11 +149,29 @@ def main() -> int:
     extra_output = norm_quarters(args.extra_output_quarters)
     quarters = company.scoring_quarters()
     if rerun_periods:
-        quarters = [q for q in quarters if q in rerun_periods]
+        quarters = list(rerun_periods)
         if not quarters:
             print(f"No matching quarters in {args.quarters}", file=sys.stderr)
             return 1
-    existing_view = load_json_obj(ticker, "dimension_view") if rerun_periods else None
+
+    registry = ensure_registry(ticker)
+    to_score = [
+        q for q in quarters
+        if args.force or not has_dimensions(registry, q)
+    ]
+    skipped = [q for q in quarters if q not in to_score]
+    if skipped:
+        print(
+            f"Skipping {len(skipped)} quarter(s) with existing dimension scores: "
+            f"{', '.join(skipped)}"
+        )
+    if not to_score:
+        print(f"All {len(quarters)} quarter(s) already have dimension scores — nothing to do.")
+        return 0
+
+    scored_periods = set(to_score)
+    needs_merge = bool(skipped) or bool(rerun_periods)
+    existing_view = load_json_obj(ticker, "dimension_view") if needs_merge else None
     view_file = company_artifact(ticker, "json", "dimension_view", "json", mkdir=True)
 
     api_key = os.getenv("ANTHROPIC_API_KEY")
@@ -177,16 +200,16 @@ def main() -> int:
 
     print(f"Provider: {provider.name} | Model: {model} | paraphrase rescue: "
           f"{'on' if use_rescue else 'off'}")
-    print(f"Scoring {len(quarters)} {ticker} quarters "
+    print(f"Scoring {len(to_score)} {ticker} quarters "
           f"({len(company.output_quarters)} in output scope) "
           f"across {len(ALL_DIMENSIONS)} dimensions."
-          f"{'  [partial re-run]' if rerun_periods else ''}\n")
+          f"{'  [partial re-run]' if needs_merge else ''}\n")
 
     score_rows: list[dict] = []
     coverage_rows: list[dict] = []
     view_quarters: list[dict] = []
 
-    for fp in quarters:
+    for fp in to_score:
         print(f"[{fp}] fetching transcript…")
         try:
             transcript = provider.fetch(ticker, fp)
@@ -203,7 +226,7 @@ def main() -> int:
         print(f"[{fp}] scoring dimensions…")
         scored = scorer.score(transcript, company.company_name)
 
-        in_output = company.is_output_quarter(fp) or fp in extra_output
+        in_output = company.is_output_quarter(fp) or fp in (extra_output or set())
         if in_output:
             for d in scored.dimensions:
                 score_rows.append({
@@ -317,26 +340,31 @@ def main() -> int:
               f"{scored.n_excerpts_verified}/{scored.n_excerpts} excerpts supported "
               f"({vpct:.0f}%)  [{breakdown}]\n")
 
-        if in_output:
-            mark_dimensions(
-                ticker,
-                fp,
-                model=model,
-                as_of_date=transcript.call_date,
-            )
+        mark_dimensions(
+            ticker,
+            fp,
+            model=model,
+            as_of_date=transcript.call_date,
+        )
 
-    if not score_rows and not rerun_periods:
+    if not score_rows:
         print("No transcripts scored — nothing written.", file=sys.stderr)
         return 1
 
-    if rerun_periods:
+    if needs_merge:
         existing_scores = load_csv_rows(ticker, "llm_dimension_scores")
         existing_cov = load_csv_rows(ticker, "transcript_coverage")
-        score_rows = merge_rows_by_period(existing_scores, score_rows, rerun_periods)
-        coverage_rows = merge_rows_by_period(existing_cov, coverage_rows, rerun_periods)
+        score_rows = merge_rows_by_period(existing_scores, score_rows, scored_periods)
+        coverage_rows = merge_rows_by_period(existing_cov, coverage_rows, scored_periods)
         if existing_view:
             view_quarters = merge_quarter_views(
-                existing_view.get("quarters", []), view_quarters, rerun_periods
+                existing_view.get("quarters", []), view_quarters, scored_periods
+            )
+        elif skipped:
+            print(
+                "Warning: skipped quarters but dimension_view missing — "
+                "output may be incomplete.",
+                file=sys.stderr,
             )
         if not score_rows:
             print("No transcripts scored — nothing written.", file=sys.stderr)

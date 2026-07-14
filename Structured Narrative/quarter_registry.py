@@ -50,6 +50,27 @@ def is_quarter_complete(registry: dict[str, Any], fiscal_period: str) -> bool:
     return all(rec.get(k) for k in ("dimensions_scored_at", "delta_scored_at", "surprise_scored_at"))
 
 
+def has_dimensions(registry: dict[str, Any], fiscal_period: str) -> bool:
+    rec = registry.get("scored_quarters", {}).get(fiscal_period, {})
+    return bool(rec.get("dimensions_scored_at"))
+
+
+def has_delta(registry: dict[str, Any], fiscal_period: str) -> bool:
+    """True when delta for transition ending in *fiscal_period* is scored."""
+    rec = registry.get("scored_quarters", {}).get(fiscal_period, {})
+    return bool(rec.get("delta_scored_at"))
+
+
+def has_surprise(registry: dict[str, Any], fiscal_period: str) -> bool:
+    rec = registry.get("scored_quarters", {}).get(fiscal_period, {})
+    return bool(rec.get("surprise_scored_at"))
+
+
+def ensure_registry(ticker: str, *, model: str = "unknown") -> dict[str, Any]:
+    """Load registry and merge any missing quarter marks from existing view JSON."""
+    return sync_registry_from_views(ticker, model=model)
+
+
 def mark_dimensions(ticker: str, fiscal_period: str, *, model: str, as_of_date: str | None = None) -> None:
     reg = load_registry(ticker)
     rec = quarter_record(reg, fiscal_period)
@@ -92,6 +113,12 @@ def sync_registry_from_views(ticker: str, *, model: str = "unknown") -> dict[str
                 prior = set(reg.get("prior_only_quarters", []))
                 prior.add(fp)
                 reg["prior_only_quarters"] = sorted(prior)
+            if q.get("prior_only") and not q.get("output_scope", True):
+                rec = quarter_record(reg, fp)
+                rec.setdefault("dimensions_scored_at", _now())
+                rec.setdefault("model", model)
+                if q.get("as_of_date"):
+                    rec.setdefault("as_of_date", q["as_of_date"])
                 continue
             if not q.get("output_scope", True):
                 continue
@@ -106,14 +133,14 @@ def sync_registry_from_views(ticker: str, *, model: str = "unknown") -> dict[str
         delta_view = json.loads(delta_path.read_text(encoding="utf-8"))
         for tr in delta_view.get("transitions", []):
             fp = tr["fiscal_period"]
-            quarter_record(reg, fp)["delta_scored_at"] = _now()
+            quarter_record(reg, fp).setdefault("delta_scored_at", _now())
 
     surprise_path = _resolve(ticker, "surprise_view", "json", layer="json")
     if surprise_path:
         surprise_view = json.loads(surprise_path.read_text(encoding="utf-8"))
         for q in surprise_view.get("quarters", []):
             fp = q["fiscal_period"]
-            quarter_record(reg, fp)["surprise_scored_at"] = _now()
+            quarter_record(reg, fp).setdefault("surprise_scored_at", _now())
 
     save_registry(ticker, reg)
     return reg

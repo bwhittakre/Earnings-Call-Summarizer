@@ -57,7 +57,7 @@ from delta_scorer import (  # noqa: E402
     VALID_CONTEXTS,
 )
 from company_config import get_company  # noqa: E402
-from quarter_registry import mark_delta  # noqa: E402
+from quarter_registry import mark_delta, ensure_registry, has_delta  # noqa: E402
 from quarter_merge import (  # noqa: E402
     load_csv_rows,
     load_json_obj,
@@ -153,19 +153,17 @@ def main() -> int:
         default=[],
         help="Treat these fiscal periods as output scope even if not in company_config.",
     )
+    ap.add_argument(
+        "--force",
+        action="store_true",
+        help="Re-score deltas even when the registry marks them complete.",
+    )
     args = ap.parse_args()
     company = get_company(args.ticker, scope=args.scope)
     ticker = company.ticker
     rerun_periods = norm_quarters(args.quarters)
     extra_output = norm_quarters(args.extra_output_quarters)
-    existing_delta_view = load_json_obj(ticker, "delta_view") if rerun_periods else None
-    delta_view_file = company_artifact(ticker, "json", "delta_view", "json", mkdir=True)
-
-    api_key = os.getenv("ANTHROPIC_API_KEY")
-    if not api_key:
-        print("Error: ANTHROPIC_API_KEY not set (checked Structured Narrative/.env "
-              "and repo-root .env).", file=sys.stderr)
-        return 1
+    registry = ensure_registry(ticker)
 
     try:
         view = load_view(ticker)
@@ -176,6 +174,41 @@ def main() -> int:
     quarters = view.get("quarters", [])
     if len(quarters) < 2:
         print("Need at least two scored quarters to compute a delta.", file=sys.stderr)
+        return 1
+
+    transitions_to_score: list[tuple[dict, dict, str, str]] = []
+    skipped_transitions: list[str] = []
+    for i in range(1, len(quarters)):
+        prior_q, current_q = quarters[i - 1], quarters[i]
+        prior_period = prior_q["fiscal_period"]
+        current_period = current_q["fiscal_period"]
+        if not (company.is_output_quarter(current_period) or current_period in (extra_output or set())):
+            continue
+        if rerun_periods and current_period not in rerun_periods:
+            continue
+        if not args.force and has_delta(registry, current_period):
+            skipped_transitions.append(f"{prior_period}->{current_period}")
+            continue
+        transitions_to_score.append((prior_q, current_q, prior_period, current_period))
+
+    if skipped_transitions:
+        print(
+            f"Skipping {len(skipped_transitions)} transition(s) with existing delta scores: "
+            f"{', '.join(skipped_transitions)}"
+        )
+    if not transitions_to_score:
+        print("All transitions already have delta scores — nothing to do.")
+        return 0
+
+    scored_periods = {current for _, _, _, current in transitions_to_score}
+    needs_merge = bool(skipped_transitions) or bool(rerun_periods)
+    existing_delta_view = load_json_obj(ticker, "delta_view") if needs_merge else None
+    delta_view_file = company_artifact(ticker, "json", "delta_view", "json", mkdir=True)
+
+    api_key = os.getenv("ANTHROPIC_API_KEY")
+    if not api_key:
+        print("Error: ANTHROPIC_API_KEY not set (checked Structured Narrative/.env "
+              "and repo-root .env).", file=sys.stderr)
         return 1
 
     model = os.getenv("DIMENSION_MODEL", DEFAULT_MODEL)
@@ -196,21 +229,13 @@ def main() -> int:
 
     print(f"Provider: {provider.name} | Model: {model} | delta context: {delta_context} "
           f"| paraphrase rescue: {'on' if use_rescue else 'off'}")
-    print(f"Computing {sum(1 for i in range(1, len(quarters)) if company.is_output_quarter(quarters[i]['fiscal_period']))} "
-          f"quarter-over-quarter transitions "
+    print(f"Computing {len(transitions_to_score)} quarter-over-quarter transition(s) "
           f"across {len(ALL_DIMENSIONS)} dimensions.\n")
 
     rows: list[dict] = []
     transitions_view: list[dict] = []
 
-    for i in range(1, len(quarters)):
-        prior_q, current_q = quarters[i - 1], quarters[i]
-        prior_period = prior_q["fiscal_period"]
-        current_period = current_q["fiscal_period"]
-        if not (company.is_output_quarter(current_period) or current_period in extra_output):
-            continue
-        if rerun_periods and current_period not in rerun_periods:
-            continue
+    for prior_q, current_q, prior_period, current_period in transitions_to_score:
         print(f"[{prior_period} -> {current_period}] fetching transcripts…")
         try:
             prior_transcript = provider.fetch(ticker, prior_period)
@@ -371,18 +396,24 @@ def main() -> int:
 
         mark_delta(ticker, current_period)
 
-    if not rows and not rerun_periods:
+    if not rows:
         print("No transitions produced — nothing written.", file=sys.stderr)
         return 1
 
-    if rerun_periods:
+    if needs_merge:
         existing_rows = load_csv_rows(ticker, "dimension_delta")
-        rows = merge_rows_by_period(existing_rows, rows, rerun_periods)
+        rows = merge_rows_by_period(existing_rows, rows, scored_periods)
         if existing_delta_view:
             transitions_view = merge_transitions(
                 existing_delta_view.get("transitions", []),
                 transitions_view,
-                rerun_periods,
+                scored_periods,
+            )
+        elif skipped_transitions:
+            print(
+                "Warning: skipped transitions but delta_view missing — "
+                "output may be incomplete.",
+                file=sys.stderr,
             )
         if not rows:
             print("No transitions produced — nothing written.", file=sys.stderr)

@@ -24,9 +24,8 @@ from fiscal_period_util import normalize_fiscal_period, prior_fiscal_period  # n
 from output_paths import ensure_company_tree, resolve_read_parquet_or_csv  # noqa: E402
 from pit_config import apply_pit_env, is_pit_mode  # noqa: E402
 from quarter_registry import (  # noqa: E402
+    ensure_registry,
     is_quarter_complete,
-    load_registry,
-    sync_registry_from_views,
 )
 
 
@@ -61,11 +60,7 @@ def assert_pit_spine(ticker: str) -> None:
 def resolve_new_quarter_args(ticker: str, new_quarter: str, force: bool) -> list[str] | None:
     """Return --quarters args for incremental scoring, or None to skip LLM."""
     fp = normalize_fiscal_period(new_quarter)
-    reg = load_registry(ticker)
-    if not reg.get("scored_quarters"):
-        sync_registry_from_views(ticker)
-        reg = load_registry(ticker)
-
+    reg = ensure_registry(ticker)
     if is_quarter_complete(reg, fp) and not force:
         print(f"Quarter {fp} already complete in registry — skipping LLM (use --force to re-score).")
         return None
@@ -136,6 +131,7 @@ def main() -> int:
         quarter_args = ["--quarters", *args.quarters]
 
     scope_args = ["--scope", args.scope] if args.scope else []
+    force_args = ["--force"] if args.force else []
     panel_args = [PY, f"{sn}/build_feature_panel.py", "--ticker", ticker, *scope_args]
     if args.new_quarter and not args.scope:
         panel_args.extend(["--from-registry"])
@@ -162,6 +158,7 @@ def main() -> int:
             )
 
     if not args.skip_llm:
+        ensure_registry(ticker)
         assert_pit_spine(ticker)
         if args.scope != "five_year":
             run_step(
@@ -170,15 +167,15 @@ def main() -> int:
             )
         run_step(
             "Focus 1 dimensions",
-            [PY, f"{sn}/run_dimension_scoring.py", "--ticker", ticker, *scope_args, *quarter_args],
+            [PY, f"{sn}/run_dimension_scoring.py", "--ticker", ticker, *scope_args, *force_args, *quarter_args],
         )
         run_step(
             "Focus 2 delta",
-            [PY, f"{sn}/run_delta_scoring.py", "--ticker", ticker, *scope_args, *quarter_args],
+            [PY, f"{sn}/run_delta_scoring.py", "--ticker", ticker, *scope_args, *force_args, *quarter_args],
         )
         run_step(
             "Focus 3 surprise",
-            [PY, f"{sn}/run_surprise_scoring.py", "--ticker", ticker, *scope_args, *quarter_args],
+            [PY, f"{sn}/run_surprise_scoring.py", "--ticker", ticker, *scope_args, *force_args, *quarter_args],
         )
 
     run_step("Feature panel", panel_args)
