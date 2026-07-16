@@ -2,15 +2,18 @@
 from __future__ import annotations
 
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
 import pandas as pd
+from openpyxl import load_workbook
 
 ROOT = Path(__file__).resolve().parents[1]
 SN = ROOT / "Structured Narrative"
 sys.path.insert(0, str(SN))
 
+from excel_export import write_cross_section_panel_workbook  # noqa: E402
 from panel_html import EvidenceLookups, build_consolidated_html, summarize_ticker_quarter  # noqa: E402
 from period_dates import (  # noqa: E402
     apply_feature_availability_dates,
@@ -195,6 +198,32 @@ class ConsolidatedPanelReportTests(unittest.TestCase):
             text=True,
         )
         self.assertEqual(result.returncode, 0, msg=result.stderr)
+
+
+class CrossSectionPanelWorkbookTests(unittest.TestCase):
+    def test_write_cross_section_panel_workbook_tables_and_rows(self):
+        panel = pd.concat(
+            [
+                _sample_panel("AAA", "FY2025-Q1", period_end="2025-03-31"),
+                _sample_panel("BBB", "FY2025-Q1", period_end="2025-03-31"),
+            ],
+            ignore_index=True,
+        )
+        spine = panel_to_spine(panel)
+        expected_rows = len(panel)
+
+        with tempfile.TemporaryDirectory() as tmp:
+            xlsx_path = Path(tmp) / "cross_section_panel.xlsx"
+            write_cross_section_panel_workbook(xlsx_path, panel, spine)
+
+            wb = load_workbook(xlsx_path)
+            self.assertEqual(set(wb.sheetnames), {"Summary", "Panel"})
+
+            for sheet_name in ("Summary", "Panel"):
+                ws = wb[sheet_name]
+                self.assertEqual(ws.freeze_panes, "A2")
+                self.assertEqual(len(ws.tables), 1)
+                self.assertEqual(ws.max_row, expected_rows + 1, msg=sheet_name)
 
 
 if __name__ == "__main__":

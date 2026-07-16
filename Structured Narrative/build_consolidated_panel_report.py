@@ -26,6 +26,7 @@ if str(HERE) not in sys.path:
 
 from company_config import PILOT_OUTPUT_QUARTERS, PILOT_TICKERS  # noqa: E402
 from export_modeling_spine import filter_registry_complete, load_panel  # noqa: E402
+from excel_export import write_cross_section_panel_workbook  # noqa: E402
 from fiscal_period_util import fiscal_period_sort_key  # noqa: E402
 from output_paths import cross_company_artifact, cross_company_layer, company_artifact, ensure_cross_company_tree  # noqa: E402
 from panel_html import build_consolidated_html, build_evidence_lookups, summarize_ticker_quarter  # noqa: E402
@@ -329,6 +330,9 @@ def main() -> int:
 
     stacked.to_csv(csv_path, index=False)
 
+    xlsx_path = cross_company_artifact("workbooks", stem, "xlsx", mkdir=True)
+    write_cross_section_panel_workbook(xlsx_path, stacked, spine_df)
+
     html_path.write_text(
         build_consolidated_html(
             stacked,
@@ -347,6 +351,7 @@ def main() -> int:
     print(f"Wrote {html_path}")
     print(f"Wrote {summary_path}")
     print(f"Wrote {csv_path}")
+    print(f"Wrote {xlsx_path}")
     print(f"  {len(loaded)} ticker(s), {len(stacked)} rows, default bucket={default_bucket}")
     if skipped:
         print(f"  Skipped: {', '.join(skipped)}")

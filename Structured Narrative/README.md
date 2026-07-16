@@ -66,6 +66,9 @@ Disable PIT guardrails (not recommended for production): `--no-pit`
 | Quarter registry | `output/{TICKER}/json/quarter_registry.json` |
 | Cross-company modeling spine | `output/cross_company/csv/modeling_spine.csv` |
 | **Consolidated comparison report** | `output/cross_company/reports/consolidated_feature_panel.html` |
+| **Consolidated Excel (filterable)** | `output/cross_company/workbooks/cross_section_panel.xlsx` |
+
+Open the **`.xlsx`** (not the CSV) in Excel for column filter dropdowns, banded rows, and structured sort on the cross-section panel.
 
 ### Cross-company comparison report
 

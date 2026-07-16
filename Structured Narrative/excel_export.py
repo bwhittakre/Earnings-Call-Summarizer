@@ -123,7 +123,81 @@ LAYER_COLUMN_LABELS: dict[str, str] = {
     "evidence_verified": "Evidence Verified",
     "excerpts": "Excerpts",
     "source": "Source",
+    "period_end_date": "Period End Date",
+    "period_end_calendar_quarter": "Period End Calendar Qtr",
+    "feature_availability_date": "Feature Available Date",
+    "quant_mapping": "Quant Mapping",
+    "quant_family": "Quant Family",
+    "quant_z_fullsample": "Quant Z (Full Sample)",
+    "quant_guidance_revision_z_pit": "Guidance Revision Z (T+7 PIT)",
+    "alpha_spec_0_90_complete": "Alpha Spec 0-90 Complete",
+    "level_rationale": "Level Rationale",
+    "prior_period": "Prior Period",
+    "change_direction": "Change Direction",
+    "change_magnitude": "Change Magnitude",
+    "score_delta": "Score Delta",
+    "quant_z_delta": "Quant Z Delta",
+    "delta_rationale": "Delta Rationale",
+    "level_evidence_supported_pct": "Level Evidence %",
+    "delta_evidence_supported_pct": "Delta Evidence %",
+    "surprise_evidence_supported_pct": "Surprise Evidence %",
+    "novelty_direction": "Novelty Direction",
+    "narrative_novelty": "Narrative Novelty",
+    "novelty_rationale": "Novelty Rationale",
+    "novelty_evidence_supported_pct": "Novelty Evidence %",
+    "has_level": "Has Level",
+    "has_delta": "Has Delta",
+    "has_surprise": "Has Surprise",
+    "has_novelty": "Has Novelty",
+    "level_quant_sign_match": "Level Quant Sign Match",
+    "delta_quant_sign_match": "Delta Quant Sign Match",
+    "level_diverges": "Level Diverges",
+    "delta_diverges": "Delta Diverges",
+    "surprise_diverges": "Surprise Diverges",
+    "any_quant_divergence": "Any Quant Divergence",
+    "is_divergence": "Is Divergence",
+    "has_quant_z": "Has Quant Z",
+    "abs_narrative_quant_gap": "Abs Narrative Quant Gap",
+    "surprise_quant_interaction": "Surprise Quant Interaction",
+    "llm_level_4q_mean": "LLM Level 4Q Mean",
+    "change_magnitude_4q_mean": "Change Magnitude 4Q Mean",
+    "signal_stack": "Signal Stack",
+    "evidence_confidence": "Evidence Confidence",
 }
+
+PANEL_EXCEL_FRONT_COLS = (
+    "ticker",
+    "fiscal_period",
+    "period_end_date",
+    "period_end_calendar_quarter",
+    "dimension",
+    "as_of_date",
+    "earnings_date",
+    "feature_availability_date",
+    "quant_mapping",
+    "quant_family",
+    "llm_level",
+    "change_direction",
+    "change_magnitude",
+    "surprise_direction",
+    "surprise_magnitude",
+    "narrative_novelty",
+    "novelty_direction",
+    "quant_z_pit",
+    "quant_z",
+    "quant_guidance_revision_z_pit",
+    "agrees_with_quant",
+    "narrative_quant_gap",
+    "evidence_confidence",
+)
+
+EVIDENCE_PCT_COLS = frozenset({
+    "level_evidence_supported_pct",
+    "delta_evidence_supported_pct",
+    "surprise_evidence_supported_pct",
+    "novelty_evidence_supported_pct",
+    "evidence_confidence",
+})
 
 
 def _humanize_column(name: str) -> str:
@@ -356,6 +430,83 @@ def _dimension_scores_for_excel(df: pd.DataFrame, ticker: str) -> pd.DataFrame:
     front = ["ticker", "fiscal_period", "dimension"]
     rest = [c for c in merged.columns if c not in front]
     return merged[front + rest]
+
+
+def _rename_dataframe_columns(df: pd.DataFrame) -> tuple[pd.DataFrame, dict[str, str]]:
+    rename = {c: _humanize_column(c) for c in df.columns}
+    return df.rename(columns=rename), rename
+
+
+def _sort_cross_section(df: pd.DataFrame) -> pd.DataFrame:
+    sort_cols = [
+        c for c in ("period_end_date", "ticker", "dimension", "fiscal_period") if c in df.columns
+    ]
+    if sort_cols:
+        return df.sort_values(sort_cols).reset_index(drop=True)
+    return df.reset_index(drop=True)
+
+
+def prepare_panel_for_excel(df: pd.DataFrame) -> pd.DataFrame:
+    """Reorder panel columns: identifiers and scores first, rationales last."""
+    rationale_cols = [c for c in df.columns if "rationale" in c]
+    front = [c for c in PANEL_EXCEL_FRONT_COLS if c in df.columns]
+    middle = [
+        c for c in df.columns
+        if c not in front and c not in rationale_cols
+    ]
+    tail = [c for c in rationale_cols if c in df.columns]
+    return df[front + middle + tail]
+
+
+def _classify_renamed_columns(rename_map: dict[str, str]) -> tuple[set[str], set[str]]:
+    percent_cols: set[str] = set()
+    zscore_cols: set[str] = set()
+    for src, label in rename_map.items():
+        if src in EVIDENCE_PCT_COLS:
+            percent_cols.add(label)
+        elif _is_zscore_source_col(src):
+            zscore_cols.add(label)
+    return percent_cols, zscore_cols
+
+
+def _prepare_cross_section_sheet(df: pd.DataFrame) -> tuple[pd.DataFrame, dict[str, str], set[str], set[str]]:
+    out = df.copy()
+    out, rename_map = _rename_dataframe_columns(out)
+    percent_cols, zscore_cols = _classify_renamed_columns(rename_map)
+    out, kinds = _prepare_sheet(out)
+    return out, kinds, percent_cols, zscore_cols
+
+
+def write_cross_section_panel_workbook(
+    path: str | Path,
+    panel_df: pd.DataFrame,
+    spine_df: pd.DataFrame,
+) -> str:
+    """Write filterable cross-section workbook: Summary (spine) + Panel (full rows)."""
+    path = str(path)
+    panel_sorted = _sort_cross_section(prepare_panel_for_excel(panel_df))
+    spine_sorted = _sort_cross_section(spine_df)
+
+    sheets = {
+        "Summary": spine_sorted,
+        "Panel": panel_sorted,
+    }
+    with pd.ExcelWriter(path, engine="openpyxl") as writer:
+        for sheet_name, raw_df in sheets.items():
+            out, kinds, percent_cols, zscore_cols = _prepare_cross_section_sheet(raw_df)
+            safe_name = sheet_name[:31]
+            out.to_excel(writer, index=False, sheet_name=safe_name)
+            _format_worksheet(
+                writer.sheets[safe_name],
+                out,
+                kinds,
+                as_table=True,
+                table_name=_table_display_name(safe_name),
+                full_scan=True,
+                percent_cols=percent_cols,
+                zscore_cols=zscore_cols,
+            )
+    return path
 
 
 def write_excel(df: pd.DataFrame, path: str, sheet_name: str = "data") -> str:
