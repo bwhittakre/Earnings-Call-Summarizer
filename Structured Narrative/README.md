@@ -23,8 +23,37 @@ For output quarter **FY2020-Q1**, all published quant comparisons use **expandin
 
 - Pre-call consensus: `effectivedate < earnings_date` (Snowflake extract)
 - LLM scorers: transcript + PIT consensus block only (post-7d revisions omitted in PIT mode)
-- `quant_z` in the feature panel = PIT `dim_*_z` (not full-sample z)
+- `quant_z_pit` in the feature panel = expanding PIT `dim_*_z` for surprise-family dims (demand, margins, earnings_power, capital_allocation)
+- `quant_guidance_revision_z_pit` = T+7d forward estimate revision z (delayed; separate from call-date features)
+- Guidance has **no** call-date `quant_z_pit` — revisions are kept separate per methodology
 - Forward alpha columns (`alpha_spec_*`) are **label-only** — excluded from default modeling export
+
+## Feature taxonomy
+
+| Layer | Column(s) | Definition |
+|-------|-----------|------------|
+| Focus 1 — Level | `llm_level` | Absolute narrative tone this quarter (no expectations) |
+| Focus 2 — Delta | `change_magnitude` | Quarter-over-quarter narrative change vs prior summary |
+| Focus 3 — Surprise | `surprise_magnitude` | Narrative vs pre-call consensus (5 quant-comparable dims only) |
+| Focus 3b — Novelty | `narrative_novelty` | New/material information vs prior quarter (3 narrative-only dims) |
+| Quant PIT | `quant_z_pit` | Point-in-time earnings-surprise z at call date |
+| Quant delayed | `quant_guidance_revision_z_pit` | T+7d forward revision z for guidance |
+
+## Dual consolidated outputs
+
+```powershell
+# Last 8 ROIC.ai quarters per ticker + cross-section report
+python "Structured Narrative/run_pilot_8q_batch.py"
+
+# Or build the report manually after scoring (quarters = union of ROIC last-8 per ticker)
+python "Structured Narrative/build_consolidated_panel_report.py" --tickers AMZN MSFT NVDA AAPL --quarters FY2025-Q1 ...
+
+# Outputs:
+#   output/cross_company/csv/cross_section_spine.csv   — slim schema for cross-sectional tests
+#   output/AMZN/csv/research_spine.csv                 — full AMZN history, same slim schema
+```
+
+Slim spine columns: ticker, fiscal_period, period_end_date, period_end_calendar_quarter, earnings_date, feature_availability_date, dimension, quant_mapping, level, delta, surprise, novelty, quant_z_pit, agrees_with_quant, evidence_confidence.
 
 Disable PIT guardrails (not recommended for production): `--no-pit`
 
@@ -42,12 +71,12 @@ Disable PIT guardrails (not recommended for production): `--no-pit`
 
 Build an interactive HTML report to compare feature panels across tickers. Two modes:
 
-- **Compare by quarter** — align tickers on the same fiscal period; expand **+** to see dimension-level detail
-- **Browse by company** — one row per ticker; expand **+** to see the full quarter × dimension panel
+- **Compare by period-end quarter** — align tickers by **calendar quarter of fiscal period-end** (e.g. `2025-Q1` = periods ending Jan–Mar 2025), not shared fiscal labels like `FY2025-Q1`; summary table shows period ending, earnings call, and feature available dates
+- **Browse by company** — one row per ticker; expand **+** to see the full quarter × dimension panel sorted by period-end date
 
 ```powershell
 python "Structured Narrative/build_consolidated_panel_report.py" --tickers AMZN MSFT NVDA AAPL
-python "Structured Narrative/build_consolidated_panel_report.py" --sector mega_cap_tech --quarter FY2025-Q4
+python "Structured Narrative/build_consolidated_panel_report.py" --sector mega_cap_tech --quarter 2025-Q1
 ```
 
 Summary JSON (including scale hooks for future lazy-load sidecars): `output/cross_company/json/consolidated_feature_panel_summary.json`

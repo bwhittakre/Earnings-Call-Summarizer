@@ -29,16 +29,37 @@ from panel_html import (  # noqa: E402
     build_evidence_lookups,
     build_single_ticker_html,
 )
-from quant_loader import load_quant_dim_z  # noqa: E402
+from quant_loader import (  # noqa: E402
+    load_quant_dim_z,
+    load_quant_guidance_revision_z_pit,
+    load_quant_spine_meta,
+    load_quant_z_fullsample,
+    load_quant_z_pit,
+)
+from quant_mapping import FEATURE_AVAILABILITY_MANIFEST, quant_family_for, quant_mapping_for  # noqa: E402
+from period_dates import (  # noqa: E402
+    apply_feature_availability_dates,
+    enrich_panel_period_columns,
+    period_end_sort_columns,
+    resolve_period_end_date,
+)
 from quant_panel import agrees, apply_derived_features, narrative_quant_gap  # noqa: E402
 
 PANEL_COLUMNS = [
     "ticker",
     "fiscal_period",
+    "period_end_date",
+    "period_end_calendar_quarter",
     "dimension",
     "as_of_date",
     "earnings_date",
+    "feature_availability_date",
+    "quant_mapping",
+    "quant_family",
     "quant_z",
+    "quant_z_pit",
+    "quant_z_fullsample",
+    "quant_guidance_revision_z_pit",
     "alpha_spec_0_90",
     "alpha_spec_0_90_z",
     "alpha_spec_0_90_complete",
@@ -58,9 +79,14 @@ PANEL_COLUMNS = [
     "narrative_quant_gap",
     "surprise_rationale",
     "surprise_evidence_supported_pct",
+    "novelty_direction",
+    "narrative_novelty",
+    "novelty_rationale",
+    "novelty_evidence_supported_pct",
     "has_level",
     "has_delta",
     "has_surprise",
+    "has_novelty",
     "level_quant_sign_match",
     "delta_quant_sign_match",
     "level_diverges",
@@ -122,32 +148,62 @@ def _signal_stack(row: pd.Series) -> str:
         parts.append("surprise_bearish")
     elif sd == "in_line":
         parts.append("surprise_inline")
+    nd = row.get("novelty_direction")
+    if nd == "high_novelty":
+        parts.append("novelty_high")
+    elif nd == "moderate_novelty":
+        parts.append("novelty_moderate")
+    elif nd == "low_novelty":
+        parts.append("novelty_low")
     if row.get("any_quant_divergence") is True or row.get("is_divergence") is True:
         parts.append("quant_diverges")
     return "|".join(parts)
 
 
 def build_spine(quant: pd.DataFrame, ticker: str) -> pd.DataFrame:
-    quant_z_map = load_quant_dim_z(ticker)
+    quant_z_pit_map = load_quant_z_pit(ticker)
+    quant_z_full_map = load_quant_z_fullsample(ticker)
+    guidance_rev_map = load_quant_guidance_revision_z_pit(ticker)
+    meta_map = load_quant_spine_meta(ticker)
     rows: list[dict] = []
     for _, row in quant.iterrows():
         fp = str(row["fiscal_period"])
-        meta = {
-            "ticker": ticker,
-            "fiscal_period": fp,
-            "as_of_date": row.get("earnings_date"),
-            "earnings_date": row.get("earnings_date"),
-            "alpha_spec_0_90": row.get("alpha_spec_0_90"),
-            "alpha_spec_0_90_z": row.get("alpha_spec_0_90_z"),
-            "alpha_spec_0_90_complete": row.get("alpha_spec_0_90_complete"),
-        }
+        meta = meta_map.get(fp, {})
+        earn = meta.get("earnings_date") or row.get("earnings_date")
+        model_date = meta.get("model_date")
+        period_end = meta.get("period_end_date") or row.get("fiscal_quarter_end")
         for dim in ALL_DIMENSIONS:
-            rec = dict(meta)
-            rec["dimension"] = dim
+            rec = {
+                "ticker": ticker,
+                "fiscal_period": fp,
+                "period_end_date": period_end,
+                "dimension": dim,
+                "as_of_date": earn,
+                "earnings_date": earn,
+                "model_date": model_date,
+                "quant_mapping": quant_mapping_for(dim),
+                "quant_family": quant_family_for(dim),
+                "alpha_spec_0_90": row.get("alpha_spec_0_90"),
+                "alpha_spec_0_90_z": row.get("alpha_spec_0_90_z"),
+                "alpha_spec_0_90_complete": row.get("alpha_spec_0_90_complete"),
+            }
             if dim in QUANT_COMPARABLE_DIMENSIONS:
-                rec["quant_z"] = quant_z_map.get(fp, {}).get(dim)
+                if dim == "guidance":
+                    rec["quant_z_pit"] = None
+                    rec["quant_z"] = None
+                    rec["quant_z_fullsample"] = None
+                    rec["quant_guidance_revision_z_pit"] = guidance_rev_map.get(fp)
+                else:
+                    qz = quant_z_pit_map.get(fp, {}).get(dim)
+                    rec["quant_z_pit"] = qz
+                    rec["quant_z"] = qz
+                    rec["quant_z_fullsample"] = quant_z_full_map.get(fp, {}).get(dim)
+                    rec["quant_guidance_revision_z_pit"] = None
             else:
+                rec["quant_z_pit"] = None
                 rec["quant_z"] = None
+                rec["quant_z_fullsample"] = None
+                rec["quant_guidance_revision_z_pit"] = None
             rows.append(rec)
     return pd.DataFrame(rows)
 
@@ -156,12 +212,17 @@ def build_spine_from_level(level: pd.DataFrame, ticker: str) -> pd.DataFrame:
     """Build panel spine from LLM level rows when quant dimension_scores are unavailable."""
     rows: list[dict] = []
     for _, row in level.iterrows():
+        fp = str(row["fiscal_period"])
+        earn = row.get("as_of_date")
+        ped = resolve_period_end_date(ticker, fp)
         rec = {
             "ticker": ticker,
-            "fiscal_period": row["fiscal_period"],
+            "fiscal_period": fp,
+            "period_end_date": ped.isoformat() if ped else None,
             "dimension": row["dimension"],
-            "as_of_date": row.get("as_of_date"),
-            "earnings_date": row.get("as_of_date"),
+            "as_of_date": earn,
+            "earnings_date": earn,
+            "model_date": None,
             "quant_z": None,
             "alpha_spec_0_90": None,
             "alpha_spec_0_90_z": None,
@@ -247,15 +308,54 @@ def prepare_surprise(surprise: pd.DataFrame) -> pd.DataFrame:
     ]
 
 
+def prepare_novelty(novelty: pd.DataFrame) -> pd.DataFrame:
+    if novelty.empty:
+        return pd.DataFrame(
+            columns=[
+                "ticker",
+                "fiscal_period",
+                "dimension",
+                "as_of_date",
+                "novelty_direction",
+                "narrative_novelty",
+                "novelty_rationale",
+                "novelty_evidence_supported_pct",
+            ]
+        )
+    df = novelty.copy()
+    df["novelty_evidence_supported_pct"] = df.apply(
+        lambda r: _evidence_pct(r.get("n_evidence_verified"), r.get("n_evidence"), r.get("evidence_verified")),
+        axis=1,
+    )
+    return df.rename(columns={"rationale": "novelty_rationale", "novelty_magnitude": "narrative_novelty"})[
+        [
+            "ticker",
+            "fiscal_period",
+            "dimension",
+            "as_of_date",
+            "novelty_direction",
+            "narrative_novelty",
+            "novelty_rationale",
+            "novelty_evidence_supported_pct",
+        ]
+    ]
+
+
 def _overlay_live_quant(panel: pd.DataFrame) -> pd.DataFrame:
-    """Recompute surprise quant agreement from spine quant_z (source of truth)."""
+    """Recompute surprise quant agreement from spine quant_z_pit (source of truth)."""
     df = panel.copy()
 
     def row_update(r):
-        if r["dimension"] not in QUANT_COMPARABLE_DIMENSIONS:
+        dim = r["dimension"]
+        if dim not in QUANT_COMPARABLE_DIMENSIONS:
             return r
-        qz = r.get("quant_z")
         mag = r.get("surprise_magnitude")
+        if dim == "guidance":
+            qz = r.get("quant_guidance_revision_z_pit")
+        else:
+            qz = r.get("quant_z_pit")
+            if qz is None or (isinstance(qz, float) and pd.isna(qz)):
+                qz = r.get("quant_z")
         if pd.notna(qz) and pd.notna(mag):
             r["agrees_with_quant"] = agrees(mag, qz)
             r["narrative_quant_gap"] = narrative_quant_gap(mag, qz)
@@ -269,6 +369,7 @@ def merge_panel(
     level: pd.DataFrame,
     delta: pd.DataFrame,
     surprise: pd.DataFrame,
+    novelty: pd.DataFrame,
     *,
     full_spine: bool,
 ) -> pd.DataFrame:
@@ -276,26 +377,37 @@ def merge_panel(
     panel = spine.merge(level, on=keys, how="left", suffixes=("", "_level"))
     panel = panel.merge(delta, on=keys, how="left", suffixes=("", "_delta"))
     panel = panel.merge(surprise, on=keys, how="left", suffixes=("", "_surprise"))
+    panel = panel.merge(novelty, on=keys, how="left", suffixes=("", "_novelty"))
 
-    for src in ("_level", "_delta", "_surprise"):
+    for src in ("_level", "_delta", "_surprise", "_novelty"):
         col = f"as_of_date{src}"
         if col in panel.columns:
             panel["as_of_date"] = panel["as_of_date"].fillna(panel[col])
             panel = panel.drop(columns=[col])
 
+    panel = apply_feature_availability_dates(panel)
+    panel = enrich_panel_period_columns(panel)
+    if "model_date" in panel.columns:
+        panel = panel.drop(columns=["model_date"])
+
     panel["has_level"] = panel["llm_level"].notna()
     panel["has_delta"] = panel["change_magnitude"].notna()
     panel["has_surprise"] = panel["surprise_magnitude"].notna()
+    panel["has_novelty"] = panel["narrative_novelty"].notna()
 
     panel = _overlay_live_quant(panel)
     panel = apply_derived_features(panel)
     panel["signal_stack"] = panel.apply(_signal_stack, axis=1)
 
     if not full_spine:
-        mask = panel["has_level"] | panel["has_delta"] | panel["has_surprise"]
+        mask = panel["has_level"] | panel["has_delta"] | panel["has_surprise"] | panel["has_novelty"]
         panel = panel.loc[mask].copy()
 
-    panel = panel.sort_values(["fiscal_period", "dimension"]).reset_index(drop=True)
+    sort_cols = [c for c in period_end_sort_columns() if c in panel.columns]
+    if sort_cols:
+        panel = panel.sort_values(sort_cols).reset_index(drop=True)
+    else:
+        panel = panel.sort_values(["fiscal_period", "dimension"]).reset_index(drop=True)
     for col in PANEL_COLUMNS:
         if col not in panel.columns:
             panel[col] = None
@@ -328,6 +440,7 @@ def build_summary(panel: pd.DataFrame, ticker: str) -> dict:
             "has_level": int(panel["has_level"].sum()),
             "has_delta": int(panel["has_delta"].sum()),
             "has_surprise": int(panel["has_surprise"].sum()),
+            "has_novelty": int(panel["has_novelty"].sum()),
             "is_divergence": int(panel["is_divergence"].sum()),
             "any_quant_divergence": int(panel["any_quant_divergence"].sum()),
         },
@@ -335,6 +448,11 @@ def build_summary(panel: pd.DataFrame, ticker: str) -> dict:
         "dimensions": ALL_DIMENSIONS,
         "top_divergences": top_rows,
     }
+
+
+def write_feature_availability_manifest(ticker: str) -> None:
+    path = company_artifact(ticker, "json", "feature_availability", "json", mkdir=True)
+    path.write_text(json.dumps(FEATURE_AVAILABILITY_MANIFEST, indent=2), encoding="utf-8")
 
 
 def write_outputs(
@@ -356,8 +474,14 @@ def write_outputs(
 
     summary_path.write_text(json.dumps(summary, indent=2), encoding="utf-8")
     html_path.write_text(build_single_ticker_html(panel, summary, lookups), encoding="utf-8")
+    write_feature_availability_manifest(ticker)
+    spine_path = company_artifact(ticker, "csv", "research_spine", "csv", mkdir=True)
+    from spine_export import panel_to_spine  # noqa: E402
+
+    panel_to_spine(panel).to_csv(spine_path, index=False)
 
     print(f"Wrote {csv_path}")
+    print(f"Wrote {spine_path}")
     print(f"Wrote {summary_path}")
     print(f"Wrote {html_path}")
 
@@ -397,6 +521,7 @@ def main() -> int:
 
     quant = _read_optional(ticker, "dimension_scores", layer="parquet")
     surprise_df = _read_optional(ticker, "dimension_surprise", layer="parquet")
+    novelty_df = _read_optional(ticker, "dimension_novelty", layer="parquet")
     if surprise_df is None:
         surprise_df = pd.DataFrame(
             columns=[
@@ -408,6 +533,22 @@ def main() -> int:
                 "surprise_magnitude",
                 "agrees_with_quant",
                 "narrative_quant_gap",
+                "rationale",
+                "n_evidence_verified",
+                "n_evidence",
+                "evidence_verified",
+            ]
+        )
+
+    if novelty_df is None:
+        novelty_df = pd.DataFrame(
+            columns=[
+                "ticker",
+                "fiscal_period",
+                "dimension",
+                "as_of_date",
+                "novelty_direction",
+                "novelty_magnitude",
                 "rationale",
                 "n_evidence_verified",
                 "n_evidence",
@@ -439,11 +580,13 @@ def main() -> int:
         prepare_level(level),
         prepare_delta(delta),
         prepare_surprise(surprise_df),
+        prepare_novelty(novelty_df),
         full_spine=full_spine,
     )
     if output_quarters is not None:
         panel = panel.loc[panel["fiscal_period"].isin(output_quarters)].copy()
-        panel = panel.sort_values(["fiscal_period", "dimension"]).reset_index(drop=True)
+        sort_cols = [c for c in period_end_sort_columns() if c in panel.columns]
+        panel = panel.sort_values(sort_cols or ["fiscal_period", "dimension"]).reset_index(drop=True)
     elif args.from_registry:
         reg = load_registry(ticker)
         fps = [
@@ -454,7 +597,8 @@ def main() -> int:
         ]
         if fps:
             panel = panel.loc[panel["fiscal_period"].isin(fps)].copy()
-            panel = panel.sort_values(["fiscal_period", "dimension"]).reset_index(drop=True)
+            sort_cols = [c for c in period_end_sort_columns() if c in panel.columns]
+            panel = panel.sort_values(sort_cols or ["fiscal_period", "dimension"]).reset_index(drop=True)
 
     summary = build_summary(panel, ticker)
     lookups = build_evidence_lookups(ticker)

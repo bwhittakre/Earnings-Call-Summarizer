@@ -4,6 +4,7 @@
 Walk-forward IC / RankIC evaluation for narrative modeling spine signals.
 
 Labels (alpha_spec_0_90*) are forward returns — never used as model inputs.
+Delayed features (quant_guidance_revision_z_pit) are excluded from call-date eval by default.
 
     python "Structured Narrative/evaluate_narrative_signals.py"
     python "Structured Narrative/evaluate_narrative_signals.py" --tickers MSFT NVDA --include-labels
@@ -23,29 +24,36 @@ HERE = Path(__file__).resolve().parent
 if str(HERE) not in sys.path:
     sys.path.insert(0, str(HERE))
 
-from company_config import PILOT_TICKERS  # noqa: E402
-from export_modeling_spine import (  # noqa: E402
-    DEFAULT_COLUMNS,
-    LABEL_COLUMNS,
-    filter_registry_complete,
-    load_panel,
-)
+from company_config import PILOT_OUTPUT_QUARTERS, PILOT_TICKERS  # noqa: E402
+from export_modeling_spine import LABEL_COLUMNS, filter_registry_complete, load_panel  # noqa: E402
 from fiscal_period_util import fiscal_period_sort_key  # noqa: E402
 from output_paths import cross_company_artifact, ensure_cross_company_tree  # noqa: E402
+from spine_export import CONSOLIDATED_SPINE_COLUMNS, panel_to_spine  # noqa: E402
 
 SIGNAL_COLUMNS = [
     "llm_level",
     "change_magnitude",
-    "quant_z_delta",
     "surprise_magnitude",
+    "narrative_novelty",
+    "quant_z_pit",
+    "quant_guidance_revision_z_pit",
     "narrative_quant_gap",
-    "abs_narrative_quant_gap",
-    "surprise_quant_interaction",
-    "llm_level_4q_mean",
-    "change_magnitude_4q_mean",
+    "agrees_with_quant",
+    "evidence_confidence",
 ]
 
 DEFAULT_LABEL = "alpha_spec_0_90"
+
+CALL_DATE_SIGNALS = {
+    "llm_level",
+    "change_magnitude",
+    "surprise_magnitude",
+    "narrative_novelty",
+    "quant_z_pit",
+    "narrative_quant_gap",
+    "agrees_with_quant",
+    "evidence_confidence",
+}
 
 
 def _pearson_ic(x: pd.Series, y: pd.Series) -> float | None:
@@ -69,7 +77,6 @@ def walk_forward_period_ics(
     signal: str,
     label: str,
 ) -> pd.DataFrame:
-    """Cross-sectional IC per fiscal period (pool tickers × dimensions at T)."""
     rows: list[dict] = []
     periods = sorted(df["fiscal_period"].unique(), key=fiscal_period_sort_key)
     for fp in periods:
@@ -134,21 +141,17 @@ def dimension_ics(df: pd.DataFrame, signal: str, label: str) -> pd.DataFrame:
 
 
 def divergence_hit_rate(df: pd.DataFrame, label: str) -> dict:
-    """Mean label when surprise diverges vs agrees (quant-comparable rows only)."""
-    sub = df[df["is_divergence"].notna() & df[label].notna()].copy()
+    sub = df[df["agrees_with_quant"].notna() & df[label].notna()].copy()
     if sub.empty:
         return {"n": 0}
-    div = sub[sub["is_divergence"] == True]  # noqa: E712
-    agree = sub[sub["is_divergence"] == False]  # noqa: E712
+    div = sub[sub["agrees_with_quant"] == False]  # noqa: E712
+    agree = sub[sub["agrees_with_quant"] == True]  # noqa: E712
     return {
         "n_total": int(len(sub)),
         "n_divergence": int(len(div)),
         "n_agree": int(len(agree)),
         "mean_label_divergence": round(float(div[label].mean()), 6) if len(div) else None,
         "mean_label_agree": round(float(agree[label].mean()), 6) if len(agree) else None,
-        "hit_rate_divergence_positive": (
-            round(float((div[label] > 0).mean()), 4) if len(div) else None
-        ),
     }
 
 
@@ -171,56 +174,64 @@ def quintile_spread(df: pd.DataFrame, signal: str, label: str, n_q: int = 5) -> 
     }
 
 
-def load_eval_frame(tickers: list[str], include_labels: bool) -> pd.DataFrame:
-    cols = DEFAULT_COLUMNS + (LABEL_COLUMNS if include_labels else [])
+def load_eval_frame(tickers: list[str], *, call_date_only: bool = True) -> pd.DataFrame:
+    quarter_set = set(PILOT_OUTPUT_QUARTERS)
     frames: list[pd.DataFrame] = []
     for ticker in tickers:
         panel = load_panel(ticker)
         panel = filter_registry_complete(panel, ticker)
-        for c in cols:
-            if c not in panel.columns:
-                panel[c] = None
-        frames.append(panel[cols])
+        panel = panel[panel["fiscal_period"].isin(quarter_set)].copy()
+        spine = panel_to_spine(panel)
+        for c in LABEL_COLUMNS:
+            if c in panel.columns:
+                spine[c] = panel[c].values
+        frames.append(spine)
     if not frames:
         raise FileNotFoundError("No feature panels loaded.")
     stacked = pd.concat(frames, ignore_index=True)
-    return stacked.sort_values(["ticker", "fiscal_period", "dimension"]).reset_index(drop=True)
+    stacked = stacked.sort_values(["ticker", "fiscal_period", "dimension"]).reset_index(drop=True)
+    if call_date_only:
+        stacked = stacked[stacked["feature_availability_date"] == stacked["earnings_date"]].copy()
+    return stacked
 
 
 def main() -> int:
     ap = argparse.ArgumentParser(description="Walk-forward IC/RankIC for narrative signals.")
     ap.add_argument("--tickers", nargs="+", default=list(PILOT_TICKERS))
-    ap.add_argument("--include-labels", action="store_true", default=True)
     ap.add_argument("--label", default=DEFAULT_LABEL)
+    ap.add_argument(
+        "--include-delayed",
+        action="store_true",
+        help="Include T+7d guidance revision z in signal set.",
+    )
     ap.add_argument(
         "--signals",
         nargs="+",
-        default=SIGNAL_COLUMNS,
+        default=None,
         help="Panel columns to evaluate as signals.",
     )
     args = ap.parse_args()
     tickers = [t.upper() for t in args.tickers]
     label = args.label
+    signals = args.signals or list(SIGNAL_COLUMNS)
+    if not args.include_delayed:
+        signals = [s for s in signals if s in CALL_DATE_SIGNALS]
 
     try:
-        df = load_eval_frame(tickers, include_labels=True)
+        df = load_eval_frame(tickers, call_date_only=not args.include_delayed)
     except FileNotFoundError as exc:
         print(f"Error: {exc}", file=sys.stderr)
         return 1
 
     if label not in df.columns or df[label].notna().sum() == 0:
-        print(
-            f"Error: label column {label!r} missing or empty. "
-            "Ensure dimension_scores spine includes alpha labels.",
-            file=sys.stderr,
-        )
+        print(f"Error: label column {label!r} missing or empty.", file=sys.stderr)
         return 1
 
     eval_df = df[df[label].notna()].copy()
     signal_summary: dict[str, dict] = {}
     period_frames: list[pd.DataFrame] = []
 
-    for signal in args.signals:
+    for signal in signals:
         if signal not in eval_df.columns:
             continue
         period_ics = walk_forward_period_ics(eval_df, signal, label)
@@ -237,6 +248,8 @@ def main() -> int:
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "tickers": tickers,
         "label": label,
+        "quarter_scope": list(PILOT_OUTPUT_QUARTERS),
+        "call_date_only": not args.include_delayed,
         "n_rows": int(len(eval_df)),
         "fiscal_periods": sorted(eval_df["fiscal_period"].unique(), key=fiscal_period_sort_key),
         "signals": signal_summary,
@@ -259,11 +272,6 @@ def main() -> int:
             f"(n_periods={wf.get('n_periods')}) "
             f"pooled RankIC={stats.get('pooled_rank_ic')}"
         )
-    div = report["divergence_hit_rate"]
-    print(
-        f"  divergence hit rate: n={div.get('n_divergence')} "
-        f"mean_label={div.get('mean_label_divergence')}"
-    )
     return 0
 
 

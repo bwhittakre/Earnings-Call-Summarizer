@@ -41,7 +41,7 @@ from dimension_scorer import (  # noqa: E402
 )
 from transcript_providers import Transcript  # noqa: E402
 
-SURPRISE_PROMPT_PATH = HERE / "prompts" / "dimension_surprise.txt"
+SURPRISE_PROMPT_PATH = HERE / "prompts" / "dimension_surprise_quant.txt"
 
 VALID_DIRECTIONS = (
     "more_bullish_than_expected",
@@ -193,6 +193,8 @@ class SurpriseScorer:
         pairs: list[tuple[str, str]] = []
         spans: list[tuple[DimensionSurprise, int, int]] = []
         for s in summary.surprises:
+            if s.dimension not in comparable:
+                continue
             start = len(pairs)
             for ev in s.evidence:
                 pairs.append((ev.claim, ev.excerpt))

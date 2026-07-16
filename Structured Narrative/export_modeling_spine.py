@@ -20,36 +20,12 @@ HERE = Path(__file__).resolve().parent
 if str(HERE) not in sys.path:
     sys.path.insert(0, str(HERE))
 
-from company_config import PILOT_TICKERS  # noqa: E402
+from company_config import PILOT_OUTPUT_QUARTERS, PILOT_TICKERS  # noqa: E402
 from output_paths import cross_company_artifact, ensure_cross_company_tree, resolve_read  # noqa: E402
 from quarter_registry import is_quarter_complete, load_registry  # noqa: E402
+from spine_export import CONSOLIDATED_SPINE_COLUMNS, panel_to_spine  # noqa: E402
 
-DEFAULT_COLUMNS = [
-    "ticker",
-    "fiscal_period",
-    "dimension",
-    "as_of_date",
-    "earnings_date",
-    "quant_z",
-    "llm_level",
-    "change_magnitude",
-    "quant_z_delta",
-    "delta_quant_sign_match",
-    "surprise_magnitude",
-    "agrees_with_quant",
-    "narrative_quant_gap",
-    "abs_narrative_quant_gap",
-    "surprise_quant_interaction",
-    "llm_level_4q_mean",
-    "change_magnitude_4q_mean",
-    "has_quant_z",
-    "level_diverges",
-    "delta_diverges",
-    "surprise_diverges",
-    "any_quant_divergence",
-    "is_divergence",
-    "signal_stack",
-]
+DEFAULT_COLUMNS = list(CONSOLIDATED_SPINE_COLUMNS)
 
 LABEL_COLUMNS = [
     "alpha_spec_0_90",
@@ -89,18 +65,27 @@ def main() -> int:
         action="store_true",
         help="Include forward alpha label columns (research only; not for live inference).",
     )
+    ap.add_argument(
+        "--quarters",
+        nargs="+",
+        default=list(PILOT_OUTPUT_QUARTERS),
+        help="Restrict to these fiscal periods (default: 8-quarter pilot scope).",
+    )
     args = ap.parse_args()
     tickers = [t.upper() for t in args.tickers]
-    cols = DEFAULT_COLUMNS + (LABEL_COLUMNS if args.include_labels else [])
+    quarter_set = set(args.quarters)
+    label_cols = LABEL_COLUMNS if args.include_labels else []
 
     frames: list[pd.DataFrame] = []
     for ticker in tickers:
         panel = load_panel(ticker)
         panel = filter_registry_complete(panel, ticker)
-        missing = [c for c in cols if c not in panel.columns]
-        for c in missing:
-            panel[c] = None
-        frames.append(panel[cols])
+        panel = panel[panel["fiscal_period"].isin(quarter_set)].copy()
+        spine = panel_to_spine(panel)
+        for c in label_cols:
+            if c in panel.columns:
+                spine[c] = panel[c].values
+        frames.append(spine)
 
     if not frames:
         print("No panels loaded.", file=sys.stderr)
@@ -108,24 +93,26 @@ def main() -> int:
 
     stacked = pd.concat(frames, ignore_index=True)
     stacked = stacked.sort_values(["ticker", "fiscal_period", "dimension"]).reset_index(drop=True)
+    out_cols = DEFAULT_COLUMNS + label_cols
 
     ensure_cross_company_tree()
     csv_path = cross_company_artifact("csv", "modeling_spine", "csv", mkdir=True)
     pq_path = cross_company_artifact("parquet", "modeling_spine", "parquet", mkdir=True)
     summary_path = cross_company_artifact("json", "modeling_spine_summary", "json", mkdir=True)
 
-    stacked.to_csv(csv_path, index=False)
+    stacked[out_cols].to_csv(csv_path, index=False)
     try:
-        stacked.to_parquet(pq_path, index=False)
+        stacked[out_cols].to_parquet(pq_path, index=False)
     except Exception as exc:
         print(f"  ! parquet write skipped: {exc}")
 
     summary = {
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "tickers": tickers,
+        "quarter_scope": sorted(quarter_set),
         "row_count": int(len(stacked)),
         "fiscal_periods": sorted(stacked["fiscal_period"].unique().tolist()),
-        "columns": cols,
+        "columns": out_cols,
         "include_labels": args.include_labels,
     }
     summary_path.write_text(json.dumps(summary, indent=2), encoding="utf-8")

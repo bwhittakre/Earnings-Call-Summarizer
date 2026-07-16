@@ -47,7 +47,16 @@ def quarter_record(registry: dict[str, Any], fiscal_period: str) -> dict[str, An
 
 def is_quarter_complete(registry: dict[str, Any], fiscal_period: str) -> bool:
     rec = registry.get("scored_quarters", {}).get(fiscal_period, {})
-    return all(rec.get(k) for k in ("dimensions_scored_at", "delta_scored_at", "surprise_scored_at"))
+    base = all(rec.get(k) for k in ("dimensions_scored_at", "delta_scored_at", "surprise_scored_at"))
+    if not base:
+        return False
+    any_novelty = any(
+        r.get("novelty_scored_at")
+        for r in registry.get("scored_quarters", {}).values()
+    )
+    if any_novelty:
+        return bool(rec.get("novelty_scored_at"))
+    return True
 
 
 def has_dimensions(registry: dict[str, Any], fiscal_period: str) -> bool:
@@ -64,6 +73,11 @@ def has_delta(registry: dict[str, Any], fiscal_period: str) -> bool:
 def has_surprise(registry: dict[str, Any], fiscal_period: str) -> bool:
     rec = registry.get("scored_quarters", {}).get(fiscal_period, {})
     return bool(rec.get("surprise_scored_at"))
+
+
+def has_novelty(registry: dict[str, Any], fiscal_period: str) -> bool:
+    rec = registry.get("scored_quarters", {}).get(fiscal_period, {})
+    return bool(rec.get("novelty_scored_at"))
 
 
 def ensure_registry(ticker: str, *, model: str = "unknown") -> dict[str, Any]:
@@ -90,6 +104,12 @@ def mark_delta(ticker: str, fiscal_period: str) -> None:
 def mark_surprise(ticker: str, fiscal_period: str) -> None:
     reg = load_registry(ticker)
     quarter_record(reg, fiscal_period)["surprise_scored_at"] = _now()
+    save_registry(ticker, reg)
+
+
+def mark_novelty(ticker: str, fiscal_period: str) -> None:
+    reg = load_registry(ticker)
+    quarter_record(reg, fiscal_period)["novelty_scored_at"] = _now()
     save_registry(ticker, reg)
 
 
@@ -141,6 +161,13 @@ def sync_registry_from_views(ticker: str, *, model: str = "unknown") -> dict[str
         for q in surprise_view.get("quarters", []):
             fp = q["fiscal_period"]
             quarter_record(reg, fp).setdefault("surprise_scored_at", _now())
+
+    novelty_path = _resolve(ticker, "novelty_view", "json", layer="json")
+    if novelty_path:
+        novelty_view = json.loads(novelty_path.read_text(encoding="utf-8"))
+        for q in novelty_view.get("quarters", []):
+            fp = q["fiscal_period"]
+            quarter_record(reg, fp).setdefault("novelty_scored_at", _now())
 
     save_registry(ticker, reg)
     return reg

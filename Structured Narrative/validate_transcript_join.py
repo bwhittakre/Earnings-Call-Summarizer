@@ -63,6 +63,10 @@ def validate_ticker(ticker: str, *, scope: str | None = None) -> int:
         has_quant = not qrow.empty if qrow is not None else False
         has_tx = tpath is not None
 
+        if not has_quant and not has_tx:
+            print(f"  {fp}: not yet available (no quant, no transcript)")
+            continue
+
         status_parts = []
         if has_quant:
             ed = qrow.iloc[0].get("earnings_date", "n/a")
@@ -72,6 +76,8 @@ def validate_ticker(ticker: str, *, scope: str | None = None) -> int:
             issues += 1
         if has_tx:
             status_parts.append(f"transcript={tpath.name}")
+        elif has_quant:
+            status_parts.append("NO transcript (quant only)")
         else:
             status_parts.append("NO transcript")
             issues += 1

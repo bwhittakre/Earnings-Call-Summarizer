@@ -46,13 +46,14 @@ def same_sign(a, b) -> bool | None:
 def apply_derived_features(panel: pd.DataFrame) -> pd.DataFrame:
     """Add derived modeling columns and multi-layer divergence flags."""
     df = panel.copy()
-    df["has_quant_z"] = df["quant_z"].notna()
+    df["has_quant_z"] = df["quant_z_pit"].notna() if "quant_z_pit" in df.columns else df["quant_z"].notna()
 
     df["abs_narrative_quant_gap"] = df["narrative_quant_gap"].abs()
     df["surprise_quant_interaction"] = df.apply(
         lambda r: (
-            round(float(r["surprise_magnitude"]) * float(r["quant_z"]), 3)
-            if pd.notna(r.get("surprise_magnitude")) and pd.notna(r.get("quant_z"))
+            round(float(r["surprise_magnitude"]) * float(r.get("quant_z_pit") or r.get("quant_z")), 3)
+            if pd.notna(r.get("surprise_magnitude"))
+            and pd.notna(r.get("quant_z_pit") if "quant_z_pit" in r.index else r.get("quant_z"))
             else None
         ),
         axis=1,
@@ -70,7 +71,7 @@ def apply_derived_features(panel: pd.DataFrame) -> pd.DataFrame:
     def _level_match(r):
         if r["dimension"] not in QUANT_COMPARABLE_DIMENSIONS:
             return pd.NA
-        return same_sign(r.get("llm_level"), r.get("quant_z"))
+        return same_sign(r.get("llm_level"), r.get("quant_z_pit") if pd.notna(r.get("quant_z_pit")) else r.get("quant_z"))
 
     def _delta_match(r):
         if r["dimension"] not in QUANT_COMPARABLE_DIMENSIONS:

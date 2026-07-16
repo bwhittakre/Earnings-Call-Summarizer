@@ -173,15 +173,24 @@ def build_dimension_scores(df: pd.DataFrame) -> pd.DataFrame:
     """One row per fiscal quarter: dimension z vectors (full-sample + PIT) plus
     the forward-return label for context."""
     # Event spine, time-ordered.
-    spine = (df.groupby("fiscal_period")
-               .agg(earnings_date=("earnings_date", "first"),
-                    earnings_datetime=("earnings_datetime", "first"),
-                    alpha_spec_0_90=("alpha_spec_0_90", "first"),
-                    alpha_spec_0_90_z=("alpha_spec_0_90_z", "first"),
-                    alpha_spec_0_90_complete=("alpha_spec_0_90_complete", "first"))
-               .reset_index()
-               .sort_values("earnings_datetime")
-               .reset_index(drop=True))
+    agg_cols = {
+        "earnings_date": ("earnings_date", "first"),
+        "earnings_datetime": ("earnings_datetime", "first"),
+        "alpha_spec_0_90": ("alpha_spec_0_90", "first"),
+        "alpha_spec_0_90_z": ("alpha_spec_0_90_z", "first"),
+        "alpha_spec_0_90_complete": ("alpha_spec_0_90_complete", "first"),
+    }
+    if "model_date" in df.columns:
+        agg_cols["model_date"] = ("model_date", "first")
+    if "fiscal_quarter_end" in df.columns:
+        agg_cols["fiscal_quarter_end"] = ("fiscal_quarter_end", "first")
+    spine = (
+        df.groupby("fiscal_period")
+        .agg(**agg_cols)
+        .reset_index()
+        .sort_values("earnings_datetime")
+        .reset_index(drop=True)
+    )
 
     present = set(df["measure"].unique())
 
@@ -204,7 +213,14 @@ def build_dimension_scores(df: pd.DataFrame) -> pd.DataFrame:
 
     for dim, spec in DIMENSIONS.items():
         pit = dim_series(spec, "z_pit")
-        spine[f"dim_{dim}_z"] = spine["fiscal_period"].map(pit)
+        full = dim_series(spec, "z")
+        if dim == "guidance":
+            # Call-date quant for guidance is null; revision z is T+7d delayed feature.
+            spine["dim_guidance_z"] = np.nan
+            spine["dim_guidance_revision_z_pit"] = spine["fiscal_period"].map(pit)
+        else:
+            spine[f"dim_{dim}_z"] = spine["fiscal_period"].map(pit)
+            spine[f"dim_{dim}_z_fullsample"] = spine["fiscal_period"].map(full)
 
     return spine
 

@@ -24,16 +24,22 @@ REPO_ROOT = HERE.parent
 if str(HERE) not in sys.path:
     sys.path.insert(0, str(HERE))
 
-from company_config import FY2025_OUTPUT_QUARTERS, FY2026_OUTPUT, PILOT_TICKERS  # noqa: E402
+from company_config import PILOT_OUTPUT_QUARTERS, PILOT_TICKERS  # noqa: E402
 from export_modeling_spine import filter_registry_complete, load_panel  # noqa: E402
 from fiscal_period_util import fiscal_period_sort_key  # noqa: E402
-from output_paths import cross_company_artifact, cross_company_layer, ensure_cross_company_tree  # noqa: E402
+from output_paths import cross_company_artifact, cross_company_layer, company_artifact, ensure_cross_company_tree  # noqa: E402
 from panel_html import build_consolidated_html, build_evidence_lookups, summarize_ticker_quarter  # noqa: E402
+from period_dates import (  # noqa: E402
+    calendar_quarter_sort_key,
+    enrich_panel_period_columns,
+    period_end_sort_columns,
+)
+from spine_export import CONSOLIDATED_SPINE_COLUMNS, panel_to_spine, validate_spine_rules  # noqa: E402
 
 SECTORS_DIR = REPO_ROOT / "config" / "sectors"
 PANEL_CHUNKS_DIR = "panel_chunks"
 
-FY2025_26_OUTPUT_QUARTERS = tuple(FY2025_OUTPUT_QUARTERS) + tuple(FY2026_OUTPUT) + ("FY2026-Q4",)
+EIGHT_QUARTER_SCOPE = tuple(PILOT_OUTPUT_QUARTERS)
 
 
 def load_sector_tickers(sector: str) -> list[str]:
@@ -77,6 +83,27 @@ def latest_common_quarter(tickers: list[str], stacked: pd.DataFrame) -> str | No
     return sorted(common, key=fiscal_period_sort_key)[-1]
 
 
+def default_period_bucket(stacked: pd.DataFrame) -> str | None:
+    """Latest period-end calendar quarter with the most tickers represented."""
+    if "period_end_calendar_quarter" not in stacked.columns:
+        stacked = enrich_panel_period_columns(stacked)
+    counts = stacked.groupby("period_end_calendar_quarter")["ticker"].nunique()
+    counts = counts[counts.index.notna()]
+    if counts.empty:
+        return None
+    return max(counts.index.tolist(), key=lambda b: (calendar_quarter_sort_key(str(b)), int(counts[b])))
+
+
+def period_buckets_from_panel(stacked: pd.DataFrame) -> list[str]:
+    if "period_end_calendar_quarter" not in stacked.columns:
+        stacked = enrich_panel_period_columns(stacked)
+    buckets = [
+        str(b)
+        for b in stacked["period_end_calendar_quarter"].dropna().unique().tolist()
+    ]
+    return sorted(buckets, key=calendar_quarter_sort_key, reverse=True)
+
+
 def filter_quarters(panel: pd.DataFrame, quarters: list[str] | None) -> pd.DataFrame:
     if not quarters:
         return panel
@@ -90,6 +117,8 @@ def build_summary_json(
     *,
     sector: str | None,
     default_quarter: str | None,
+    default_period_bucket: str | None,
+    period_buckets: list[str],
     loaded_tickers: list[str],
     skipped_tickers: list[str],
     quarter_scope: list[str] | None = None,
@@ -100,13 +129,33 @@ def build_summary_json(
     for ticker in loaded_tickers:
         sub = stacked[stacked["ticker"] == ticker]
         periods = sorted(sub["fiscal_period"].unique().tolist(), key=fiscal_period_sort_key)
+        quarter_meta: list[dict] = []
+        for fp in periods:
+            qsub = sub[sub["fiscal_period"] == fp]
+            meta_row = qsub.iloc[0]
+            quarter_meta.append(
+                {
+                    "fiscal_period": fp,
+                    "period_end_date": str(meta_row.get("period_end_date"))[:10]
+                    if pd.notna(meta_row.get("period_end_date"))
+                    else None,
+                    "period_end_calendar_quarter": meta_row.get("period_end_calendar_quarter"),
+                    "earnings_date": str(meta_row.get("earnings_date"))[:10]
+                    if pd.notna(meta_row.get("earnings_date"))
+                    else None,
+                    "feature_availability_date": str(meta_row.get("feature_availability_date"))[:10]
+                    if pd.notna(meta_row.get("feature_availability_date"))
+                    else None,
+                }
+            )
         by_quarter = {}
         for fp in periods:
             qsub = sub[sub["fiscal_period"] == fp]
             by_quarter[fp] = summarize_ticker_quarter(qsub)
         by_ticker[ticker] = {
             "rows": int(len(sub)),
-            "quarters": periods,
+            "quarters": quarter_meta,
+            "fiscal_periods": periods,
             "divergence_count": int(sub["is_divergence"].fillna(False).sum()),
             "by_quarter": by_quarter,
         }
@@ -121,6 +170,8 @@ def build_summary_json(
         "tickers_skipped": skipped_tickers,
         "sector": sector,
         "default_quarter": default_quarter,
+        "default_period_bucket": default_period_bucket,
+        "period_end_calendar_quarters": period_buckets,
         "quarter_scope": quarter_scope,
         "prior_quarters_excluded": prior_quarters,
         "fiscal_periods": fiscal_periods,
@@ -148,8 +199,8 @@ def main() -> int:
     ap.add_argument("--sector", help="Load tickers from config/sectors/{name}.txt")
     ap.add_argument(
         "--quarter",
-        metavar="FYyyyy-Qn",
-        help="Default quarter for Compare-by-quarter mode (default: latest common quarter).",
+        metavar="yyyy-Qn",
+        help="Default period-end calendar bucket for Compare mode (e.g. 2025-Q1).",
     )
     ap.add_argument(
         "--quarters",
@@ -165,8 +216,13 @@ def main() -> int:
     ap.add_argument(
         "--full-history-tickers",
         nargs="+",
-        default=["AMZN"],
+        default=[],
         help="Tickers that keep all panel rows (ignore --quarters/--scope filter).",
+    )
+    ap.add_argument(
+        "--research-ticker",
+        default="AMZN",
+        help="Ticker for separate full-history research spine export (default: AMZN).",
     )
     ap.add_argument(
         "--output-stem",
@@ -178,7 +234,7 @@ def main() -> int:
 
     quarter_scope: list[str] | None = None
     if args.scope == "fy2025_26":
-        quarter_scope = list(FY2025_26_OUTPUT_QUARTERS)
+        quarter_scope = list(EIGHT_QUARTER_SCOPE)
     elif args.quarters:
         quarter_scope = [q.upper() for q in args.quarters]
 
@@ -216,17 +272,18 @@ def main() -> int:
         return 1
 
     stacked = pd.concat(frames, ignore_index=True)
-    stacked = stacked.sort_values(["ticker", "fiscal_period", "dimension"]).reset_index(drop=True)
+    stacked = enrich_panel_period_columns(stacked)
+    sort_cols = [c for c in period_end_sort_columns() if c in stacked.columns]
+    stacked = stacked.sort_values(sort_cols or ["ticker", "fiscal_period", "dimension"]).reset_index(drop=True)
 
-    default_quarter = args.quarter
-    if not default_quarter:
-        default_quarter = latest_common_quarter(loaded, stacked)
-    if not default_quarter and not stacked.empty:
-        default_quarter = sorted(
-            stacked["fiscal_period"].unique().tolist(), key=fiscal_period_sort_key
-        )[-1]
+    period_buckets = period_buckets_from_panel(stacked)
+    default_bucket = args.quarter
+    if not default_bucket:
+        default_bucket = default_period_bucket(stacked)
+    if not default_bucket and period_buckets:
+        default_bucket = period_buckets[0]
 
-    fiscal_periods = sorted(stacked["fiscal_period"].unique().tolist(), key=fiscal_period_sort_key)
+    default_quarter = latest_common_quarter(loaded, stacked)
     lookups_by_ticker = {t: build_evidence_lookups(t) for t in loaded}
 
     summary = build_summary_json(
@@ -234,6 +291,8 @@ def main() -> int:
         tickers,
         sector=sector,
         default_quarter=default_quarter,
+        default_period_bucket=default_bucket,
+        period_buckets=period_buckets,
         loaded_tickers=loaded,
         skipped_tickers=skipped,
         quarter_scope=quarter_scope,
@@ -245,6 +304,29 @@ def main() -> int:
     html_path = cross_company_artifact("reports", stem, "html", mkdir=True)
     summary_path = cross_company_artifact("json", f"{stem}_summary", "json", mkdir=True)
     csv_path = cross_company_artifact("csv", stem, "csv", mkdir=True)
+    spine_path = cross_company_artifact("csv", "cross_section_spine", "csv", mkdir=True)
+
+    cross_section = stacked.copy()
+    if quarter_scope:
+        cross_section = filter_quarters(cross_section, quarter_scope)
+    spine_df = panel_to_spine(cross_section)
+    spine_errors = validate_spine_rules(spine_df)
+    if spine_errors:
+        print(f"  ! Spine validation warnings: {len(spine_errors)}", file=sys.stderr)
+    spine_df.to_csv(spine_path, index=False)
+
+    research_ticker = args.research_ticker.upper()
+    if research_ticker in loaded:
+        try:
+            research_panel = load_panel(research_ticker)
+            research_panel = filter_registry_complete(research_panel, research_ticker)
+            research_spine = panel_to_spine(research_panel)
+            research_out = company_artifact(research_ticker, "csv", "research_spine", "csv", mkdir=True)
+            research_spine.to_csv(research_out, index=False)
+            print(f"Wrote {research_out} ({len(research_spine)} rows, full {research_ticker} history)")
+        except FileNotFoundError:
+            print(f"  ! Skipping research spine: no panel for {research_ticker}", file=sys.stderr)
+
     stacked.to_csv(csv_path, index=False)
 
     html_path.write_text(
@@ -252,8 +334,8 @@ def main() -> int:
             stacked,
             lookups_by_ticker,
             tickers=loaded,
-            fiscal_periods=fiscal_periods,
-            default_quarter=default_quarter or "ALL",
+            period_buckets=period_buckets,
+            default_bucket=default_bucket or "ALL",
             sector_label=sector,
             generated_at=summary["generated_at"],
         ),
@@ -261,10 +343,11 @@ def main() -> int:
     )
     summary_path.write_text(json.dumps(summary, indent=2), encoding="utf-8")
 
+    print(f"Wrote {spine_path}")
     print(f"Wrote {html_path}")
     print(f"Wrote {summary_path}")
     print(f"Wrote {csv_path}")
-    print(f"  {len(loaded)} ticker(s), {len(stacked)} rows, default quarter={default_quarter}")
+    print(f"  {len(loaded)} ticker(s), {len(stacked)} rows, default bucket={default_bucket}")
     if skipped:
         print(f"  Skipped: {', '.join(skipped)}")
     return 0

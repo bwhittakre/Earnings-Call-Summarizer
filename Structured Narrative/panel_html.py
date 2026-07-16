@@ -11,6 +11,7 @@ import pandas as pd
 
 from html_evidence import EVIDENCE_CSS, render_evidence_block
 from output_paths import resolve_read
+from period_dates import calendar_quarter_display, format_us_date, quarter_cell_html
 
 DIM_LABELS = {
     "demand": "Demand",
@@ -38,7 +39,8 @@ SURPRISE_DIR_LABELS = {
 FOCUS_DETAIL_BLOCKS = (
     ("level_rationale", "Focus 1 — Level", "level", "L", "Notes — transcript evidence"),
     ("delta_rationale", "Focus 2 — Delta", "delta", "D", "Notes — current-quarter change evidence"),
-    ("surprise_rationale", "Focus 3 — Surprise", "surprise", "S", "Notes — narrative evidence"),
+    ("surprise_rationale", "Focus 3 — Surprise vs consensus", "surprise", "S", "Notes — narrative evidence"),
+    ("novelty_rationale", "Focus 3b — Narrative novelty", "surprise", "N", "Notes — novelty evidence"),
 )
 
 PANEL_TABLE_HEADERS = (
@@ -65,6 +67,9 @@ BASE_CSS = """
   th { background: #f2f2f4; font-size: 12px; text-transform: uppercase; letter-spacing: .03em; }
   td.dim { font-weight: 600; white-space: nowrap; }
   td.ticker { font-weight: 700; white-space: nowrap; }
+  td.fp .fp-label { font-weight: 600; }
+  td.fp .fp-sub { font-size: 11px; color: #666; line-height: 1.35; }
+  td.date { font-size: 12px; white-space: nowrap; }
   td.num { text-align: center; font-variant-numeric: tabular-nums; font-weight: 600; width: 10%; }
   td.flags { width: 18%; font-size: 11px; }
   .flag { display: inline-block; margin: 1px 3px 1px 0; padding: 1px 6px; border-radius: 4px;
@@ -184,7 +189,7 @@ def render_dimension_row(
     if not row.get("has_delta"):
         flags.append('<span class="flag missing">no delta</span>')
     stack = row.get("signal_stack") or ""
-    if stack:
+    if stack and isinstance(stack, str):
         flags.append(
             f'<span class="flag stack" title="{esc(stack)}">'
             f'{esc(stack[:48])}{"…" if len(stack) > 48 else ""}</span>'
@@ -199,6 +204,24 @@ def render_dimension_row(
     surpr_txt = "&mdash;"
     if pd.notna(row.get("surprise_magnitude")):
         surpr_txt = f"{SURPRISE_DIR_LABELS.get(sd, sd or '')} {fmt_score(row.get('surprise_magnitude'))}"
+
+    nd = row.get("novelty_direction")
+    novelty_txt = "&mdash;"
+    if pd.notna(row.get("narrative_novelty")):
+        novelty_txt = f"{nd or 'novelty'} {fmt_score(row.get('narrative_novelty'))}"
+
+    qz = row.get("quant_z_pit") if pd.notna(row.get("quant_z_pit")) else row.get("quant_z")
+    agree = row.get("agrees_with_quant")
+    agree_txt = "yes" if agree is True else ("no" if agree is False else "&mdash;")
+    ev_conf = row.get("evidence_confidence")
+    if ev_conf is None and pd.notna(row.get("level_evidence_supported_pct")):
+        pcts = [row.get(c) for c in (
+            "level_evidence_supported_pct",
+            "delta_evidence_supported_pct",
+            "surprise_evidence_supported_pct",
+            "novelty_evidence_supported_pct",
+        ) if pd.notna(row.get(c))]
+        ev_conf = min(pcts) if pcts else None
 
     ev_key = (row["fiscal_period"], dim)
     details = []
@@ -220,7 +243,15 @@ def render_dimension_row(
             )
 
     details_html = f'<div class="details">{"".join(details)}</div>' if details else ""
-    fp_cell = f'<td class="fp">{esc(row["fiscal_period"])}</td>' if show_quarter else ""
+    meta = []
+    if pd.notna(row.get("earnings_date")):
+        meta.append(f"Earnings: {esc(row.get('earnings_date'))}")
+    if pd.notna(row.get("feature_availability_date")):
+        meta.append(f"Available: {esc(row.get('feature_availability_date'))}")
+    if row.get("quant_mapping"):
+        meta.append(f"Quant map: {esc(str(row.get('quant_mapping')))}")
+    meta_html = f'<div class="sub">{ " · ".join(meta)}</div>' if meta else ""
+    fp_cell = f'<td class="fp">{quarter_cell_html(row)}</td>' if show_quarter else ""
 
     return f"""
     <tr class="data-row" data-q="{esc(row['fiscal_period'])}" data-div="{1 if row.get('is_divergence') else 0}"
@@ -230,12 +261,15 @@ def render_dimension_row(
       <td class="num" style="{mag_tint(row.get('llm_level'))}">{fmt_score(row.get('llm_level'))}</td>
       <td class="num" style="{mag_tint(row.get('change_magnitude'))}">{delta_txt}</td>
       <td class="num" style="{mag_tint(row.get('surprise_magnitude'))}">{surpr_txt}</td>
-      <td class="num z" style="{mag_tint(row.get('quant_z'), hi=1.5)}">{fmt_z(row.get('quant_z'))}</td>
+      <td class="num" style="{mag_tint(row.get('narrative_novelty'))}">{novelty_txt}</td>
+      <td class="num z" style="{mag_tint(qz, hi=1.5)}">{fmt_z(qz)}</td>
+      <td class="num">{agree_txt}</td>
+      <td class="num">{fmt_z(ev_conf) if ev_conf is not None else "&mdash;"}</td>
       <td class="num gap" style="{mag_tint(row.get('narrative_quant_gap'), hi=2.0)}">{fmt_z(row.get('narrative_quant_gap'))}</td>
       <td class="flags">{''.join(flags)}</td>
       <td class="expand"><button type="button" class="toggle" aria-expanded="false" data-target="{esc(row_id)}">+</button></td>
     </tr>
-    <tr class="detail-row" id="{esc(row_id)}" hidden><td colspan="{9 if show_quarter else 8}">{details_html}</td></tr>
+    <tr class="detail-row" id="{esc(row_id)}" hidden><td colspan="{11 if show_quarter else 10}">{meta_html}{details_html}</td></tr>
     """
 
 
@@ -256,7 +290,7 @@ def render_panel_table(
     quarter_th = "<th>Quarter</th>" if show_quarter else ""
     headers = (
         f"<tr>{quarter_th}<th>Dimension</th><th>Level</th><th>Delta</th><th>Surprise</th>"
-        f"<th>Quant z</th><th>Gap</th><th>Flags</th><th></th></tr>"
+        f"<th>Novelty</th><th>Quant PIT</th><th>Agree</th><th>Evidence</th><th>Gap</th><th>Flags</th><th></th></tr>"
     )
     return f'<table class="{table_class}"><thead>{headers}</thead><tbody>{"".join(rows_html)}</tbody></table>'
 
@@ -407,8 +441,8 @@ def build_consolidated_html(
     lookups_by_ticker: dict[str, EvidenceLookups],
     *,
     tickers: list[str],
-    fiscal_periods: list[str],
-    default_quarter: str,
+    period_buckets: list[str],
+    default_bucket: str,
     sector_label: str | None,
     generated_at: str,
 ) -> str:
@@ -416,28 +450,49 @@ def build_consolidated_html(
     ticker_txt = ", ".join(tickers)
 
     quarter_buttons = []
-    for fp in fiscal_periods:
-        sel = " active" if fp == default_quarter else ""
+    for bucket in period_buckets:
+        sel = " active" if bucket == default_bucket else ""
+        label = calendar_quarter_display(bucket)
         quarter_buttons.append(
-            f'<button class="fbtn qbtn{sel}" data-quarter="{esc(fp)}">{esc(fp)}</button>'
+            f'<button class="fbtn qbtn{sel}" data-period-bucket="{esc(bucket)}" '
+            f'title="{esc(label)}">{esc(bucket)}</button>'
         )
-    quarter_buttons.append('<button class="fbtn qbtn" data-quarter="ALL">All quarters</button>')
+    quarter_buttons.append('<button class="fbtn qbtn" data-period-bucket="ALL">All buckets</button>')
 
     compare_rows: list[str] = []
     browse_rows: list[str] = []
-    row_idx = 0
 
     for ticker in tickers:
-        tpanel = stacked[stacked["ticker"] == ticker].sort_values(["fiscal_period", "dimension"])
+        tpanel = stacked[stacked["ticker"] == ticker].copy()
+        if "period_end_date" in tpanel.columns:
+            tpanel = tpanel.sort_values(["period_end_date", "fiscal_period", "dimension"])
+        else:
+            tpanel = tpanel.sort_values(["fiscal_period", "dimension"])
         lookups = lookups_by_ticker[ticker]
-        periods = sorted(tpanel["fiscal_period"].unique().tolist())
-        latest = periods[-1] if periods else ""
         div_count = int(tpanel["is_divergence"].fillna(False).sum())
 
-        for fp in periods:
+        buckets_seen: set[str] = set()
+        bucket_groups = (
+            tpanel.groupby("period_end_calendar_quarter", sort=False)
+            if "period_end_calendar_quarter" in tpanel.columns
+            else tpanel.groupby("fiscal_period", sort=False)
+        )
+        for bucket, grp in bucket_groups:
+            if pd.isna(bucket):
+                continue
+            bucket = str(bucket)
+            if bucket in buckets_seen:
+                continue
+            buckets_seen.add(bucket)
+
+            if "period_end_date" in grp.columns and grp["period_end_date"].notna().any():
+                fp = grp.sort_values("period_end_date").iloc[-1]["fiscal_period"]
+            else:
+                fp = grp.iloc[0]["fiscal_period"]
             qsub = tpanel[tpanel["fiscal_period"] == fp]
+            meta_row = qsub.iloc[0]
             stats = summarize_ticker_quarter(qsub)
-            detail_id = f"cmp-{ticker}-{fp.replace('-', '')}"
+            detail_id = f"cmp-{ticker}-{bucket.replace('-', '')}"
             inner = render_panel_table(
                 qsub,
                 lookups,
@@ -445,12 +500,15 @@ def build_consolidated_html(
                 show_quarter=False,
                 table_class="inner-panel",
             )
-            hidden = "" if fp == default_quarter else ' style="display:none"'
+            hidden = "" if bucket == default_bucket else ' style="display:none"'
             compare_rows.append(f"""
-    <tr class="company-row cmp-row" data-ticker="{esc(ticker)}" data-quarter="{esc(fp)}"{hidden}
+    <tr class="company-row cmp-row" data-ticker="{esc(ticker)}" data-period-bucket="{esc(bucket)}"{hidden}
         data-div="{1 if stats['divergence_count'] else 0}">
       <td class="ticker">{esc(ticker)}</td>
-      <td class="fp">{esc(fp)}</td>
+      <td class="fp">{quarter_cell_html(meta_row)}</td>
+      <td class="date">{format_us_date(meta_row.get('period_end_date')) or '&mdash;'}</td>
+      <td class="date">{format_us_date(meta_row.get('earnings_date')) or '&mdash;'}</td>
+      <td class="date">{format_us_date(meta_row.get('feature_availability_date')) or '&mdash;'}</td>
       <td class="num">{fmt_mean(stats['level_avg'])}</td>
       <td class="num">{fmt_mean(stats['delta_avg'])}</td>
       <td class="num">{fmt_mean(stats['surprise_avg'])}</td>
@@ -460,8 +518,15 @@ def build_consolidated_html(
       <td class="flags">{_summary_flags(qsub)}</td>
       <td class="expand"><button type="button" class="toggle" aria-expanded="false" data-target="{detail_id}-wrap">+</button></td>
     </tr>
-    <tr class="detail-row" id="{detail_id}-wrap" hidden><td colspan="10">{inner}</td></tr>
+    <tr class="detail-row" id="{detail_id}-wrap" hidden><td colspan="13">{inner}</td></tr>
             """)
+
+        if "period_end_date" in tpanel.columns and tpanel["period_end_date"].notna().any():
+            latest_row = tpanel.sort_values("period_end_date").iloc[-1]
+            latest_html = quarter_cell_html(latest_row)
+        else:
+            periods = sorted(tpanel["fiscal_period"].unique().tolist())
+            latest_html = esc(periods[-1] if periods else "")
 
         browse_id = f"br-{ticker}"
         inner_full = render_panel_table(
@@ -471,18 +536,18 @@ def build_consolidated_html(
             show_quarter=True,
             table_class="inner-panel",
         )
+        n_quarters = tpanel["fiscal_period"].nunique()
         browse_rows.append(f"""
     <tr class="company-row br-row" data-ticker="{esc(ticker)}" data-div="{1 if div_count else 0}">
       <td class="ticker">{esc(ticker)}</td>
-      <td>{len(periods)}</td>
+      <td>{n_quarters}</td>
       <td class="num">{len(tpanel)}</td>
       <td class="num">{div_count}</td>
-      <td class="fp">{esc(latest)}</td>
+      <td class="fp">{latest_html}</td>
       <td class="expand"><button type="button" class="toggle" aria-expanded="false" data-target="{browse_id}-wrap">+</button></td>
     </tr>
     <tr class="detail-row" id="{browse_id}-wrap" hidden><td colspan="6">{inner_full}</td></tr>
         """)
-        row_idx += 1
 
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -496,17 +561,18 @@ def build_consolidated_html(
   <h1>Consolidated Feature Panel</h1>
   <div class="sub">Cross-company comparison. Generated {esc(generated_at)}.{sector_txt}<br>Tickers: {esc(ticker_txt)}</div>
   <div class="controls">
-    <button class="mbtn active" data-mode="compare">Compare by quarter</button>
+    <button class="mbtn active" data-mode="compare">Compare by period-end quarter</button>
     <button class="mbtn" data-mode="browse">Browse by company</button>
     <span id="quarter-controls">{''.join(quarter_buttons)}</span>
     <button class="fbtn" data-filter="div">Diverges only</button>
-    <div class="legend">Click + next to a company to expand its feature panel. In Compare mode, pick a quarter to align tickers. Gap = surprise magnitude minus quant z.</div>
+    <div class="legend">Compare aligns companies by <strong>calendar quarter of fiscal period-end</strong>, not fiscal quarter label. Click + next to a company to expand its feature panel. Gap = surprise magnitude minus quant z.</div>
   </div>
 
   <div id="mode-compare" class="mode-section active">
     <table id="compare-table">
       <thead>
-        <tr><th>Ticker</th><th>Quarter</th><th>Level avg</th><th>Delta avg</th><th>Surprise avg</th>
+        <tr><th>Ticker</th><th>Quarter</th><th>Period ending</th><th>Earnings call</th><th>Feature available</th>
+            <th>Level avg</th><th>Delta avg</th><th>Surprise avg</th>
             <th>Quant z avg</th><th>Divergences</th><th>Max gap</th><th>Flags</th><th></th></tr>
       </thead>
       <tbody>{"".join(compare_rows)}</tbody>
@@ -525,7 +591,7 @@ def build_consolidated_html(
 <script>
 (function () {{
   var mode = 'compare';
-  var selectedQuarter = {json.dumps(default_quarter)};
+  var selectedBucket = {json.dumps(default_bucket)};
   var filterDivOnly = false;
 
   function bindToggles(scope) {{
@@ -546,8 +612,8 @@ def build_consolidated_html(
 
   function applyCompareQuarter() {{
     document.querySelectorAll('.cmp-row').forEach(function (tr) {{
-      var q = tr.getAttribute('data-quarter');
-      var showQ = (selectedQuarter === 'ALL') || (q === selectedQuarter);
+      var q = tr.getAttribute('data-period-bucket');
+      var showQ = (selectedBucket === 'ALL') || (q === selectedBucket);
       var showDiv = !filterDivOnly || tr.getAttribute('data-div') === '1';
       tr.style.display = (showQ && showDiv) ? '' : 'none';
       var next = tr.nextElementSibling;
@@ -558,9 +624,9 @@ def build_consolidated_html(
       }}
     }});
     document.querySelectorAll('.qbtn').forEach(function (b) {{
-      b.classList.toggle('active', b.getAttribute('data-quarter') === selectedQuarter);
+      b.classList.toggle('active', b.getAttribute('data-period-bucket') === selectedBucket);
     }});
-    var showEvidence = selectedQuarter !== 'ALL';
+    var showEvidence = selectedBucket !== 'ALL';
     document.querySelectorAll('.quarter-evidence').forEach(function (el) {{
       el.hidden = !showEvidence;
     }});
@@ -593,7 +659,7 @@ def build_consolidated_html(
 
   document.querySelectorAll('.qbtn').forEach(function (b) {{
     b.addEventListener('click', function () {{
-      selectedQuarter = b.getAttribute('data-quarter');
+      selectedBucket = b.getAttribute('data-period-bucket');
       applyCompareQuarter();
     }});
   }});

@@ -27,7 +27,7 @@ from output_paths import (  # noqa: E402
     resolve_read_parquet_or_csv,
     resolve_read_required,
 )
-from quant_loader import load_quant_dim_z  # noqa: E402
+from quant_loader import load_quant_guidance_revision_z_pit, load_quant_z_pit  # noqa: E402
 
 
 from quant_panel import agrees, narrative_quant_gap  # noqa: E402
@@ -137,7 +137,11 @@ def refresh_delta(ticker: str, quant_z: dict[str, dict[str, float | None]]) -> N
     print(f"Updated {out}")
 
 
-def refresh_surprise(ticker: str, quant_z: dict[str, dict[str, float | None]]) -> None:
+def refresh_surprise(
+    ticker: str,
+    quant_z: dict[str, dict[str, float | None]],
+    guidance_rev: dict[str, float | None],
+) -> None:
     pq_path = resolve_read_parquet_or_csv(ticker, "dimension_surprise", layer="parquet")
     if pq_path is None:
         print("  ! dimension_surprise not found; skipping surprise refresh")
@@ -151,8 +155,16 @@ def refresh_surprise(ticker: str, quant_z: dict[str, dict[str, float | None]]) -
         fp = str(r["fiscal_period"])
         if not r.get("is_quant_comparable", True):
             return r
-        qz = quant_z.get(fp, {}).get(dim)
-        r["quant_z"] = qz
+        if dim == "guidance":
+            qz = guidance_rev.get(fp)
+            r["quant_z"] = None
+            r["quant_z_pit"] = None
+            r["quant_guidance_revision_z_pit"] = qz
+        else:
+            qz = quant_z.get(fp, {}).get(dim)
+            r["quant_z"] = qz
+            r["quant_z_pit"] = qz
+            r["quant_guidance_revision_z_pit"] = None
         mag = r.get("surprise_magnitude")
         r["agrees_with_quant"] = agrees(mag, qz)
         r["narrative_quant_gap"] = narrative_quant_gap(mag, qz)
@@ -194,7 +206,8 @@ def main() -> int:
     ap.add_argument("--ticker", default="AMZN")
     args = ap.parse_args()
     ticker = args.ticker.upper()
-    quant_z = load_quant_dim_z(ticker)
+    quant_z = load_quant_z_pit(ticker)
+    guidance_rev = load_quant_guidance_revision_z_pit(ticker)
     if not quant_z:
         print(f"Error: no dimension_scores for {ticker}", file=sys.stderr)
         return 1
@@ -204,7 +217,7 @@ def main() -> int:
     refresh_dimension_view(ticker, quant_z)
     refresh_level_csv(ticker, quant_z)
     refresh_delta(ticker, quant_z)
-    refresh_surprise(ticker, quant_z)
+    refresh_surprise(ticker, quant_z, guidance_rev)
     print(f"\nDone: refreshed PIT quant anchors for {ticker}.")
     return 0
 

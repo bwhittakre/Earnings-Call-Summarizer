@@ -60,6 +60,7 @@ class PanelQuantTests(unittest.TestCase):
                     "ticker": "TST",
                     "fiscal_period": "FY2025-Q1",
                     "dimension": "demand",
+                    "quant_z_pit": 0.5,
                     "quant_z": 0.5,
                     "llm_level": -0.4,
                     "change_magnitude": 0.2,
@@ -73,6 +74,40 @@ class PanelQuantTests(unittest.TestCase):
         out = apply_derived_features(panel)
         self.assertIn("any_quant_divergence", out.columns)
         self.assertTrue(bool(out.iloc[0]["any_quant_divergence"]))
+
+    def test_spine_export_rules(self):
+        from spine_export import panel_to_spine, validate_spine_rules
+
+        panel = pd.DataFrame(
+            [
+                {
+                    "ticker": "TST",
+                    "fiscal_period": "FY2025-Q1",
+                    "dimension": "demand",
+                    "earnings_date": "2025-05-01",
+                    "feature_availability_date": "2025-05-01",
+                    "llm_level": 1.0,
+                    "surprise_magnitude": 0.5,
+                    "narrative_novelty": None,
+                    "quant_z_pit": 0.2,
+                    "level_evidence_supported_pct": 1.0,
+                },
+                {
+                    "ticker": "TST",
+                    "fiscal_period": "FY2025-Q1",
+                    "dimension": "management_confidence",
+                    "earnings_date": "2025-05-01",
+                    "feature_availability_date": "2025-05-01",
+                    "llm_level": 0.5,
+                    "surprise_magnitude": None,
+                    "narrative_novelty": 1.0,
+                    "quant_z_pit": None,
+                    "novelty_evidence_supported_pct": 1.0,
+                },
+            ]
+        )
+        spine = panel_to_spine(panel)
+        self.assertEqual(validate_spine_rules(spine), [])
 
     def test_msft_panel_quant_matches_spine_if_present(self):
         panel_path = SN / "output" / "MSFT" / "csv" / "feature_panel.csv"

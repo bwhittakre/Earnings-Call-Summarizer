@@ -92,7 +92,7 @@ def load_view(ticker: str) -> dict:
     return json.loads(view_file.read_text(encoding="utf-8"))
 
 
-from quant_loader import load_quant_dim_z  # noqa: E402
+from quant_loader import load_quant_guidance_revision_z_pit, load_quant_z_pit  # noqa: E402
 from pit_config import is_pit_mode  # noqa: E402
 from quarter_registry import mark_surprise, ensure_registry, has_surprise  # noqa: E402
 
@@ -175,7 +175,8 @@ def main() -> int:
         print("No quarters in dimension view.", file=sys.stderr)
         return 1
 
-    quant_z_by_fp = load_quant_dim_z(ticker)
+    quant_z_by_fp = load_quant_z_pit(ticker)
+    guidance_rev_by_fp = load_quant_guidance_revision_z_pit(ticker)
 
     scoped_output = [
         q for q in quarters
@@ -225,7 +226,7 @@ def main() -> int:
     print(f"Provider: {provider.name} | Model: {model} | paraphrase rescue: "
           f"{'on' if use_rescue else 'off'}")
     print(f"Scoring narrative surprise for {len(output_quarters)} output quarter(s) "
-          f"across {len(ALL_DIMENSIONS)} dimensions.\n")
+          f"across {len(QUANT_COMPARABLE_DIMENSIONS)} quant-comparable dimensions.\n")
 
     rows: list[dict] = []
     quarters_view: list[dict] = []
@@ -253,7 +254,7 @@ def main() -> int:
             ticker=ticker,
             include_validation_revisions=not is_pit_mode(),
         )
-        level_block = format_level_summary(q)
+        level_block = "" if is_pit_mode() else format_level_summary(q)
 
         print(f"[{fp}] scoring narrative surprise…")
         scored = scorer.score(transcript, consensus_block, company.company_name, level_block)
@@ -263,7 +264,12 @@ def main() -> int:
 
         for s in scored.surprises:
             dim = s.dimension
-            qz = dim_z.get(dim) if s.is_quant_comparable else None
+            if dim not in QUANT_COMPARABLE_DIMENSIONS:
+                continue
+            if dim == "guidance":
+                qz = guidance_rev_by_fp.get(fp)
+            else:
+                qz = quant_z_by_fp.get(fp, {}).get(dim)
             llm_level = levels.get(dim)
             agrees = _agrees(s.surprise_magnitude, qz) if s.is_quant_comparable else None
             gap = _narrative_quant_gap(s.surprise_magnitude, qz) if s.is_quant_comparable else None
@@ -278,7 +284,9 @@ def main() -> int:
                 "dimension": dim,
                 "is_quant_comparable": s.is_quant_comparable,
                 "llm_level": llm_level,
-                "quant_z": qz,
+                "quant_z": qz if dim != "guidance" else None,
+                "quant_z_pit": qz if dim != "guidance" else None,
+                "quant_guidance_revision_z_pit": qz if dim == "guidance" else None,
                 "surprise_direction": s.surprise_direction,
                 "surprise_magnitude": s.surprise_magnitude,
                 "agrees_with_quant": agrees,
@@ -381,7 +389,7 @@ def main() -> int:
         "company_name": company.company_name,
         "model": model,
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-        "dimension_order": ALL_DIMENSIONS,
+        "dimension_order": QUANT_COMPARABLE_DIMENSIONS,
         "quant_comparable": QUANT_COMPARABLE_DIMENSIONS,
         "quarters": quarters_view,
     }

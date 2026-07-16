@@ -172,6 +172,10 @@ def main() -> int:
             "Focus 3 surprise",
             [PY, f"{sn}/run_surprise_scoring.py", "--ticker", ticker, *scope_args, *force_args, *quarter_args],
         )
+        run_step(
+            "Focus 3b novelty",
+            [PY, f"{sn}/run_novelty_scoring.py", "--ticker", ticker, *scope_args, *force_args, *quarter_args],
+        )
 
     if resolve_read_parquet_or_csv(ticker, "dimension_scores", layer="parquet") is not None:
         run_step(

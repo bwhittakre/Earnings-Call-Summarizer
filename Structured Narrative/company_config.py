@@ -19,7 +19,10 @@ FY2026_OUTPUT = (
     "FY2026-Q3",
 )
 
-PILOT_OUTPUT_QUARTERS = FY2025_OUTPUT_QUARTERS + FY2026_OUTPUT
+# Legacy calendar-aligned 8Q window for eval exports. Live batch runs use ROIC.ai
+# ``--last 8`` (see roic_quarters.py / run_pilot_8q_batch.py) — the 8 most recent
+# earnings calls ROIC has per company, not this fixed FY2025–FY2026 span.
+PILOT_OUTPUT_QUARTERS = FY2025_OUTPUT_QUARTERS + FY2026_OUTPUT + ("FY2026-Q4",)
 
 FY2024_PRIOR_QUARTERS = (
     "FY2024-Q4",
@@ -55,7 +58,7 @@ AMZN_FIVE_YEAR_OUTPUT_QUARTERS = (
 # AMZN published panel: five-year history + FY2024-Q4 bridge + pilot FY2025–FY2026.
 AMZN_FULL_OUTPUT_QUARTERS = AMZN_FIVE_YEAR_OUTPUT_QUARTERS + (
     "FY2024-Q4",
-) + PILOT_OUTPUT_QUARTERS + ("FY2026-Q4",)
+) + PILOT_OUTPUT_QUARTERS
 
 PILOT_TICKERS = ("AMZN", "MSFT", "NVDA")
 DEFAULT_TICKER = "AMZN"
@@ -140,7 +143,7 @@ COMPANIES: dict[str, CompanyProfile] = {
         estpermid=30064826814,
         isin="US0378331005",
         barra_id="USAB1X1",
-        output_quarters=FY2025_OUTPUT_QUARTERS,
+        output_quarters=PILOT_OUTPUT_QUARTERS,
         prior_quarters=FY2024_PRIOR_QUARTERS,
     ),
 }
