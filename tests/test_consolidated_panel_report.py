@@ -17,15 +17,27 @@ from excel_export import write_cross_section_panel_workbook  # noqa: E402
 from panel_html import EvidenceLookups, build_consolidated_html, summarize_ticker_quarter  # noqa: E402
 from period_dates import (  # noqa: E402
     apply_feature_availability_dates,
+    apply_investable_cross_section_columns,
     calendar_quarter_from_date,
     enrich_panel_period_columns,
     quarter_cell_html,
 )
-from spine_export import CONSOLIDATED_SPINE_COLUMNS, panel_to_spine, validate_spine_rules  # noqa: E402
+from spine_export import (  # noqa: E402
+    CONSOLIDATED_SPINE_COLUMNS,
+    panel_to_spine,
+    standardize_surprise_novelty_exclusivity,
+    validate_spine_rules,
+)
 from quant_mapping import quant_mapping_for, quant_family_for  # noqa: E402
 
 
-def _sample_panel(ticker: str, fp: str, *, period_end: str = "2025-03-31") -> pd.DataFrame:
+def _sample_panel(
+    ticker: str,
+    fp: str,
+    *,
+    period_end: str = "2025-03-31",
+    earnings_date: str = "2025-05-01",
+) -> pd.DataFrame:
     bucket = calendar_quarter_from_date(period_end)
     rows = [
         {
@@ -34,8 +46,10 @@ def _sample_panel(ticker: str, fp: str, *, period_end: str = "2025-03-31") -> pd
             "period_end_date": period_end,
             "period_end_calendar_quarter": bucket,
             "dimension": "demand",
-            "earnings_date": "2025-05-01",
-            "feature_availability_date": "2025-05-01",
+            "earnings_date": earnings_date,
+            "call_feature_available_date": earnings_date,
+            "t7_feature_available_date": None,
+            "feature_availability_date": earnings_date,
             "quant_mapping": quant_mapping_for("demand"),
             "quant_family": quant_family_for("demand"),
             "llm_level": 1.5,
@@ -67,8 +81,10 @@ def _sample_panel(ticker: str, fp: str, *, period_end: str = "2025-03-31") -> pd
             "period_end_date": period_end,
             "period_end_calendar_quarter": bucket,
             "dimension": "management_confidence",
-            "earnings_date": "2025-05-01",
-            "feature_availability_date": "2025-05-01",
+            "earnings_date": earnings_date,
+            "call_feature_available_date": earnings_date,
+            "t7_feature_available_date": None,
+            "feature_availability_date": earnings_date,
             "quant_mapping": "",
             "quant_family": None,
             "llm_level": 0.5,
@@ -121,17 +137,56 @@ class PeriodEndBucketTests(unittest.TestCase):
         self.assertIn("03/31/2025", html)
         self.assertIn("Earnings call", html)
 
-    def test_guidance_feature_availability_t_plus_7(self):
-        row = pd.Series(
-            {
-                "dimension": "guidance",
-                "earnings_date": "2025-05-01",
-                "model_date": "2025-05-08",
-                "quant_guidance_revision_z_pit": 0.5,
-            }
-        )
+    def test_guidance_feature_availability_feature_level(self):
+        row = {
+            "dimension": "guidance",
+            "earnings_date": "2025-05-01",
+            "as_of_date": "2025-05-01",
+            "model_date": "2025-05-08",
+            "quant_guidance_revision_z_pit": 0.5,
+        }
         panel = apply_feature_availability_dates(pd.DataFrame([row]))
-        self.assertEqual(str(panel.iloc[0]["feature_availability_date"])[:10], "2025-05-08")
+        r = panel.iloc[0]
+        self.assertEqual(str(r["call_feature_available_date"])[:10], "2025-05-01")
+        self.assertEqual(str(r["t7_feature_available_date"])[:10], "2025-05-08")
+        self.assertEqual(str(r["feature_availability_date"])[:10], "2025-05-01")
+
+    def test_demand_has_no_t7_availability(self):
+        row = {
+            "dimension": "demand",
+            "earnings_date": "2025-05-01",
+            "as_of_date": "2025-05-01",
+            "quant_guidance_revision_z_pit": None,
+        }
+        panel = apply_feature_availability_dates(pd.DataFrame([row]))
+        self.assertEqual(str(panel.iloc[0]["call_feature_available_date"])[:10], "2025-05-01")
+        self.assertTrue(pd.isna(panel.iloc[0]["t7_feature_available_date"]))
+
+    def test_investable_as_of_uses_latest_earnings_t7(self):
+        stacked = pd.concat(
+            [
+                _sample_panel("AAA", "FY2025-Q1", period_end="2025-03-31", earnings_date="2025-04-20"),
+                _sample_panel("BBB", "FY2025-Q1", period_end="2025-03-31", earnings_date="2025-05-01"),
+            ],
+            ignore_index=True,
+        )
+        out = apply_investable_cross_section_columns(stacked)
+        # Latest earnings 2025-05-01 → as-of 2025-05-08
+        self.assertTrue((out["investable_as_of_date"].astype(str).str[:10] == "2025-05-08").all())
+        aaa = out[out["ticker"] == "AAA"].iloc[0]
+        self.assertEqual(int(aaa["days_since_earnings"]), 18)
+        self.assertTrue(bool(aaa["investable_ready"]))
+
+    def test_legacy_surprise_novelty_cleared(self):
+        dirty = _sample_panel("AMZN", "FY2025-Q1")
+        dirty.loc[dirty["dimension"] == "management_confidence", "surprise_magnitude"] = 0.5
+        dirty.loc[dirty["dimension"] == "demand", "narrative_novelty"] = 1.0
+        clean = standardize_surprise_novelty_exclusivity(dirty)
+        narr = clean[clean["dimension"] == "management_confidence"].iloc[0]
+        dem = clean[clean["dimension"] == "demand"].iloc[0]
+        self.assertTrue(pd.isna(narr["surprise_magnitude"]))
+        self.assertTrue(pd.isna(dem["narrative_novelty"]))
+        self.assertEqual(validate_spine_rules(panel_to_spine(clean)), [])
 
     def test_compare_filter_uses_period_bucket(self):
         stacked = pd.concat(

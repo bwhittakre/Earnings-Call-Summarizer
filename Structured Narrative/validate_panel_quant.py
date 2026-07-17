@@ -63,9 +63,18 @@ def validate_panel_quant(ticker: str, *, tol: float = 1e-3) -> list[str]:
 
     delayed = panel[panel["dimension"] == "guidance"]
     for _, row in delayed.iterrows():
-        if pd.notna(row.get("quant_guidance_revision_z_pit")) and pd.notna(row.get("feature_availability_date")):
-            if str(row["feature_availability_date"]) == str(row.get("earnings_date")):
-                pass  # call-date availability on row is fine; delayed z stored separately
+        if pd.isna(row.get("quant_guidance_revision_z_pit")):
+            continue
+        t7 = row.get("t7_feature_available_date")
+        earn = row.get("earnings_date")
+        if pd.isna(t7):
+            errors.append(
+                f"{row['fiscal_period']} guidance: missing t7_feature_available_date with revision z"
+            )
+        elif pd.notna(earn) and str(t7)[:10] <= str(earn)[:10]:
+            errors.append(
+                f"{row['fiscal_period']} guidance: t7_feature_available_date must be after earnings_date"
+            )
 
     return errors
 

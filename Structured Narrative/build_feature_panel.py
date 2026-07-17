@@ -23,6 +23,7 @@ if str(HERE) not in sys.path:
 from company_config import get_company  # noqa: E402
 from quarter_registry import is_quarter_complete, load_registry  # noqa: E402
 from dimension_scorer import ALL_DIMENSIONS, QUANT_COMPARABLE_DIMENSIONS  # noqa: E402
+from spine_export import standardize_surprise_novelty_exclusivity  # noqa: E402
 from dimension_order import prepare_consolidated_panel  # noqa: E402
 from output_paths import company_artifact, resolve_read, resolve_read_parquet_or_csv  # noqa: E402
 from panel_html import (  # noqa: E402
@@ -40,6 +41,7 @@ from quant_loader import (  # noqa: E402
 from quant_mapping import FEATURE_AVAILABILITY_MANIFEST, quant_family_for, quant_mapping_for  # noqa: E402
 from period_dates import (  # noqa: E402
     apply_feature_availability_dates,
+    apply_investable_cross_section_columns,
     enrich_panel_period_columns,
     resolve_period_end_date,
 )
@@ -54,7 +56,13 @@ PANEL_COLUMNS = [
     "dimension_group",
     "as_of_date",
     "earnings_date",
+    "call_feature_available_date",
+    "t7_feature_available_date",
     "feature_availability_date",
+    "investable_as_of_date",
+    "days_since_earnings",
+    "feature_age_days",
+    "investable_ready",
     "quant_mapping",
     "quant_family",
     "quant_z",
@@ -386,8 +394,10 @@ def merge_panel(
             panel["as_of_date"] = panel["as_of_date"].fillna(panel[col])
             panel = panel.drop(columns=[col])
 
+    panel = standardize_surprise_novelty_exclusivity(panel)
     panel = apply_feature_availability_dates(panel)
     panel = enrich_panel_period_columns(panel)
+    panel = apply_investable_cross_section_columns(panel)
     if "model_date" in panel.columns:
         panel = panel.drop(columns=["model_date"])
 

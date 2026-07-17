@@ -41,9 +41,14 @@ CALL_DATE_QUANT_DIMS = (
 
 FEATURE_AVAILABILITY_MANIFEST = {
     "call_date": {
-        "description": "Available at or immediately after the earnings call.",
+        "description": (
+            "Available at or immediately after the earnings call. "
+            "Availability stamped in call_feature_available_date "
+            "(feature_availability_date is the same for display/compat)."
+        ),
         "columns": [
             "as_of_date",
+            "call_feature_available_date",
             "feature_availability_date",
             "llm_level",
             "change_magnitude",
@@ -53,13 +58,22 @@ FEATURE_AVAILABILITY_MANIFEST = {
         ],
     },
     "t_plus_7": {
-        "description": "Available after the 7-business-day estimate revision window.",
+        "description": (
+            "Available after the T+7 estimate revision window (model_date). "
+            "Availability stamped in t7_feature_available_date. "
+            "Pair only with forward-return labels that start on or after this date "
+            "(alpha_spec_* uses t+7 entry)."
+        ),
         "columns": [
+            "t7_feature_available_date",
             "quant_guidance_revision_z_pit",
         ],
     },
     "label_only": {
-        "description": "Forward return labels — not model inputs.",
+        "description": (
+            "Forward return labels — not model inputs. "
+            "Compounded from model_date (t+7 entry); initial IC tests use this entry."
+        ),
         "columns": [
             "alpha_spec_0_90",
             "alpha_spec_0_90_z",

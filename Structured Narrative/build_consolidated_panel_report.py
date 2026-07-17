@@ -32,10 +32,17 @@ from fiscal_period_util import fiscal_period_sort_key  # noqa: E402
 from output_paths import cross_company_artifact, cross_company_layer, company_artifact, ensure_cross_company_tree  # noqa: E402
 from panel_html import build_consolidated_html, build_evidence_lookups, summarize_ticker_quarter  # noqa: E402
 from period_dates import (  # noqa: E402
+    apply_feature_availability_dates,
+    apply_investable_cross_section_columns,
     calendar_quarter_sort_key,
     enrich_panel_period_columns,
 )
-from spine_export import CONSOLIDATED_SPINE_COLUMNS, panel_to_spine, validate_spine_rules  # noqa: E402
+from spine_export import (  # noqa: E402
+    CONSOLIDATED_SPINE_COLUMNS,
+    panel_to_spine,
+    standardize_surprise_novelty_exclusivity,
+    validate_spine_rules,
+)
 
 SECTORS_DIR = REPO_ROOT / "config" / "sectors"
 PANEL_CHUNKS_DIR = "panel_chunks"
@@ -279,7 +286,12 @@ def main() -> int:
         return 1
 
     stacked = pd.concat(frames, ignore_index=True)
+    stacked = standardize_surprise_novelty_exclusivity(stacked)
     stacked = enrich_panel_period_columns(stacked)
+    if "call_feature_available_date" not in stacked.columns:
+        stacked = apply_feature_availability_dates(stacked)
+    # Recompute cohort as-of across stacked tickers (per period_end_calendar_quarter).
+    stacked = apply_investable_cross_section_columns(stacked)
     stacked = prepare_consolidated_panel(stacked, args.dimension_order)
 
     period_buckets = period_buckets_from_panel(stacked)
@@ -318,7 +330,10 @@ def main() -> int:
     spine_df = panel_to_spine(cross_section)
     spine_errors = validate_spine_rules(spine_df)
     if spine_errors:
-        print(f"  ! Spine validation warnings: {len(spine_errors)}", file=sys.stderr)
+        print(f"Error: spine validation failed ({len(spine_errors)} issue(s)):", file=sys.stderr)
+        for err in spine_errors[:20]:
+            print(f"  - {err}", file=sys.stderr)
+        return 1
     spine_df.to_csv(spine_path, index=False)
 
     research_ticker = args.research_ticker.upper()

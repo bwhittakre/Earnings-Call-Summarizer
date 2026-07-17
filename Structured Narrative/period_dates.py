@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import sys
-from datetime import date
+from datetime import date, timedelta
 from pathlib import Path
 
 import pandas as pd
@@ -23,7 +23,7 @@ _MONTH_ABBR = ("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "O
 def to_date(val) -> date | None:
     if val is None or (isinstance(val, float) and pd.isna(val)):
         return None
-    if isinstance(val, date):
+    if isinstance(val, date) and not isinstance(val, pd.Timestamp):
         return val
     try:
         return pd.Timestamp(val).date()
@@ -77,21 +77,36 @@ def resolve_period_end_date(
         return None
 
 
-def row_feature_availability_date(row: pd.Series) -> str | None:
-    """PIT availability: call date for most dims; T+7 / model_date for guidance revision z."""
-    dim = row.get("dimension")
-    rev_z = row.get("quant_guidance_revision_z_pit")
-    if dim == "guidance" and pd.notna(rev_z):
-        md = row.get("model_date")
-        if pd.notna(md):
-            return str(to_date(md) or md)
-        earn = to_date(row.get("earnings_date"))
-        if earn is not None:
-            return (pd.Timestamp(earn) + pd.Timedelta(days=7)).date().isoformat()
+def _iso(d: date | None) -> str | None:
+    return d.isoformat() if d is not None else None
+
+
+def row_call_feature_available_date(row: pd.Series) -> str | None:
+    """Availability for call-date features (level/delta/surprise/novelty/quant_z_pit)."""
     for col in ("as_of_date", "earnings_date"):
         if pd.notna(row.get(col)):
-            return str(row.get(col))
+            d = to_date(row.get(col))
+            return _iso(d) if d is not None else str(row.get(col))
     return None
+
+
+def row_t7_feature_available_date(row: pd.Series) -> str | None:
+    """Availability for quant_guidance_revision_z_pit; null when revision absent."""
+    if pd.isna(row.get("quant_guidance_revision_z_pit")):
+        return None
+    md = row.get("model_date")
+    if pd.notna(md):
+        d = to_date(md)
+        return _iso(d) if d is not None else str(md)
+    earn = to_date(row.get("earnings_date"))
+    if earn is not None:
+        return (earn + timedelta(days=7)).isoformat()
+    return None
+
+
+def row_feature_availability_date(row: pd.Series) -> str | None:
+    """Compat/display: earliest call-date feature availability (not T+7)."""
+    return row_call_feature_available_date(row)
 
 
 def enrich_panel_period_columns(panel: pd.DataFrame) -> pd.DataFrame:
@@ -126,8 +141,105 @@ def enrich_panel_period_columns(panel: pd.DataFrame) -> pd.DataFrame:
 
 
 def apply_feature_availability_dates(panel: pd.DataFrame) -> pd.DataFrame:
+    """Set call/T+7 feature-level availability and compat feature_availability_date."""
     df = panel.copy()
-    df["feature_availability_date"] = df.apply(row_feature_availability_date, axis=1)
+    df["call_feature_available_date"] = df.apply(row_call_feature_available_date, axis=1)
+    df["t7_feature_available_date"] = df.apply(row_t7_feature_available_date, axis=1)
+    df["feature_availability_date"] = df["call_feature_available_date"]
+    return df
+
+
+def _event_t7_date(row: pd.Series) -> date | None:
+    """Per-event T+7 entry date: model_date when present, else earnings+7."""
+    md = to_date(row.get("model_date"))
+    if md is not None:
+        return md
+    t7 = to_date(row.get("t7_feature_available_date"))
+    if t7 is not None:
+        return t7
+    earn = to_date(row.get("earnings_date"))
+    if earn is not None:
+        return earn + timedelta(days=7)
+    return None
+
+
+def apply_investable_cross_section_columns(panel: pd.DataFrame) -> pd.DataFrame:
+    """Add common as-of date, age columns, and investable_ready within calendar-quarter buckets.
+
+    investable_as_of_date = T+7 after the latest earnings_date in the bucket
+    (or the latest model_date / event T+7 when available).
+    """
+    df = panel.copy()
+    if "period_end_calendar_quarter" not in df.columns:
+        df = enrich_panel_period_columns(df)
+    if "call_feature_available_date" not in df.columns:
+        df = apply_feature_availability_dates(df)
+
+    as_of_by_bucket: dict[str, date | None] = {}
+    for bucket, grp in df.groupby("period_end_calendar_quarter", dropna=False):
+        if pd.isna(bucket):
+            as_of_by_bucket[str(bucket)] = None
+            continue
+        event_dates: list[date] = []
+        # One event date per ticker×fiscal_period
+        keys = [c for c in ("ticker", "fiscal_period") if c in grp.columns]
+        if keys:
+            for _, eg in grp.groupby(keys, sort=False):
+                d = _event_t7_date(eg.iloc[0])
+                if d is not None:
+                    event_dates.append(d)
+        else:
+            for _, row in grp.iterrows():
+                d = _event_t7_date(row)
+                if d is not None:
+                    event_dates.append(d)
+        as_of_by_bucket[str(bucket)] = max(event_dates) if event_dates else None
+
+    def _as_of(row) -> str | None:
+        bucket = row.get("period_end_calendar_quarter")
+        d = as_of_by_bucket.get(str(bucket) if pd.notna(bucket) else "")
+        return _iso(d)
+
+    df["investable_as_of_date"] = df.apply(_as_of, axis=1)
+
+    def _days_since_earnings(row) -> int | None:
+        as_of = to_date(row.get("investable_as_of_date"))
+        earn = to_date(row.get("earnings_date"))
+        if as_of is None or earn is None:
+            return None
+        return (as_of - earn).days
+
+    def _feature_age(row) -> int | None:
+        as_of = to_date(row.get("investable_as_of_date"))
+        if as_of is None:
+            return None
+        # Delayed revision feature: age from T+7 availability when present
+        if pd.notna(row.get("quant_guidance_revision_z_pit")) and pd.notna(
+            row.get("t7_feature_available_date")
+        ):
+            avail = to_date(row.get("t7_feature_available_date"))
+        else:
+            avail = to_date(row.get("call_feature_available_date"))
+        if avail is None:
+            return None
+        return (as_of - avail).days
+
+    def _investable_ready(row) -> bool:
+        as_of = to_date(row.get("investable_as_of_date"))
+        if as_of is None:
+            return False
+        call = to_date(row.get("call_feature_available_date"))
+        if call is not None and call > as_of:
+            return False
+        if pd.notna(row.get("quant_guidance_revision_z_pit")):
+            t7 = to_date(row.get("t7_feature_available_date"))
+            if t7 is not None and t7 > as_of:
+                return False
+        return True
+
+    df["days_since_earnings"] = df.apply(_days_since_earnings, axis=1)
+    df["feature_age_days"] = df.apply(_feature_age, axis=1)
+    df["investable_ready"] = df.apply(_investable_ready, axis=1)
     return df
 
 
@@ -141,9 +253,12 @@ def quarter_cell_html(row: pd.Series) -> str:
     ecall = format_us_date(row.get("earnings_date"))
     if ecall:
         parts.append(f'<div class="fp-sub">Earnings call {ecall}</div>')
-    avail = format_us_date(row.get("feature_availability_date"))
-    if avail and avail != ecall:
-        parts.append(f'<div class="fp-sub">Feature available {avail}</div>')
+    call_avail = format_us_date(row.get("call_feature_available_date") or row.get("feature_availability_date"))
+    if call_avail and call_avail != ecall:
+        parts.append(f'<div class="fp-sub">Call features {call_avail}</div>')
+    t7_avail = format_us_date(row.get("t7_feature_available_date"))
+    if t7_avail:
+        parts.append(f'<div class="fp-sub">T+7 features {t7_avail}</div>')
     return "".join(parts)
 
 

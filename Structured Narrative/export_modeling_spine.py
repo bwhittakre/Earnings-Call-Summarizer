@@ -22,8 +22,17 @@ if str(HERE) not in sys.path:
 
 from company_config import PILOT_OUTPUT_QUARTERS, PILOT_TICKERS  # noqa: E402
 from output_paths import cross_company_artifact, ensure_cross_company_tree, resolve_read  # noqa: E402
+from period_dates import (  # noqa: E402
+    apply_feature_availability_dates,
+    apply_investable_cross_section_columns,
+    enrich_panel_period_columns,
+)
 from quarter_registry import is_quarter_complete, load_registry  # noqa: E402
-from spine_export import CONSOLIDATED_SPINE_COLUMNS, panel_to_spine  # noqa: E402
+from spine_export import (  # noqa: E402
+    CONSOLIDATED_SPINE_COLUMNS,
+    panel_to_spine,
+    standardize_surprise_novelty_exclusivity,
+)
 from dimension_order import sort_panel_by_dimension  # noqa: E402
 
 DEFAULT_COLUMNS = list(CONSOLIDATED_SPINE_COLUMNS)
@@ -93,6 +102,11 @@ def main() -> int:
         return 1
 
     stacked = pd.concat(frames, ignore_index=True)
+    stacked = standardize_surprise_novelty_exclusivity(stacked)
+    stacked = enrich_panel_period_columns(stacked)
+    if "call_feature_available_date" not in stacked.columns:
+        stacked = apply_feature_availability_dates(stacked)
+    stacked = apply_investable_cross_section_columns(stacked)
     stacked = sort_panel_by_dimension(
         stacked,
         leading_columns=("ticker", "fiscal_period", "period_end_date"),

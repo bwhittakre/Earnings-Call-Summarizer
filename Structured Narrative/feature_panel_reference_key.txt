@@ -40,10 +40,19 @@ Keys
 Metadata
   as_of_date          Point-in-time date for the row (call date when available).
   earnings_date       Earnings announcement date from the quant spine.
+  call_feature_available_date  Availability for call-date features (level/delta/surprise/novelty/quant_z_pit).
+  t7_feature_available_date    Availability for quant_guidance_revision_z_pit (model_date / earnings+7); null when revision absent.
+  feature_availability_date    Compat/display copy of call_feature_available_date (not overwritten to T+7).
+  period_end_date / period_end_calendar_quarter  Fiscal period-end date and calendar-quarter bucket for Compare mode.
+  investable_as_of_date  Common as-of within period_end_calendar_quarter (= T+7 after latest earnings in bucket).
+  days_since_earnings    investable_as_of_date minus earnings_date.
+  feature_age_days       Age of the primary feature at as-of (call features, or T+7 revision when present).
+  investable_ready       True when all features on the row are available by investable_as_of_date.
 
 Quant / labels (from dimension_scores — point-in-time expanding z)
   quant_z             PIT standardized surprise vs company history (dim_*_z). Uses only quarters strictly before the event; NaN until MIN_HISTORY=8 prior observations.
-  alpha_spec_0_90     Realized 90-day alpha (specification 0) — eval label only.
+  quant_guidance_revision_z_pit  T+7 forward revision z for guidance only; pair with t+7-entry labels.
+  alpha_spec_0_90     Realized 90-day alpha from t+7 entry (model_date) — eval label only.
   alpha_spec_0_90_z   Z-scored alpha label vs AMZN history.
   alpha_spec_0_90_complete  True when the alpha label is fully observed.
 
@@ -61,13 +70,14 @@ Focus 2 — Delta (from AMZN_dimension_delta)
   delta_rationale     Reasoning for the change read.
   delta_evidence_supported_pct  Fraction of delta evidence verified.
 
-Focus 3 — Surprise (from AMZN_dimension_surprise)
+Focus 3 — Surprise (from AMZN_dimension_surprise; quant-comparable dims only)
   surprise_direction  more_bullish_than_expected | in_line | more_bearish_than_expected.
   surprise_magnitude  Primary surprise signal -2..+2 vs pre-call consensus.
   agrees_with_quant   True when surprise and quant_z point the same way; False = diverges.
   narrative_quant_gap surprise_magnitude minus quant_z (from surprise scorer; not recomputed).
   surprise_rationale  Reasoning for the surprise read.
   surprise_evidence_supported_pct  Fraction of surprise evidence verified.
+  Note: narrative-only dims must not carry surprise; quant dims must not carry novelty (cleared at merge).
 
 Derived (computed by build_feature_panel.py)
   has_level           True when Focus 1 data exists for this row.

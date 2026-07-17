@@ -14,7 +14,13 @@ CONSOLIDATED_SPINE_COLUMNS = [
     "period_end_date",
     "period_end_calendar_quarter",
     "earnings_date",
+    "call_feature_available_date",
+    "t7_feature_available_date",
     "feature_availability_date",
+    "investable_as_of_date",
+    "days_since_earnings",
+    "feature_age_days",
+    "investable_ready",
     "dimension",
     "dimension_group",
     "quant_mapping",
@@ -49,9 +55,42 @@ def evidence_confidence(row: pd.Series) -> float | None:
     return round(min(pcts), 4)
 
 
+def standardize_surprise_novelty_exclusivity(panel: pd.DataFrame) -> pd.DataFrame:
+    """Clear legacy dual-population: surprise only on quant dims, novelty only on narrative-only."""
+    df = panel.copy()
+    if "dimension" not in df.columns:
+        return df
+    narrative = set(NARRATIVE_ONLY_DIMENSIONS)
+    quant = set(QUANT_COMPARABLE_DIMENSIONS)
+
+    narr_mask = df["dimension"].isin(narrative)
+    for col in (
+        "surprise_direction",
+        "surprise_magnitude",
+        "agrees_with_quant",
+        "narrative_quant_gap",
+        "surprise_rationale",
+        "surprise_evidence_supported_pct",
+    ):
+        if col in df.columns:
+            df.loc[narr_mask, col] = None
+
+    quant_mask = df["dimension"].isin(quant)
+    for col in (
+        "novelty_direction",
+        "narrative_novelty",
+        "novelty_rationale",
+        "novelty_evidence_supported_pct",
+    ):
+        if col in df.columns:
+            df.loc[quant_mask, col] = None
+
+    return df
+
+
 def panel_to_spine(panel: pd.DataFrame) -> pd.DataFrame:
     """Project a feature panel to the slim cross-sectional schema."""
-    df = panel.copy()
+    df = standardize_surprise_novelty_exclusivity(panel)
     if "quant_z_pit" not in df.columns and "quant_z" in df.columns:
         df["quant_z_pit"] = df["quant_z"]
 
@@ -85,11 +124,15 @@ def validate_spine_rules(spine: pd.DataFrame) -> list[str]:
         if dim == "guidance" and pd.notna(row.get("quant_z_pit")):
             errors.append(f"{row['fiscal_period']} guidance: quant_z_pit should be null at call")
         delayed = row.get("quant_guidance_revision_z_pit")
-        avail = row.get("feature_availability_date")
         earn = row.get("earnings_date")
-        if pd.notna(delayed) and pd.notna(avail) and pd.notna(earn) and dim == "guidance":
-            if str(avail) == str(earn):
+        t7 = row.get("t7_feature_available_date")
+        if pd.notna(delayed) and dim == "guidance":
+            if pd.isna(t7):
                 errors.append(
-                    f"{row['fiscal_period']} guidance: feature_availability_date should be T+7 when revision z present"
+                    f"{row['fiscal_period']} guidance: t7_feature_available_date required when revision z present"
+                )
+            elif pd.notna(earn) and str(t7)[:10] <= str(earn)[:10]:
+                errors.append(
+                    f"{row['fiscal_period']} guidance: t7_feature_available_date must be after earnings_date"
                 )
     return errors

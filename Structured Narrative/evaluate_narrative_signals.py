@@ -3,11 +3,13 @@
 """
 Walk-forward IC / RankIC evaluation for narrative modeling spine signals.
 
-Labels (alpha_spec_0_90*) are forward returns — never used as model inputs.
+Labels (alpha_spec_0_90*) are forward returns from t+7 entry (model_date) — never model inputs.
+Call-date signals use call_feature_available_date; T+7 revision z uses t7_feature_available_date
+and is only paired with labels that start on/after that date (default alpha already does).
 Delayed features (quant_guidance_revision_z_pit) are excluded from call-date eval by default.
 
     python "Structured Narrative/evaluate_narrative_signals.py"
-    python "Structured Narrative/evaluate_narrative_signals.py" --tickers MSFT NVDA --include-labels
+    python "Structured Narrative/evaluate_narrative_signals.py" --tickers MSFT NVDA --include-delayed
 """
 from __future__ import annotations
 
@@ -174,6 +176,9 @@ def quintile_spread(df: pd.DataFrame, signal: str, label: str, n_q: int = 5) -> 
     }
 
 
+DELAYED_SIGNALS = {"quant_guidance_revision_z_pit"}
+
+
 def load_eval_frame(tickers: list[str], *, call_date_only: bool = True) -> pd.DataFrame:
     quarter_set = set(PILOT_OUTPUT_QUARTERS)
     frames: list[pd.DataFrame] = []
@@ -191,8 +196,24 @@ def load_eval_frame(tickers: list[str], *, call_date_only: bool = True) -> pd.Da
     stacked = pd.concat(frames, ignore_index=True)
     stacked = stacked.sort_values(["ticker", "fiscal_period", "dimension"]).reset_index(drop=True)
     if call_date_only:
-        stacked = stacked[stacked["feature_availability_date"] == stacked["earnings_date"]].copy()
+        # Call-date features: available at earnings/as_of (feature_availability_date == call date).
+        call_col = (
+            "call_feature_available_date"
+            if "call_feature_available_date" in stacked.columns
+            else "feature_availability_date"
+        )
+        stacked = stacked[stacked[call_col].astype(str).str[:10] == stacked["earnings_date"].astype(str).str[:10]].copy()
     return stacked
+
+
+def _signal_eval_frame(df: pd.DataFrame, signal: str) -> pd.DataFrame:
+    """Restrict delayed revision signals to rows with T+7 availability (label is t+7 entry)."""
+    if signal not in DELAYED_SIGNALS:
+        return df
+    out = df[df[signal].notna()].copy()
+    if "t7_feature_available_date" in out.columns:
+        out = out[out["t7_feature_available_date"].notna()].copy()
+    return out
 
 
 def main() -> int:
@@ -202,7 +223,7 @@ def main() -> int:
     ap.add_argument(
         "--include-delayed",
         action="store_true",
-        help="Include T+7d guidance revision z in signal set.",
+        help="Include T+7d guidance revision z; pairs with t+7-entry labels only.",
     )
     ap.add_argument(
         "--signals",
@@ -218,6 +239,7 @@ def main() -> int:
         signals = [s for s in signals if s in CALL_DATE_SIGNALS]
 
     try:
+        # Always load full panel for delayed path; call-date path filters to call availability.
         df = load_eval_frame(tickers, call_date_only=not args.include_delayed)
     except FileNotFoundError as exc:
         print(f"Error: {exc}", file=sys.stderr)
@@ -234,20 +256,31 @@ def main() -> int:
     for signal in signals:
         if signal not in eval_df.columns:
             continue
-        period_ics = walk_forward_period_ics(eval_df, signal, label)
+        sig_df = _signal_eval_frame(eval_df, signal)
+        if sig_df.empty:
+            continue
+        period_ics = walk_forward_period_ics(sig_df, signal, label)
         period_frames.append(period_ics)
         signal_summary[signal] = {
             "walk_forward": summarize_ics(period_ics),
-            "pooled_ic": _pearson_ic(eval_df[signal], eval_df[label]),
-            "pooled_rank_ic": _spearman_ic(eval_df[signal], eval_df[label]),
-            "by_dimension": dimension_ics(eval_df, signal, label).to_dict(orient="records"),
-            "quintile_spread": quintile_spread(eval_df, signal, label),
+            "pooled_ic": _pearson_ic(sig_df[signal], sig_df[label]),
+            "pooled_rank_ic": _spearman_ic(sig_df[signal], sig_df[label]),
+            "by_dimension": dimension_ics(sig_df, signal, label).to_dict(orient="records"),
+            "quintile_spread": quintile_spread(sig_df, signal, label),
+            "n_rows": int(len(sig_df)),
+            "availability": (
+                "t7_feature_available_date"
+                if signal in DELAYED_SIGNALS
+                else "call_feature_available_date"
+            ),
+            "label_entry": "t_plus_7",
         }
 
     report = {
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "tickers": tickers,
         "label": label,
+        "label_entry": "t_plus_7",
         "quarter_scope": list(PILOT_OUTPUT_QUARTERS),
         "call_date_only": not args.include_delayed,
         "n_rows": int(len(eval_df)),
