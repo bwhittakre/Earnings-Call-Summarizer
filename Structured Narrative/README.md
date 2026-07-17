@@ -111,6 +111,17 @@ Summary JSON (including scale hooks for future lazy-load sidecars): `output/cros
 
 Past quarters are **not re-scored** unless `--force` is passed. The registry tracks `dimensions_scored_at`, `delta_scored_at`, and `surprise_scored_at` per quarter.
 
+## Signal IC evaluation (4-name pilot)
+
+```powershell
+python "Structured Narrative/evaluate_narrative_signals.py" --labels both
+```
+
+- Restacks panels, recomputes **cross-ticker** `investable_as_of_date`, rebuilds `alpha_spec_asof_0_90*` from cached returns.
+- **Event** label: WF by `fiscal_period` on all call-date rows.
+- **As-of** label: WF by `period_end_calendar_quarter` on `investable_ready` rows (`--no-investable-only` to disable).
+- Writes `output/cross_company/json/narrative_signal_eval.json`, plus `…_leaderboard.csv`, `…_period_ic.csv`, `…_jackknife.csv`.
+
 ## Reference keys
 
 - `feature_panel_reference_key.txt` — column dictionary
