@@ -27,8 +27,13 @@ For output quarter **FY2020-Q1**, all published quant comparisons use **expandin
 - `quant_guidance_revision_z_pit` = T+7d forward estimate revision z (delayed; separate from call-date features)
 - Guidance has **no** call-date `quant_z_pit` — revisions are kept separate per methodology
 - Feature availability is **feature-level**: `call_feature_available_date` (level/delta/surprise/novelty/`quant_z_pit`) and `t7_feature_available_date` (guidance revision only). Row `feature_availability_date` equals the call date for display/compat.
-- Forward alpha columns (`alpha_spec_*`) are **label-only**, compounded from **t+7 entry** (`model_date`) — initial IC tests use this entry; do not pair T+7 revision z with a return window that starts before `t7_feature_available_date`.
+- Forward alpha labels are **research-only** and come in two families:
+  - **Event-driven** `alpha_spec_0_90*` — from each company's T+7 / `model_date`
+  - **Cross-sectional** `alpha_spec_asof_0_90*` — from the common `investable_as_of_date` in the calendar-quarter bucket
+  Export via `export_modeling_spine.py --include-labels --labels event|asof|both`. Do not pair T+7 revision z with a return window that starts before `t7_feature_available_date`.
+  As-of labels need cached daily returns (`output/{TICKER}/parquet/specific_returns.parquet`), written automatically by `single_company_extractor.py` when Snowflake is reachable.
 - Investable cross-section: within each `period_end_calendar_quarter`, `investable_as_of_date` = T+7 after the latest earnings date in the bucket, plus `days_since_earnings` / `feature_age_days` / `investable_ready`. Compare mode still buckets by period-end calendar quarter.
+- Pilot defaults include **AMZN, MSFT, NVDA, AAPL**. Coverage / exclusion reasons are written to `{stem}_coverage.json` when consolidating.
 
 ## Feature taxonomy
 

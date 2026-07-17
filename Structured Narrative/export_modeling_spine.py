@@ -5,6 +5,7 @@ Export a cross-company modeling spine from per-ticker feature panels.
 
     python "Structured Narrative/export_modeling_spine.py"
     python "Structured Narrative/export_modeling_spine.py" --tickers AMZN --include-labels
+    python "Structured Narrative/export_modeling_spine.py" --include-labels --labels asof
 """
 from __future__ import annotations
 
@@ -20,7 +21,9 @@ HERE = Path(__file__).resolve().parent
 if str(HERE) not in sys.path:
     sys.path.insert(0, str(HERE))
 
+from asof_alpha import apply_asof_alpha_labels, label_column_sets  # noqa: E402
 from company_config import PILOT_OUTPUT_QUARTERS, PILOT_TICKERS  # noqa: E402
+from coverage import annotate_included  # noqa: E402
 from output_paths import cross_company_artifact, ensure_cross_company_tree, resolve_read  # noqa: E402
 from period_dates import (  # noqa: E402
     apply_feature_availability_dates,
@@ -37,11 +40,8 @@ from dimension_order import sort_panel_by_dimension  # noqa: E402
 
 DEFAULT_COLUMNS = list(CONSOLIDATED_SPINE_COLUMNS)
 
-LABEL_COLUMNS = [
-    "alpha_spec_0_90",
-    "alpha_spec_0_90_z",
-    "alpha_spec_0_90_complete",
-]
+# Back-compat alias for evaluate_narrative_signals
+LABEL_COLUMNS = label_column_sets("event")
 
 
 def load_panel(ticker: str) -> pd.DataFrame:
@@ -76,6 +76,12 @@ def main() -> int:
         help="Include forward alpha label columns (research only; not for live inference).",
     )
     ap.add_argument(
+        "--labels",
+        choices=("event", "asof", "both"),
+        default="both",
+        help="Which research label set to include with --include-labels (default: both).",
+    )
+    ap.add_argument(
         "--quarters",
         nargs="+",
         default=list(PILOT_OUTPUT_QUARTERS),
@@ -84,18 +90,14 @@ def main() -> int:
     args = ap.parse_args()
     tickers = [t.upper() for t in args.tickers]
     quarter_set = set(args.quarters)
-    label_cols = LABEL_COLUMNS if args.include_labels else []
+    label_cols = label_column_sets(args.labels) if args.include_labels else []
 
     frames: list[pd.DataFrame] = []
     for ticker in tickers:
         panel = load_panel(ticker)
         panel = filter_registry_complete(panel, ticker)
         panel = panel[panel["fiscal_period"].isin(quarter_set)].copy()
-        spine = panel_to_spine(panel)
-        for c in label_cols:
-            if c in panel.columns:
-                spine[c] = panel[c].values
-        frames.append(spine)
+        frames.append(panel)
 
     if not frames:
         print("No panels loaded.", file=sys.stderr)
@@ -107,20 +109,39 @@ def main() -> int:
     if "call_feature_available_date" not in stacked.columns:
         stacked = apply_feature_availability_dates(stacked)
     stacked = apply_investable_cross_section_columns(stacked)
-    stacked = sort_panel_by_dimension(
-        stacked,
+    stacked = annotate_included(stacked)
+    if args.include_labels and any(c.startswith("alpha_spec_asof") for c in label_cols):
+        stacked = apply_asof_alpha_labels(stacked, fetch_if_missing=True)
+
+    spine = panel_to_spine(stacked)
+    for c in label_cols:
+        if c in stacked.columns:
+            spine[c] = stacked[c].values
+        else:
+            spine[c] = None
+
+    spine = sort_panel_by_dimension(
+        spine,
         leading_columns=("ticker", "fiscal_period", "period_end_date"),
     )
-    out_cols = DEFAULT_COLUMNS + label_cols
+    out_cols = DEFAULT_COLUMNS + [c for c in label_cols if c not in DEFAULT_COLUMNS]
 
     ensure_cross_company_tree()
-    csv_path = cross_company_artifact("csv", "modeling_spine", "csv", mkdir=True)
-    pq_path = cross_company_artifact("parquet", "modeling_spine", "parquet", mkdir=True)
-    summary_path = cross_company_artifact("json", "modeling_spine_summary", "json", mkdir=True)
+    stem = "modeling_spine"
+    if args.include_labels and args.labels == "event":
+        stem = "modeling_spine_event"
+    elif args.include_labels and args.labels == "asof":
+        stem = "modeling_spine_asof"
+    elif args.include_labels and args.labels == "both":
+        stem = "modeling_spine"
 
-    stacked[out_cols].to_csv(csv_path, index=False)
+    csv_path = cross_company_artifact("csv", stem, "csv", mkdir=True)
+    pq_path = cross_company_artifact("parquet", stem, "parquet", mkdir=True)
+    summary_path = cross_company_artifact("json", f"{stem}_summary", "json", mkdir=True)
+
+    spine[out_cols].to_csv(csv_path, index=False)
     try:
-        stacked[out_cols].to_parquet(pq_path, index=False)
+        spine[out_cols].to_parquet(pq_path, index=False)
     except Exception as exc:
         print(f"  ! parquet write skipped: {exc}")
 
@@ -128,14 +149,19 @@ def main() -> int:
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "tickers": tickers,
         "quarter_scope": sorted(quarter_set),
-        "row_count": int(len(stacked)),
-        "fiscal_periods": sorted(stacked["fiscal_period"].unique().tolist()),
+        "row_count": int(len(spine)),
+        "fiscal_periods": sorted(spine["fiscal_period"].unique().tolist()),
         "columns": out_cols,
         "include_labels": args.include_labels,
+        "labels_mode": args.labels if args.include_labels else None,
+        "label_sets": {
+            "event": "alpha_spec_0_90* from each company T+7 / model_date",
+            "asof": "alpha_spec_asof_0_90* from investable_as_of_date",
+        },
     }
     summary_path.write_text(json.dumps(summary, indent=2), encoding="utf-8")
 
-    print(f"Wrote {csv_path} ({len(stacked)} rows)")
+    print(f"Wrote {csv_path} ({len(spine)} rows)")
     print(f"Wrote {summary_path}")
     return 0
 

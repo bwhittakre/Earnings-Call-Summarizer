@@ -243,7 +243,8 @@ class ConsolidatedPanelReportTests(unittest.TestCase):
         self.assertIn("Quant PIT", html)
         self.assertIn("Novelty", html)
         self.assertIn('data-mode="compare"', html)
-        self.assertIn("Feature available", html)
+        self.assertIn("Call features", html)
+        self.assertIn("Investable as-of", html)
 
     def test_build_script_runs_if_panels_exist(self):
         script = SN / "build_consolidated_panel_report.py"
@@ -286,17 +287,29 @@ class CrossSectionPanelWorkbookTests(unittest.TestCase):
             for sheet_name in ("Summary", "Panel"):
                 ws = wb[sheet_name]
                 self.assertEqual(ws.freeze_panes, "A2")
-                self.assertIsNotNone(ws.auto_filter.ref)
-                # Group header rows expand row count vs raw panel (2 headers per ticker×quarter block).
-                self.assertGreater(ws.max_row, expected_rows + 1, msg=sheet_name)
+                # Summary uses autofilter (group headers); Panel uses Excel table or autofilter.
+                has_filter = ws.auto_filter.ref is not None or len(ws.tables) >= 1
+                self.assertTrue(has_filter, msg=sheet_name)
 
-            panel_labels = {
-                str(ws["A" + str(r)].value)
+            # Panel is observation-only (no Fundamentals / Narrative Context header rows).
+            self.assertEqual(wb["Panel"].max_row, expected_rows + 1)
+            panel_a_vals = {
+                str(wb["Panel"]["A" + str(r)].value)
                 for r in range(2, wb["Panel"].max_row + 1)
                 if wb["Panel"]["A" + str(r)].value
             }
-            self.assertIn("Fundamentals", panel_labels)
-            self.assertIn("Narrative context", panel_labels)
+            self.assertNotIn("Fundamentals", panel_a_vals)
+            self.assertNotIn("Narrative context", panel_a_vals)
+
+            # Summary keeps formatted group headers.
+            self.assertGreater(wb["Summary"].max_row, expected_rows + 1)
+            summary_labels = {
+                str(wb["Summary"]["A" + str(r)].value)
+                for r in range(2, wb["Summary"].max_row + 1)
+                if wb["Summary"]["A" + str(r)].value
+            }
+            self.assertIn("Fundamentals", summary_labels)
+            self.assertIn("Narrative context", summary_labels)
 
 
 if __name__ == "__main__":

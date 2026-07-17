@@ -140,6 +140,11 @@ LAYER_COLUMN_LABELS: dict[str, str] = {
     "quant_z_fullsample": "Quant Z (Full Sample)",
     "quant_guidance_revision_z_pit": "Guidance Revision Z (T+7 PIT)",
     "alpha_spec_0_90_complete": "Alpha Spec 0-90 Complete",
+    "alpha_spec_asof_0_90": "Alpha Spec As-Of 0-90",
+    "alpha_spec_asof_0_90_z": "Alpha Spec As-Of 0-90 Z",
+    "alpha_spec_asof_0_90_complete": "Alpha Spec As-Of 0-90 Complete",
+    "in_cross_section": "In Cross Section",
+    "exclusion_reason": "Exclusion Reason",
     "level_rationale": "Level Rationale",
     "prior_period": "Prior Period",
     "change_direction": "Change Direction",
@@ -531,11 +536,16 @@ def write_cross_section_panel_workbook(
     *,
     dimension_order: str | None = None,
 ) -> str:
-    """Write filterable cross-section workbook: Summary (spine) + Panel (full rows)."""
+    """Write filterable cross-section workbook: Summary (spine) + Panel (full rows).
+
+    Group header rows stay on the formatted Summary sheet only. The Panel sheet
+    is observation-only (use dimension_group for classification).
+    """
     path = str(path)
     panel_sorted = _sort_cross_section(prepare_panel_for_excel(panel_df), dimension_order)
     spine_sorted = _sort_cross_section(spine_df, dimension_order)
-    panel_export, panel_header_rows = insert_dimension_group_header_rows(panel_sorted)
+    # Machine-readable Panel: no synthetic Fundamentals / Narrative Context rows.
+    panel_export, panel_header_rows = panel_sorted, []
     spine_export, spine_header_rows = insert_dimension_group_header_rows(spine_sorted)
 
     sheets = {

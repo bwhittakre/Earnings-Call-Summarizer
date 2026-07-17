@@ -167,6 +167,14 @@ def build(company):
     cur.close()
     conn.close()
 
+    try:
+        from asof_alpha import save_specific_returns
+
+        save_specific_returns(company.ticker, ret)
+        print(f"Cached specific returns -> output/{company.ticker}/parquet/specific_returns.parquet")
+    except Exception as exc:
+        print(f"  ! could not cache specific returns: {exc}")
+
     desc_map = (cons.dropna(subset=["measure_desc"])
                     .groupby("measure")["measure_desc"].first().to_dict())
 

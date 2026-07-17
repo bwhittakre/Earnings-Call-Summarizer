@@ -39,6 +39,7 @@ from quant_loader import (  # noqa: E402
     load_quant_z_pit,
 )
 from quant_mapping import FEATURE_AVAILABILITY_MANIFEST, quant_family_for, quant_mapping_for  # noqa: E402
+from asof_alpha import apply_asof_alpha_labels  # noqa: E402
 from period_dates import (  # noqa: E402
     apply_feature_availability_dates,
     apply_investable_cross_section_columns,
@@ -72,6 +73,11 @@ PANEL_COLUMNS = [
     "alpha_spec_0_90",
     "alpha_spec_0_90_z",
     "alpha_spec_0_90_complete",
+    "alpha_spec_asof_0_90",
+    "alpha_spec_asof_0_90_z",
+    "alpha_spec_asof_0_90_complete",
+    "in_cross_section",
+    "exclusion_reason",
     "llm_level",
     "level_rationale",
     "level_evidence_supported_pct",
@@ -398,6 +404,9 @@ def merge_panel(
     panel = apply_feature_availability_dates(panel)
     panel = enrich_panel_period_columns(panel)
     panel = apply_investable_cross_section_columns(panel)
+    panel = apply_asof_alpha_labels(panel, fetch_if_missing=True)
+    panel["in_cross_section"] = True
+    panel["exclusion_reason"] = None
     if "model_date" in panel.columns:
         panel = panel.drop(columns=["model_date"])
 

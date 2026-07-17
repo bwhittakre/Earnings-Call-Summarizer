@@ -27,7 +27,10 @@ if str(HERE) not in sys.path:
     sys.path.insert(0, str(HERE))
 
 from company_config import PILOT_OUTPUT_QUARTERS, PILOT_TICKERS  # noqa: E402
-from export_modeling_spine import LABEL_COLUMNS, filter_registry_complete, load_panel  # noqa: E402
+from asof_alpha import ASOF_ALPHA_COLUMNS, EVENT_ALPHA_COLUMNS  # noqa: E402
+from export_modeling_spine import filter_registry_complete, load_panel  # noqa: E402
+
+LABEL_COLUMNS = list(EVENT_ALPHA_COLUMNS) + list(ASOF_ALPHA_COLUMNS)
 from fiscal_period_util import fiscal_period_sort_key  # noqa: E402
 from output_paths import cross_company_artifact, ensure_cross_company_tree  # noqa: E402
 from spine_export import CONSOLIDATED_SPINE_COLUMNS, panel_to_spine  # noqa: E402
@@ -45,6 +48,7 @@ SIGNAL_COLUMNS = [
 ]
 
 DEFAULT_LABEL = "alpha_spec_0_90"
+# Also supported once panels include as-of labels: alpha_spec_asof_0_90
 
 CALL_DATE_SIGNALS = {
     "llm_level",

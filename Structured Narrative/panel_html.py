@@ -78,6 +78,9 @@ BASE_CSS = """
   .flag { display: inline-block; margin: 1px 3px 1px 0; padding: 1px 6px; border-radius: 4px;
            text-transform: uppercase; letter-spacing: .03em; font-size: 10px; }
   .flag.diverge { color: #7a4a12; background: #fbf0df; border: 1px solid #eed6ab; }
+  .flag.level-div { color: #1a4a8a; background: #e8f0fe; border: 1px solid #c5d8f5; }
+  .flag.delta-div { color: #1a5c2e; background: #e6f4ea; border: 1px solid #b7dfc3; }
+  .flag.surprise-div { color: #7a4a12; background: #fbf0df; border: 1px solid #eed6ab; }
   .flag.missing { color: #555; background: #f0f0f0; border: 1px solid #ddd; }
   .flag.stack { color: #334; background: #eef2f7; border: 1px solid #ccd6e0; text-transform: none; }
   .toggle { font-size: 14px; width: 28px; height: 28px; border: 1px solid #ccc; border-radius: 4px;
@@ -187,8 +190,12 @@ def render_dimension_row(
     dim = row["dimension"]
     label = DIM_LABELS.get(dim, dim.replace("_", " ").title())
     flags = []
-    if row.get("any_quant_divergence") is True or row.get("is_divergence") is True:
-        flags.append('<span class="flag diverge">quant diverges</span>')
+    if row.get("level_diverges") is True:
+        flags.append('<span class="flag level-div">level diverges</span>')
+    if row.get("delta_diverges") is True:
+        flags.append('<span class="flag delta-div">delta diverges</span>')
+    if row.get("surprise_diverges") is True or row.get("is_divergence") is True:
+        flags.append('<span class="flag surprise-div">surprise diverges</span>')
     if not row.get("has_delta"):
         flags.append('<span class="flag missing">no delta</span>')
     stack = row.get("signal_stack") or ""
@@ -249,15 +256,29 @@ def render_dimension_row(
     meta = []
     if pd.notna(row.get("earnings_date")):
         meta.append(f"Earnings: {esc(row.get('earnings_date'))}")
-    if pd.notna(row.get("feature_availability_date")):
-        meta.append(f"Available: {esc(row.get('feature_availability_date'))}")
+    call_avail = row.get("call_feature_available_date") or row.get("feature_availability_date")
+    if pd.notna(call_avail):
+        meta.append(f"Call features: {esc(call_avail)}")
+    if pd.notna(row.get("t7_feature_available_date")):
+        meta.append(f"T+7 revision: {esc(row.get('t7_feature_available_date'))}")
+    if pd.notna(row.get("investable_as_of_date")):
+        meta.append(f"Investable as-of: {esc(row.get('investable_as_of_date'))}")
+    if pd.notna(row.get("feature_age_days")):
+        meta.append(f"Feature age: {int(row.get('feature_age_days'))}d")
     if row.get("quant_mapping"):
         meta.append(f"Quant map: {esc(str(row.get('quant_mapping')))}")
     meta_html = f'<div class="sub">{ " · ".join(meta)}</div>' if meta else ""
     fp_cell = f'<td class="fp">{quarter_cell_html(row)}</td>' if show_quarter else ""
+    any_div = bool(
+        row.get("level_diverges") is True
+        or row.get("delta_diverges") is True
+        or row.get("surprise_diverges") is True
+        or row.get("is_divergence") is True
+        or row.get("any_quant_divergence") is True
+    )
 
     return f"""
-    <tr class="data-row" data-q="{esc(row['fiscal_period'])}" data-div="{1 if row.get('is_divergence') else 0}"
+    <tr class="data-row" data-q="{esc(row['fiscal_period'])}" data-div="{1 if any_div else 0}"
         data-delta-missing="{0 if row.get('has_delta') else 1}">
       {fp_cell}
       <td class="dim">{esc(label)}</td>
@@ -436,8 +457,15 @@ def build_single_ticker_html(panel: pd.DataFrame, summary: dict, lookups: Eviden
 
 def _summary_flags(sub: pd.DataFrame) -> str:
     flags = []
-    if sub["is_divergence"].fillna(False).any() or sub.get("any_quant_divergence", pd.Series(dtype=bool)).fillna(False).any():
-        flags.append('<span class="flag diverge">quant diverges</span>')
+    if "level_diverges" in sub.columns and sub["level_diverges"].fillna(False).any():
+        flags.append('<span class="flag level-div">level diverges</span>')
+    if "delta_diverges" in sub.columns and sub["delta_diverges"].fillna(False).any():
+        flags.append('<span class="flag delta-div">delta diverges</span>')
+    if (
+        ("surprise_diverges" in sub.columns and sub["surprise_diverges"].fillna(False).any())
+        or sub["is_divergence"].fillna(False).any()
+    ):
+        flags.append('<span class="flag surprise-div">surprise diverges</span>')
     if not sub["has_delta"].fillna(False).all():
         flags.append('<span class="flag missing">no delta</span>')
     return "".join(flags)
@@ -528,14 +556,26 @@ def build_consolidated_html(
                 dimension_order=dimension_order,
             )
             hidden = "" if bucket == default_bucket else ' style="display:none"'
+            age = meta_row.get("feature_age_days")
+            age_txt = str(int(age)) if age is not None and pd.notna(age) else "&mdash;"
+            any_div = bool(
+                stats["divergence_count"]
+                or (
+                    "any_quant_divergence" in qsub.columns
+                    and qsub["any_quant_divergence"].fillna(False).any()
+                )
+            )
             compare_rows.append(f"""
     <tr class="company-row cmp-row" data-ticker="{esc(ticker)}" data-period-bucket="{esc(bucket)}"{hidden}
-        data-div="{1 if stats['divergence_count'] else 0}">
+        data-div="{1 if any_div else 0}">
       <td class="ticker">{esc(ticker)}</td>
       <td class="fp">{quarter_cell_html(meta_row)}</td>
       <td class="date">{format_us_date(meta_row.get('period_end_date')) or '&mdash;'}</td>
       <td class="date">{format_us_date(meta_row.get('earnings_date')) or '&mdash;'}</td>
-      <td class="date">{format_us_date(meta_row.get('feature_availability_date')) or '&mdash;'}</td>
+      <td class="date">{format_us_date(meta_row.get('call_feature_available_date') or meta_row.get('feature_availability_date')) or '&mdash;'}</td>
+      <td class="date">{format_us_date(meta_row.get('t7_feature_available_date')) or '&mdash;'}</td>
+      <td class="date">{format_us_date(meta_row.get('investable_as_of_date')) or '&mdash;'}</td>
+      <td class="num">{age_txt}</td>
       <td class="num">{fmt_mean(stats['level_avg'])}</td>
       <td class="num">{fmt_mean(stats['delta_avg'])}</td>
       <td class="num">{fmt_mean(stats['surprise_avg'])}</td>
@@ -545,7 +585,7 @@ def build_consolidated_html(
       <td class="flags">{_summary_flags(qsub)}</td>
       <td class="expand"><button type="button" class="toggle" aria-expanded="false" data-target="{detail_id}-wrap">+</button></td>
     </tr>
-    <tr class="detail-row" id="{detail_id}-wrap" hidden><td colspan="13">{inner}</td></tr>
+    <tr class="detail-row" id="{detail_id}-wrap" hidden><td colspan="16">{inner}</td></tr>
             """)
 
         if "period_end_date" in tpanel.columns and tpanel["period_end_date"].notna().any():
@@ -599,7 +639,8 @@ def build_consolidated_html(
   <div id="mode-compare" class="mode-section active">
     <table id="compare-table">
       <thead>
-        <tr><th>Ticker</th><th>Quarter</th><th>Period ending</th><th>Earnings call</th><th>Feature available</th>
+        <tr><th>Ticker</th><th>Quarter</th><th>Period ending</th><th>Earnings call</th>
+            <th>Call features</th><th>T+7 revision</th><th>Investable as-of</th><th>Feature age</th>
             <th>Level avg</th><th>Delta avg</th><th>Surprise avg</th>
             <th>Quant z avg</th><th>Divergences</th><th>Max gap</th><th>Flags</th><th></th></tr>
       </thead>

@@ -21,6 +21,8 @@ CONSOLIDATED_SPINE_COLUMNS = [
     "days_since_earnings",
     "feature_age_days",
     "investable_ready",
+    "in_cross_section",
+    "exclusion_reason",
     "dimension",
     "dimension_group",
     "quant_mapping",

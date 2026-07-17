@@ -24,7 +24,9 @@ REPO_ROOT = HERE.parent
 if str(HERE) not in sys.path:
     sys.path.insert(0, str(HERE))
 
+from asof_alpha import apply_asof_alpha_labels  # noqa: E402
 from company_config import PILOT_OUTPUT_QUARTERS, PILOT_TICKERS  # noqa: E402
+from coverage import annotate_included, build_coverage_summary  # noqa: E402
 from dimension_order import DEFAULT_PRESET, prepare_consolidated_panel  # noqa: E402
 from export_modeling_spine import filter_registry_complete, load_panel  # noqa: E402
 from excel_export import write_cross_section_panel_workbook  # noqa: E402
@@ -292,7 +294,17 @@ def main() -> int:
         stacked = apply_feature_availability_dates(stacked)
     # Recompute cohort as-of across stacked tickers (per period_end_calendar_quarter).
     stacked = apply_investable_cross_section_columns(stacked)
+    stacked = apply_asof_alpha_labels(stacked, fetch_if_missing=True)
+    stacked = annotate_included(stacked)
     stacked = prepare_consolidated_panel(stacked, args.dimension_order)
+
+    coverage = build_coverage_summary(
+        tickers_requested=tickers,
+        tickers_loaded=loaded,
+        tickers_skipped=skipped,
+        quarter_scope=quarter_scope,
+        stacked=stacked,
+    )
 
     period_buckets = period_buckets_from_panel(stacked)
     default_bucket = args.quarter
@@ -316,11 +328,13 @@ def main() -> int:
         quarter_scope=quarter_scope,
         prior_quarters=["FY2024-Q4"],
     )
+    summary["coverage"] = coverage
 
     stem = args.output_stem
     ensure_cross_company_tree()
     html_path = cross_company_artifact("reports", stem, "html", mkdir=True)
     summary_path = cross_company_artifact("json", f"{stem}_summary", "json", mkdir=True)
+    coverage_path = cross_company_artifact("json", f"{stem}_coverage", "json", mkdir=True)
     csv_path = cross_company_artifact("csv", stem, "csv", mkdir=True)
     spine_path = cross_company_artifact("csv", "cross_section_spine", "csv", mkdir=True)
 
@@ -369,10 +383,12 @@ def main() -> int:
         encoding="utf-8",
     )
     summary_path.write_text(json.dumps(summary, indent=2), encoding="utf-8")
+    coverage_path.write_text(json.dumps(coverage, indent=2), encoding="utf-8")
 
     print(f"Wrote {spine_path}")
     print(f"Wrote {html_path}")
     print(f"Wrote {summary_path}")
+    print(f"Wrote {coverage_path}")
     print(f"Wrote {csv_path}")
     print(f"Wrote {xlsx_path}")
     print(f"  {len(loaded)} ticker(s), {len(stacked)} rows, default bucket={default_bucket}")

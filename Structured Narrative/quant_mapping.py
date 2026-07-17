@@ -69,15 +69,41 @@ FEATURE_AVAILABILITY_MANIFEST = {
             "quant_guidance_revision_z_pit",
         ],
     },
-    "label_only": {
+    "label_only_event": {
         "description": (
-            "Forward return labels — not model inputs. "
-            "Compounded from model_date (t+7 entry); initial IC tests use this entry."
+            "Event-driven forward return labels — not model inputs. "
+            "Compounded from each company's model_date (T+7 entry)."
         ),
         "columns": [
             "alpha_spec_0_90",
             "alpha_spec_0_90_z",
             "alpha_spec_0_90_complete",
+        ],
+    },
+    "label_only_asof": {
+        "description": (
+            "Cross-sectional forward return labels — not model inputs. "
+            "Compounded from investable_as_of_date (common as-of in the calendar-quarter bucket)."
+        ),
+        "columns": [
+            "alpha_spec_asof_0_90",
+            "alpha_spec_asof_0_90_z",
+            "alpha_spec_asof_0_90_complete",
+        ],
+    },
+    # Compat alias used by older readers
+    "label_only": {
+        "description": (
+            "Forward return labels — not model inputs. "
+            "Prefer label_only_event / label_only_asof for explicit entry dates."
+        ),
+        "columns": [
+            "alpha_spec_0_90",
+            "alpha_spec_0_90_z",
+            "alpha_spec_0_90_complete",
+            "alpha_spec_asof_0_90",
+            "alpha_spec_asof_0_90_z",
+            "alpha_spec_asof_0_90_complete",
         ],
     },
 }
