@@ -25,6 +25,7 @@ if str(HERE) not in sys.path:
     sys.path.insert(0, str(HERE))
 
 from company_config import PILOT_OUTPUT_QUARTERS, PILOT_TICKERS  # noqa: E402
+from dimension_order import DEFAULT_PRESET, prepare_consolidated_panel  # noqa: E402
 from export_modeling_spine import filter_registry_complete, load_panel  # noqa: E402
 from excel_export import write_cross_section_panel_workbook  # noqa: E402
 from fiscal_period_util import fiscal_period_sort_key  # noqa: E402
@@ -33,7 +34,6 @@ from panel_html import build_consolidated_html, build_evidence_lookups, summariz
 from period_dates import (  # noqa: E402
     calendar_quarter_sort_key,
     enrich_panel_period_columns,
-    period_end_sort_columns,
 )
 from spine_export import CONSOLIDATED_SPINE_COLUMNS, panel_to_spine, validate_spine_rules  # noqa: E402
 
@@ -230,6 +230,12 @@ def main() -> int:
         default="consolidated_feature_panel",
         help="Output file stem under cross_company/{reports,json,csv}/.",
     )
+    ap.add_argument(
+        "--dimension-order",
+        default=DEFAULT_PRESET,
+        choices=("pipeline", "fundamentals_context", "behavioral", "research_note", "risk_first"),
+        help="Thematic dimension row order for consolidated panel (default: fundamentals_context / Option B).",
+    )
     args = ap.parse_args()
     full_history = {t.upper() for t in args.full_history_tickers}
 
@@ -274,8 +280,7 @@ def main() -> int:
 
     stacked = pd.concat(frames, ignore_index=True)
     stacked = enrich_panel_period_columns(stacked)
-    sort_cols = [c for c in period_end_sort_columns() if c in stacked.columns]
-    stacked = stacked.sort_values(sort_cols or ["ticker", "fiscal_period", "dimension"]).reset_index(drop=True)
+    stacked = prepare_consolidated_panel(stacked, args.dimension_order)
 
     period_buckets = period_buckets_from_panel(stacked)
     default_bucket = args.quarter
@@ -331,7 +336,9 @@ def main() -> int:
     stacked.to_csv(csv_path, index=False)
 
     xlsx_path = cross_company_artifact("workbooks", stem, "xlsx", mkdir=True)
-    write_cross_section_panel_workbook(xlsx_path, stacked, spine_df)
+    write_cross_section_panel_workbook(
+        xlsx_path, stacked, spine_df, dimension_order=args.dimension_order
+    )
 
     html_path.write_text(
         build_consolidated_html(
@@ -342,6 +349,7 @@ def main() -> int:
             default_bucket=default_bucket or "ALL",
             sector_label=sector,
             generated_at=summary["generated_at"],
+            dimension_order=args.dimension_order,
         ),
         encoding="utf-8",
     )

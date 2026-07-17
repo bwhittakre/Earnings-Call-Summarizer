@@ -53,7 +53,9 @@ python "Structured Narrative/build_consolidated_panel_report.py" --tickers AMZN 
 #   output/AMZN/csv/research_spine.csv                 — full AMZN history, same slim schema
 ```
 
-Slim spine columns: ticker, fiscal_period, period_end_date, period_end_calendar_quarter, earnings_date, feature_availability_date, dimension, quant_mapping, level, delta, surprise, novelty, quant_z_pit, agrees_with_quant, evidence_confidence.
+Slim spine columns: ticker, fiscal_period, period_end_date, period_end_calendar_quarter, earnings_date, feature_availability_date, dimension, dimension_group, quant_mapping, level, delta, surprise, novelty, quant_z_pit, agrees_with_quant, evidence_confidence.
+
+Consolidated panel rows use **Option B** thematic order (default `--dimension-order fundamentals_context`): fundamentals block (demand → margins → earnings_power → capital_allocation → guidance), then narrative context (management_confidence → competitive_position → macro_regulatory_risk). Other presets: `pipeline`, `behavioral`, `research_note`, `risk_first`.
 
 Disable PIT guardrails (not recommended for production): `--no-pit`
 

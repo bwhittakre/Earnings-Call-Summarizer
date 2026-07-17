@@ -164,9 +164,13 @@ class ConsolidatedPanelReportTests(unittest.TestCase):
         self.assertIsNotNone(stats["level_avg"])
 
     def test_build_consolidated_html_markers(self):
-        stacked = pd.concat(
-            [_sample_panel("AAA", "FY2025-Q1"), _sample_panel("BBB", "FY2025-Q1")],
-            ignore_index=True,
+        from dimension_order import prepare_consolidated_panel
+
+        stacked = prepare_consolidated_panel(
+            pd.concat(
+                [_sample_panel("AAA", "FY2025-Q1"), _sample_panel("BBB", "FY2025-Q1")],
+                ignore_index=True,
+            )
         )
         empty = EvidenceLookups(level={}, delta={}, surprise={})
         html = build_consolidated_html(
@@ -179,6 +183,8 @@ class ConsolidatedPanelReportTests(unittest.TestCase):
             generated_at="2026-01-01T00:00:00Z",
         )
         self.assertIn('data-ticker="AAA"', html)
+        self.assertIn("dim-group-header", html)
+        self.assertIn("Fundamentals", html)
         self.assertIn("Quant PIT", html)
         self.assertIn("Novelty", html)
         self.assertIn('data-mode="compare"', html)
@@ -209,6 +215,9 @@ class CrossSectionPanelWorkbookTests(unittest.TestCase):
             ],
             ignore_index=True,
         )
+        from dimension_order import prepare_consolidated_panel
+
+        panel = prepare_consolidated_panel(panel)
         spine = panel_to_spine(panel)
         expected_rows = len(panel)
 
@@ -222,8 +231,17 @@ class CrossSectionPanelWorkbookTests(unittest.TestCase):
             for sheet_name in ("Summary", "Panel"):
                 ws = wb[sheet_name]
                 self.assertEqual(ws.freeze_panes, "A2")
-                self.assertEqual(len(ws.tables), 1)
-                self.assertEqual(ws.max_row, expected_rows + 1, msg=sheet_name)
+                self.assertIsNotNone(ws.auto_filter.ref)
+                # Group header rows expand row count vs raw panel (2 headers per ticker×quarter block).
+                self.assertGreater(ws.max_row, expected_rows + 1, msg=sheet_name)
+
+            panel_labels = {
+                str(ws["A" + str(r)].value)
+                for r in range(2, wb["Panel"].max_row + 1)
+                if wb["Panel"]["A" + str(r)].value
+            }
+            self.assertIn("Fundamentals", panel_labels)
+            self.assertIn("Narrative context", panel_labels)
 
 
 if __name__ == "__main__":

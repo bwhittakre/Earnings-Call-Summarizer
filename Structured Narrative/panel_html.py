@@ -10,6 +10,7 @@ from dataclasses import dataclass
 import pandas as pd
 
 from html_evidence import EVIDENCE_CSS, render_evidence_block
+from dimension_order import dimension_group_label, sort_panel_by_dimension
 from output_paths import resolve_read
 from period_dates import calendar_quarter_display, format_us_date, quarter_cell_html
 
@@ -63,6 +64,8 @@ BASE_CSS = """
   .fbtn.active, .mbtn.active { background: #1c1c1e; color: #fff; border-color: #1c1c1e; }
   table { border-collapse: collapse; width: 100%; }
   table.inner-panel { margin: 8px 0; font-size: 13px; }
+  tr.dim-group-header td { background: #eef2ff; color: #1e3a8a; font-weight: 700;
+           font-size: 12px; letter-spacing: .02em; border-top: 2px solid #cbd5e1; padding: 6px 10px; }
   th, td { border: 1px solid #e2e2e2; padding: 8px 10px; vertical-align: top; text-align: left; }
   th { background: #f2f2f4; font-size: 12px; text-transform: uppercase; letter-spacing: .03em; }
   td.dim { font-weight: 600; white-space: nowrap; }
@@ -280,9 +283,34 @@ def render_panel_table(
     row_id_prefix: str,
     show_quarter: bool = True,
     table_class: str = "inner-panel",
+    dimension_order: str | None = None,
+    show_group_headers: bool = True,
 ) -> str:
+    panel = sort_panel_by_dimension(panel, dimension_order)
     rows_html = []
+    current_group: str | None = None
+    block_key: tuple | None = None
+    block_cols = tuple(
+        c for c in ("period_end_date", "ticker", "fiscal_period") if c in panel.columns
+    )
+    n_cols = 12 if show_quarter else 11
+
     for i, (_, row) in enumerate(panel.iterrows()):
+        if show_group_headers and "dimension_group" in panel.columns:
+            if block_cols:
+                key = tuple(row.get(c) for c in block_cols)
+                if key != block_key:
+                    block_key = key
+                    current_group = None
+            grp = row.get("dimension_group")
+            grp_key = None if pd.isna(grp) else str(grp)
+            if grp_key and grp_key != current_group:
+                label = esc(dimension_group_label(grp_key))
+                rows_html.append(
+                    f'<tr class="dim-group-header"><td colspan="{n_cols}">{label}</td></tr>'
+                )
+                current_group = grp_key
+
         row_id = f"{row_id_prefix}-dim-{i}"
         rows_html.append(
             render_dimension_row(row, row_id, lookups, show_quarter=show_quarter)
@@ -445,6 +473,7 @@ def build_consolidated_html(
     default_bucket: str,
     sector_label: str | None,
     generated_at: str,
+    dimension_order: str | None = None,
 ) -> str:
     sector_txt = f" &middot; Sector preset: {esc(sector_label)}" if sector_label else ""
     ticker_txt = ", ".join(tickers)
@@ -464,10 +493,7 @@ def build_consolidated_html(
 
     for ticker in tickers:
         tpanel = stacked[stacked["ticker"] == ticker].copy()
-        if "period_end_date" in tpanel.columns:
-            tpanel = tpanel.sort_values(["period_end_date", "fiscal_period", "dimension"])
-        else:
-            tpanel = tpanel.sort_values(["fiscal_period", "dimension"])
+        tpanel = sort_panel_by_dimension(tpanel, dimension_order)
         lookups = lookups_by_ticker[ticker]
         div_count = int(tpanel["is_divergence"].fillna(False).sum())
 
@@ -499,6 +525,7 @@ def build_consolidated_html(
                 row_id_prefix=detail_id,
                 show_quarter=False,
                 table_class="inner-panel",
+                dimension_order=dimension_order,
             )
             hidden = "" if bucket == default_bucket else ' style="display:none"'
             compare_rows.append(f"""
@@ -535,6 +562,7 @@ def build_consolidated_html(
             row_id_prefix=browse_id,
             show_quarter=True,
             table_class="inner-panel",
+            dimension_order=dimension_order,
         )
         n_quarters = tpanel["fiscal_period"].nunique()
         browse_rows.append(f"""

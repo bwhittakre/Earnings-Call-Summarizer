@@ -29,6 +29,7 @@ from pathlib import Path
 
 import pandas as pd
 from openpyxl.utils import get_column_letter
+from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.worksheet.table import Table, TableStyleInfo
 
 from output_paths import (
@@ -39,6 +40,7 @@ from output_paths import (
     resolve_read_parquet_or_csv,
     ROOT,
 )
+from dimension_order import insert_dimension_group_header_rows, sort_panel_by_dimension  # noqa: E402
 
 DATE_FMT = "yyyy-mm-dd"
 DATETIME_FMT = "yyyy-mm-dd hh:mm"
@@ -125,6 +127,7 @@ LAYER_COLUMN_LABELS: dict[str, str] = {
     "source": "Source",
     "period_end_date": "Period End Date",
     "period_end_calendar_quarter": "Period End Calendar Qtr",
+    "dimension_group": "Dimension Group",
     "feature_availability_date": "Feature Available Date",
     "quant_mapping": "Quant Mapping",
     "quant_family": "Quant Family",
@@ -171,6 +174,7 @@ PANEL_EXCEL_FRONT_COLS = (
     "period_end_date",
     "period_end_calendar_quarter",
     "dimension",
+    "dimension_group",
     "as_of_date",
     "earnings_date",
     "feature_availability_date",
@@ -330,6 +334,30 @@ def _apply_excel_table(ws, *, nrows: int, ncols: int, display_name: str) -> None
     ws.add_table(tab)
 
 
+def _apply_group_header_rows(
+    ws,
+    header_row_indices: list[int],
+    ncols: int,
+    *,
+    label_col: int = 1,
+) -> None:
+    """Merge and style inserted dimension-group label rows (0-based data frame indices)."""
+    if not header_row_indices or ncols < 1:
+        return
+    last_col = get_column_letter(ncols)
+    fill = PatternFill(fill_type="solid", fgColor="EEF2FF")
+    font = Font(bold=True, color="1E3A8A")
+    for idx in header_row_indices:
+        excel_row = idx + 2
+        label = ws.cell(row=excel_row, column=label_col).value
+        ws.merge_cells(f"A{excel_row}:{last_col}{excel_row}")
+        cell = ws.cell(row=excel_row, column=1)
+        cell.value = label
+        cell.fill = fill
+        cell.font = font
+        cell.alignment = Alignment(vertical="center")
+
+
 def _format_worksheet(
     ws,
     out: pd.DataFrame,
@@ -340,6 +368,7 @@ def _format_worksheet(
     full_scan: bool = False,
     percent_cols: set[str] | None = None,
     zscore_cols: set[str] | None = None,
+    group_header_rows: list[int] | None = None,
 ) -> None:
     ws.freeze_panes = "A2"
     nrows = len(out) + 1
@@ -364,13 +393,24 @@ def _format_worksheet(
             out[col], col, kind, full_scan=full_scan
         )
 
-    if as_table:
+    group_header_rows = group_header_rows or []
+    label_col = 1
+    if "Dimension" in out.columns:
+        label_col = out.columns.get_loc("Dimension") + 1
+    if group_header_rows:
+        _apply_group_header_rows(
+            ws, group_header_rows, ncols, label_col=label_col
+        )
+
+    if as_table and not group_header_rows:
         _apply_excel_table(
             ws,
             nrows=nrows,
             ncols=ncols,
             display_name=table_name or _table_display_name(ws.title),
         )
+    elif nrows > 1 and ncols >= 1:
+        ws.auto_filter.ref = f"A1:{get_column_letter(ncols)}{nrows}"
 
 
 def _dimension_z_columns(df: pd.DataFrame) -> list[str]:
@@ -437,13 +477,8 @@ def _rename_dataframe_columns(df: pd.DataFrame) -> tuple[pd.DataFrame, dict[str,
     return df.rename(columns=rename), rename
 
 
-def _sort_cross_section(df: pd.DataFrame) -> pd.DataFrame:
-    sort_cols = [
-        c for c in ("period_end_date", "ticker", "dimension", "fiscal_period") if c in df.columns
-    ]
-    if sort_cols:
-        return df.sort_values(sort_cols).reset_index(drop=True)
-    return df.reset_index(drop=True)
+def _sort_cross_section(df: pd.DataFrame, dimension_order: str | None = None) -> pd.DataFrame:
+    return sort_panel_by_dimension(df, dimension_order)
 
 
 def prepare_panel_for_excel(df: pd.DataFrame) -> pd.DataFrame:
@@ -481,18 +516,22 @@ def write_cross_section_panel_workbook(
     path: str | Path,
     panel_df: pd.DataFrame,
     spine_df: pd.DataFrame,
+    *,
+    dimension_order: str | None = None,
 ) -> str:
     """Write filterable cross-section workbook: Summary (spine) + Panel (full rows)."""
     path = str(path)
-    panel_sorted = _sort_cross_section(prepare_panel_for_excel(panel_df))
-    spine_sorted = _sort_cross_section(spine_df)
+    panel_sorted = _sort_cross_section(prepare_panel_for_excel(panel_df), dimension_order)
+    spine_sorted = _sort_cross_section(spine_df, dimension_order)
+    panel_export, panel_header_rows = insert_dimension_group_header_rows(panel_sorted)
+    spine_export, spine_header_rows = insert_dimension_group_header_rows(spine_sorted)
 
     sheets = {
-        "Summary": spine_sorted,
-        "Panel": panel_sorted,
+        "Summary": (spine_export, spine_header_rows),
+        "Panel": (panel_export, panel_header_rows),
     }
     with pd.ExcelWriter(path, engine="openpyxl") as writer:
-        for sheet_name, raw_df in sheets.items():
+        for sheet_name, (raw_df, header_rows) in sheets.items():
             out, kinds, percent_cols, zscore_cols = _prepare_cross_section_sheet(raw_df)
             safe_name = sheet_name[:31]
             out.to_excel(writer, index=False, sheet_name=safe_name)
@@ -505,6 +544,7 @@ def write_cross_section_panel_workbook(
                 full_scan=True,
                 percent_cols=percent_cols,
                 zscore_cols=zscore_cols,
+                group_header_rows=header_rows,
             )
     return path
 

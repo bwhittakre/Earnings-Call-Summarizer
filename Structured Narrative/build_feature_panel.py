@@ -23,6 +23,7 @@ if str(HERE) not in sys.path:
 from company_config import get_company  # noqa: E402
 from quarter_registry import is_quarter_complete, load_registry  # noqa: E402
 from dimension_scorer import ALL_DIMENSIONS, QUANT_COMPARABLE_DIMENSIONS  # noqa: E402
+from dimension_order import prepare_consolidated_panel  # noqa: E402
 from output_paths import company_artifact, resolve_read, resolve_read_parquet_or_csv  # noqa: E402
 from panel_html import (  # noqa: E402
     EvidenceLookups,
@@ -40,7 +41,6 @@ from quant_mapping import FEATURE_AVAILABILITY_MANIFEST, quant_family_for, quant
 from period_dates import (  # noqa: E402
     apply_feature_availability_dates,
     enrich_panel_period_columns,
-    period_end_sort_columns,
     resolve_period_end_date,
 )
 from quant_panel import agrees, apply_derived_features, narrative_quant_gap  # noqa: E402
@@ -51,6 +51,7 @@ PANEL_COLUMNS = [
     "period_end_date",
     "period_end_calendar_quarter",
     "dimension",
+    "dimension_group",
     "as_of_date",
     "earnings_date",
     "feature_availability_date",
@@ -403,11 +404,7 @@ def merge_panel(
         mask = panel["has_level"] | panel["has_delta"] | panel["has_surprise"] | panel["has_novelty"]
         panel = panel.loc[mask].copy()
 
-    sort_cols = [c for c in period_end_sort_columns() if c in panel.columns]
-    if sort_cols:
-        panel = panel.sort_values(sort_cols).reset_index(drop=True)
-    else:
-        panel = panel.sort_values(["fiscal_period", "dimension"]).reset_index(drop=True)
+    panel = prepare_consolidated_panel(panel)
     for col in PANEL_COLUMNS:
         if col not in panel.columns:
             panel[col] = None
@@ -585,8 +582,7 @@ def main() -> int:
     )
     if output_quarters is not None:
         panel = panel.loc[panel["fiscal_period"].isin(output_quarters)].copy()
-        sort_cols = [c for c in period_end_sort_columns() if c in panel.columns]
-        panel = panel.sort_values(sort_cols or ["fiscal_period", "dimension"]).reset_index(drop=True)
+        panel = prepare_consolidated_panel(panel)
     elif args.from_registry:
         reg = load_registry(ticker)
         fps = [
@@ -597,8 +593,7 @@ def main() -> int:
         ]
         if fps:
             panel = panel.loc[panel["fiscal_period"].isin(fps)].copy()
-            sort_cols = [c for c in period_end_sort_columns() if c in panel.columns]
-            panel = panel.sort_values(sort_cols or ["fiscal_period", "dimension"]).reset_index(drop=True)
+            panel = prepare_consolidated_panel(panel)
 
     summary = build_summary(panel, ticker)
     lookups = build_evidence_lookups(ticker)

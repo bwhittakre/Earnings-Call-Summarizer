@@ -148,4 +148,5 @@ def quarter_cell_html(row: pd.Series) -> str:
 
 
 def period_end_sort_columns() -> list[str]:
-    return ["period_end_date", "ticker", "dimension"]
+    """Leading sort keys before thematic dimension order (see dimension_order.py)."""
+    return ["period_end_date", "ticker", "fiscal_period"]

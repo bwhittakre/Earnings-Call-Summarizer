@@ -16,6 +16,7 @@ CONSOLIDATED_SPINE_COLUMNS = [
     "earnings_date",
     "feature_availability_date",
     "dimension",
+    "dimension_group",
     "quant_mapping",
     "quant_family",
     "llm_level",

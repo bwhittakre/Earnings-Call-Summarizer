@@ -16,6 +16,11 @@ The eight dimensions
   demand, margins, earnings_power, capital_allocation, guidance,
   management_confidence, competitive_position, macro_regulatory_risk
 
+Display order (consolidated panel / xlsx / HTML, default Option B):
+  dimension_group fundamentals: demand, margins, earnings_power, capital_allocation, guidance
+  dimension_group narrative_context: management_confidence, competitive_position, macro_regulatory_risk
+  Override via build_consolidated_panel_report.py --dimension-order (pipeline | fundamentals_context | behavioral | research_note | risk_first)
+
 Quant z mapping (five comparable dimensions only)
   demand              -> dim_demand_z / dim_demand_z_pit
   margins             -> dim_margins_z / dim_margins_z_pit
@@ -30,6 +35,7 @@ Keys
   ticker              Security identifier (e.g. AMZN).
   fiscal_period       Fiscal quarter label (e.g. FY2024-Q3).
   dimension           One of the eight dimensions above.
+  dimension_group     Thematic group for consolidated display (fundamentals | narrative_context by default).
 
 Metadata
   as_of_date          Point-in-time date for the row (call date when available).

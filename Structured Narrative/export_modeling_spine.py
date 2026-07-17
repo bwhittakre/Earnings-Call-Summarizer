@@ -24,6 +24,7 @@ from company_config import PILOT_OUTPUT_QUARTERS, PILOT_TICKERS  # noqa: E402
 from output_paths import cross_company_artifact, ensure_cross_company_tree, resolve_read  # noqa: E402
 from quarter_registry import is_quarter_complete, load_registry  # noqa: E402
 from spine_export import CONSOLIDATED_SPINE_COLUMNS, panel_to_spine  # noqa: E402
+from dimension_order import sort_panel_by_dimension  # noqa: E402
 
 DEFAULT_COLUMNS = list(CONSOLIDATED_SPINE_COLUMNS)
 
@@ -92,7 +93,10 @@ def main() -> int:
         return 1
 
     stacked = pd.concat(frames, ignore_index=True)
-    stacked = stacked.sort_values(["ticker", "fiscal_period", "dimension"]).reset_index(drop=True)
+    stacked = sort_panel_by_dimension(
+        stacked,
+        leading_columns=("ticker", "fiscal_period", "period_end_date"),
+    )
     out_cols = DEFAULT_COLUMNS + label_cols
 
     ensure_cross_company_tree()
