@@ -38,6 +38,7 @@ from period_dates import (  # noqa: E402
     apply_investable_cross_section_columns,
     calendar_quarter_sort_key,
     enrich_panel_period_columns,
+    filter_min_calendar_quarter,
 )
 from spine_export import (  # noqa: E402
     CONSOLIDATED_SPINE_COLUMNS,
@@ -230,6 +231,14 @@ def main() -> int:
         help="Tickers that keep all panel rows (ignore --quarters/--scope filter).",
     )
     ap.add_argument(
+        "--min-calendar-quarter",
+        metavar="yyyy-Qn",
+        help=(
+            "Drop rows / Compare tabs before this period-end calendar quarter "
+            "(e.g. 2021-Q3 for a shared ~5-year four-name window)."
+        ),
+    )
+    ap.add_argument(
         "--research-ticker",
         default="AMZN",
         help="Ticker for separate full-history research spine export (default: AMZN).",
@@ -290,6 +299,16 @@ def main() -> int:
     stacked = pd.concat(frames, ignore_index=True)
     stacked = standardize_surprise_novelty_exclusivity(stacked)
     stacked = enrich_panel_period_columns(stacked)
+    if args.min_calendar_quarter:
+        before = len(stacked)
+        stacked = filter_min_calendar_quarter(stacked, args.min_calendar_quarter)
+        print(
+            f"Min calendar quarter {args.min_calendar_quarter}: "
+            f"kept {len(stacked)}/{before} rows"
+        )
+        if stacked.empty:
+            print("No rows remain after --min-calendar-quarter filter.", file=sys.stderr)
+            return 1
     if "call_feature_available_date" not in stacked.columns:
         stacked = apply_feature_availability_dates(stacked)
     # Recompute cohort as-of across stacked tickers (per period_end_calendar_quarter).

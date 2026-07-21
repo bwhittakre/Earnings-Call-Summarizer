@@ -110,6 +110,17 @@ def main() -> int:
         default=[],
         help="When refreshing quant, fetch/merge only these fiscal periods.",
     )
+    ap.add_argument(
+        "--extra-output-quarters",
+        nargs="+",
+        default=[],
+        help="Treat these fiscal periods as output scope (not prior-only) even if outside company_config.",
+    )
+    ap.add_argument(
+        "--from-registry",
+        action="store_true",
+        help="Build feature panel from all registry-complete quarters.",
+    )
     args = ap.parse_args()
     ticker = args.ticker.upper()
     sn = str(HERE)
@@ -129,11 +140,16 @@ def main() -> int:
             quarter_args.extend(["--extra-output-quarters", normalize_fiscal_period(args.new_quarter)])
     elif args.quarters:
         quarter_args = ["--quarters", *args.quarters]
+        # Historical backfills: keep scored quarters in the published panel, not prior-only.
+        extra = args.extra_output_quarters or args.quarters
+        quarter_args.extend(["--extra-output-quarters", *extra])
+    elif args.extra_output_quarters:
+        quarter_args = ["--extra-output-quarters", *args.extra_output_quarters]
 
     scope_args = ["--scope", args.scope] if args.scope else []
     force_args = ["--force"] if args.force else []
     panel_args = [PY, f"{sn}/build_feature_panel.py", "--ticker", ticker, *scope_args]
-    if args.new_quarter and not args.scope:
+    if (args.new_quarter or args.quarters or args.from_registry) and not args.scope:
         panel_args.extend(["--from-registry"])
 
     ensure_company_tree(ticker)

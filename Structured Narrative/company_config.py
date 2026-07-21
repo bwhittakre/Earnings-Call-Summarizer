@@ -24,9 +24,16 @@ FY2026_OUTPUT = (
 # earnings calls ROIC has per company, not this fixed FY2025–FY2026 span.
 PILOT_OUTPUT_QUARTERS = FY2025_OUTPUT_QUARTERS + FY2026_OUTPUT + ("FY2026-Q4",)
 
-FY2024_PRIOR_QUARTERS = (
-    "FY2024-Q4",
-)
+FY2024_PRIOR_QUARTERS = ()
+
+# FY2024-Q4 is fully scored (dimensions/delta/surprise/novelty) for MSFT and AAPL
+# and now bridges their 5-year historical backfill into the FY2025-FY2026 pilot
+# window as a real output quarter, mirroring AMZN_FULL_OUTPUT_QUARTERS below.
+# NVDA's FY2024-Q4 is intentionally excluded here: only a partial dimensions
+# score exists (no delta/surprise/novelty, no local transcript) — see
+# output/NVDA/json/quarter_registry.json.
+FY2024_Q4_BRIDGE = ("FY2024-Q4",)
+PILOT_OUTPUT_QUARTERS_WITH_BRIDGE = FY2024_Q4_BRIDGE + PILOT_OUTPUT_QUARTERS
 
 # AMZN 5-year historical run: transcripts in Structured Narrative/AMZN/
 # FY2019-Q2 is prior-only (delta baseline for FY2019-Q3); not in published outputs.
@@ -129,6 +136,8 @@ COMPANIES: dict[str, CompanyProfile] = {
         estpermid=30064848647,
         isin="US5949181045",
         barra_id="USAJ471",
+        output_quarters=PILOT_OUTPUT_QUARTERS_WITH_BRIDGE,
+        prior_quarters=FY2024_PRIOR_QUARTERS,
     ),
     "NVDA": CompanyProfile(
         ticker="NVDA",
@@ -136,6 +145,10 @@ COMPANIES: dict[str, CompanyProfile] = {
         estpermid=30064850531,
         isin="US67066G1040",
         barra_id="USA2HB1",
+        # FY2024-Q4 transcript sourced + delta/surprise/novelty scored 2026-07-21;
+        # now bridges the 5-year backfill into the pilot window like MSFT/AAPL.
+        output_quarters=PILOT_OUTPUT_QUARTERS_WITH_BRIDGE,
+        prior_quarters=FY2024_PRIOR_QUARTERS,
     ),
     "AAPL": CompanyProfile(
         ticker="AAPL",
@@ -143,7 +156,7 @@ COMPANIES: dict[str, CompanyProfile] = {
         estpermid=30064826814,
         isin="US0378331005",
         barra_id="USAB1X1",
-        output_quarters=PILOT_OUTPUT_QUARTERS,
+        output_quarters=PILOT_OUTPUT_QUARTERS_WITH_BRIDGE,
         prior_quarters=FY2024_PRIOR_QUARTERS,
     ),
 }

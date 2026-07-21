@@ -27,12 +27,13 @@ For output quarter **FY2020-Q1**, all published quant comparisons use **expandin
 - `quant_guidance_revision_z_pit` = T+7d forward estimate revision z (delayed; separate from call-date features)
 - Guidance has **no** call-date `quant_z_pit` — revisions are kept separate per methodology
 - Feature availability is **feature-level**: `call_feature_available_date` (level/delta/surprise/novelty/`quant_z_pit`) and `t7_feature_available_date` (guidance revision only). Row `feature_availability_date` equals the call date for display/compat.
-- Forward alpha labels are **research-only** and come in two families:
-  - **Event-driven** `alpha_spec_0_90*` — from each company's T+7 / `model_date`
-  - **Cross-sectional** `alpha_spec_asof_0_90*` — from the common `investable_as_of_date` in the calendar-quarter bucket
-  Export via `export_modeling_spine.py --include-labels --labels event|asof|both`. Do not pair T+7 revision z with a return window that starts before `t7_feature_available_date`.
-  As-of labels need cached daily returns (`output/{TICKER}/parquet/specific_returns.parquet`), written automatically by `single_company_extractor.py` when Snowflake is reachable.
-- Investable cross-section: within each `period_end_calendar_quarter`, `investable_as_of_date` = T+7 after the latest earnings date in the bucket, plus `days_since_earnings` / `feature_age_days` / `investable_ready`. Compare mode still buckets by period-end calendar quarter.
+- Forward alpha labels are **research-only** and come in two families, each computed across
+  several forward-return horizons (see "Signal IC evaluation" below for the full window table):
+  - **Event-driven** `alpha_spec_{horizon}*` — from each company's T+7 / `model_date`
+  - **Cross-sectional** `alpha_spec_asof_{horizon}*` — from the common `investable_as_of_date` in the calendar-quarter bucket
+  Export via `export_modeling_spine.py --include-labels --labels event|asof|both [--horizons 0_14 0_56 ...]`. Do not pair T+7 revision z with a return window that starts before `t7_feature_available_date`.
+  As-of/event labels need cached daily returns (`output/{TICKER}/parquet/specific_returns.parquet`), written automatically by `single_company_extractor.py` when Snowflake is reachable; new horizons beyond the legacy `0_90` window are always computed offline from that cache.
+- Investable cross-section: within each `period_end_calendar_quarter`, `investable_as_of_date` = T+7 after the latest earnings date in the bucket, plus `days_since_earnings` / `feature_age_days` / `investable_ready`. Compare mode buckets by nearest calendar quarter-end (Mar/Jun/Sep/Dec), so late-month fiscal ends (e.g. NVDA Oct 31 → Sep bucket) sit with concurrent peers. Use `--min-calendar-quarter 2021-Q3` on the consolidated / spine / IC scripts to drop AMZN-only pre-history and keep a shared ~5-year four-name window.
 - Pilot defaults include **AMZN, MSFT, NVDA, AAPL**. Coverage / exclusion reasons are written to `{stem}_coverage.json` when consolidating.
 
 ## Feature taxonomy
@@ -114,13 +115,62 @@ Past quarters are **not re-scored** unless `--force` is passed. The registry tra
 ## Signal IC evaluation (4-name pilot)
 
 ```powershell
-python "Structured Narrative/evaluate_narrative_signals.py" --labels both
+python "Structured Narrative/evaluate_narrative_signals.py"
+python "Structured Narrative/evaluate_narrative_signals.py" --labels both --horizons 0_14 0_56
 ```
 
-- Restacks panels, recomputes **cross-ticker** `investable_as_of_date`, rebuilds `alpha_spec_asof_0_90*` from cached returns.
-- **Event** label: WF by `fiscal_period` on all call-date rows.
-- **As-of** label: WF by `period_end_calendar_quarter` on `investable_ready` rows (`--no-investable-only` to disable).
-- Writes `output/cross_company/json/narrative_signal_eval.json`, plus `…_leaderboard.csv`, `…_period_ic.csv`, `…_jackknife.csv`.
+**Unit of observation.** Each company contributes **one** independent return observation per
+cross-section. A period's eight dimension rows per company all point at the *same* forward
+return, so RankIC is computed **separately for each `(period, dimension)` pair** — never pooled
+across dimensions (that pooling was a bug: it inflated `n` to `4 tickers × 8 dims = 32` while
+secretly repeating each company's return 8×). `by_dimension` in the JSON report / HTML holds each
+dimension's own walk-forward RankIC, pooled RankIC, and quintile spread; `dimension_mean` averages
+those per-dimension means for a quick cross-dimension glance — it is a display convenience, not a
+statistic in its own right.
+
+**As-of is primary; event is bucketed by earnings date.** `--labels` defaults to `asof` — the
+common investable as-of construction (`period_end_calendar_quarter` grouping, `investable_ready`
+rows only; `--no-investable-only` to disable) is the primary cross-sectional test. `event`
+(model-date / T+7-entry, per-company) is grouped by **`earnings_date_calendar_quarter`**, not
+`fiscal_period` — fiscal-period labels aren't calendar-aligned across companies (that mismatch is
+the same problem `period_end_calendar_quarter` already solved for period-end dates, applied here
+to the earnings date instead).
+
+**Multiple forward horizons.** Every label is computed for several calendar-day windows from the
+same T+7 entry anchor (`model_date` for event, `investable_as_of_date` for as-of), tiling
+end-to-end so nothing is double-counted or skipped:
+
+| Horizon key | Window (from T+7 entry) | Column suffix |
+|---|---|---|
+| `0_14`  | T+7 → T+21  | `alpha_spec[_asof]_0_14`  |
+| `14_35` | T+22 → T+42 | `alpha_spec[_asof]_14_35` |
+| `35_56` | T+43 → T+63 | `alpha_spec[_asof]_35_56` |
+| `0_56`  | T+7 → T+63 (combined) | `alpha_spec[_asof]_0_56` |
+| `0_90`  | legacy 90-day window (kept for continuity) | `alpha_spec[_asof]_0_90` |
+
+`--horizons` restricts a run to a subset (default: all). New horizons are computed **offline**
+from cached `specific_returns.parquet` — `model_date` isn't retained in `feature_panel.csv`, so
+`period_dates.model_date_from(earnings_date)` recomputes it (same T+7 + weekend-roll rule used at
+ingestion), and the legacy on-disk `alpha_spec_0_90*` triple is cross-checked against its own
+offline recomputation as a sanity check, then left untouched either way.
+
+**Agreement effect.** `agrees_with_quant` is categorical, so besides RankIC it gets its own
+mean-return comparison: `agreement_effect_stats` reports mean forward return for agree vs.
+disagree, the spread, and a **95% ticker-cluster bootstrap CI** on the spread (resampling the
+ticker set, not individual rows — the same unit-of-observation fix applied to a mean comparison).
+Computed per quant-mapped dimension (`demand`, `margins`, `earnings_power`, `capital_allocation`)
+plus one `pooled` row, for every `(label, horizon)` combination — `--agreement-bootstrap` controls
+the resample count (default 2000). With only 4 tickers the CI is wide; that reflects genuinely
+limited cross-sectional power, not a bug.
+
+**Outputs:** `output/cross_company/json/narrative_signal_eval.json` (nested `by_label[event|asof]
+[horizon][signal].by_dimension[dim]`), `…_leaderboard.csv` (`signal × dimension` rows per
+`label × horizon`), `…_period_ic.csv`, `…_jackknife.csv`, `…_agreement.csv`, and an interactive
+HTML report at `output/cross_company/reports/narrative_signal_eval.html` with Label / Horizon /
+Dimension selectors driving a period RankIC heatmap, company × quarter signal/return grid,
+leaderboard, the promoted **By dimension** matrix (rows = dimension, columns = signal — the
+primary "evaluate Demand/Margins/Guidance independently" view), an **Agreement effect** tab, and
+jackknife.
 
 ## Reference keys
 

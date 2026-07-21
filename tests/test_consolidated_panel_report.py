@@ -20,6 +20,8 @@ from period_dates import (  # noqa: E402
     apply_investable_cross_section_columns,
     calendar_quarter_from_date,
     enrich_panel_period_columns,
+    filter_min_calendar_quarter,
+    model_date_from,
     quarter_cell_html,
 )
 from spine_export import (  # noqa: E402
@@ -129,6 +131,51 @@ class PeriodEndBucketTests(unittest.TestCase):
         msft = _sample_panel("MSFT", "FY2025-Q1", period_end="2024-09-30")
         self.assertEqual(amzn.iloc[0]["period_end_calendar_quarter"], "2025-Q1")
         self.assertEqual(msft.iloc[0]["period_end_calendar_quarter"], "2024-Q3")
+
+    def test_exact_calendar_quarter_ends_unchanged(self):
+        self.assertEqual(calendar_quarter_from_date("2021-09-30"), "2021-Q3")
+        self.assertEqual(calendar_quarter_from_date("2021-12-31"), "2021-Q4")
+        self.assertEqual(calendar_quarter_from_date("2022-03-31"), "2022-Q1")
+
+    def test_nvda_late_month_ends_nearest_prior_quarter(self):
+        # NVIDIA FY ends ~Jan 31; Q3 ends ~Oct 31 — bucket with Sep/Dec peers.
+        self.assertEqual(calendar_quarter_from_date("2021-10-31"), "2021-Q3")
+        self.assertEqual(calendar_quarter_from_date("2022-01-31"), "2021-Q4")
+        self.assertEqual(calendar_quarter_from_date("2022-04-30"), "2022-Q1")
+        self.assertEqual(calendar_quarter_from_date("2022-07-31"), "2022-Q2")
+
+    def test_earnings_date_calendar_quarter_bucketed_from_earnings_date(self):
+        # period_end 2025-03-31 (-> 2025-Q1) but earnings_date 2025-05-01 is nearest
+        # to 2025-03-31 too (31d away vs. 60d to 2025-06-30) — still Q1 here; the
+        # point is the column is derived from earnings_date, not period_end_date.
+        panel = _sample_panel("AMZN", "FY2025-Q1", period_end="2025-03-31", earnings_date="2025-05-01")
+        enriched = enrich_panel_period_columns(panel)
+        self.assertIn("earnings_date_calendar_quarter", enriched.columns)
+        self.assertEqual(enriched.iloc[0]["earnings_date_calendar_quarter"], "2025-Q1")
+
+    def test_earnings_date_calendar_quarter_diverges_from_period_end_bucket(self):
+        # period ends 2025-03-31 (-> Q1) but the call itself happens late enough
+        # (2025-06-20) to land nearer the following calendar quarter-end.
+        panel = _sample_panel("AMZN", "FY2025-Q1", period_end="2025-03-31", earnings_date="2025-06-20")
+        enriched = enrich_panel_period_columns(panel)
+        self.assertEqual(enriched.iloc[0]["period_end_calendar_quarter"], "2025-Q1")
+        self.assertEqual(enriched.iloc[0]["earnings_date_calendar_quarter"], "2025-Q2")
+
+    def test_model_date_from_adds_seven_calendar_days(self):
+        self.assertEqual(model_date_from("2025-05-01").isoformat(), "2025-05-08")
+
+    def test_model_date_from_rolls_off_weekend(self):
+        # 2025-04-26 is a Saturday; +7d lands on another Saturday (2025-05-03),
+        # which rolls forward to the following Monday.
+        self.assertEqual(model_date_from("2025-04-26").isoformat(), "2025-05-05")
+
+    def test_filter_min_calendar_quarter_drops_early_amzn(self):
+        early = _sample_panel("AMZN", "FY2021-Q2", period_end="2021-06-30")
+        keep = _sample_panel("AMZN", "FY2021-Q3", period_end="2021-09-30")
+        stacked = pd.concat([early, keep], ignore_index=True)
+        stacked = enrich_panel_period_columns(stacked)
+        trimmed = filter_min_calendar_quarter(stacked, "2021-Q3")
+        self.assertEqual(set(trimmed["fiscal_period"]), {"FY2021-Q3"})
 
     def test_quarter_cell_html_period_ending_subline(self):
         row = _sample_panel("AMZN", "FY2025-Q1").iloc[0]

@@ -19,6 +19,13 @@ from src.market.fiscal_resolver import resolve_quarter_end_date  # noqa: E402
 _CALENDAR_QUARTER_END_MONTH = {1: 3, 2: 6, 3: 9, 4: 12}
 _MONTH_ABBR = ("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
 
+# T+7 entry-date delay used for both the event alpha anchor (model_date) and the
+# as-of investable anchor. Duplicated from single_company_extractor.py's
+# MODEL_DELAY_DAYS/model_date_from (rather than imported) so this module — and
+# anything that imports it (asof_alpha.py, evaluate_narrative_signals.py) — never
+# pulls in single_company_extractor.py's snowflake.connector dependency.
+MODEL_DELAY_DAYS = 7
+
 
 def to_date(val) -> date | None:
     if val is None or (isinstance(val, float) and pd.isna(val)):
@@ -37,11 +44,46 @@ def format_us_date(val) -> str:
 
 
 def calendar_quarter_from_date(val) -> str | None:
+    """Map a period-end date to a compare-mode calendar-quarter bucket.
+
+    Uses the *nearest* calendar quarter-end (Mar 31 / Jun 30 / Sep 30 / Dec 31),
+    not the calendar quarter that contains the date. Late-month fiscal ends
+    (e.g. NVDA Oct 31 / Jan 31) therefore sit with peers whose periods ended
+    ~30 days earlier (Sep 30 / Dec 31), not in the following calendar quarter.
+    """
     d = to_date(val)
     if d is None:
         return None
-    q = (d.month - 1) // 3 + 1
-    return f"{d.year}-Q{q}"
+    candidates: list[date] = []
+    for year in (d.year - 1, d.year, d.year + 1):
+        candidates.extend(
+            (
+                date(year, 3, 31),
+                date(year, 6, 30),
+                date(year, 9, 30),
+                date(year, 12, 31),
+            )
+        )
+    nearest = min(candidates, key=lambda c: abs((d - c).days))
+    q = (nearest.month - 1) // 3 + 1
+    return f"{nearest.year}-Q{q}"
+
+
+def model_date_from(earnings_date) -> date | None:
+    """T+7 entry date from an earnings date: +MODEL_DELAY_DAYS calendar days, rolled off weekends.
+
+    Mirrors single_company_extractor.py's model_date_from exactly (same delay,
+    same weekend roll-forward rule) so alpha windows recomputed here from cached
+    specific_returns line up with the Snowflake-computed alpha_spec_0_90 baked
+    into the panel at ingestion time.
+    """
+    d = to_date(earnings_date)
+    if d is None:
+        return None
+    result = d + timedelta(days=MODEL_DELAY_DAYS)
+    while result.weekday() >= 5:
+        result += timedelta(days=1)
+    return result
 
 
 def calendar_quarter_sort_key(cq: str) -> tuple[int, int]:
@@ -49,6 +91,22 @@ def calendar_quarter_sort_key(cq: str) -> tuple[int, int]:
         return (0, 0)
     yr, qn = cq.split("-Q", 1)
     return int(yr), int(qn)
+
+
+def filter_min_calendar_quarter(
+    panel: pd.DataFrame,
+    min_calendar_quarter: str | None,
+) -> pd.DataFrame:
+    """Drop rows whose period_end_calendar_quarter is before ``min_calendar_quarter``."""
+    if not min_calendar_quarter:
+        return panel
+    if "period_end_calendar_quarter" not in panel.columns:
+        panel = enrich_panel_period_columns(panel)
+    floor = calendar_quarter_sort_key(min_calendar_quarter.strip().upper())
+    mask = panel["period_end_calendar_quarter"].map(
+        lambda cq: calendar_quarter_sort_key(str(cq)) >= floor if pd.notna(cq) else False
+    )
+    return panel.loc[mask].copy()
 
 
 def calendar_quarter_display(cq: str) -> str:
@@ -137,6 +195,12 @@ def enrich_panel_period_columns(panel: pd.DataFrame) -> pd.DataFrame:
 
     df["period_end_date"] = df.apply(_ped, axis=1)
     df["period_end_calendar_quarter"] = df["period_end_date"].map(calendar_quarter_from_date)
+    if "earnings_date" in df.columns:
+        # Event-label walk-forward grouping key: fiscal_period labels aren't
+        # calendar-aligned across companies, so bucket by the nearest calendar
+        # quarter-end of the *earnings date* itself (same nearest-quarter-end
+        # rule as period_end_calendar_quarter, applied to a different date).
+        df["earnings_date_calendar_quarter"] = df["earnings_date"].map(calendar_quarter_from_date)
     return df
 
 

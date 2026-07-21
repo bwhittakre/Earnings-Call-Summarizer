@@ -167,6 +167,17 @@ def main() -> int:
         )
     if not to_score:
         print(f"All {len(quarters)} quarter(s) already have dimension scores — nothing to do.")
+        # Still honor --extra-output-quarters so backfills aren't stuck in prior_only.
+        if extra_output:
+            from quarter_registry import load_registry, save_registry
+
+            reg = load_registry(ticker)
+            prior = set(reg.get("prior_only_quarters", []))
+            for q in extra_output:
+                prior.discard(q)
+            reg["prior_only_quarters"] = sorted(prior)
+            save_registry(ticker, reg)
+            print(f"Updated prior_only_quarters (removed output: {', '.join(sorted(extra_output))})")
         return 0
 
     scored_periods = set(to_score)
