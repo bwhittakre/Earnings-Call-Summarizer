@@ -117,6 +117,10 @@ Past quarters are **not re-scored** unless `--force` is passed. The registry tra
 ```powershell
 python "Structured Narrative/evaluate_narrative_signals.py"
 python "Structured Narrative/evaluate_narrative_signals.py" --labels both --horizons 0_14 0_56
+# 5-year cross-company window (matches the consolidated panel's 2021-Q3+ scope):
+# omitting --quarters here means "each ticker's full registry-complete history",
+# trimmed to the shared window by --min-calendar-quarter.
+python "Structured Narrative/evaluate_narrative_signals.py" --min-calendar-quarter 2021-Q3
 ```
 
 **Unit of observation.** Each company contributes **one** independent return observation per

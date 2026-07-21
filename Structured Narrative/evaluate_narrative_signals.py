@@ -348,14 +348,22 @@ def load_eval_frame(
     fetch_returns_if_missing: bool = True,
     horizons: list[str] | None = None,
 ) -> pd.DataFrame:
-    """Stack panels and rebuild cross-ticker investable as-of + multi-horizon alpha labels."""
-    quarter_set = set(quarters or PILOT_OUTPUT_QUARTERS)
+    """Stack panels and rebuild cross-ticker investable as-of + multi-horizon alpha labels.
+
+    ``quarters=None`` means no fiscal-period filter — use each ticker's full
+    registry-complete history (still per-ticker, since fiscal calendars aren't
+    aligned across companies). Combine with ``min_calendar_quarter`` to get a
+    calendar-aligned N-year window across the whole universe, mirroring how
+    build_consolidated_panel_report.py trims AMZN's longer history.
+    """
+    quarter_set = set(quarters) if quarters else None
     windows = [w for w in HORIZON_WINDOWS if w[0] in horizons] if horizons else list(HORIZON_WINDOWS)
     frames: list[pd.DataFrame] = []
     for ticker in tickers:
         panel = load_panel(ticker)
         panel = filter_registry_complete(panel, ticker)
-        panel = panel[panel["fiscal_period"].isin(quarter_set)].copy()
+        if quarter_set is not None:
+            panel = panel[panel["fiscal_period"].isin(quarter_set)].copy()
         panel = standardize_surprise_novelty_exclusivity(panel)
         panel = enrich_panel_period_columns(panel)
         if min_calendar_quarter:
@@ -691,8 +699,14 @@ def main() -> int:
     ap.add_argument(
         "--quarters",
         nargs="+",
-        default=list(PILOT_OUTPUT_QUARTERS),
-        help="Fiscal periods to include (default: PILOT_OUTPUT_QUARTERS).",
+        default=None,
+        help=(
+            "Fiscal periods to include (default: PILOT_OUTPUT_QUARTERS, unless "
+            "--min-calendar-quarter is given without an explicit --quarters, in "
+            "which case each ticker's full registry-complete history is used and "
+            "trimmed by calendar quarter instead — e.g. for a 5-year cross-company "
+            "window)."
+        ),
     )
     ap.add_argument(
         "--min-calendar-quarter",
@@ -730,6 +744,13 @@ def main() -> int:
 
     horizon_keys = list(dict.fromkeys(args.horizons)) or list(HORIZON_KEYS)
 
+    if args.quarters:
+        quarters_filter: list[str] | None = list(args.quarters)
+    elif args.min_calendar_quarter:
+        quarters_filter = None  # full per-ticker history, trimmed by calendar quarter below
+    else:
+        quarters_filter = list(PILOT_OUTPUT_QUARTERS)
+
     # Legacy --label overrides --labels/--horizons to a single custom column.
     if args.label:
         label_specs = [("custom", "custom", args.label, "all", "fiscal_period")]
@@ -756,7 +777,7 @@ def main() -> int:
         df = load_eval_frame(
             tickers,
             call_date_only=not args.include_delayed,
-            quarters=args.quarters,
+            quarters=quarters_filter,
             min_calendar_quarter=args.min_calendar_quarter,
             recompute_cross_ticker_asof=not args.no_recompute_asof,
             horizons=horizon_keys,
@@ -864,7 +885,8 @@ def main() -> int:
             "event": "company_t_plus_7 (model_date = earnings_date + 7d, weekend-rolled)",
             "asof": "investable_as_of_date (common cross-ticker T+7)",
         },
-        "quarter_scope": list(args.quarters),
+        "quarter_scope": list(quarters_filter) if quarters_filter else "full_history",
+        "min_calendar_quarter": args.min_calendar_quarter,
         "call_date_only": not args.include_delayed,
         "investable_only_for_asof": args.investable_only,
         "recompute_cross_ticker_asof": not args.no_recompute_asof,
