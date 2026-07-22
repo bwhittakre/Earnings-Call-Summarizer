@@ -296,6 +296,25 @@ def main() -> int:
         print("No feature panels loaded.", file=sys.stderr)
         return 1
 
+    # Guard against silently publishing a partial cross-company report. When
+    # the caller didn't explicitly narrow the universe (no --tickers/--sector,
+    # i.e. this is a "give me all pilot tickers" run), any ticker that got
+    # skipped (missing panel / empty quarter scope) means the deliverable
+    # would come out narrower than expected — fail loudly instead of writing
+    # a plausible-looking but incomplete consolidated_feature_panel.html.
+    # Explicit --tickers runs (e.g. a deliberate single-ticker smoke test) are
+    # exempt: the caller asked for exactly what they got.
+    used_default_tickers = not args.tickers and not args.sector
+    if skipped and used_default_tickers:
+        print(
+            "Error: default pilot-ticker run skipped "
+            f"{', '.join(skipped)} — refusing to silently write a partial "
+            "consolidated report for the full pilot universe. Pass "
+            "--tickers explicitly if a partial report is intentional.",
+            file=sys.stderr,
+        )
+        return 1
+
     stacked = pd.concat(frames, ignore_index=True)
     stacked = standardize_surprise_novelty_exclusivity(stacked)
     stacked = enrich_panel_period_columns(stacked)

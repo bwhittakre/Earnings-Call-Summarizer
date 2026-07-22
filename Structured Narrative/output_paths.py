@@ -14,11 +14,22 @@ stay visible at the output root.
 """
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE / "output"
-CROSS_DIR = ROOT / "cross_company"
+
+# Cross-company output dir is independently overridable via
+# SN_CROSS_COMPANY_OUTPUT_DIR. This exists so tests/tools can smoke-test
+# build_consolidated_panel_report.py (or similar cross-company writers)
+# WITHOUT touching the real shared deliverable at
+# output/cross_company/reports/consolidated_feature_panel.html — a mistake
+# that previously caused that report to be silently overwritten with
+# narrow/partial ticker data (e.g. MSFT-only) every time the full test suite
+# ran. Left unset, behavior is unchanged.
+_CROSS_DIR_OVERRIDE = os.environ.get("SN_CROSS_COMPANY_OUTPUT_DIR")
+CROSS_DIR = Path(_CROSS_DIR_OVERRIDE) if _CROSS_DIR_OVERRIDE else ROOT / "cross_company"
 SHARED_DIR = ROOT / "shared"
 
 LAYERS = ("parquet", "workbooks", "csv", "json", "reports", "audit")

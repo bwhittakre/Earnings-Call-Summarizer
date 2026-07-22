@@ -294,19 +294,41 @@ class ConsolidatedPanelReportTests(unittest.TestCase):
         self.assertIn("Investable as-of", html)
 
     def test_build_script_runs_if_panels_exist(self):
+        """Smoke-test the CLI entry point with a narrow --tickers MSFT run.
+
+        This MUST NOT write into the shared output/cross_company/{reports,json,
+        csv,workbooks}/ tree: that is where the real 4-ticker
+        consolidated_feature_panel.* deliverable lives. A prior version of this
+        test ran the script against the production output paths, which meant
+        every full-suite run silently overwrote the real consolidated report
+        with MSFT-only data (the recurring "report reverted to MSFT-only" bug).
+        Redirect cross-company output to an isolated temp dir via
+        SN_CROSS_COMPANY_OUTPUT_DIR (see output_paths.py) so this test can never
+        clobber the real deliverable, no matter how many times it runs.
+        """
         script = SN / "build_consolidated_panel_report.py"
         msft_panel = SN / "output" / "MSFT" / "csv" / "feature_panel.csv"
         if not msft_panel.exists():
             self.skipTest("MSFT feature panel not present")
+        import os
         import subprocess
 
-        result = subprocess.run(
-            [sys.executable, str(script), "--tickers", "MSFT"],
-            cwd=ROOT,
-            capture_output=True,
-            text=True,
-        )
-        self.assertEqual(result.returncode, 0, msg=result.stderr)
+        with tempfile.TemporaryDirectory() as tmp_cross:
+            env = dict(os.environ)
+            env["SN_CROSS_COMPANY_OUTPUT_DIR"] = tmp_cross
+            result = subprocess.run(
+                [sys.executable, str(script), "--tickers", "MSFT"],
+                cwd=ROOT,
+                capture_output=True,
+                text=True,
+                env=env,
+            )
+            self.assertEqual(result.returncode, 0, msg=result.stderr)
+            # Confirm the isolation actually took effect (wrote to the temp
+            # dir, not to the real output/cross_company/ tree).
+            self.assertTrue(
+                (Path(tmp_cross) / "reports" / "consolidated_feature_panel.html").exists()
+            )
 
 
 class CrossSectionPanelWorkbookTests(unittest.TestCase):
