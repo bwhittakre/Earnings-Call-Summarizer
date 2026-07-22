@@ -24,6 +24,7 @@ from rank_ic_html import (  # noqa: E402
     build_rank_ic_report_html,
     company_period_signal_rows,
 )
+from composite_signal import build_composite_signal  # noqa: E402
 
 
 class SpearmicIcTests(unittest.TestCase):
@@ -357,6 +358,82 @@ class RankIcHtmlTests(unittest.TestCase):
         self.assertIn("data-dimension=", out_html)
         self.assertIn("const DATA =", out_html)
         self.assertIn("llm_level", out_html)
+
+
+def _composite_ready_frame() -> pd.DataFrame:
+    """3 periods x 4 tickers x 1 dimension, with 'sig' always rank-matching
+    the label -- enough history for build_composite_signal (min_periods=1)
+    to produce a defined composite_score from period 2 onward."""
+    tickers = {"AAA": 1.0, "BBB": 2.0, "CCC": 3.0, "DDD": 4.0}
+    periods = ["FY2025-Q1", "FY2025-Q2", "FY2025-Q3"]
+    rows = []
+    for p in periods:
+        for t, lbl in tickers.items():
+            rows.append(
+                {
+                    "ticker": t,
+                    "fiscal_period": p,
+                    "dimension": "demand",
+                    "sig": lbl,
+                    "alpha_spec_0_90": lbl,
+                }
+            )
+    return pd.DataFrame(rows)
+
+
+class CompositeSignalIntegrationTests(unittest.TestCase):
+    """composite_score is just another signal column once built -- these
+    confirm it flows through the existing generic leaderboard/HTML plumbing
+    (the --composite smoke test) and that its presence never perturbs any
+    other signal's own walk-forward result (the --no-composite regression
+    guard, at the unit level -- main() itself reads from disk so isn't
+    exercised directly here)."""
+
+    def test_composite_score_flows_through_leaderboard_and_html(self):
+        df = _composite_ready_frame()
+        df["composite_score"] = build_composite_signal(
+            df, "alpha_spec_0_90", period_col="fiscal_period", input_signals=["sig"], min_periods=1,
+        )
+        self.assertTrue(df["composite_score"].notna().any())
+
+        summary, _ = evaluate_signals(df, ["sig", "composite_score"], "alpha_spec_0_90")
+        self.assertIn("composite_score", summary)
+
+        blocks = {"asof": {"0_56": summary}}
+        rows = leaderboard_rows(blocks)
+        self.assertTrue(any(r["signal"] == "composite_score" for r in rows))
+
+        report = {
+            "generated_at": "2026-01-01T00:00:00+00:00",
+            "tickers": ["AAA", "BBB", "CCC", "DDD"],
+            "horizons": ["0_56"],
+            "horizon_windows": {"0_56": "T+7 to T+63 (combined)"},
+            "primary_label_key": "asof",
+            "primary_horizon": "0_56",
+            "leaderboard": rows,
+            "jackknife": [],
+            "agreement_effect": [],
+            "by_label": blocks,
+        }
+        html = build_rank_ic_report_html(report, period_ics=[], company_period=[])
+        self.assertIn("composite_score", html)
+
+    def test_composite_score_column_does_not_change_other_signal_results(self):
+        without = _composite_ready_frame()
+        with_composite = without.copy()
+        with_composite["composite_score"] = build_composite_signal(
+            with_composite,
+            "alpha_spec_0_90",
+            period_col="fiscal_period",
+            input_signals=["sig"],
+            min_periods=1,
+        )
+
+        summary_without, period_without = evaluate_signals(without, ["sig"], "alpha_spec_0_90")
+        summary_with, period_with = evaluate_signals(with_composite, ["sig"], "alpha_spec_0_90")
+
+        self.assertEqual(summary_without, summary_with)
+        pd.testing.assert_frame_equal(period_without, period_with)
 
 
 if __name__ == "__main__":

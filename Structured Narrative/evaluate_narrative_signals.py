@@ -50,6 +50,11 @@ from asof_alpha import (  # noqa: E402
     horizon_display_name,
 )
 from company_config import PILOT_OUTPUT_QUARTERS, PILOT_TICKERS  # noqa: E402
+from composite_signal import (  # noqa: E402
+    DEFAULT_MIN_PERIODS as COMPOSITE_DEFAULT_MIN_PERIODS,
+    build_composite_signal,
+    latest_composite_weights,
+)
 from export_modeling_spine import filter_registry_complete, load_panel  # noqa: E402
 from fiscal_period_util import fiscal_period_sort_key  # noqa: E402
 from output_paths import cross_company_artifact, ensure_cross_company_tree  # noqa: E402
@@ -732,6 +737,25 @@ def main() -> int:
         help="Ticker-cluster bootstrap resamples for the agreement-effect CI (default: 2000).",
     )
     ap.add_argument(
+        "--composite",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help=(
+            "Evaluate a walk-forward, PIT-correct composite_score per dimension "
+            "that blends the raw signals using expanding, strictly-prior-period "
+            "fitted weights (default: true). See composite_signal.py."
+        ),
+    )
+    ap.add_argument(
+        "--composite-min-periods",
+        type=int,
+        default=COMPOSITE_DEFAULT_MIN_PERIODS,
+        help=(
+            f"Distinct prior periods required before composite_score is defined "
+            f"for a dimension (default: {COMPOSITE_DEFAULT_MIN_PERIODS})."
+        ),
+    )
+    ap.add_argument(
         "--no-recompute-asof",
         action="store_true",
         help="Skip cross-ticker investable rebuild / multi-horizon alpha recompute.",
@@ -793,6 +817,7 @@ def main() -> int:
     agreement_rows: list[dict] = []
     n_rows_by_label: dict[str, int] = {}
     company_period_rows: list[dict] = []
+    composite_weights_by_label: dict[str, dict] = {}
 
     for fam, hk, label, universe, period_col in label_specs:
         if label not in df.columns or df[label].notna().sum() == 0:
@@ -807,8 +832,25 @@ def main() -> int:
         pcol = period_col if period_col in work.columns else "fiscal_period"
         tag = f"{fam}:{hk}"
 
+        eval_signals = list(signals)
+        if args.composite:
+            work = work.copy()
+            work["composite_score"] = build_composite_signal(
+                work,
+                label,
+                period_col=pcol,
+                min_periods=args.composite_min_periods,
+            )
+            eval_signals = eval_signals + ["composite_score"]
+            composite_weights_by_label[tag] = latest_composite_weights(
+                work,
+                label,
+                period_col=pcol,
+                min_periods=args.composite_min_periods,
+            )
+
         summary, period_df = evaluate_signals(
-            work, signals, label, period_col=pcol, universe=universe
+            work, eval_signals, label, period_col=pcol, universe=universe
         )
         label_blocks.setdefault(fam, {})[hk] = summary
         n_rows_by_label[tag] = int(work[label].notna().sum())
@@ -823,7 +865,7 @@ def main() -> int:
         company_period_rows.extend(
             company_period_signal_rows(
                 work,
-                signals,
+                eval_signals,
                 label,
                 period_col=pcol,
                 label_key=fam,
@@ -833,7 +875,7 @@ def main() -> int:
         )
 
         if args.jackknife and len(tickers) > 1:
-            jrows = leave_one_ticker_out(work, signals, label, period_col=pcol, universe=universe)
+            jrows = leave_one_ticker_out(work, eval_signals, label, period_col=pcol, universe=universe)
             for r in jrows:
                 r["label_key"] = fam
                 r["horizon"] = hk
@@ -901,6 +943,9 @@ def main() -> int:
         "divergence_by_label": divergence_by_label,
         "jackknife": jackknife_rows,
         "agreement_effect": agreement_rows,
+        "composite_enabled": args.composite,
+        "composite_min_periods": args.composite_min_periods,
+        "composite_weights": composite_weights_by_label,
     }
 
     ensure_cross_company_tree()

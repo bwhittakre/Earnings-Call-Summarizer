@@ -176,6 +176,45 @@ leaderboard, the promoted **By dimension** matrix (rows = dimension, columns = s
 primary "evaluate Demand/Margins/Guidance independently" view), an **Agreement effect** tab, and
 jackknife.
 
+**Dimension-aware composite signal.** `composite_score` is a 7th signal evaluated alongside the
+raw ones — a walk-forward, point-in-time blend of `llm_level`, `change_magnitude`,
+`surprise_magnitude`, `narrative_novelty`, `quant_z_pit`, and `agrees_with_quant`. It deliberately
+excludes `evidence_confidence` (checked against the spine: constant at 1.0 across every sampled
+row, so it has zero cross-sectional variance and always reports `n_dims=0` on the leaderboard — a
+dead signal until the evidence-verification step gets a rubric that can produce partial scores)
+and the delayed T+7 guidance-revision z (out of scope for this pass). It is fit **independently
+per dimension** (never a cross-dimension rollup) and rebuilt fresh
+for every `(label, horizon)` combination, since a signal's efficacy is itself horizon-dependent
+(e.g. `change_magnitude` flips from +0.13 to -0.13 RankIC between the first and second 3-week
+window — a composite fit against one horizon cannot reuse another's weights). See
+`composite_signal.py`:
+
+- Each input signal is **expanding-standardized** per dimension (z-scored using only rows from
+  periods strictly before the row being scored, pooled across tickers) — the same PIT discipline
+  `quant_z_pit` already uses, generalized to every signal so wildly different raw scales (a
+  bounded LLM tone score, a boolean flag, a z-score already) become comparable before blending.
+- Each input signal's **weight** at a given period is the *signed* expanding mean of its own
+  walk-forward RankIC-so-far for that dimension (periods strictly before the current one). A
+  consistently positive history gets a positive weight; a consistently negative one gets a
+  negative weight (used contrarian, sign-flipped, rather than dropped); no history yet (warm-up,
+  `--composite-min-periods`, default 4 distinct prior periods) or a wash gets ~zero weight.
+- The composite is `sum(weight × standardized) / sum(|weight|)` over whatever inputs have both a
+  value and a fitted weight for that row — renormalized so the scale doesn't depend on how many
+  signals happen to apply to a (sparse) dimension.
+
+Flags: `--composite` / `--no-composite` (default: on), `--composite-min-periods` (default: 4).
+The JSON report's `composite_weights[{label}:{horizon}][dimension]` holds the most recent period's
+fitted weight per signal, for interpretability (e.g. `asof:0_90.demand` currently reads
+`{"surprise_magnitude": 0.27, "agrees_with_quant": 0.18, "llm_level": 0.17, "quant_z_pit": 0.16,
+"change_magnitude": 0.07}` — not a black box).
+
+**This is a research construct, not yet a validated model output.** With only 4 tickers and ~20
+periods, the fitted weights are themselves noisy — the composite's own leaderboard RankIC is
+correspondingly mixed (it beats most individual signals at some horizons, trails `agrees_with_quant`
+at others), which is the expected, honest result of walk-forward-fitting on a small sample, not a
+bug. The universe-expansion next step (growing the pilot beyond 4 names) would materially firm up
+both the composite's weights and its own evaluated RankIC.
+
 ## Reference keys
 
 - `feature_panel_reference_key.txt` — column dictionary
