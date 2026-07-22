@@ -1,0 +1,53 @@
+---
+description: How to crunch earnings reports dropped in inbox/ — coordinator-driven grounded extraction into the zettelkasten, then join sources to described projects. Use when asked to "process the inbox", "crunch the earnings reports", "extract the earnings calls", or similar.
+alwaysApply: false
+---
+
+# Earnings ingestion (you are the coordinator)
+
+Files land in `inbox/` (dropped manually via `scripts/stage_inbox.py`, or — once
+the LSEG StreetEvents Snowflake share is provisioned — by `scripts/pull_to_inbox.py`).
+Your job is to turn each into grounded, quote-backed zettelkasten notes and file
+the source into the right projects. You drive this as the **coordinator** using
+local subagents — no external LLM API key, no Stream driver.
+
+## Inputs
+- `inbox/` — the earnings reports to process (`*.pdf`, `*.txt`, `*.md`, `*.html`, `*.xml`).
+- `.cursor/extraction-schemas.yaml` — the lenses: `earnings-call` (default),
+  `guidance-tracker`, `qa-sentiment`, `kpi-scorecard`.
+- `projects.yaml` — the described projects and each one's `join_when` criteria.
+
+## Procedure
+1. **List** the unprocessed files in `inbox/` (ignore `inbox/_processed/`).
+2. For each file, build a source dict: `{name: "<company>-<period>", path: "<inbox path>",
+   title, doc_type}`. Prefer a kebab `name` derived from company + period so the
+   source graph id is stable and restatements dedupe.
+3. **Pick the schema(s)** — default `earnings-call` unless the user asked for a
+   specific lens (e.g. "just track guidance" -> `guidance-tracker`).
+4. **Choose the primary project** for the run. Read `projects.yaml`; the primary
+   is usually the company project (e.g. `company-aapl`). If it doesn't exist yet,
+   create it with `project(action="create", name=..., description=...)`.
+5. **Run grounded extraction** via the coordinator capability:
+   `create_extraction_graph(sources=[...], schema="<schema>", project="<primary>",
+   synthesis_label="<primary>")`. Then drive the returned graph to completion the
+   normal coordinator way — `get_ready_tasks` -> `claim_task` -> `get_task_context`
+   -> spawn a local subagent (Task tool) with the persona/prompt -> `submit_result`
+   — wave by wave until done (see the coordinator/operations rules for the loop).
+   Batch multiple inbox files into ONE run when they share a schema.
+6. **Join to the other projects.** After extraction, read each source's content and
+   evaluate every project's `join_when` in `projects.yaml`. For each that fits,
+   `project(action="add", project="<proj>", source="<source name>")` (create the
+   project first if missing). A source will typically join its company, its
+   quarter, its sector, and any theme it matches — extract once, file into many.
+7. **Mark done.** Move processed originals to `inbox/_processed/` so the next run
+   skips them (content-hash dedup in the store is the backstop).
+
+## Rules of thumb
+- Grounding is non-negotiable: every load-bearing claim needs a verbatim quote
+  (the auditor enforces it). Don't relax the schema's `grounded: true`.
+- One schema per run; to apply a second lens (e.g. `qa-sentiment` on the same
+  calls), run a second extraction over the same sources under the same project.
+- Keep the primary project stable per company so its synthesis spine accumulates
+  across quarters into a comparable trajectory; peers sharing a schema line up
+  into a matrix automatically.
+- Never invent a ticker/period you can't see in the document or filename.

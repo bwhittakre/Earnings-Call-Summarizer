@@ -1,0 +1,124 @@
+# Earnings-scraper extraction schemas — project overrides/additions layered on
+# top of the zettelkasten's built-in defaults (this file sits next to agents.yaml
+# and is loaded automatically). Each schema is a REUSABLE LENS a grounded-
+# extraction run reads a transcript through: pick one per run with
+# create_extraction_graph(schema="<name>", ...).
+#
+# Field reference (see the shipped extraction-schemas.yaml for the full contract):
+#   description   one line — what this rubric extracts
+#   grounded      require a verbatim quote per claim (default true)
+#   link_relation default relation from each claim note -> the source hub note
+#   hub           the per-source hub note {type, title_template}
+#   dimensions    the rows. each {tag, desc, note_type?, connect_to?, relation?}
+#                 tag IS the contract: it becomes the note tag + the cross-source
+#                 comparison column. Tags unique within a schema.
+#   relations     optional dimension->dimension backbone {from, to, relation}
+#   synthesis     optional materialized spine (apex + one node per dimension) so a
+#                 project's runs accumulate into a comparable tree/matrix.
+#
+# Pick by intent:
+#   earnings-call     — full-call analysis (the default, comprehensive lens)
+#   guidance-tracker  — forward guidance only, built to compare across quarters
+#   qa-sentiment      — management tone + analyst Q&A dynamics
+#   kpi-scorecard     — the reported numbers, each pinned to its quote
+
+# ===========================================================================
+earnings-call:
+  description: "Full earnings-call analysis: results, drivers, guidance, capital allocation, risks, and tone."
+  grounded: true
+  strict: true
+  link_relation: component-of
+  hub:
+    type: model
+    title_template: "{source_title}: Earnings Call"
+  dimensions:
+    - {tag: results-headline,    desc: "reported revenue/EPS vs expectations; beat/miss and magnitude", note_type: finding}
+    - {tag: revenue-drivers,     desc: "what drove the top line: volume, price, mix, FX, new products",
+       connect_to: results-headline, relation: motivated-by}
+    - {tag: margins,             desc: "gross/operating margin level + direction and the reasons given",
+       connect_to: results-headline, relation: qualifies}
+    - {tag: segment-performance, desc: "per-segment / per-geography performance and standouts",
+       connect_to: revenue-drivers, relation: component-of}
+    - {tag: forward-guidance,    desc: "guidance for next quarter / full year (revenue, EPS, margin)", note_type: finding}
+    - {tag: demand-environment,  desc: "management's read on demand, backlog, pipeline, macro"}
+    - {tag: capital-allocation,  desc: "buybacks, dividends, M&A, capex, debt paydown"}
+    - {tag: strategic-initiatives, desc: "new products, markets, restructuring, big bets (e.g. AI, capacity)"}
+    - {tag: risks-headwinds,     desc: "stated risks, headwinds, cautious/negative commentary",
+       connect_to: forward-guidance, relation: qualifies}
+    - {tag: management-tone,     desc: "confidence vs hedging in prepared remarks and Q&A"}
+    - {tag: one-time-items,      desc: "charges, impairments, tax items, other non-recurring effects"}
+  relations:
+    - {from: revenue-drivers,     to: results-headline,  relation: motivated-by}
+    - {from: margins,             to: results-headline,  relation: qualifies}
+    - {from: segment-performance, to: revenue-drivers,   relation: component-of}
+    - {from: risks-headwinds,     to: forward-guidance,  relation: qualifies}
+    - {from: management-tone,     to: forward-guidance,  relation: qualifies}
+  synthesis:
+    graph: "{label}-earnings"
+    node:
+      type: synthesis
+      title_template: "{label}: Earnings Profile"
+
+# ===========================================================================
+guidance-tracker:
+  description: "Forward guidance only — structured to compare a company's guidance across quarters."
+  grounded: true
+  strict: true
+  link_relation: component-of
+  hub:
+    type: model
+    title_template: "{source_title}: Guidance"
+  dimensions:
+    - {tag: guidance-direction, desc: "raised / lowered / reaffirmed / initiated vs prior guide", note_type: finding}
+    - {tag: revenue-guide,      desc: "revenue guidance range/point for the guided period", note_type: finding}
+    - {tag: eps-guide,          desc: "EPS / earnings guidance", note_type: finding,
+       connect_to: guidance-direction, relation: component-of}
+    - {tag: margin-guide,       desc: "gross/operating margin guidance", note_type: finding,
+       connect_to: guidance-direction, relation: component-of}
+    - {tag: segment-guide,      desc: "guidance called out per segment / product line"}
+    - {tag: key-assumptions,    desc: "assumptions underpinning the guide (FX, tax rate, macro, share count)",
+       connect_to: guidance-direction, relation: motivated-by}
+    - {tag: guidance-caveats,   desc: "hedges, ranges-widening, refusal to guide, conditional language",
+       connect_to: guidance-direction, relation: qualifies}
+  synthesis:
+    graph: "{label}-guidance"
+    node:
+      type: synthesis
+      title_template: "{label}: Guidance Trajectory"
+
+# ===========================================================================
+qa-sentiment:
+  description: "Management tone and analyst Q&A dynamics — confidence, hedging, pushback, concessions."
+  grounded: true
+  strict: true
+  link_relation: component-of
+  hub:
+    type: concept
+    title_template: "{source_title}: Tone & Q&A"
+  dimensions:
+    - {tag: management-confidence, desc: "explicit confidence / optimism signals in prepared remarks"}
+    - {tag: hedging-language,      desc: "hedged, vague, or non-committal phrasing on key topics"}
+    - {tag: evasiveness,           desc: "questions dodged or answered indirectly in Q&A"}
+    - {tag: analyst-pushback,      desc: "pointed/skeptical analyst questions and the topics probed", note_type: finding}
+    - {tag: notable-concessions,   desc: "admissions of weakness, misses, or problems",
+       connect_to: analyst-pushback, relation: responds-to}
+    - {tag: tone-shift,            desc: "tone change vs prior quarter, if the transcript references it"}
+    - {tag: forward-conviction,    desc: "strength of conviction in forward statements (firm vs caveated)"}
+
+# ===========================================================================
+kpi-scorecard:
+  description: "Every reported KPI/number pinned to its grounding quote — a per-call scorecard."
+  grounded: true
+  strict: true
+  link_relation: component-of
+  hub:
+    type: concept
+    title_template: "{source_title}: KPI Scorecard"
+  dimensions:
+    - {tag: headline-financials, desc: "revenue, net income, EPS (GAAP + non-GAAP) with values + units", note_type: finding,
+       claim_framing: "State the metric, value, unit, and period in one sentence."}
+    - {tag: growth-rates,        desc: "YoY / QoQ growth figures management cited", note_type: finding}
+    - {tag: segment-metrics,     desc: "per-segment revenue / operating income figures", note_type: finding}
+    - {tag: operational-kpis,    desc: "business KPIs: units, subscribers, ARR, churn, bookings, backlog", note_type: finding}
+    - {tag: cash-capital,        desc: "FCF, cash balance, buyback $, dividend, capex figures", note_type: finding}
+    - {tag: guidance-figures,    desc: "the numeric guidance values given", note_type: finding}

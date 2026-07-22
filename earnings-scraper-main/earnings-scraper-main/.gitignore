@@ -1,0 +1,38 @@
+/secrets/
+
+# Python virtual environment
+.venv/
+
+# Env + build
+.env
+*.egg-info/
+build/
+dist/
+__pycache__/
+*.py[cod]
+
+# Inbox contents (keep the folder, ignore dropped reports + processed originals)
+/inbox/*
+!/inbox/.gitkeep
+
+# Local data (parquet caches, watermarks, lookups)
+/data/
+
+# >>> angelo >>>
+# Runtime state and derived caches (source of truth is .memory/ and
+# .zettelkasten/, which should be committed)
+.angelo/
+.memory/session-active.json
+.memory/active-sessions/
+
+# Legacy locations (pre-.angelo layouts)
+.cassius/
+.memory.kgl
+.memory.index.json
+.memory.embeddings.json
+.coordinator-state.json
+.coordinator-meta.json
+
+# Claude Code local settings (not shared)
+.claude/settings.local.json
+# <<< angelo <<<

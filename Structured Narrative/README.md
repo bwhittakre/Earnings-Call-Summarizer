@@ -215,10 +215,98 @@ at others), which is the expected, honest result of walk-forward-fitting on a sm
 bug. The universe-expansion next step (growing the pilot beyond 4 names) would materially firm up
 both the composite's weights and its own evaluated RankIC.
 
+## Phase 1 — pre-specified hypotheses, generalized cluster bootstrap, FDR correction, dev/holdout split
+
+Phase 1 of the Structured Narrative Expansion plan hardens the evaluation methodology itself,
+ahead of (and independent from) the Phase 2/3 data expansion. All of it runs today against the
+current 4-name/5-year dataset — nothing here waits on new transcripts.
+
+**Pre-specified primary hypotheses, evaluated and corrected separately from the exploratory
+grid.** `PRIMARY_HYPOTHESES` (top of `evaluate_narrative_signals.py`) hard-codes four
+candidates called out ahead of time rather than picked after seeing results: demand
+`quant_z_pit`, and `agrees_with_quant` for demand/margins/guidance. These get their **own**
+report (`primary_hypothesis_report` in the JSON, `…_primary_hypotheses.csv`) with a per-test
+p-value and a **Benjamini-Hochberg FDR correction applied once across the whole family**
+(`--fdr-alpha`, default 0.05) — `q_value`/`reject_fdr` per row. The much larger exploratory
+signal × dimension × horizon grid (the leaderboard) is deliberately left uncorrected, as is
+standard for a screening pass; conflating the two would either under-power the exploratory scan
+or under-correct the pre-specified test. Every leaderboard row also carries an `is_primary` flag
+so the two families are never visually confused in the HTML/CSV output.
+
+**Return-label timing, confirmed.** Verified (no code change needed — this was already correct):
+`compound_specific_return`'s exclusive-start window means forward returns for the as-of
+cross-section begin **strictly after** the common `investable_as_of_date` (itself the max T+7
+date across every ticker/period in a calendar-quarter bucket — see
+`period_dates.apply_investable_cross_section_columns`), and the event-aligned test begins
+strictly after each company's own T+7 `model_date`. This is item 3 of the expansion plan.
+
+**Generalized cluster bootstrap.** `cluster_bootstrap_mean_diff` replaces the
+ticker-only bootstrap previously inlined in `agreement_effect_stats`, parameterized by
+`cluster_col ∈ {ticker, calendar_period, company_period}` (see `_cluster_key_series`):
+resampling whole clusters — not individual rows — keeps every row a cluster contributes moving
+together, so a company's (or period's) repeated dimension rows are never treated as independent
+observations they aren't. `agreement_effect_stats` now also returns a bootstrap `p_value` (a
+two-sided test of mean_diff ≠ 0), not just a CI. A parallel period-cluster helper,
+`bootstrap_rank_ic_mean`, does the equivalent for a walk-forward RankIC mean (each row of
+`period_ics` is already one independent cross-section, so *periods* are the natural cluster).
+
+**Companies-per-quarter cross-section counts.** `cross_section_counts` reports the distinct
+ticker count behind every `(label, horizon)` block (`report["cross_section_counts"]`), so a
+RankIC computed over `n=4` companies is never confused with one computed over `n=16` once the
+universe grows — this is item 7's "number of companies in each quarterly cross-section"
+requirement.
+
+**Dev/holdout split mechanism.** `--dev-cutoff YYYY-Qn` / `--holdout-start YYYY-Qn` (plus
+`--dev-only` / `--holdout-only`, mutually exclusive) partition the eval frame by calendar quarter
+via `apply_dev_holdout_split`, before any signal/label computation runs. Built and unit-tested
+now against the current 5-year window (where the split is close to degenerate — there isn't much
+history to hold out yet) so that Phase 4's real Q2-2016–Q1-2023 dev / Q2-2023–Q1-2026 holdout
+split, once the 10-year history exists, is "run it" rather than "build it." The report's
+`dev_holdout` block records whatever split (if any) produced the current output.
+
+```bash
+# Primary-hypothesis run with a real (if currently thin) dev/holdout split:
+python "Structured Narrative/evaluate_narrative_signals.py" --min-calendar-quarter 2021-Q3 \
+  --dev-cutoff 2024-Q4 --fdr-alpha 0.05
+```
+
+**Return units, exclusions, and feature-availability semantics** (item 7, remainder): forward
+return labels (`alpha_spec*`) are **decimal specific (idiosyncratic) returns** — residualized,
+compounded daily-percent specific returns from Snowflake, not raw price returns — see
+"Multiple forward horizons" above for exact windows. Data exclusions: rows without a resolved
+`period_end_calendar_quarter` or `investable_as_of_date` are dropped from the as-of cross-section
+(no calendar bucket to join on); `--call-date-only`/default excludes any signal whose
+availability date is later than the earnings call itself (see `DELAYED_SIGNALS`, currently just
+`quant_guidance_revision_z_pit`) unless `--include-delayed` is passed. Feature-availability-date
+semantics are documented in `feature_panel_reference_key.txt`. Universe membership rules are
+documented in `universe_reference_key.txt` (Phase 0, below) once the pilot expands beyond the
+current 4 names.
+
+## Universe expansion — Phase 0: point-in-time universe reconstruction
+
+`universe_reconstruction.py` is Phase 0 of the Structured Narrative Expansion plan: a bias-aware
+candidate list for growing the pilot beyond AAPL/MSFT/NVDA/AMZN, built from SEC EDGAR filings for
+the Technology Select Sector SPDR Fund (XLK) rather than read off today's holdings page — so a name
+that was a constituent years ago but has since been acquired, delisted, or reclassified out of the
+sector still appears in the periods it was actually a member, instead of being silently excluded by
+picking today's list and projecting it backward.
+
+```bash
+python "Structured Narrative/universe_reconstruction.py"                     # full 2016-present window
+python "Structured Narrative/universe_reconstruction.py" --target-n 20       # wider candidate screen
+```
+
+Outputs land in `output/universe/`: `candidate_list.csv`/`.json` (the screened net-new list),
+`membership_by_filing_date.csv` (the full point-in-time audit trail), and
+`historical_only_constituents.csv` (constituents that have since dropped out — kept, not discarded).
+See `universe_reference_key.txt` for the full methodology: filing sources by era (N-PORT-P, N-Q,
+N-CSR/N-CSRS), the CIK/series/class identifiers, known parsing gaps, and the screening rule.
+
 ## Reference keys
 
 - `feature_panel_reference_key.txt` — column dictionary
 - `dimension_reference_key.txt`, `delta_reference_key.txt`, `surprise_reference_key.txt` — layer detail
+- `universe_reference_key.txt` — Phase 0 universe-reconstruction methodology (see above)
 
 ## SEC confidence pipeline
 

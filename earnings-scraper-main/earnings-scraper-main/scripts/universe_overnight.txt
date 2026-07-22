@@ -1,0 +1,120 @@
+# Overnight transcript backfill universe (~100 US large caps).
+# One ticker per line; blank lines and # comments are ignored.
+# Weighted toward the projects.yaml lenses: technology, financials, AI-capex.
+# Edit freely — this is just an input list for scripts/fetch_transcripts.py --all.
+
+# ---- Technology: hardware / semis ----
+AAPL
+NVDA
+AVGO
+AMD
+QCOM
+TXN
+INTC
+MU
+AMAT
+LRCX
+KLAC
+ADI
+CSCO
+DELL
+HPQ
+IBM
+ANET
+
+# ---- Technology: software / internet ----
+MSFT
+GOOGL
+META
+AMZN
+ORCL
+CRM
+ADBE
+NOW
+INTU
+SAP
+PLTR
+SNOW
+PANW
+CRWD
+UBER
+NFLX
+
+# ---- Communication / media ----
+DIS
+CMCSA
+T
+VZ
+TMUS
+
+# ---- Financials: banks ----
+JPM
+BAC
+WFC
+C
+GS
+MS
+USB
+PNC
+TFC
+SCHW
+
+# ---- Financials: payments / insurers / asset mgrs ----
+V
+MA
+AXP
+PYPL
+BLK
+BX
+SPGI
+CB
+PGR
+MMC
+
+# ---- Consumer ----
+WMT
+COST
+HD
+LOW
+MCD
+SBUX
+NKE
+TGT
+PG
+KO
+PEP
+PM
+MDLZ
+
+# ---- Healthcare ----
+UNH
+JNJ
+LLY
+ABBV
+MRK
+PFE
+TMO
+ABT
+DHR
+AMGN
+ISRG
+
+# ---- Industrials ----
+CAT
+BA
+GE
+HON
+UNP
+LMT
+RTX
+DE
+UPS
+
+# ---- Energy ----
+XOM
+CVX
+COP
+SLB
+
+# ---- Autos / misc growth ----
+TSLA

@@ -12,11 +12,19 @@ SN = ROOT / "Structured Narrative"
 sys.path.insert(0, str(SN))
 
 from evaluate_narrative_signals import (  # noqa: E402
+    PRIMARY_HYPOTHESES,
     _spearman_ic,
     agreement_effect_stats,
+    apply_dev_holdout_split,
+    benjamini_hochberg,
+    bootstrap_rank_ic_mean,
+    cluster_bootstrap_mean_diff,
+    cross_section_counts,
     evaluate_signals,
+    is_primary_hypothesis,
     leaderboard_rows,
     leave_one_ticker_out,
+    primary_hypothesis_rows,
     summarize_ics,
     walk_forward_period_ics,
 )
@@ -434,6 +442,256 @@ class CompositeSignalIntegrationTests(unittest.TestCase):
 
         self.assertEqual(summary_without, summary_with)
         pd.testing.assert_frame_equal(period_without, period_with)
+
+
+class ClusterBootstrapTests(unittest.TestCase):
+    def _company_period_frame(self) -> pd.DataFrame:
+        # 4 tickers x 2 periods; True group always higher than False group,
+        # but by a DIFFERENT amount per period, so calendar_period clustering
+        # produces a different (wider) CI than ticker clustering on this fixture.
+        rows = []
+        for t in ["AAA", "BBB", "CCC", "DDD"]:
+            for p, gap in [("2024-Q1", 0.05), ("2024-Q2", 0.09)]:
+                rows.append(
+                    {
+                        "ticker": t,
+                        "period_end_calendar_quarter": p,
+                        "flag": True,
+                        "ret": 0.02 + gap,
+                    }
+                )
+                rows.append(
+                    {
+                        "ticker": t,
+                        "period_end_calendar_quarter": p,
+                        "flag": False,
+                        "ret": 0.02,
+                    }
+                )
+        return pd.DataFrame(rows)
+
+    def test_ticker_cluster_matches_point_estimate(self):
+        df = self._company_period_frame()
+        out = cluster_bootstrap_mean_diff(df, "flag", "ret", cluster_col="ticker", n_boot=300, seed=1)
+        self.assertEqual(out["n_clusters"], 4)
+        self.assertAlmostEqual(out["mean_diff"], 0.07, places=6)
+        self.assertIsNotNone(out["ci_low"])
+        self.assertIsNotNone(out["p_value"])
+
+    def test_calendar_period_cluster_uses_period_as_unit(self):
+        df = self._company_period_frame()
+        out = cluster_bootstrap_mean_diff(
+            df, "flag", "ret", cluster_col="calendar_period", n_boot=300, seed=1
+        )
+        self.assertEqual(out["n_clusters"], 2)
+        self.assertAlmostEqual(out["mean_diff"], 0.07, places=6)
+
+    def test_company_period_cluster_finest_unit(self):
+        df = self._company_period_frame()
+        out = cluster_bootstrap_mean_diff(
+            df, "flag", "ret", cluster_col="company_period", n_boot=300, seed=1
+        )
+        self.assertEqual(out["n_clusters"], 8)
+
+    def test_unknown_cluster_col_raises(self):
+        df = self._company_period_frame()
+        with self.assertRaises(ValueError):
+            cluster_bootstrap_mean_diff(df, "flag", "ret", cluster_col="nonsense")
+
+    def test_single_cluster_returns_none_ci(self):
+        df = self._company_period_frame()
+        df = df[df["ticker"] == "AAA"]
+        out = cluster_bootstrap_mean_diff(df, "flag", "ret", cluster_col="ticker", n_boot=100)
+        self.assertEqual(out["n_clusters"], 1)
+        self.assertIsNone(out["ci_low"])
+
+    def test_agreement_effect_stats_accepts_cluster_col(self):
+        df = pd.DataFrame(
+            {
+                "ticker": ["AAA", "AAA", "BBB", "BBB"],
+                "dimension": ["demand"] * 4,
+                "period_end_calendar_quarter": ["2024-Q1", "2024-Q2", "2024-Q1", "2024-Q2"],
+                "agrees_with_quant": [True, False, True, False],
+                "alpha_spec_0_90": [0.05, -0.02, 0.06, -0.01],
+            }
+        )
+        stats = agreement_effect_stats(
+            df, "alpha_spec_0_90", dimension="demand", cluster_col="calendar_period", n_boot=100, seed=1
+        )
+        self.assertEqual(stats["cluster_col"], "calendar_period")
+        self.assertIn("p_value", stats)
+
+
+class RankIcBootstrapTests(unittest.TestCase):
+    def test_too_few_periods_returns_none(self):
+        out = bootstrap_rank_ic_mean(pd.DataFrame({"rank_ic": [0.1, 0.2]}))
+        self.assertIsNone(out["mean"])
+
+    def test_consistent_positive_ic_yields_positive_mean_and_small_pvalue(self):
+        period_ics = pd.DataFrame({"rank_ic": [0.3, 0.35, 0.28, 0.31, 0.33, 0.29]})
+        out = bootstrap_rank_ic_mean(period_ics, n_boot=500, seed=1)
+        self.assertEqual(out["n_periods"], 6)
+        self.assertGreater(out["mean"], 0)
+        self.assertLess(out["ci_low"], out["mean"])
+        self.assertLess(out["mean"], out["ci_high"])
+        self.assertLess(out["p_value"], 0.2)
+
+    def test_zero_centered_ic_yields_wide_ci_spanning_zero(self):
+        period_ics = pd.DataFrame({"rank_ic": [0.3, -0.3, 0.2, -0.2, 0.1, -0.1]})
+        out = bootstrap_rank_ic_mean(period_ics, n_boot=500, seed=1)
+        self.assertLessEqual(out["ci_low"], 0.0)
+        self.assertGreaterEqual(out["ci_high"], 0.0)
+
+
+class BenjaminiHochbergTests(unittest.TestCase):
+    def test_preserves_input_order(self):
+        pvals = [0.2, 0.001, None, 0.04]
+        out = benjamini_hochberg(pvals)
+        self.assertEqual(len(out), 4)
+        self.assertIsNone(out[2]["q_value"])
+        self.assertFalse(out[2]["reject"])
+
+    def test_small_pvalues_rejected_large_not(self):
+        # BH step-up: only the smallest p-value clears i/m*alpha here (0.001 <=
+        # 1/15*0.05); every later rank's p exceeds its own threshold, so nothing
+        # else survives -- this is the expected, harsher-than-uncorrected result.
+        pvals = [0.001, 0.008, 0.039, 0.041, 0.042, 0.06, 0.074, 0.205, 0.212, 0.216, 0.222, 0.251, 0.269, 0.275, 0.34]
+        out = benjamini_hochberg(pvals, alpha=0.05)
+        self.assertTrue(out[0]["reject"])
+        self.assertFalse(out[1]["reject"])
+        self.assertFalse(out[-1]["reject"])
+        self.assertLess(out[0]["q_value"], out[1]["q_value"])
+
+    def test_all_none_returns_no_rejections(self):
+        out = benjamini_hochberg([None, None])
+        self.assertTrue(all(o["q_value"] is None and not o["reject"] for o in out))
+
+    def test_empty_list(self):
+        self.assertEqual(benjamini_hochberg([]), [])
+
+
+class PrimaryHypothesisTests(unittest.TestCase):
+    def test_is_primary_hypothesis_matches_known_pairs(self):
+        self.assertTrue(is_primary_hypothesis("quant_z_pit", "demand"))
+        self.assertTrue(is_primary_hypothesis("agrees_with_quant", "margins"))
+        self.assertFalse(is_primary_hypothesis("quant_z_pit", "margins"))
+        self.assertFalse(is_primary_hypothesis("llm_level", "demand"))
+
+    def test_primary_hypothesis_rows_covers_every_declared_hypothesis(self):
+        period_df = pd.DataFrame(
+            {
+                "signal": ["quant_z_pit"] * 6,
+                "dimension": ["demand"] * 6,
+                "rank_ic": [0.2, 0.25, 0.18, 0.22, 0.19, 0.24],
+            }
+        )
+        agreement_rows = [
+            {"dimension": "demand", "spread": 0.05, "ci_low": 0.01, "ci_high": 0.09, "n_agree": 4, "n_disagree": 4, "n_tickers": 4, "p_value": 0.03},
+            {"dimension": "margins", "spread": 0.02, "ci_low": -0.01, "ci_high": 0.05, "n_agree": 4, "n_disagree": 4, "n_tickers": 4, "p_value": 0.4},
+            {"dimension": "guidance", "spread": None, "ci_low": None, "ci_high": None, "n_agree": 0, "n_disagree": 0, "n_tickers": 0, "p_value": None},
+        ]
+        rows = primary_hypothesis_rows(period_df, agreement_rows, fam="asof", horizon="0_56", n_boot=200)
+        self.assertEqual(len(rows), len(PRIMARY_HYPOTHESES))
+        by_signal_dim = {(r["signal"], r["dimension"]): r for r in rows}
+        quant_row = by_signal_dim[("quant_z_pit", "demand")]
+        self.assertIsNotNone(quant_row["stat"])
+        self.assertIsNotNone(quant_row["p_value"])
+        demand_agree_row = by_signal_dim[("agrees_with_quant", "demand")]
+        self.assertAlmostEqual(demand_agree_row["stat"], 0.05)
+        guidance_row = by_signal_dim[("agrees_with_quant", "guidance")]
+        self.assertIsNone(guidance_row["p_value"])
+
+
+class CrossSectionCountsTests(unittest.TestCase):
+    def test_counts_distinct_tickers_per_period(self):
+        df = pd.DataFrame(
+            {
+                "ticker": ["AAA", "BBB", "AAA", "CCC", "CCC"],
+                "period_end_calendar_quarter": ["2024-Q1", "2024-Q1", "2024-Q2", "2024-Q2", "2024-Q2"],
+            }
+        )
+        counts = cross_section_counts(df, "period_end_calendar_quarter")
+        self.assertEqual(counts, {"2024-Q1": 2, "2024-Q2": 2})
+
+    def test_missing_columns_returns_empty(self):
+        df = pd.DataFrame({"foo": [1, 2]})
+        self.assertEqual(cross_section_counts(df, "period_end_calendar_quarter"), {})
+
+
+class DevHoldoutSplitTests(unittest.TestCase):
+    def _quarterly_frame(self) -> pd.DataFrame:
+        return pd.DataFrame(
+            {
+                "period_end_calendar_quarter": ["2022-Q1", "2022-Q2", "2023-Q1", "2023-Q2", "2024-Q1"],
+                "val": [1, 2, 3, 4, 5],
+            }
+        )
+
+    def test_no_split_args_returns_unchanged(self):
+        df = self._quarterly_frame()
+        out = apply_dev_holdout_split(df, "period_end_calendar_quarter")
+        self.assertEqual(len(out), len(df))
+
+    def test_dev_only_keeps_at_or_before_cutoff(self):
+        df = self._quarterly_frame()
+        out = apply_dev_holdout_split(
+            df, "period_end_calendar_quarter", dev_cutoff="2023-Q1", dev_only=True
+        )
+        self.assertEqual(sorted(out["period_end_calendar_quarter"]), ["2022-Q1", "2022-Q2", "2023-Q1"])
+
+    def test_holdout_only_keeps_at_or_after_start(self):
+        df = self._quarterly_frame()
+        out = apply_dev_holdout_split(
+            df, "period_end_calendar_quarter", holdout_start="2023-Q2", holdout_only=True
+        )
+        self.assertEqual(sorted(out["period_end_calendar_quarter"]), ["2023-Q2", "2024-Q1"])
+
+    def test_both_bounds_drop_no_mans_land(self):
+        df = self._quarterly_frame()
+        out = apply_dev_holdout_split(
+            df,
+            "period_end_calendar_quarter",
+            dev_cutoff="2022-Q2",
+            holdout_start="2024-Q1",
+        )
+        self.assertEqual(sorted(out["period_end_calendar_quarter"]), ["2022-Q1", "2022-Q2", "2024-Q1"])
+
+    def test_holdout_only_with_only_dev_cutoff_uses_implied_complement(self):
+        # Regression: passing --dev-cutoff alone with --holdout-only must NOT
+        # fall back to "everything" -- holdout is the implied complement
+        # (strictly after the cutoff), even though holdout_start was never set.
+        df = self._quarterly_frame()
+        out = apply_dev_holdout_split(
+            df, "period_end_calendar_quarter", dev_cutoff="2023-Q1", holdout_only=True
+        )
+        self.assertEqual(sorted(out["period_end_calendar_quarter"]), ["2023-Q2", "2024-Q1"])
+
+    def test_dev_only_with_only_holdout_start_uses_implied_complement(self):
+        df = self._quarterly_frame()
+        out = apply_dev_holdout_split(
+            df, "period_end_calendar_quarter", holdout_start="2023-Q2", dev_only=True
+        )
+        self.assertEqual(sorted(out["period_end_calendar_quarter"]), ["2022-Q1", "2022-Q2", "2023-Q1"])
+
+    def test_dev_cutoff_alone_without_only_flag_returns_full_frame(self):
+        # dev U holdout is a full complementary partition when only one bound
+        # is given and no *_only flag restricts to one side -- this is the
+        # documented "the split flag alone doesn't drop data" default.
+        df = self._quarterly_frame()
+        out = apply_dev_holdout_split(df, "period_end_calendar_quarter", dev_cutoff="2023-Q1")
+        self.assertEqual(len(out), len(df))
+
+    def test_dev_only_and_holdout_only_mutually_exclusive(self):
+        df = self._quarterly_frame()
+        with self.assertRaises(ValueError):
+            apply_dev_holdout_split(
+                df,
+                "period_end_calendar_quarter",
+                dev_cutoff="2023-Q1",
+                holdout_start="2023-Q2",
+                dev_only=True,
+                holdout_only=True,
+            )
 
 
 if __name__ == "__main__":

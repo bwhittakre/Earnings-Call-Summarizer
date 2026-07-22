@@ -58,6 +58,17 @@ Quant / labels (from dimension_scores — point-in-time expanding z)
   alpha_spec_asof_0_90_z / _complete  Z-score and completeness for the as-of label.
   in_cross_section / exclusion_reason  Included-row flag; null reason when included (see coverage JSON for exclusions).
 
+  Units and horizons (all alpha_spec* / alpha_spec_asof* columns): decimal SPECIFIC (idiosyncratic,
+  residualized) returns, compounded from daily-percent specific returns with an exclusive start /
+  inclusive end window from the T+7 entry anchor -- NOT raw price returns. The base feature panel
+  only carries the legacy 0_90 (T+7 to ~T+97) window on disk; the narrower tiled horizons
+  (0_14 = T+7-T+21, 14_35 = T+22-T+42, 35_56 = T+43-T+63, 0_56 = T+7-T+63 combined) are computed
+  OFFLINE at evaluation time by evaluate_narrative_signals.py / asof_alpha.py from cached
+  specific_returns.parquet and are not persisted here. See Structured Narrative/README.md
+  ("Phase 1" and "Multiple forward horizons" sections) for the full horizon table, the
+  pre-specified primary-hypothesis family and its FDR correction, and the per-(label,horizon)
+  companies-per-quarter cross-section counts now reported alongside every RankIC number.
+
 Focus 1 — Level (from AMZN_llm_dimension_scores)
   llm_level           Narrative health score -2..+2 (was "score" in source CSV).
   level_rationale     One-paragraph reasoning for the level score.

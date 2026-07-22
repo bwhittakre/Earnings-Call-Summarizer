@@ -1,0 +1,31 @@
+{
+  "mcpServers": {
+    "zettelkasten": {
+      "command": "/Users/natashahirt/Library/CloudStorage/OneDrive-CassiusCapital/Code/earnings-scraper/.venv/bin/angelo-zettelkasten",
+      "env": {
+        "ANGELO_WORKSPACE": "${workspaceFolder}",
+        "ZETTELKASTEN_PATH": "${workspaceFolder}/.zettelkasten"
+      }
+    },
+    "coordinator": {
+      "command": "/Users/natashahirt/Library/CloudStorage/OneDrive-CassiusCapital/Code/earnings-scraper/.venv/bin/angelo-coordinator",
+      "env": {
+        "ANGELO_WORKSPACE": "${workspaceFolder}",
+        "ANGELO_ZETTELKASTEN": "1"
+      }
+    },
+    "memory": {
+      "command": "/Users/natashahirt/Library/CloudStorage/OneDrive-CassiusCapital/Code/earnings-scraper/.venv/bin/angelo-memory",
+      "env": {
+        "ANGELO_WORKSPACE": "${workspaceFolder}",
+        "MEMORY_FILE_PATH": "${workspaceFolder}/.angelo/memory.kgl"
+      }
+    },
+    "memory-artifacts": {
+      "command": "/Users/natashahirt/Library/CloudStorage/OneDrive-CassiusCapital/Code/earnings-scraper/.venv/bin/angelo-memory-artifacts",
+      "env": {
+        "ANGELO_WORKSPACE": "${workspaceFolder}"
+      }
+    }
+  }
+}

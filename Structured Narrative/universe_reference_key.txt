@@ -1,0 +1,123 @@
+What this is
+Point-in-time membership history for the Technology Select Sector SPDR Fund (XLK), reconstructed
+directly from SEC EDGAR regulatory filings rather than read off today's holdings page. This is
+Phase 0 of the Structured Narrative Expansion plan and exists to hand off a bias-aware candidate
+list for universe expansion (Phase 3) while avoiding the most common mistake in that kind of
+exercise: picking the fund's CURRENT constituents and assuming they were always the constituents.
+A name that was in XLK eight years ago but has since been acquired, delisted, or reclassified out
+of the sector must still show up in the periods it was actually a member -- otherwise the dataset
+silently only contains survivors, which biases any downstream evaluation toward whatever
+characteristics happen to correlate with "still existing today."
+
+Run
+  python "Structured Narrative/universe_reconstruction.py"
+  python "Structured Narrative/universe_reconstruction.py" --start-year 2016 --target-n 16
+  python "Structured Narrative/universe_reconstruction.py" --no-cache      (refetch every filing)
+  python "Structured Narrative/universe_reconstruction.py" --exclude-tickers AAPL MSFT NVDA AMZN
+
+Default window: 2016-01-01 through the current year+1 (i.e. "everything available"). Default
+screen target: 16 net-new candidate tickers (excludes AAPL/MSFT/NVDA/AMZN -- already in the pilot).
+
+Identifiers (verified against SEC EDGAR's own primary_doc.xml for a live N-PORT-P filing, not
+inferred from a third-party site)
+  Filer CIK    1064641   "SELECT SECTOR SPDR TRUST" -- files jointly for every one of its sector
+                         funds (Technology, Financial, Energy, ...), so every filing list must be
+                         scoped to the series below, not just this CIK.
+  Series ID    S000006415  "State Street(R) Technology Select Sector SPDR(R) ETF" -- ticker XLK.
+                         Older filings (pre-2023) use the fund's earlier name, "The Technology
+                         Select Sector SPDR Fund" -- both names refer to the same series.
+  Class ID     C000017601
+
+Data sources, by era (holdings-disclosure format changed over the 10-year window; this is the
+central reason point-in-time resolution isn't uniform across the whole history)
+  N-PORT-P   ~2019-present, quarterly.   Structured XML, one <invstOrSec> element per holding, with
+             a pctVal field the filer has already computed (% of net assets) -- the cleanest and
+             most reliable source. Only equity holdings (assetCat EC/EP) are kept; cash-collateral
+             and securities-lending sleeve entries are excluded.
+  N-Q        pre-2019, semi-annual (Feb/Aug filings, covering the fiscal Q1/Q3 of a Sept-30 fiscal
+             year end). Narrative HTML filed jointly for every Select Sector SPDR fund in one
+             document -- the Technology fund's own "SCHEDULE OF INVESTMENTS" section is located
+             and sliced out of the combined filing, then parsed with a tolerant text-based row
+             extractor (holdings tables use a consistent "Name | Shares | Value" layout across
+             years, though the surrounding HTML markup verbosity varies a lot -- 2018+ filings use
+             far heavier per-cell inline styling than 2016-2017 ones).
+  N-CSR /    Annual / semi-annual shareholder reports, same joint-filing narrative-HTML structure
+  N-CSRS     as N-Q. Used strictly as a FALLBACK to fill any pre-2019 quarter N-Q doesn't cover
+             (Q2/Q4 of the fiscal year) -- never as a primary source, and the most brittle of the
+             three to parse. Not fetched at all past 2019, since N-PORT-P already gives complete
+             quarterly coverage from that point on.
+
+  Together, N-Q + N-CSR/N-CSRS give quarterly-to-semiannual point-in-time resolution before 2019;
+  N-PORT-P gives clean quarterly resolution from 2019 on. Neither source gives daily resolution --
+  acceptable (and now disclosed) for defining a UNIVERSE membership history, as opposed to a
+  timing-sensitive trading signal.
+
+Known parsing gaps / limitations
+  - pct_of_fund is "disclosed" (the filer's own computed % of net assets) for N-PORT-P rows, but
+    only "computed" (this holding's value / sum of all parsed holdings' values in that filing) for
+    legacy N-Q/N-CSR/N-CSRS rows, since those filings don't carry an explicit percentage field per
+    row. See the pct_basis column in membership_by_filing_date.csv.
+  - Company-name -> ticker resolution is a curated lookup table (KNOWN_NAME_TO_TICKER in
+    universe_reconstruction.py), built by inspecting every name EDGAR actually returned across the
+    full window, not by a live third-party ticker service. Every row is mapped or explicitly
+    flagged "UNRESOLVED:<name>" in the ticker column -- nothing is dropped silently. As of the
+    last full run (2016-2026), zero rows are unresolved; new filings in future years may introduce
+    new names that need adding to the table (unresolved_names.json will flag them).
+  - A small number of rows are known residual regex-parsing noise from page-break/table-restart
+    boundaries in the legacy HTML parser (a bare "Corp." or "Inc." with no name attached) -- these
+    are filtered by an explicit generic-suffix stoplist (_GENERIC_SUFFIX_NOISE), matched only on an
+    exact normalized token, never a substring, so a real company name is never at risk.
+  - This reconstruction is scoped to ONE sector fund (XLK / Technology). It does not, by itself,
+    correct for names that would belong in a broader "large-cap tech" universe by some definition
+    other than GICS Information Technology membership (e.g. Amazon and Google/Meta are GICS
+    Consumer Discretionary / Communication Services, not Information Technology, and are
+    genuinely absent from XLK for that reason -- see "GICS reclassifications" below).
+
+Screening methodology (candidate_list.csv / candidate_list.json)
+  Ranked by: (1) presence_ratio -- the fraction of all 41 reconstructed snapshots the ticker
+  appears in (continuity), then (2) mean_pct_of_fund -- its average disclosed/computed weight
+  across those snapshots (materiality). Restricted to tickers that are STILL constituents as of
+  the most recent filing (still_constituent == True) and not already in the pilot
+  (--exclude-tickers, default AAPL/MSFT/NVDA/AMZN). Default target: 16 tickers.
+  This is a screen over the SAME source used for membership (not a second, different data system),
+  so the candidate list and the membership table it's drawn from are always mutually consistent.
+
+Historical-only constituents (historical_only_constituents.csv)
+  Every ticker that was ever a Technology-fund constituent but has dropped out by the most recent
+  filing -- kept, not discarded, exactly as the build plan requires. There is no forward path to
+  onboard a delisted/acquired/reclassified name into a going-forward transcript-scoring pipeline,
+  but this list is valuable in its own right: it is the direct evidence that the reconstruction is
+  doing its job. Two GICS sector-definition changes are visible directly in this table:
+    - Mid-2018: Alphabet (GOOGL/GOOG), Meta/Facebook, AT&T, Verizon, eBay, EA, Activision Blizzard,
+      and CenturyLink all exit -- GICS split "Telecommunication Services" into a broadened
+      "Communication Services" sector and moved several former Technology/Telecom names into it.
+      A naive "current top tech names" list would never surface that these were ever validly XLK
+      constituents, or that "big tech" and "GICS Information Technology" are not the same set.
+    - Late 2022 / early 2023: Visa, Mastercard, PayPal, ADP, Fidelity National Information
+      Services, Fiserv, Global Payments, and Paychex all exit -- GICS moved "Transaction &
+      Payment Processing Services" from Information Technology into Financials.
+  Older exits (Broadcom Corp -> acquired by Avago 2016; EMC -> acquired by Dell 2016; CA Inc ->
+  acquired by Broadcom 2018; Red Hat -> acquired by IBM 2019; Xilinx -> acquired by AMD 2022;
+  Citrix -> taken private 2022; NortonLifeLock -> renamed Gen Digital 2022, see KNOWN_NAME_TO_TICKER
+  "gen digital inc") show up the same way: present, then absent, with the exact quarter of the
+  transition visible in first_seen/last_seen.
+
+Output files (Structured Narrative/output/universe/)
+  membership_by_filing_date.csv   Every parsed holding row, one row per (report_date, ticker):
+                                   report_date, source_form, accession, raw_name, ticker, cusip,
+                                   isin, shares_or_balance, value_usd, pct_of_fund, pct_basis,
+                                   rank_in_filing. The full point-in-time audit trail.
+  candidate_list.csv / .json       The screened net-new candidate list (see above).
+  historical_only_constituents.csv  Tickers no longer in the fund (see above).
+  unresolved_names.json           Any raw names that failed ticker resolution on the most recent
+                                   run (empty as of the last full run).
+  run_log.json                    One entry per filing attempted, including failures -- so gaps
+                                   in coverage are visible rather than silently absorbed.
+  raw_filings/                    Cached raw filing bytes (XML/HTML), keyed by accession number --
+                                   the durable audit trail each membership row was parsed from,
+                                   and avoids re-hitting EDGAR on repeat runs.
+
+Once Bloomberg terminal access is available, treat its point-in-time constituent history as a
+CROSS-CHECK against this filings-based table (pull a handful of snapshot dates and diff them),
+not a rebuild -- this reconstruction already covers the full 10-year window and was built to not
+be a blocking dependency on Bloomberg access.

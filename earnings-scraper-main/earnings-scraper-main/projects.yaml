@@ -1,0 +1,70 @@
+# Described projects — the working sets a parsed earnings source can join.
+#
+# There is NO mechanical router. When the coordinator processes a transcript it
+# READS these descriptions and joins the source to every project whose `join_when`
+# fits (via the zettelkasten `project` tool: create if missing, then add_to_project).
+# One source can join several projects at once (a company AND its quarter AND its
+# sector AND a theme) — the claims are extracted once and the source is listed in
+# each project's scope.
+#
+# A project is a lens for comparison:
+#   - by COMPANY  -> track one company across quarters (guidance drift, tone shift)
+#   - by QUARTER  -> compare many companies reporting in the same period
+#   - by SECTOR   -> compare peers; spot sector-wide themes
+#   - by THEME    -> cut across companies/quarters on a topic (AI capex, margins)
+#
+# These are EXAMPLES — edit freely. Names are kebab-case (they become zettelkasten
+# project ids). `default_schema` is a hint for which lens to run for this project.
+
+projects:
+  # ---- by company ---------------------------------------------------------
+  - name: company-aapl
+    kind: company
+    default_schema: earnings-call
+    description: "All Apple (AAPL) earnings events, accumulated across quarters."
+    join_when: "The source is an Apple / AAPL earnings call or report."
+
+  - name: company-msft
+    kind: company
+    default_schema: earnings-call
+    description: "All Microsoft (MSFT) earnings events across quarters."
+    join_when: "The source is a Microsoft / MSFT earnings call or report."
+
+  # ---- by quarter ---------------------------------------------------------
+  - name: quarter-2025-q1
+    kind: quarter
+    default_schema: earnings-call
+    description: "Every company reporting for fiscal/calendar 2025 Q1 — cross-company snapshot."
+    join_when: "The source's reported period is 2025 Q1 (fiscal or calendar)."
+
+  - name: quarter-2025-q2
+    kind: quarter
+    default_schema: earnings-call
+    description: "Every company reporting for 2025 Q2."
+    join_when: "The source's reported period is 2025 Q2."
+
+  # ---- by sector ----------------------------------------------------------
+  - name: sector-technology
+    kind: sector
+    default_schema: earnings-call
+    description: "Technology-sector earnings — hardware, software, semis, internet."
+    join_when: "The issuer is a technology company."
+
+  - name: sector-financials
+    kind: sector
+    default_schema: earnings-call
+    description: "Financials — banks, insurers, asset managers, exchanges."
+    join_when: "The issuer is a financials-sector company."
+
+  # ---- by theme (cross-cutting) ------------------------------------------
+  - name: theme-ai-capex
+    kind: theme
+    default_schema: earnings-call
+    description: "Cross-company thread on AI investment, data-center capex, and monetization."
+    join_when: "The call discusses AI spend/capacity/capex or AI monetization in a material way."
+
+  - name: theme-margin-pressure
+    kind: theme
+    default_schema: guidance-tracker
+    description: "Cross-company thread on margin compression, cost pressure, and pricing."
+    join_when: "Management flags margin pressure, rising costs, or pricing actions."

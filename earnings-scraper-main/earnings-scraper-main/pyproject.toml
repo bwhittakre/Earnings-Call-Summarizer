@@ -1,0 +1,30 @@
+[project]
+name = "earnings-scraper"
+version = "0.1.0"
+description = "Ingest earnings-call transcripts/reports into an Angelo zettelkasten via coordinator-driven grounded extraction."
+requires-python = ">=3.10"
+dependencies = [
+    # Only needed for the (future) Snowflake -> inbox puller. The core workflow
+    # (drop files in inbox/, let the coordinator crunch them) needs none of these.
+    "pandas>=2.0",
+    "python-dotenv>=1.0",
+    "pyyaml>=6.0",
+    "snowflake-connector-python[pandas]>=3.0",
+    "cryptography>=41.0",
+    # HTTP client for the transcript fetcher (ROIC.ai API + SEC EDGAR fallback).
+    "httpx>=0.28",
+]
+
+[project.optional-dependencies]
+dev = ["ruff>=0.6"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100
+src = ["src", "scripts"]

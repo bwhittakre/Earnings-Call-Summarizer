@@ -113,6 +113,39 @@ CALL_DATE_SIGNALS = {
 
 DELAYED_SIGNALS = {"quant_guidance_revision_z_pit"}
 
+# Pre-specified primary hypotheses (superior's feedback, item 4), evaluated and
+# reported SEPARATELY from the full exploratory signal × dimension × horizon
+# grid, with its own multiple-testing (FDR) correction — see
+# primary_hypothesis_report() / benjamini_hochberg(). The exploratory grid
+# stays uncorrected (standard practice for a screening pass); only THIS
+# pre-specified family gets the FDR treatment, per the plan.
+PRIMARY_HYPOTHESES: tuple[dict[str, str], ...] = (
+    {
+        "signal": "quant_z_pit",
+        "dimension": "demand",
+        "hypothesis": "Demand quantitative z-score (quant_z_pit) predicts forward specific return",
+    },
+    {
+        "signal": "agrees_with_quant",
+        "dimension": "demand",
+        "hypothesis": "Demand narrative/quantitative agreement predicts forward specific return",
+    },
+    {
+        "signal": "agrees_with_quant",
+        "dimension": "margins",
+        "hypothesis": "Margins narrative/quantitative agreement predicts forward specific return",
+    },
+    {
+        "signal": "agrees_with_quant",
+        "dimension": "guidance",
+        "hypothesis": "Guidance narrative/quantitative agreement predicts forward specific return",
+    },
+)
+
+
+def is_primary_hypothesis(signal: str, dimension: str | None) -> bool:
+    return any(h["signal"] == signal and h["dimension"] == dimension for h in PRIMARY_HYPOTHESES)
+
 
 def _finite(x: Any) -> float | None:
     if x is None:
@@ -261,6 +294,218 @@ def divergence_hit_rate(df: pd.DataFrame, label: str) -> dict:
     }
 
 
+def _cluster_key_series(df: pd.DataFrame, cluster_col: str) -> pd.Series:
+    """Map a logical cluster key to the resampling-unit series for that key.
+
+    "ticker"          -- resample companies (the original default: every row
+                          belonging to a company, across every period AND
+                          every dimension it appears in, moves together).
+    "calendar_period"  -- resample calendar periods (robustness check: is a
+                          result driven by a handful of volatile quarters
+                          rather than being broadly true across time?).
+    "company_period"  -- resample (ticker, period) pairs -- the finest unit
+                          that still keeps one company-period's repeated rows
+                          (e.g. its 8 dimension rows, which all share the same
+                          forward return) together in one cluster, avoiding
+                          the double-counting the RankIC unit-of-observation
+                          fix addresses even when the statistic pools rows
+                          across dimensions or periods.
+    """
+    if cluster_col == "ticker":
+        return df["ticker"].astype(str).str.upper()
+    period_col = "period_end_calendar_quarter" if "period_end_calendar_quarter" in df.columns else "fiscal_period"
+    if cluster_col == "calendar_period":
+        return df[period_col].astype(str)
+    if cluster_col == "company_period":
+        return df["ticker"].astype(str).str.upper() + "::" + df[period_col].astype(str)
+    raise ValueError(f"Unknown cluster_col {cluster_col!r} (expected ticker/calendar_period/company_period)")
+
+
+def cluster_bootstrap_mean_diff(
+    df: pd.DataFrame,
+    group_col: str,
+    value_col: str,
+    *,
+    cluster_col: str = "ticker",
+    n_boot: int = 2000,
+    seed: int = 13,
+) -> dict:
+    """Cluster-bootstrap CI + two-sided p-value for mean(group=True) - mean(group=False).
+
+    Resamples whole clusters (see _cluster_key_series), not individual rows, so
+    a company's (or period's) repeated rows always move together and are never
+    treated as independent observations they aren't. Generalizes the original
+    ticker-only bootstrap in agreement_effect_stats to any of the three cluster
+    keys the build plan calls for.
+    """
+    sub = df[[group_col, value_col]].copy()
+    sub["_cluster"] = _cluster_key_series(df, cluster_col).values
+    sub = sub.dropna(subset=[group_col, value_col, "_cluster"])
+    out: dict = {
+        "cluster_col": cluster_col,
+        "n_clusters": 0,
+        "mean_diff": None,
+        "ci_low": None,
+        "ci_high": None,
+        "p_value": None,
+        "n_boot": n_boot,
+        "n_boot_used": 0,
+    }
+    if sub.empty:
+        return out
+    true_mean = sub.loc[sub[group_col] == True, value_col].mean()  # noqa: E712
+    false_mean = sub.loc[sub[group_col] == False, value_col].mean()  # noqa: E712
+    clusters = sorted(sub["_cluster"].unique())
+    out["n_clusters"] = len(clusters)
+    if pd.isna(true_mean) or pd.isna(false_mean):
+        return out
+    observed = float(true_mean - false_mean)
+    out["mean_diff"] = round(observed, 6)
+    if len(clusters) < 2:
+        return out
+
+    rng = np.random.default_rng(seed)
+    groups = {c: g for c, g in sub.groupby("_cluster")}
+    boot_diffs: list[float] = []
+    for _ in range(n_boot):
+        sample = rng.choice(clusters, size=len(clusters), replace=True)
+        resampled = pd.concat([groups[c] for c in sample], ignore_index=True)
+        r_true = resampled.loc[resampled[group_col] == True, value_col].mean()  # noqa: E712
+        r_false = resampled.loc[resampled[group_col] == False, value_col].mean()  # noqa: E712
+        if pd.isna(r_true) or pd.isna(r_false):
+            continue
+        boot_diffs.append(float(r_true - r_false))
+    out["n_boot_used"] = len(boot_diffs)
+    if out["n_boot_used"] < max(50, n_boot // 4):
+        return out
+    arr = np.array(boot_diffs)
+    out["ci_low"] = round(float(np.percentile(arr, 2.5)), 6)
+    out["ci_high"] = round(float(np.percentile(arr, 97.5)), 6)
+    # Two-sided bootstrap p-value: proportion of the resampled distribution on
+    # the opposite side of zero from the observed sign, doubled and capped at 1.
+    if observed >= 0:
+        p = 2.0 * min(1.0, float((arr <= 0).mean()))
+    else:
+        p = 2.0 * min(1.0, float((arr >= 0).mean()))
+    out["p_value"] = round(min(p, 1.0), 6)
+    return out
+
+
+def bootstrap_rank_ic_mean(period_ics: pd.DataFrame, *, n_boot: int = 2000, seed: int = 13) -> dict:
+    """Cluster-bootstrap CI + two-sided p-value for a walk-forward RankIC mean.
+
+    Each row of ``period_ics`` (from walk_forward_period_ics) is already one
+    independent, unit-correct cross-section — so the cluster here is the
+    PERIOD itself; resampling periods (not underlying rows) is the correct
+    way to test whether the mean RankIC is distinguishable from zero.
+    """
+    vals = period_ics["rank_ic"].dropna().to_numpy() if not period_ics.empty else np.array([])
+    out = {"n_periods": int(len(vals)), "mean": None, "ci_low": None, "ci_high": None, "p_value": None, "n_boot": n_boot}
+    if len(vals) < 3:
+        return out
+    observed = float(vals.mean())
+    out["mean"] = round(observed, 4)
+    rng = np.random.default_rng(seed)
+    boot_means = rng.choice(vals, size=(n_boot, len(vals)), replace=True).mean(axis=1)
+    out["ci_low"] = round(float(np.percentile(boot_means, 2.5)), 4)
+    out["ci_high"] = round(float(np.percentile(boot_means, 97.5)), 4)
+    if observed >= 0:
+        p = 2.0 * min(1.0, float((boot_means <= 0).mean()))
+    else:
+        p = 2.0 * min(1.0, float((boot_means >= 0).mean()))
+    out["p_value"] = round(min(p, 1.0), 6)
+    return out
+
+
+def benjamini_hochberg(p_values: list[float | None], *, alpha: float = 0.05) -> list[dict]:
+    """Benjamini-Hochberg FDR correction, returned in the ORIGINAL input order.
+
+    ``None`` entries (missing/undefined tests) pass through with q_value=None,
+    reject=False, and are excluded from the correction's multiple-testing
+    count entirely (they were never a test in the first place).
+    """
+    m = sum(1 for p in p_values if p is not None)
+    result: list[dict] = [{"p_value": p, "q_value": None, "reject": False} for p in p_values]
+    if m == 0:
+        return result
+    indexed = sorted(
+        ((i, p) for i, p in enumerate(p_values) if p is not None), key=lambda t: t[1]
+    )
+    q_running = 1.0
+    q_by_index: dict[int, float] = {}
+    for rank in range(m, 0, -1):
+        i_orig, p = indexed[rank - 1]
+        q_running = min(q_running, p * m / rank)
+        q_by_index[i_orig] = q_running
+    for i_orig, p in indexed:
+        q = q_by_index[i_orig]
+        result[i_orig] = {"p_value": p, "q_value": round(float(q), 6), "reject": bool(q <= alpha)}
+    return result
+
+
+def primary_hypothesis_rows(
+    period_df: pd.DataFrame,
+    agreement_rows_for_tag: list[dict],
+    *,
+    fam: str,
+    horizon: str,
+    n_boot: int = 2000,
+) -> list[dict]:
+    """One row per PRIMARY_HYPOTHESES entry for this (label, horizon) tag.
+
+    quant_z_pit hypotheses are tested via a period-cluster bootstrap on the
+    walk-forward RankIC mean (bootstrap_rank_ic_mean); agrees_with_quant
+    hypotheses reuse the ticker-cluster bootstrap already computed per
+    dimension in agreement_effect_stats (agreement_rows_for_tag). p_value
+    here is per-test — benjamini_hochberg() is applied once, across every
+    (label, horizon, hypothesis) row, by the caller in main().
+    """
+    rows: list[dict] = []
+    for h in PRIMARY_HYPOTHESES:
+        base = {
+            "label_key": fam,
+            "horizon": horizon,
+            "signal": h["signal"],
+            "dimension": h["dimension"],
+            "hypothesis": h["hypothesis"],
+        }
+        if h["signal"] == "agrees_with_quant":
+            match = next(
+                (r for r in agreement_rows_for_tag if r.get("dimension") == h["dimension"]), None
+            )
+            if match is None:
+                rows.append({**base, "stat": None, "n": None, "p_value": None})
+                continue
+            rows.append(
+                {
+                    **base,
+                    "stat": match.get("spread"),
+                    "ci_low": match.get("ci_low"),
+                    "ci_high": match.get("ci_high"),
+                    "n": match.get("n_agree", 0) + match.get("n_disagree", 0),
+                    "n_clusters": match.get("n_tickers"),
+                    "p_value": match.get("p_value"),
+                }
+            )
+        else:
+            sub = period_df[
+                (period_df.get("signal") == h["signal"]) & (period_df.get("dimension") == h["dimension"])
+            ] if not period_df.empty else pd.DataFrame()
+            boot = bootstrap_rank_ic_mean(sub, n_boot=n_boot)
+            rows.append(
+                {
+                    **base,
+                    "stat": boot.get("mean"),
+                    "ci_low": boot.get("ci_low"),
+                    "ci_high": boot.get("ci_high"),
+                    "n": boot.get("n_periods"),
+                    "n_clusters": boot.get("n_periods"),
+                    "p_value": boot.get("p_value"),
+                }
+            )
+    return rows
+
+
 def agreement_effect_stats(
     df: pd.DataFrame,
     label: str,
@@ -268,18 +513,18 @@ def agreement_effect_stats(
     dimension: str | None = None,
     n_boot: int = 2000,
     seed: int = 13,
+    cluster_col: str = "ticker",
 ) -> dict:
     """Mean forward return by agrees_with_quant (True/False), spread, and a 95% CI.
 
     agrees_with_quant is a categorical, dimension-scoped flag that repeats across
     periods for the same company (and, when ``dimension`` is None, across the
     pooled quant-mapped dimensions too) — the same pseudo-replication issue the
-    RankIC unit-of-observation fix addresses. A naive per-row bootstrap would
-    reproduce it, so this resamples the *ticker set* with replacement: each
-    resample pools every row belonging to the resampled tickers, so every
-    company is one independent unit regardless of how many rows it contributes.
-    With only a handful of tickers the resulting CI will be wide — that reflects
-    genuinely limited cross-sectional power, not a bug in the method.
+    RankIC unit-of-observation fix addresses. cluster_bootstrap_mean_diff resamples
+    whole clusters (default: the *ticker set*) with replacement, so every company
+    is one independent unit regardless of how many rows it contributes. With only
+    a handful of tickers the resulting CI will be wide — that reflects genuinely
+    limited cross-sectional power, not a bug in the method.
     """
     sub = df[df["agrees_with_quant"].notna() & df[label].notna()].copy()
     if dimension is not None and "dimension" in sub.columns:
@@ -296,50 +541,35 @@ def agreement_effect_stats(
             "spread": None,
             "ci_low": None,
             "ci_high": None,
+            "p_value": None,
             "n_boot": n_boot,
+            "cluster_col": cluster_col,
         }
 
     agree = sub[sub["agrees_with_quant"] == True]  # noqa: E712
     disagree = sub[sub["agrees_with_quant"] == False]  # noqa: E712
     mean_agree = float(agree[label].mean()) if len(agree) else None
     mean_disagree = float(disagree[label].mean()) if len(disagree) else None
-    spread = (
-        (mean_agree - mean_disagree) if mean_agree is not None and mean_disagree is not None else None
-    )
 
-    sub["_ticker_upper"] = sub["ticker"].astype(str).str.upper()
-    tickers = sorted(sub["_ticker_upper"].unique())
-    ci_low = ci_high = None
-    n_boot_used = 0
-    if spread is not None and len(tickers) >= 2:
-        rng = np.random.default_rng(seed)
-        groups = {t: g for t, g in sub.groupby("_ticker_upper")}
-        boot_spreads: list[float] = []
-        for _ in range(n_boot):
-            sample_tickers = rng.choice(tickers, size=len(tickers), replace=True)
-            resampled = pd.concat([groups[t] for t in sample_tickers], ignore_index=True)
-            r_agree_mean = resampled.loc[resampled["agrees_with_quant"] == True, label].mean()  # noqa: E712
-            r_disagree_mean = resampled.loc[resampled["agrees_with_quant"] == False, label].mean()  # noqa: E712
-            if pd.isna(r_agree_mean) or pd.isna(r_disagree_mean):
-                continue
-            boot_spreads.append(float(r_agree_mean - r_disagree_mean))
-        n_boot_used = len(boot_spreads)
-        if n_boot_used >= max(50, n_boot // 4):
-            ci_low = round(float(np.percentile(boot_spreads, 2.5)), 6)
-            ci_high = round(float(np.percentile(boot_spreads, 97.5)), 6)
+    boot = cluster_bootstrap_mean_diff(
+        sub, "agrees_with_quant", label, cluster_col=cluster_col, n_boot=n_boot, seed=seed
+    )
+    n_tickers = int(sub["ticker"].astype(str).str.upper().nunique())
 
     return {
         "dimension": dim_tag,
         "n_agree": int(len(agree)),
         "n_disagree": int(len(disagree)),
-        "n_tickers": len(tickers),
+        "n_tickers": n_tickers,
         "mean_return_agree": round(mean_agree, 6) if mean_agree is not None else None,
         "mean_return_disagree": round(mean_disagree, 6) if mean_disagree is not None else None,
-        "spread": round(spread, 6) if spread is not None else None,
-        "ci_low": ci_low,
-        "ci_high": ci_high,
+        "spread": boot.get("mean_diff"),
+        "ci_low": boot.get("ci_low"),
+        "ci_high": boot.get("ci_high"),
+        "p_value": boot.get("p_value"),
         "n_boot": n_boot,
-        "n_boot_used": n_boot_used,
+        "n_boot_used": boot.get("n_boot_used", 0),
+        "cluster_col": cluster_col,
     }
 
 
@@ -595,6 +825,7 @@ def leaderboard_rows(label_blocks: dict[str, dict[str, dict[str, dict]]]) -> lis
                             "positive_rank_ic_hit_rate": wf.get("positive_rank_ic_hit_rate"),
                             "n_periods": wf.get("n_periods"),
                             "n_rows": dim_stats.get("n_rows"),
+                            "is_primary": is_primary_hypothesis(signal, dim),
                         }
                     )
                 dm = stats.get("dimension_mean") or {}
@@ -612,6 +843,7 @@ def leaderboard_rows(label_blocks: dict[str, dict[str, dict[str, dict]]]) -> lis
                         "positive_rank_ic_hit_rate": None,
                         "n_periods": dm.get("n_dimensions"),
                         "n_rows": stats.get("n_rows"),
+                        "is_primary": False,
                     }
                 )
     rows.sort(
@@ -624,6 +856,74 @@ def leaderboard_rows(label_blocks: dict[str, dict[str, dict[str, dict]]]) -> lis
         )
     )
     return rows
+
+
+def cross_section_counts(df: pd.DataFrame, period_col: str) -> dict[str, int]:
+    """Distinct ticker count per period value — the actual cross-section size
+    behind every RankIC number (item 7: "the number of companies in each
+    quarterly cross-section"). A RankIC computed over n=2 companies means
+    something very different from one computed over n=16; this makes that
+    visible next to every result rather than only in n_rows/n_periods, which
+    conflate cross-section size with period count.
+    """
+    if period_col not in df.columns or "ticker" not in df.columns:
+        return {}
+    counts = df.groupby(period_col)["ticker"].nunique()
+    return {str(k): int(v) for k, v in counts.items()}
+
+
+def apply_dev_holdout_split(
+    df: pd.DataFrame,
+    period_col: str,
+    *,
+    dev_cutoff: str | None = None,
+    holdout_start: str | None = None,
+    holdout_only: bool = False,
+    dev_only: bool = False,
+) -> pd.DataFrame:
+    """Split the eval frame into a development window vs. a genuine holdout.
+
+    ``dev_cutoff`` / ``holdout_start`` are calendar-quarter strings (e.g.
+    "2023-Q1"), compared via calendar_quarter_sort_key so they work regardless
+    of period_col's exact format (period_end_calendar_quarter or
+    earnings_date_calendar_quarter).
+
+    When only ONE bound is given, the other window is its implied complement
+    (dev_cutoff alone => holdout is everything strictly after it; holdout_start
+    alone => dev is everything strictly before it) -- so passing just
+    --dev-cutoff, with no --*-only flag, filters the frame down to that dev
+    window's complement being dropped nowhere and everything partitioned, not
+    silently returning the full frame. When BOTH are given, rows strictly
+    between them are dropped so the two windows don't overlap.
+    holdout_only/dev_only restrict the result to just one side.
+    """
+    if not (dev_cutoff or holdout_start) or period_col not in df.columns:
+        return df
+    from period_dates import calendar_quarter_sort_key
+
+    if dev_only and holdout_only:
+        raise ValueError("dev_only and holdout_only are mutually exclusive.")
+
+    keys = df[period_col].astype(str).map(calendar_quarter_sort_key)
+    cutoff_key = calendar_quarter_sort_key(dev_cutoff) if dev_cutoff else None
+    start_key = calendar_quarter_sort_key(holdout_start) if holdout_start else None
+
+    if cutoff_key is not None:
+        dev_mask = keys <= cutoff_key
+    else:
+        dev_mask = keys < start_key  # implied complement of holdout_start
+    if start_key is not None:
+        holdout_mask = keys >= start_key
+    else:
+        holdout_mask = keys > cutoff_key  # implied complement of dev_cutoff
+
+    if dev_only:
+        return df[dev_mask].copy()
+    if holdout_only:
+        return df[holdout_mask].copy()
+    # No explicit only-filter: keep dev ∪ holdout, dropping any no-man's-land
+    # strictly between an explicit dev_cutoff and holdout_start.
+    return df[dev_mask | holdout_mask].copy()
 
 
 def label_overlap_stats(df: pd.DataFrame) -> dict:
@@ -760,6 +1060,41 @@ def main() -> int:
         action="store_true",
         help="Skip cross-ticker investable rebuild / multi-horizon alpha recompute.",
     )
+    ap.add_argument(
+        "--primary-hypothesis-bootstrap",
+        type=int,
+        default=2000,
+        help="Bootstrap resamples for the primary-hypothesis significance tests (default: 2000).",
+    )
+    ap.add_argument(
+        "--fdr-alpha",
+        type=float,
+        default=0.05,
+        help="Benjamini-Hochberg FDR threshold applied to the primary hypothesis family (default: 0.05).",
+    )
+    ap.add_argument(
+        "--dev-cutoff",
+        metavar="yyyy-Qn",
+        default=None,
+        help=(
+            "Development window ends at (and includes) this calendar quarter, e.g. 2023-Q1. "
+            "Combine with --holdout-start to define a real out-of-sample split; see item 5 of the "
+            "Structured Narrative Expansion plan."
+        ),
+    )
+    ap.add_argument(
+        "--holdout-start",
+        metavar="yyyy-Qn",
+        default=None,
+        help="Holdout window starts at (and includes) this calendar quarter, e.g. 2023-Q2.",
+    )
+    dev_holdout_group = ap.add_mutually_exclusive_group()
+    dev_holdout_group.add_argument(
+        "--dev-only", action="store_true", help="Evaluate only rows at/before --dev-cutoff."
+    )
+    dev_holdout_group.add_argument(
+        "--holdout-only", action="store_true", help="Evaluate only rows at/after --holdout-start."
+    )
     args = ap.parse_args()
     tickers = [t.upper() for t in args.tickers]
     signals = args.signals or list(SIGNAL_COLUMNS)
@@ -818,6 +1153,8 @@ def main() -> int:
     n_rows_by_label: dict[str, int] = {}
     company_period_rows: list[dict] = []
     composite_weights_by_label: dict[str, dict] = {}
+    cross_section_counts_by_label: dict[str, dict[str, int]] = {}
+    primary_hypothesis_raw: list[dict] = []
 
     for fam, hk, label, universe, period_col in label_specs:
         if label not in df.columns or df[label].notna().sum() == 0:
@@ -831,6 +1168,15 @@ def main() -> int:
                 work = work[work["investable_ready"] == True].copy()  # noqa: E712
         pcol = period_col if period_col in work.columns else "fiscal_period"
         tag = f"{fam}:{hk}"
+
+        work = apply_dev_holdout_split(
+            work,
+            pcol,
+            dev_cutoff=args.dev_cutoff,
+            holdout_start=args.holdout_start,
+            holdout_only=args.holdout_only,
+            dev_only=args.dev_only,
+        )
 
         eval_signals = list(signals)
         if args.composite:
@@ -881,6 +1227,7 @@ def main() -> int:
                 r["horizon"] = hk
             jackknife_rows.extend(jrows)
 
+        tag_agreement_rows: list[dict] = []
         for dim in list(CALL_DATE_QUANT_DIMS) + [None]:
             stats = agreement_effect_stats(
                 work, label, dimension=dim, n_boot=args.agreement_bootstrap
@@ -888,7 +1235,19 @@ def main() -> int:
             stats["label_key"] = fam
             stats["horizon"] = hk
             stats["horizon_name"] = horizon_display_name(hk)
-            agreement_rows.append(stats)
+            tag_agreement_rows.append(stats)
+        agreement_rows.extend(tag_agreement_rows)
+
+        cross_section_counts_by_label[tag] = cross_section_counts(work, pcol)
+        primary_hypothesis_raw.extend(
+            primary_hypothesis_rows(
+                period_df,
+                tag_agreement_rows,
+                fam=fam,
+                horizon=hk,
+                n_boot=args.primary_hypothesis_bootstrap,
+            )
+        )
 
     if not label_blocks:
         print("Error: no labels evaluated.", file=sys.stderr)
@@ -896,6 +1255,16 @@ def main() -> int:
 
     board = leaderboard_rows(label_blocks)
     overlap = label_overlap_stats(df)
+
+    # BH-FDR correction applied ONCE, across the whole pre-specified primary
+    # hypothesis family (every hypothesis x label x horizon row) — the
+    # exploratory signal x dimension x horizon grid in `board` is intentionally
+    # left uncorrected (see PRIMARY_HYPOTHESES docstring above).
+    qvals = benjamini_hochberg([r["p_value"] for r in primary_hypothesis_raw], alpha=args.fdr_alpha)
+    for row, q in zip(primary_hypothesis_raw, qvals):
+        row["q_value"] = q["q_value"]
+        row["reject_fdr"] = q["reject"]
+    primary_hypothesis_report = primary_hypothesis_raw
 
     # Back-compat single-label top-level fields: prefer asof + the combined
     # T+7-T+63 horizon; fall back to the first available (label, horizon) block.
@@ -946,6 +1315,16 @@ def main() -> int:
         "composite_enabled": args.composite,
         "composite_min_periods": args.composite_min_periods,
         "composite_weights": composite_weights_by_label,
+        "cross_section_counts": cross_section_counts_by_label,
+        "primary_hypotheses": [dict(h) for h in PRIMARY_HYPOTHESES],
+        "primary_hypothesis_report": primary_hypothesis_report,
+        "fdr_alpha": args.fdr_alpha,
+        "dev_holdout": {
+            "dev_cutoff": args.dev_cutoff,
+            "holdout_start": args.holdout_start,
+            "dev_only": args.dev_only,
+            "holdout_only": args.holdout_only,
+        },
     }
 
     ensure_cross_company_tree()
@@ -954,6 +1333,9 @@ def main() -> int:
     board_path = cross_company_artifact("csv", "narrative_signal_eval_leaderboard", "csv", mkdir=True)
     jack_path = cross_company_artifact("csv", "narrative_signal_eval_jackknife", "csv", mkdir=True)
     agreement_path = cross_company_artifact("csv", "narrative_signal_eval_agreement", "csv", mkdir=True)
+    primary_hyp_path = cross_company_artifact(
+        "csv", "narrative_signal_eval_primary_hypotheses", "csv", mkdir=True
+    )
     html_path = cross_company_artifact("reports", "narrative_signal_eval", "html", mkdir=True)
 
     period_concat = pd.concat(period_frames, ignore_index=True) if period_frames else pd.DataFrame()
@@ -989,6 +1371,13 @@ def main() -> int:
         _write_csv(jack_path, pd.DataFrame(jackknife_rows))
     if agreement_rows:
         _write_csv(agreement_path, pd.DataFrame(agreement_rows))
+    if primary_hypothesis_report:
+        _write_csv(primary_hyp_path, pd.DataFrame(primary_hypothesis_report))
+        n_reject = sum(1 for r in primary_hypothesis_report if r.get("reject_fdr"))
+        print(
+            f"\nPrimary hypotheses (FDR alpha={args.fdr_alpha}): "
+            f"{n_reject}/{len(primary_hypothesis_report)} significant after correction."
+        )
     if overlap:
         print(
             f"Legacy 0-90d event vs asof labels: differ={overlap.get('n_differ')} "
