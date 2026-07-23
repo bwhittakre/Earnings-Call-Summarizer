@@ -330,19 +330,36 @@ RankIC computed over `n=4` companies is never confused with one computed over `n
 universe grows — this is item 7's "number of companies in each quarterly cross-section"
 requirement.
 
-**Dev/holdout split mechanism.** `--dev-cutoff YYYY-Qn` / `--holdout-start YYYY-Qn` (plus
-`--dev-only` / `--holdout-only`, mutually exclusive) partition the eval frame by calendar quarter
-via `apply_dev_holdout_split`, before any signal/label computation runs. Built and unit-tested
-now against the current 5-year window (where the split is close to degenerate — there isn't much
-history to hold out yet) so that Phase 4's real Q2-2016–Q1-2023 dev / Q2-2023–Q1-2026 holdout
-split, once the 10-year history exists, is "run it" rather than "build it." The report's
-`dev_holdout` block records whatever split (if any) produced the current output.
+**Dev/holdout split mechanism (Phase 4 — now run against the full 10-year history).**
+`--dev-cutoff YYYY-Qn` / `--holdout-start YYYY-Qn` (plus `--dev-only` / `--holdout-only`, mutually
+exclusive) partition the eval frame by calendar quarter via `apply_dev_holdout_split`, before any
+signal/label computation runs. Passing `--dev-cutoff` (or `--holdout-start`) **alone, with no
+`--*-only` flag, is a no-op on the row count** — dev ∪ holdout is the full frame — it only tags
+the `dev_holdout` metadata block; the two windows must each be evaluated with their own `--dev-only`
+/ `--holdout-only` run to get independent summary statistics per window.
+
+Because both runs otherwise write to the same fixed output filenames, `--output-tag TAG` suffixes
+every artifact (`narrative_signal_eval_TAG.json`, `..._leaderboard_TAG.csv`, etc.) so a dev run and
+a holdout run can coexist on disk instead of clobbering each other:
 
 ```bash
-# Primary-hypothesis run with a real (if currently thin) dev/holdout split:
-python "Structured Narrative/evaluate_narrative_signals.py" --min-calendar-quarter 2021-Q3 \
-  --dev-cutoff 2024-Q4 --fdr-alpha 0.05
+# Dev window: 2016-Q1 through 2023-Q1 (in-sample / exploratory-fit period)
+python "Structured Narrative/evaluate_narrative_signals.py" --min-calendar-quarter 2016-Q1 \
+  --dev-only --dev-cutoff 2023-Q1 --output-tag dev
+
+# Holdout window: 2023-Q2 through present (genuine out-of-sample)
+python "Structured Narrative/evaluate_narrative_signals.py" --min-calendar-quarter 2016-Q1 \
+  --holdout-only --holdout-start 2023-Q2 --output-tag holdout
 ```
+
+`--min-calendar-quarter 2016-Q1` (rather than `--quarters`) is what switches the default scope from
+the small ROIC 8-quarter pilot window to each ticker's full registry-complete history — needed for
+both the baseline full-history report and each dev/holdout window to actually see 10 years of data.
+Composite-signal weights are refit from scratch inside whichever window is selected (each run's
+walk-forward history starts over at that window's first period) — a known, transparent limitation
+of filter-then-evaluate, not a bug; the raw (non-composite) signals aren't affected since they don't
+carry state across periods. The report's `dev_holdout` block (including `output_tag`) records
+exactly what split produced that file.
 
 **Return units, exclusions, and feature-availability semantics** (item 7, remainder): forward
 return labels (`alpha_spec*`) are **decimal specific (idiosyncratic) returns** — residualized,

@@ -1095,6 +1095,16 @@ def main() -> int:
     dev_holdout_group.add_argument(
         "--holdout-only", action="store_true", help="Evaluate only rows at/after --holdout-start."
     )
+    ap.add_argument(
+        "--output-tag",
+        default=None,
+        help=(
+            "Suffix (e.g. 'dev', 'holdout') appended to every output artifact stem "
+            "(narrative_signal_eval_<tag>.json, ..._leaderboard_<tag>.csv, etc.) so a "
+            "--dev-only run and a --holdout-only run can coexist on disk instead of "
+            "clobbering the same files -- see the Phase 4 dev/holdout workflow in README.md."
+        ),
+    )
     args = ap.parse_args()
     tickers = [t.upper() for t in args.tickers]
     signals = args.signals or list(SIGNAL_COLUMNS)
@@ -1324,19 +1334,29 @@ def main() -> int:
             "holdout_start": args.holdout_start,
             "dev_only": args.dev_only,
             "holdout_only": args.holdout_only,
+            "output_tag": args.output_tag,
         },
     }
 
     ensure_cross_company_tree()
-    json_path = cross_company_artifact("json", "narrative_signal_eval", "json", mkdir=True)
-    csv_path = cross_company_artifact("csv", "narrative_signal_eval_period_ic", "csv", mkdir=True)
-    board_path = cross_company_artifact("csv", "narrative_signal_eval_leaderboard", "csv", mkdir=True)
-    jack_path = cross_company_artifact("csv", "narrative_signal_eval_jackknife", "csv", mkdir=True)
-    agreement_path = cross_company_artifact("csv", "narrative_signal_eval_agreement", "csv", mkdir=True)
-    primary_hyp_path = cross_company_artifact(
-        "csv", "narrative_signal_eval_primary_hypotheses", "csv", mkdir=True
+    tag_suffix = f"_{args.output_tag}" if args.output_tag else ""
+    json_path = cross_company_artifact("json", f"narrative_signal_eval{tag_suffix}", "json", mkdir=True)
+    csv_path = cross_company_artifact(
+        "csv", f"narrative_signal_eval_period_ic{tag_suffix}", "csv", mkdir=True
     )
-    html_path = cross_company_artifact("reports", "narrative_signal_eval", "html", mkdir=True)
+    board_path = cross_company_artifact(
+        "csv", f"narrative_signal_eval_leaderboard{tag_suffix}", "csv", mkdir=True
+    )
+    jack_path = cross_company_artifact(
+        "csv", f"narrative_signal_eval_jackknife{tag_suffix}", "csv", mkdir=True
+    )
+    agreement_path = cross_company_artifact(
+        "csv", f"narrative_signal_eval_agreement{tag_suffix}", "csv", mkdir=True
+    )
+    primary_hyp_path = cross_company_artifact(
+        "csv", f"narrative_signal_eval_primary_hypotheses{tag_suffix}", "csv", mkdir=True
+    )
+    html_path = cross_company_artifact("reports", f"narrative_signal_eval{tag_suffix}", "html", mkdir=True)
 
     period_concat = pd.concat(period_frames, ignore_index=True) if period_frames else pd.DataFrame()
     html_path.write_text(
