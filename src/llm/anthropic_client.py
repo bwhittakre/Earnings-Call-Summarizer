@@ -2,9 +2,10 @@ from __future__ import annotations
 
 import json
 import re
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import TypeVar
+from typing import Any, TypeVar
 
 import anthropic
 from pydantic import BaseModel, ValidationError
@@ -60,6 +61,55 @@ def save_error_artifact(label: str, raw_response: str, error: Exception) -> Path
     return path
 
 
+def _system_blocks(system_prompt: str) -> list[dict]:
+    """Wrap a system prompt as a single cacheable content block.
+
+    Every scorer (dimension/delta/surprise/novelty/rescue) loads its system
+    prompt once from a prompt file and reuses the identical string across
+    every call for that stage. Marking it with an ephemeral cache breakpoint
+    means the 2nd+ call within the cache TTL reads it at the discounted
+    cache-read rate instead of paying full input price again. Used by both
+    the synchronous (`complete_json`) and batch (`submit_batch`) request
+    paths so caching benefits apply everywhere uniformly.
+    """
+    return [
+        {
+            "type": "text",
+            "text": system_prompt,
+            "cache_control": {"type": "ephemeral"},
+        }
+    ]
+
+
+@dataclass
+class BatchRequestItem:
+    """One request to include in an Anthropic Message Batch.
+
+    Mirrors the (system_prompt, user_content) pair `complete_json` takes, so
+    the same call site can be reused for either the sync or batch path.
+    """
+
+    custom_id: str
+    system_prompt: str
+    user_content: str
+    max_tokens: int = 16384
+
+
+@dataclass
+class BatchItemResult:
+    """One normalized result from a completed Message Batch.
+
+    `error` is set (and `raw_text`/`usage` are None) when the item did not
+    succeed — a non-"succeeded" batch result, or a request-level failure.
+    Callers typically fall back to a synchronous retry for these.
+    """
+
+    custom_id: str
+    raw_text: str | None
+    usage: TokenUsage | None
+    error: str | None
+
+
 class AnthropicClient:
     def __init__(self, api_key: str, model: str, max_retries: int = 1):
         self.client = anthropic.Anthropic(api_key=api_key)
@@ -67,6 +117,30 @@ class AnthropicClient:
         self.max_retries = max_retries
         self.total_input_tokens = 0
         self.total_output_tokens = 0
+        self.total_cache_creation_tokens = 0
+        self.total_cache_read_tokens = 0
+
+    def _usage_from_response(self, response_usage: Any) -> TokenUsage:
+        return TokenUsage(
+            input_tokens=response_usage.input_tokens,
+            output_tokens=response_usage.output_tokens,
+            cache_creation_input_tokens=(
+                getattr(response_usage, "cache_creation_input_tokens", 0) or 0
+            ),
+            cache_read_input_tokens=(
+                getattr(response_usage, "cache_read_input_tokens", 0) or 0
+            ),
+        )
+
+    def _accumulate_usage(self, usage: TokenUsage) -> None:
+        self.total_input_tokens += usage.input_tokens
+        self.total_output_tokens += usage.output_tokens
+        self.total_cache_creation_tokens += usage.cache_creation_input_tokens
+        self.total_cache_read_tokens += usage.cache_read_input_tokens
+
+    def _parse_response(self, raw: str, response_model: type[T]) -> T:
+        payload = extract_json(raw)
+        return response_model.model_validate(payload)
 
     def complete_json(
         self,
@@ -82,7 +156,7 @@ class AnthropicClient:
             response = self.client.messages.create(
                 model=self.model,
                 max_tokens=16384,
-                system=system_prompt,
+                system=_system_blocks(system_prompt),
                 messages=[{"role": "user", "content": user_content}],
             )
 
@@ -91,16 +165,11 @@ class AnthropicClient:
             )
             last_raw = raw
 
-            usage = TokenUsage(
-                input_tokens=response.usage.input_tokens,
-                output_tokens=response.usage.output_tokens,
-            )
-            self.total_input_tokens += usage.input_tokens
-            self.total_output_tokens += usage.output_tokens
+            usage = self._usage_from_response(response.usage)
+            self._accumulate_usage(usage)
 
             try:
-                payload = extract_json(raw)
-                parsed = response_model.model_validate(payload)
+                parsed = self._parse_response(raw, response_model)
                 return parsed, LLMResult(usage=usage, raw_response=raw)
             except (ValueError, ValidationError, json.JSONDecodeError) as exc:
                 last_error = exc
@@ -115,9 +184,94 @@ class AnthropicClient:
 
         raise ValueError(f"Unexpected LLM failure for '{label}'") from last_error
 
+    # ------------------------------------------------------------------
+    # Message Batches API — async, ~50% off input+output tokens vs. the
+    # synchronous path above. Submit a whole stage's worth of requests as
+    # one batch, poll until it finishes, then parse results one at a time.
+    # ------------------------------------------------------------------
+
+    def submit_batch(self, items: list[BatchRequestItem]) -> str:
+        """Submit `items` as one Anthropic Message Batch. Returns the batch id."""
+        requests = [
+            {
+                "custom_id": item.custom_id,
+                "params": {
+                    "model": self.model,
+                    "max_tokens": item.max_tokens,
+                    "system": _system_blocks(item.system_prompt),
+                    "messages": [{"role": "user", "content": item.user_content}],
+                },
+            }
+            for item in items
+        ]
+        batch = self.client.messages.batches.create(requests=requests)
+        return batch.id
+
+    def get_batch(self, batch_id: str) -> Any:
+        """Return the current MessageBatch (has `.processing_status`, `.request_counts`)."""
+        return self.client.messages.batches.retrieve(batch_id)
+
+    def retrieve_batch_results(self, batch_id: str) -> list[BatchItemResult]:
+        """Fetch and normalize every item's result from a finished batch.
+
+        Only call this once `get_batch(batch_id).processing_status == "ended"`.
+        Also rolls each succeeded item's usage into the running totals, same
+        as `complete_json` does for the sync path.
+        """
+        results: list[BatchItemResult] = []
+        for entry in self.client.messages.batches.results(batch_id):
+            result = entry.result
+            if result.type == "succeeded":
+                message = result.message
+                raw = "".join(
+                    block.text for block in message.content if block.type == "text"
+                )
+                usage = self._usage_from_response(message.usage)
+                self._accumulate_usage(usage)
+                results.append(
+                    BatchItemResult(
+                        custom_id=entry.custom_id,
+                        raw_text=raw,
+                        usage=usage,
+                        error=None,
+                    )
+                )
+            else:
+                error_detail = getattr(result, "error", None)
+                results.append(
+                    BatchItemResult(
+                        custom_id=entry.custom_id,
+                        raw_text=None,
+                        usage=None,
+                        error=f"{result.type}: {error_detail}" if error_detail else result.type,
+                    )
+                )
+        return results
+
+    def parse_batch_result(self, result: BatchItemResult, response_model: type[T]) -> T:
+        """Parse+validate one succeeded BatchItemResult (single attempt, no retry).
+
+        Batch items don't get the synchronous path's automatic retry loop —
+        raises on failure so the caller can decide to retry that item via
+        `complete_json` instead.
+        """
+        if result.error:
+            raise ValueError(f"Batch item '{result.custom_id}' did not succeed: {result.error}")
+        raw = result.raw_text or ""
+        try:
+            return self._parse_response(raw, response_model)
+        except (ValueError, ValidationError, json.JSONDecodeError) as exc:
+            save_error_artifact(result.custom_id, raw, exc)
+            raise ValueError(
+                f"Failed to parse batch LLM response for '{result.custom_id}'. "
+                f"Raw response saved to output_confidence/errors/."
+            ) from exc
+
     def usage_summary(self) -> str:
         return (
             f"Total tokens — input: {self.total_input_tokens:,}, "
             f"output: {self.total_output_tokens:,}, "
-            f"total: {self.total_input_tokens + self.total_output_tokens:,}"
+            f"total: {self.total_input_tokens + self.total_output_tokens:,} | "
+            f"cache — write: {self.total_cache_creation_tokens:,}, "
+            f"read: {self.total_cache_read_tokens:,}"
         )

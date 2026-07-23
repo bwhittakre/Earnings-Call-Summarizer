@@ -82,6 +82,11 @@ class RescueJudgeResult(BaseModel):
 class TokenUsage(BaseModel):
     input_tokens: int
     output_tokens: int
+    # Populated only when the system-prompt cache breakpoint was hit/written
+    # (see AnthropicClient._system_blocks); 0 for calls that predate caching
+    # or whose provider response omitted these fields.
+    cache_creation_input_tokens: int = 0
+    cache_read_input_tokens: int = 0
 
 
 class LLMResult(BaseModel):

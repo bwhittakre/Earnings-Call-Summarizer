@@ -45,7 +45,7 @@ REPO_ROOT = HERE.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from src.llm.anthropic_client import AnthropicClient  # noqa: E402
+from src.llm.anthropic_client import AnthropicClient, BatchRequestItem  # noqa: E402
 from src.schemas.models import EvidenceClaim, LLMResult  # noqa: E402
 from src.validation.evidence_validator import (  # noqa: E402
     NormalizedSource,
@@ -280,6 +280,10 @@ def verify_excerpts(
 
 
 class DimensionScorer:
+    # Exposed so a batch runner can generically parse results without every
+    # call site hardcoding this scorer's response model.
+    RESPONSE_MODEL = TranscriptDimensionSummary
+
     def __init__(
         self,
         client: AnthropicClient,
@@ -293,19 +297,42 @@ class DimensionScorer:
         self.use_rescue = use_rescue
         self.rescue = RescueJudge(client) if use_rescue else None
 
-    def score(self, transcript: Transcript, company_name: str) -> ScoredTranscript:
+    def build_request(self, transcript: Transcript, company_name: str) -> BatchRequestItem:
+        """Build the LLM request for one quarter without making the call.
+
+        Lets a batch runner collect requests across many quarters/companies
+        into a single Anthropic Message Batch. Use `finalize()` on the parsed
+        result to get back a `ScoredTranscript`, same as `score()` returns.
+        """
         user_content = _build_user_content(transcript, company_name)
         label = f"{transcript.ticker}_{transcript.fiscal_period}_dimensions"
-        summary, result = self.client.complete_json(
-            system_prompt=self.system_prompt,
-            user_content=user_content,
-            response_model=TranscriptDimensionSummary,
-            label=label,
+        return BatchRequestItem(
+            custom_id=label, system_prompt=self.system_prompt, user_content=user_content
         )
-        dimensions = self._verify(summary, transcript.raw_text, label)
+
+    def finalize(
+        self,
+        summary: TranscriptDimensionSummary,
+        result: LLMResult,
+        label: str,
+        source_text: str,
+    ) -> ScoredTranscript:
+        """Verify evidence and assemble a ScoredTranscript from an already-parsed
+        LLM result (from either the sync `score()` path or a batch result)."""
+        dimensions = self._verify(summary, source_text, label)
         return ScoredTranscript(
             summary=summary, dimensions=dimensions, llm_result=result
         )
+
+    def score(self, transcript: Transcript, company_name: str) -> ScoredTranscript:
+        request = self.build_request(transcript, company_name)
+        summary, result = self.client.complete_json(
+            system_prompt=request.system_prompt,
+            user_content=request.user_content,
+            response_model=self.RESPONSE_MODEL,
+            label=request.custom_id,
+        )
+        return self.finalize(summary, result, request.custom_id, transcript.raw_text)
 
     def _verify(
         self,

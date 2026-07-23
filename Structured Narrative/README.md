@@ -112,6 +112,80 @@ Summary JSON (including scale hooks for future lazy-load sidecars): `output/cros
 
 Past quarters are **not re-scored** unless `--force` is passed. The registry tracks `dimensions_scored_at`, `delta_scored_at`, and `surprise_scored_at` per quarter.
 
+## LLM cost controls — prompt caching + Batch API
+
+Two independent, stackable cost levers on `src/llm/anthropic_client.py`, aimed at large historical
+backfills (many company-quarters scored in one run) where LLM spend matters more than turnaround
+speed.
+
+**Prompt caching (always on, no flag).** Every `AnthropicClient` call — sync (`complete_json`) or
+batch (`submit_batch`) — sends its `system` prompt as a cache-breakpointed block
+(`cache_control: {"type": "ephemeral"}`). Each scoring stage (dimension/delta/surprise/novelty/
+rescue) reuses the identical system prompt across every quarter/company, so the 2nd+ call within
+the 5-minute cache TTL reads it at the discounted cache-read rate instead of paying full input
+price again. The system prompt is only ~5-10% of a call's input tokens (the transcript body
+dominates), so this trims a few percent of total spend — small but free; `client.usage_summary()`
+reports `cache — write: …, read: …` so you can see the hit rate. `TokenUsage` carries
+`cache_creation_input_tokens` / `cache_read_input_tokens` for anyone parsing audit JSON directly.
+
+**Batch API (`--batch`, opt-in).** Anthropic's Message Batches API discounts **all** tokens
+(input + output, not just the system prompt) by ~50%, at the cost of asynchronous turnaround
+(Anthropic's SLA is "within 24h"; small batches — tens to low hundreds of items, the usual case
+here — often finish much faster in practice, but there's no guaranteed fast tier). Pass `--batch`
+to any of `run_dimension_scoring.py` / `run_delta_scoring.py` / `run_surprise_scoring.py` /
+`run_novelty_scoring.py`, or to `run_company_pipeline.py` to thread it through all four:
+
+```powershell
+python "Structured Narrative/run_company_pipeline.py" --ticker AMZN --scope five_year --batch
+```
+
+Mechanics: each script fetches all pending transcripts (fast/local, unchanged), builds one
+`BatchRequestItem` per quarter via the scorer's `build_request()`, submits them as a single
+`AnthropicClient.submit_batch()` call, polls `get_batch()` until `processing_status == "ended"`
+(`--batch-poll-interval` seconds between polls, default 30; `--batch-timeout` to cap the wait,
+default none), then parses each result with `parse_batch_result()` and finishes it through the
+scorer's `finalize()` — the same evidence-verification path `score()` uses. **Delta, surprise, and
+novelty depend on dimensions, not on each other**: each reads the *current* (and, for delta/
+novelty, *prior*) quarter's already-written dimension summary from `dimension_view.json`, so the
+dimension batch must fully complete and be written to disk before their batches are built — but
+delta/surprise/novelty never read each other's outputs, so nothing stops their batches from being
+combined once dimensions is done (see `run_universe_batch.py` below). Any item that errors inside
+a batch (a request-level failure, or a JSON that fails to parse) is retried synchronously rather
+than failing the whole run — Batch API items don't get the synchronous path's automatic retry loop.
+
+Only use `--batch` for a run where the async wait is acceptable — it's the right default for a
+large backfill (e.g. the 10-year/20-company universe expansion), not for scoring one new quarter
+incrementally where you want the result in seconds.
+
+**Cross-ticker batch consolidation (`run_universe_batch.py`).** The four scripts above each batch
+one ticker's items for one stage — a run across N tickers still submits up to `4 * N` separate
+batches, each with its own async wait. `run_universe_batch.py` combines the *same* work into
+exactly **2** batches regardless of ticker count, by exploiting the dependency graph above:
+
+  1. **Batch group 1** — dimension-scoring items for every ticker that needs it, submitted
+     together as one Message Batch.
+  2. **Batch group 2** — delta + surprise + novelty items for every ticker that needs them,
+     submitted **together** as one Message Batch (each item carries its own response model, since
+     the three stages have different schemas; `run_batch()` accepts a `{custom_id: model}` dict for
+     exactly this case).
+
+```powershell
+# Score a new quarter for all four pilot tickers in one call:
+python "Structured Narrative/run_universe_batch.py" --tickers AMZN MSFT NVDA AAPL --new-quarter FY2025-Q3
+
+# Backfill specific quarters for a subset of tickers, forcing a re-score:
+python "Structured Narrative/run_universe_batch.py" --tickers MSFT NVDA AAPL --quarters FY2021-Q1 FY2021-Q2 --extra-output-quarters FY2021-Q2 --force
+
+# Only re-run delta/surprise/novelty (skip dimensions) for two tickers:
+python "Structured Narrative/run_universe_batch.py" --tickers AMZN MSFT --stages delta surprise novelty
+```
+
+This is always a batch run (there's no sync mode) — for a single ticker, or when the async wait
+isn't worth it, use the four individual scripts (or `run_company_pipeline.py --batch`) instead.
+Quant extraction, feature-panel building, and join/quant validation aren't LLM-batched and stay
+per-ticker via `run_company_pipeline.py --skip-llm` (or run individually) after this script
+finishes the LLM stages.
+
 ## Signal IC evaluation (4-name pilot)
 
 ```powershell

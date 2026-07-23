@@ -18,7 +18,7 @@ if str(HERE) not in sys.path:
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from src.llm.anthropic_client import AnthropicClient  # noqa: E402
+from src.llm.anthropic_client import AnthropicClient, BatchRequestItem  # noqa: E402
 from src.schemas.models import EvidenceClaim, LLMResult  # noqa: E402
 from src.validation.rescue_judge import RescueJudge  # noqa: E402
 
@@ -123,6 +123,8 @@ def _build_user_content(
 
 
 class NoveltyScorer:
+    RESPONSE_MODEL = TranscriptNoveltySummary
+
     def __init__(
         self,
         client: AnthropicClient,
@@ -134,24 +136,46 @@ class NoveltyScorer:
         self.use_rescue = use_rescue
         self.rescue = RescueJudge(client) if use_rescue else None
 
+    def build_request(
+        self,
+        transcript: Transcript,
+        prior_block: str,
+        company_name: str,
+    ) -> BatchRequestItem:
+        """Build the LLM request for one quarter without making the call
+        (see DimensionScorer.build_request for the batch-runner contract)."""
+        user_content = _build_user_content(transcript, prior_block, company_name)
+        label = f"{transcript.ticker}_{transcript.fiscal_period}_novelty"
+        return BatchRequestItem(
+            custom_id=label, system_prompt=self.system_prompt, user_content=user_content
+        )
+
+    def finalize(
+        self,
+        summary: TranscriptNoveltySummary,
+        result: LLMResult,
+        label: str,
+        source_text: str,
+    ) -> ScoredNoveltyTranscript:
+        novelties = self._verify(summary, source_text, label)
+        return ScoredNoveltyTranscript(
+            summary=summary, novelties=novelties, llm_result=result
+        )
+
     def score(
         self,
         transcript: Transcript,
         prior_block: str,
         company_name: str,
     ) -> ScoredNoveltyTranscript:
-        user_content = _build_user_content(transcript, prior_block, company_name)
-        label = f"{transcript.ticker}_{transcript.fiscal_period}_novelty"
+        request = self.build_request(transcript, prior_block, company_name)
         summary, result = self.client.complete_json(
-            system_prompt=self.system_prompt,
-            user_content=user_content,
-            response_model=TranscriptNoveltySummary,
-            label=label,
+            system_prompt=request.system_prompt,
+            user_content=request.user_content,
+            response_model=self.RESPONSE_MODEL,
+            label=request.custom_id,
         )
-        novelties = self._verify(summary, transcript.raw_text, label)
-        return ScoredNoveltyTranscript(
-            summary=summary, novelties=novelties, llm_result=result
-        )
+        return self.finalize(summary, result, request.custom_id, transcript.raw_text)
 
     def _verify(
         self,

@@ -16,6 +16,9 @@ Outputs (under output/):
   * llm_audit/AMZN_{fiscal_period}_surprise.json
 
     python "Structured Narrative/run_surprise_scoring.py"
+
+`resolve_scope()`, `prepare_items()`, and `finalize_and_write()` below are also
+called directly (per ticker) by `run_universe_batch.py`.
 """
 from __future__ import annotations
 
@@ -23,6 +26,7 @@ import argparse
 import json
 import os
 import sys
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -47,8 +51,9 @@ from consensus_context import (  # noqa: E402
     format_level_summary,
     try_load_quant_long,
 )
-from surprise_scorer import SurpriseScorer  # noqa: E402
-from company_config import get_company  # noqa: E402
+from surprise_scorer import SurpriseScorer, ScoredSurpriseTranscript  # noqa: E402
+from batch_scoring import run_batch  # noqa: E402
+from company_config import CompanyProfile, get_company  # noqa: E402
 from quarter_merge import (  # noqa: E402
     load_json_obj,
     load_parquet_df,
@@ -119,48 +124,43 @@ def write_outputs(ticker: str, rows: list[dict]) -> None:
         print(f"  ! narrative_layers workbook skipped: {exc}")
 
 
-def main() -> int:
-    ap = argparse.ArgumentParser(description="Run Focus 3 surprise scoring.")
-    ap.add_argument("--ticker", default="AMZN", help="Ticker symbol.")
-    ap.add_argument(
-        "--scope",
-        choices=("five_year",),
-        help="Quarter scope preset (five_year: AMZN FY2019-Q2 prior, FY2019-Q3..FY2024-Q3 output).",
-    )
-    ap.add_argument(
-        "--quarters",
-        nargs="+",
-        default=[],
-        help="Re-score only these fiscal periods and merge into existing outputs.",
-    )
-    ap.add_argument(
-        "--extra-output-quarters",
-        nargs="+",
-        default=[],
-        help="Treat these fiscal periods as output scope even if not in company_config.",
-    )
-    ap.add_argument(
-        "--force",
-        action="store_true",
-        help="Re-score surprise even when the registry marks quarters complete.",
-    )
-    args = ap.parse_args()
-    company = get_company(args.ticker, scope=args.scope)
+@dataclass
+class SurpriseScope:
+    """Everything `finalize_and_write()` needs about one ticker's surprise run,
+    computed by `resolve_scope()` before any transcript is fetched or scored."""
+
+    ticker: str
+    company: CompanyProfile
+    output_quarters: list[dict]
+    skipped: list[str]
+    rerun_periods: set[str] | None
+    extra_output: set[str] | None
+    needs_merge: bool
+    existing_surprise_view: dict | None
+    surprise_view_file: Path
+    scored_periods: set[str]
+    audit_dir: Path
+    quant_df: "pd.DataFrame | None"
+    quant_z_by_fp: dict = field(default_factory=dict)
+    guidance_rev_by_fp: dict = field(default_factory=dict)
+
+
+def resolve_scope(ticker: str, args: argparse.Namespace) -> SurpriseScope | None:
+    """Resolve which quarters need surprise scoring for one ticker.
+
+    Returns None when there is nothing to score. Raises FileNotFoundError if
+    dimension_view.json is missing, or ValueError if it has no quarters.
+    """
+    company = get_company(ticker, scope=args.scope)
     ticker = company.ticker
     rerun_periods = norm_quarters(args.quarters)
     extra_output = norm_quarters(args.extra_output_quarters)
     registry = ensure_registry(ticker)
 
-    api_key = os.getenv("ANTHROPIC_API_KEY")
-    if not api_key:
-        print("Error: ANTHROPIC_API_KEY not set.", file=sys.stderr)
-        return 1
-
-    try:
-        view = load_view(ticker)
-    except FileNotFoundError as exc:
-        print(f"Error: {exc}", file=sys.stderr)
-        return 1
+    view = load_view(ticker)
+    quarters = view.get("quarters", [])
+    if not quarters:
+        raise ValueError("No quarters in dimension view.")
 
     quant_df = try_load_quant_long(ticker)
     if quant_df is None:
@@ -169,11 +169,6 @@ def main() -> int:
             "consensus/quant context (agrees_with_quant and narrative_quant_gap will be null).",
             file=sys.stderr,
         )
-
-    quarters = view.get("quarters", [])
-    if not quarters:
-        print("No quarters in dimension view.", file=sys.stderr)
-        return 1
 
     quant_z_by_fp = load_quant_z_pit(ticker)
     guidance_rev_by_fp = load_quant_guidance_revision_z_pit(ticker)
@@ -200,42 +195,40 @@ def main() -> int:
 
     if not output_quarters:
         print("All output quarters already have surprise scores — nothing to do.")
-        return 0
+        return None
 
     scored_periods = {q["fiscal_period"] for q in output_quarters}
     needs_merge = len(scored_periods) < len(scoped_output) or bool(rerun_periods)
     existing_surprise_view = load_json_obj(ticker, "surprise_view") if needs_merge else None
     surprise_view_file = company_artifact(ticker, "json", "surprise_view", "json", mkdir=True)
-
-    model = os.getenv("DIMENSION_MODEL", DEFAULT_MODEL)
-    use_rescue = os.getenv("DIMENSION_RESCUE", "1").strip().lower() not in (
-        "0", "false", "no", "off",
-    )
-
-    sync_inbox_transcripts(ticker, verbose=True)
-    try:
-        provider = get_provider()
-    except Exception as exc:
-        print(f"Error initializing transcript provider: {exc}", file=sys.stderr)
-        return 1
-
-    client = AnthropicClient(api_key=api_key, model=model, max_retries=1)
-    scorer = SurpriseScorer(client, use_rescue=use_rescue)
     audit_dir = company_layer(ticker, "audit", mkdir=True)
 
-    print(f"Provider: {provider.name} | Model: {model} | paraphrase rescue: "
-          f"{'on' if use_rescue else 'off'}")
-    print(f"Scoring narrative surprise for {len(output_quarters)} output quarter(s) "
-          f"across {len(QUANT_COMPARABLE_DIMENSIONS)} quant-comparable dimensions.\n")
+    return SurpriseScope(
+        ticker=ticker,
+        company=company,
+        output_quarters=output_quarters,
+        skipped=skipped,
+        rerun_periods=rerun_periods,
+        extra_output=extra_output,
+        needs_merge=needs_merge,
+        existing_surprise_view=existing_surprise_view,
+        surprise_view_file=surprise_view_file,
+        scored_periods=scored_periods,
+        audit_dir=audit_dir,
+        quant_df=quant_df,
+        quant_z_by_fp=quant_z_by_fp,
+        guidance_rev_by_fp=guidance_rev_by_fp,
+    )
 
-    rows: list[dict] = []
-    quarters_view: list[dict] = []
 
-    for q in output_quarters:
+def prepare_items(scope: SurpriseScope, provider) -> list[dict]:
+    """Fetch transcripts for every quarter in scope.output_quarters."""
+    prepared: list[dict] = []
+    for q in scope.output_quarters:
         fp = q["fiscal_period"]
         print(f"[{fp}] fetching transcript…")
         try:
-            transcript = provider.fetch(ticker, fp)
+            transcript = provider.fetch(scope.ticker, fp)
         except TranscriptNotFound as exc:
             print(f"  ! {exc}; skipping")
             continue
@@ -245,19 +238,41 @@ def main() -> int:
             or q.get("as_of_date")
             or q.get("earnings_date")
         )
-        dim_z = quant_z_by_fp.get(fp, {})
+        dim_z = scope.quant_z_by_fp.get(fp, {})
         levels = dim_level_map(q)
         consensus_block = format_consensus_context(
             fp,
-            quant_df,
+            scope.quant_df,
             dim_z,
-            ticker=ticker,
+            ticker=scope.ticker,
             include_validation_revisions=not is_pit_mode(),
         )
         level_block = "" if is_pit_mode() else format_level_summary(q)
+        prepared.append({
+            "fp": fp, "transcript": transcript, "as_of": as_of, "dim_z": dim_z,
+            "levels": levels, "consensus_block": consensus_block, "level_block": level_block,
+        })
+    return prepared
 
-        print(f"[{fp}] scoring narrative surprise…")
-        scored = scorer.score(transcript, consensus_block, company.company_name, level_block)
+
+def finalize_and_write(
+    ticker: str,
+    company: CompanyProfile,
+    scope: SurpriseScope,
+    prepared: list[dict],
+    scored_by_fp: dict[str, ScoredSurpriseTranscript],
+    model: str,
+) -> int:
+    """Post-process scored quarters, merge with existing outputs, and write
+    csv/json/registry. Returns the number of rows written (0 means nothing was
+    written at all)."""
+    rows: list[dict] = []
+    quarters_view: list[dict] = []
+
+    for p in prepared:
+        fp, transcript, as_of = p["fp"], p["transcript"], p["as_of"]
+        dim_z, levels, consensus_block = p["dim_z"], p["levels"], p["consensus_block"]
+        scored = scored_by_fp[fp]
 
         status_counts: dict[str, int] = {}
         surprises_view: list[dict] = []
@@ -267,9 +282,9 @@ def main() -> int:
             if dim not in QUANT_COMPARABLE_DIMENSIONS:
                 continue
             if dim == "guidance":
-                qz = guidance_rev_by_fp.get(fp)
+                qz = scope.guidance_rev_by_fp.get(fp)
             else:
-                qz = quant_z_by_fp.get(fp, {}).get(dim)
+                qz = scope.quant_z_by_fp.get(fp, {}).get(dim)
             llm_level = levels.get(dim)
             agrees = _agrees(s.surprise_magnitude, qz) if s.is_quant_comparable else None
             gap = _narrative_quant_gap(s.surprise_magnitude, qz) if s.is_quant_comparable else None
@@ -347,7 +362,7 @@ def main() -> int:
             ],
             "raw_response": scored.llm_result.raw_response,
         }
-        (audit_dir / f"{fp}_surprise.json").write_text(
+        (scope.audit_dir / f"{fp}_surprise.json").write_text(
             json.dumps(audit, indent=2), encoding="utf-8"
         )
 
@@ -365,22 +380,22 @@ def main() -> int:
 
     if not rows:
         print("No quarters scored.", file=sys.stderr)
-        return 1
+        return 0
 
-    if needs_merge:
+    if scope.needs_merge:
         existing_df = load_parquet_df(ticker, "dimension_surprise")
         new_df = pd.DataFrame(rows)
-        merged_df = merge_dataframes_by_period(existing_df, new_df, scored_periods)
+        merged_df = merge_dataframes_by_period(existing_df, new_df, scope.scored_periods)
         rows = merged_df.to_dict("records")
-        if existing_surprise_view:
+        if scope.existing_surprise_view:
             quarters_view = merge_quarter_views(
-                existing_surprise_view.get("quarters", []),
+                scope.existing_surprise_view.get("quarters", []),
                 quarters_view,
-                scored_periods,
+                scope.scored_periods,
             )
         if not rows:
             print("No quarters scored.", file=sys.stderr)
-            return 1
+            return 0
 
     write_outputs(ticker, rows)
 
@@ -393,12 +408,138 @@ def main() -> int:
         "quant_comparable": QUANT_COMPARABLE_DIMENSIONS,
         "quarters": quarters_view,
     }
-    surprise_view_file.write_text(json.dumps(surprise_view, indent=2), encoding="utf-8")
+    scope.surprise_view_file.write_text(json.dumps(surprise_view, indent=2), encoding="utf-8")
 
-    print(client.usage_summary())
     print(f"\nWrote {len(rows)} surprise rows to parquet/dimension_surprise")
-    print(f"Surprise view JSON: {surprise_view_file}")
-    return 0
+    print(f"Surprise view JSON: {scope.surprise_view_file}")
+    return len(rows)
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser(description="Run Focus 3 surprise scoring.")
+    ap.add_argument("--ticker", default="AMZN", help="Ticker symbol.")
+    ap.add_argument(
+        "--scope",
+        choices=("five_year",),
+        help="Quarter scope preset (five_year: AMZN FY2019-Q2 prior, FY2019-Q3..FY2024-Q3 output).",
+    )
+    ap.add_argument(
+        "--quarters",
+        nargs="+",
+        default=[],
+        help="Re-score only these fiscal periods and merge into existing outputs.",
+    )
+    ap.add_argument(
+        "--extra-output-quarters",
+        nargs="+",
+        default=[],
+        help="Treat these fiscal periods as output scope even if not in company_config.",
+    )
+    ap.add_argument(
+        "--force",
+        action="store_true",
+        help="Re-score surprise even when the registry marks quarters complete.",
+    )
+    ap.add_argument(
+        "--batch",
+        action="store_true",
+        help="Submit surprise-scoring calls as one Anthropic Message Batch "
+        "(~50%% cheaper than synchronous calls; async, can take minutes to "
+        "~24h). Any item that errors in the batch is retried synchronously.",
+    )
+    ap.add_argument(
+        "--batch-poll-interval",
+        type=float,
+        default=30.0,
+        help="Seconds between batch status polls (--batch only).",
+    )
+    ap.add_argument(
+        "--batch-timeout",
+        type=float,
+        default=None,
+        help="Max seconds to wait for the batch before raising (--batch only; "
+        "default: no timeout, up to Anthropic's 24h SLA).",
+    )
+    args = ap.parse_args()
+
+    api_key = os.getenv("ANTHROPIC_API_KEY")
+    if not api_key:
+        print("Error: ANTHROPIC_API_KEY not set.", file=sys.stderr)
+        return 1
+
+    try:
+        scope = resolve_scope(args.ticker, args)
+    except (FileNotFoundError, ValueError) as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        return 1
+    if scope is None:
+        return 0
+    ticker = scope.ticker
+    company = scope.company
+
+    model = os.getenv("DIMENSION_MODEL", DEFAULT_MODEL)
+    use_rescue = os.getenv("DIMENSION_RESCUE", "1").strip().lower() not in (
+        "0", "false", "no", "off",
+    )
+
+    sync_inbox_transcripts(ticker, verbose=True)
+    try:
+        provider = get_provider()
+    except Exception as exc:
+        print(f"Error initializing transcript provider: {exc}", file=sys.stderr)
+        return 1
+
+    client = AnthropicClient(api_key=api_key, model=model, max_retries=1)
+    scorer = SurpriseScorer(client, use_rescue=use_rescue)
+
+    print(f"Provider: {provider.name} | Model: {model} | paraphrase rescue: "
+          f"{'on' if use_rescue else 'off'}")
+    print(f"Scoring narrative surprise for {len(scope.output_quarters)} output quarter(s) "
+          f"across {len(QUANT_COMPARABLE_DIMENSIONS)} quant-comparable dimensions.\n")
+
+    prepared = prepare_items(scope, provider)
+
+    scored_by_fp: dict[str, ScoredSurpriseTranscript] = {}
+    if args.batch and prepared:
+        items = [
+            scorer.build_request(p["transcript"], p["consensus_block"], company.company_name, p["level_block"])
+            for p in prepared
+        ]
+        by_fp = {p["fp"]: p for p in prepared}
+        id_to_fp = {item.custom_id: p["fp"] for item, p in zip(items, prepared)}
+        outcomes = run_batch(
+            client, items, scorer.RESPONSE_MODEL,
+            poll_interval=args.batch_poll_interval, timeout=args.batch_timeout,
+        )
+        retry_fps: list[str] = []
+        for item in items:
+            fp = id_to_fp[item.custom_id]
+            outcome = outcomes.get(item.custom_id)
+            if outcome is None or not outcome.ok:
+                print(f"  ! [{fp}] batch item failed "
+                      f"({outcome.error if outcome else 'missing'}) — will retry synchronously")
+                retry_fps.append(fp)
+                continue
+            p = by_fp[fp]
+            scored_by_fp[fp] = scorer.finalize(
+                outcome.parsed, outcome.llm_result, item.custom_id, p["transcript"].raw_text
+            )
+        for fp in retry_fps:
+            p = by_fp[fp]
+            print(f"[{fp}] scoring narrative surprise (sync retry)…")
+            scored_by_fp[fp] = scorer.score(
+                p["transcript"], p["consensus_block"], company.company_name, p["level_block"]
+            )
+    else:
+        for p in prepared:
+            print(f"[{p['fp']}] scoring narrative surprise…")
+            scored_by_fp[p["fp"]] = scorer.score(
+                p["transcript"], p["consensus_block"], company.company_name, p["level_block"]
+            )
+
+    n_written = finalize_and_write(ticker, company, scope, prepared, scored_by_fp, model)
+    print(client.usage_summary())
+    return 0 if n_written else 1
 
 
 if __name__ == "__main__":

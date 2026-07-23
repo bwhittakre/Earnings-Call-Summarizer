@@ -20,6 +20,9 @@ Outputs (under output/):
 The first quarter in the view has no prior, so no delta is produced for it.
 
     python "Structured Narrative/run_delta_scoring.py"
+
+`resolve_scope()`, `prepare_items()`, and `finalize_and_write()` below are also
+called directly (per ticker) by `run_universe_batch.py`.
 """
 from __future__ import annotations
 
@@ -27,6 +30,7 @@ import argparse
 import json
 import os
 import sys
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -51,12 +55,14 @@ from transcript_providers import get_provider, sync_inbox_transcripts, Transcrip
 from dimension_scorer import ALL_DIMENSIONS, QUANT_COMPARABLE_DIMENSIONS  # noqa: E402
 from delta_scorer import (  # noqa: E402
     DeltaScorer,
+    ScoredDeltaTranscript,
     format_prior_summary,
     CONTEXT_SUMMARY,
     CONTEXT_BOTH_TRANSCRIPTS,
     VALID_CONTEXTS,
 )
-from company_config import get_company  # noqa: E402
+from batch_scoring import run_batch  # noqa: E402
+from company_config import CompanyProfile, get_company  # noqa: E402
 from quant_loader import load_quant_dim_z  # noqa: E402
 from quarter_registry import mark_delta, ensure_registry, has_delta  # noqa: E402
 from quarter_merge import (  # noqa: E402
@@ -132,48 +138,43 @@ def write_outputs(ticker: str, rows: list[dict]) -> None:
         print(f"  ! parquet write skipped: {exc}")
 
 
-def main() -> int:
-    ap = argparse.ArgumentParser(description="Run Focus 2 delta scoring.")
-    ap.add_argument("--ticker", default="AMZN", help="Ticker symbol.")
-    ap.add_argument(
-        "--scope",
-        choices=("five_year",),
-        help="Quarter scope preset (five_year: AMZN FY2019-Q2 prior, FY2019-Q3..FY2024-Q3 output).",
-    )
-    ap.add_argument(
-        "--quarters",
-        nargs="+",
-        default=[],
-        help="Re-score deltas ending in these fiscal periods and merge into existing outputs.",
-    )
-    ap.add_argument(
-        "--extra-output-quarters",
-        nargs="+",
-        default=[],
-        help="Treat these fiscal periods as output scope even if not in company_config.",
-    )
-    ap.add_argument(
-        "--force",
-        action="store_true",
-        help="Re-score deltas even when the registry marks them complete.",
-    )
-    args = ap.parse_args()
-    company = get_company(args.ticker, scope=args.scope)
+@dataclass
+class DeltaScope:
+    """Everything `finalize_and_write()` needs about one ticker's delta run,
+    computed by `resolve_scope()` before any transcript is fetched or scored."""
+
+    ticker: str
+    company: CompanyProfile
+    transitions_to_score: list[tuple[dict, dict, str, str]]
+    skipped_transitions: list[str]
+    rerun_periods: set[str] | None
+    extra_output: set[str] | None
+    needs_merge: bool
+    existing_delta_view: dict | None
+    delta_view_file: Path
+    scored_periods: set[str]
+    audit_dir: Path
+    delta_context: str
+    quant_z_by_fp: dict = field(default_factory=dict)
+
+
+def resolve_scope(ticker: str, args: argparse.Namespace) -> DeltaScope | None:
+    """Resolve which quarter-over-quarter transitions need delta scoring.
+
+    Returns None when there is nothing to score. Raises FileNotFoundError if
+    dimension_view.json is missing, or ValueError if it has fewer than two
+    quarters.
+    """
+    company = get_company(ticker, scope=args.scope)
     ticker = company.ticker
     rerun_periods = norm_quarters(args.quarters)
     extra_output = norm_quarters(args.extra_output_quarters)
     registry = ensure_registry(ticker)
 
-    try:
-        view = load_view(ticker)
-    except FileNotFoundError as exc:
-        print(f"Error: {exc}", file=sys.stderr)
-        return 1
-
+    view = load_view(ticker)
     quarters = view.get("quarters", [])
     if len(quarters) < 2:
-        print("Need at least two scored quarters to compute a delta.", file=sys.stderr)
-        return 1
+        raise ValueError("Need at least two scored quarters to compute a delta.")
 
     transitions_to_score: list[tuple[dict, dict, str, str]] = []
     skipped_transitions: list[str] = []
@@ -197,49 +198,42 @@ def main() -> int:
         )
     if not transitions_to_score:
         print("All transitions already have delta scores — nothing to do.")
-        return 0
+        return None
 
     scored_periods = {current for _, _, _, current in transitions_to_score}
     needs_merge = bool(skipped_transitions) or bool(rerun_periods)
     existing_delta_view = load_json_obj(ticker, "delta_view") if needs_merge else None
     delta_view_file = company_artifact(ticker, "json", "delta_view", "json", mkdir=True)
-
-    api_key = os.getenv("ANTHROPIC_API_KEY")
-    if not api_key:
-        print("Error: ANTHROPIC_API_KEY not set (checked Structured Narrative/.env "
-              "and repo-root .env).", file=sys.stderr)
-        return 1
-
-    model = os.getenv("DIMENSION_MODEL", DEFAULT_MODEL)
-    delta_context = parse_delta_context()
-    use_rescue = os.getenv("DIMENSION_RESCUE", "1").strip().lower() not in (
-        "0", "false", "no", "off",
-    )
-    sync_inbox_transcripts(ticker, verbose=True)
-    try:
-        provider = get_provider()
-    except Exception as exc:
-        print(f"Error initializing transcript provider: {exc}", file=sys.stderr)
-        return 1
-
-    client = AnthropicClient(api_key=api_key, model=model, max_retries=1)
-    scorer = DeltaScorer(client, context=delta_context, use_rescue=use_rescue)
     audit_dir = company_layer(ticker, "audit", mkdir=True)
 
-    print(f"Provider: {provider.name} | Model: {model} | delta context: {delta_context} "
-          f"| paraphrase rescue: {'on' if use_rescue else 'off'}")
-    print(f"Computing {len(transitions_to_score)} quarter-over-quarter transition(s) "
-          f"across {len(ALL_DIMENSIONS)} dimensions.\n")
+    return DeltaScope(
+        ticker=ticker,
+        company=company,
+        transitions_to_score=transitions_to_score,
+        skipped_transitions=skipped_transitions,
+        rerun_periods=rerun_periods,
+        extra_output=extra_output,
+        needs_merge=needs_merge,
+        existing_delta_view=existing_delta_view,
+        delta_view_file=delta_view_file,
+        scored_periods=scored_periods,
+        audit_dir=audit_dir,
+        delta_context=parse_delta_context(),
+        quant_z_by_fp=load_quant_dim_z(ticker),
+    )
 
-    rows: list[dict] = []
-    transitions_view: list[dict] = []
-    quant_z_by_fp = load_quant_dim_z(ticker)
 
-    for prior_q, current_q, prior_period, current_period in transitions_to_score:
+def prepare_items(scope: DeltaScope, provider) -> list[dict]:
+    """Fetch prior+current transcripts for every transition in scope.
+
+    Returns one dict per fetchable transition (in order); a transition whose
+    transcripts can't both be fetched is skipped (logged, not an error)."""
+    prepared: list[dict] = []
+    for prior_q, current_q, prior_period, current_period in scope.transitions_to_score:
         print(f"[{prior_period} -> {current_period}] fetching transcripts…")
         try:
-            prior_transcript = provider.fetch(ticker, prior_period)
-            transcript = provider.fetch(ticker, current_period)
+            prior_transcript = provider.fetch(scope.ticker, prior_period)
+            transcript = provider.fetch(scope.ticker, current_period)
         except TranscriptNotFound as exc:
             print(f"  ! {exc}; skipping transition")
             continue
@@ -251,27 +245,49 @@ def main() -> int:
             or current_q.get("as_of_date")
             or current_q.get("earnings_date")
         )
+        prepared.append({
+            "prior_q": prior_q,
+            "current_q": current_q,
+            "prior_period": prior_period,
+            "current_period": current_period,
+            "prior_transcript": prior_transcript,
+            "transcript": transcript,
+            "as_of": as_of,
+            "prior_block": format_prior_summary(prior_q),
+        })
+    return prepared
+
+
+def build_kwargs_for(scope: DeltaScope, prior_transcript, prior_block) -> dict:
+    if scope.delta_context == CONTEXT_BOTH_TRANSCRIPTS:
+        return {"prior_transcript": prior_transcript}
+    return {"prior_summary_block": prior_block}
+
+
+def finalize_and_write(
+    ticker: str,
+    company: CompanyProfile,
+    scope: DeltaScope,
+    prepared: list[dict],
+    scored_by_period: dict[str, ScoredDeltaTranscript],
+    model: str,
+) -> int:
+    """Post-process scored transitions, merge with existing outputs, and write
+    csv/json/registry. Returns the number of rows written (0 means nothing was
+    written at all)."""
+    rows: list[dict] = []
+    transitions_view: list[dict] = []
+
+    for p in prepared:
+        prior_q, current_q = p["prior_q"], p["current_q"]
+        prior_period, current_period = p["prior_period"], p["current_period"]
+        prior_transcript, transcript, as_of = p["prior_transcript"], p["transcript"], p["as_of"]
+        scored = scored_by_period[current_period]
+
         prior_scores = dim_maps(prior_q)
         current_scores = dim_maps(current_q)
-        prior_zs = quant_z_by_fp.get(str(prior_period), {})
-        current_zs = quant_z_by_fp.get(str(current_period), {})
-        prior_block = format_prior_summary(prior_q)
-
-        print(f"[{prior_period} -> {current_period}] scoring narrative change…")
-        if delta_context == CONTEXT_BOTH_TRANSCRIPTS:
-            scored = scorer.score(
-                transcript,
-                prior_period,
-                company.company_name,
-                prior_transcript=prior_transcript,
-            )
-        else:
-            scored = scorer.score(
-                transcript,
-                prior_period,
-                company.company_name,
-                prior_summary_block=prior_block,
-            )
+        prior_zs = scope.quant_z_by_fp.get(str(prior_period), {})
+        current_zs = scope.quant_z_by_fp.get(str(current_period), {})
 
         status_counts: dict[str, int] = {}
         deltas_view: list[dict] = []
@@ -323,7 +339,7 @@ def main() -> int:
                 "evidence_verified": d.evidence_verified,
                 "excerpts": " || ".join(d.excerpts),
                 "source": transcript.source_name,
-                "delta_context": delta_context,
+                "delta_context": scope.delta_context,
             })
 
             deltas_view.append({
@@ -357,7 +373,7 @@ def main() -> int:
             "fiscal_period": current_period,
             "as_of_date": as_of,
             "source": transcript.source_name,
-            "delta_context": delta_context,
+            "delta_context": scope.delta_context,
             "n_chars_prior": len(prior_transcript.raw_text),
             "n_chars_current": len(transcript.raw_text),
             "n_speakers": transcript.n_speakers,
@@ -369,7 +385,7 @@ def main() -> int:
         })
 
         audit = {
-            "delta_context": delta_context,
+            "delta_context": scope.delta_context,
             "summary": scored.summary.model_dump(),
             "numeric_anchors": [
                 {
@@ -382,7 +398,7 @@ def main() -> int:
             ],
             "raw_response": scored.llm_result.raw_response,
         }
-        (audit_dir / f"{prior_period}_to_{current_period}_delta.json").write_text(
+        (scope.audit_dir / f"{prior_period}_to_{current_period}_delta.json").write_text(
             json.dumps(audit, indent=2), encoding="utf-8"
         )
 
@@ -400,18 +416,18 @@ def main() -> int:
 
     if not rows:
         print("No transitions produced — nothing written.", file=sys.stderr)
-        return 1
+        return 0
 
-    if needs_merge:
+    if scope.needs_merge:
         existing_rows = load_csv_rows(ticker, "dimension_delta")
-        rows = merge_rows_by_period(existing_rows, rows, scored_periods)
-        if existing_delta_view:
+        rows = merge_rows_by_period(existing_rows, rows, scope.scored_periods)
+        if scope.existing_delta_view:
             transitions_view = merge_transitions(
-                existing_delta_view.get("transitions", []),
+                scope.existing_delta_view.get("transitions", []),
                 transitions_view,
-                scored_periods,
+                scope.scored_periods,
             )
-        elif skipped_transitions:
+        elif scope.skipped_transitions:
             print(
                 "Warning: skipped transitions but delta_view missing — "
                 "output may be incomplete.",
@@ -419,7 +435,7 @@ def main() -> int:
             )
         if not rows:
             print("No transitions produced — nothing written.", file=sys.stderr)
-            return 1
+            return 0
 
     write_outputs(ticker, rows)
 
@@ -427,19 +443,150 @@ def main() -> int:
         "ticker": ticker,
         "company_name": company.company_name,
         "model": model,
-        "delta_context": delta_context,
+        "delta_context": scope.delta_context,
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "dimension_order": ALL_DIMENSIONS,
         "quant_comparable": QUANT_COMPARABLE_DIMENSIONS,
         "transitions": transitions_view,
     }
-    delta_view_file.write_text(json.dumps(delta_view, indent=2), encoding="utf-8")
+    scope.delta_view_file.write_text(json.dumps(delta_view, indent=2), encoding="utf-8")
 
-    print(client.usage_summary())
     print(f"\nWrote {len(rows)} delta rows to csv/dimension_delta")
-    print(f"Delta view JSON: {delta_view_file}")
-    print(f"LLM audit JSON:  {audit_dir}")
-    return 0
+    print(f"Delta view JSON: {scope.delta_view_file}")
+    print(f"LLM audit JSON:  {scope.audit_dir}")
+    return len(rows)
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser(description="Run Focus 2 delta scoring.")
+    ap.add_argument("--ticker", default="AMZN", help="Ticker symbol.")
+    ap.add_argument(
+        "--scope",
+        choices=("five_year",),
+        help="Quarter scope preset (five_year: AMZN FY2019-Q2 prior, FY2019-Q3..FY2024-Q3 output).",
+    )
+    ap.add_argument(
+        "--quarters",
+        nargs="+",
+        default=[],
+        help="Re-score deltas ending in these fiscal periods and merge into existing outputs.",
+    )
+    ap.add_argument(
+        "--extra-output-quarters",
+        nargs="+",
+        default=[],
+        help="Treat these fiscal periods as output scope even if not in company_config.",
+    )
+    ap.add_argument(
+        "--force",
+        action="store_true",
+        help="Re-score deltas even when the registry marks them complete.",
+    )
+    ap.add_argument(
+        "--batch",
+        action="store_true",
+        help="Submit delta-scoring calls as one Anthropic Message Batch "
+        "(~50%% cheaper than synchronous calls; async, can take minutes to "
+        "~24h). Any item that errors in the batch is retried synchronously.",
+    )
+    ap.add_argument(
+        "--batch-poll-interval",
+        type=float,
+        default=30.0,
+        help="Seconds between batch status polls (--batch only).",
+    )
+    ap.add_argument(
+        "--batch-timeout",
+        type=float,
+        default=None,
+        help="Max seconds to wait for the batch before raising (--batch only; "
+        "default: no timeout, up to Anthropic's 24h SLA).",
+    )
+    args = ap.parse_args()
+
+    try:
+        scope = resolve_scope(args.ticker, args)
+    except (FileNotFoundError, ValueError) as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        return 1
+    if scope is None:
+        return 0
+    ticker = scope.ticker
+    company = scope.company
+
+    api_key = os.getenv("ANTHROPIC_API_KEY")
+    if not api_key:
+        print("Error: ANTHROPIC_API_KEY not set (checked Structured Narrative/.env "
+              "and repo-root .env).", file=sys.stderr)
+        return 1
+
+    model = os.getenv("DIMENSION_MODEL", DEFAULT_MODEL)
+    use_rescue = os.getenv("DIMENSION_RESCUE", "1").strip().lower() not in (
+        "0", "false", "no", "off",
+    )
+    sync_inbox_transcripts(ticker, verbose=True)
+    try:
+        provider = get_provider()
+    except Exception as exc:
+        print(f"Error initializing transcript provider: {exc}", file=sys.stderr)
+        return 1
+
+    client = AnthropicClient(api_key=api_key, model=model, max_retries=1)
+    scorer = DeltaScorer(client, context=scope.delta_context, use_rescue=use_rescue)
+
+    print(f"Provider: {provider.name} | Model: {model} | delta context: {scope.delta_context} "
+          f"| paraphrase rescue: {'on' if use_rescue else 'off'}")
+    print(f"Computing {len(scope.transitions_to_score)} quarter-over-quarter transition(s) "
+          f"across {len(ALL_DIMENSIONS)} dimensions.\n")
+
+    prepared = prepare_items(scope, provider)
+
+    scored_by_period: dict[str, ScoredDeltaTranscript] = {}
+    if args.batch and prepared:
+        items = [
+            scorer.build_request(
+                p["transcript"], p["prior_period"], company.company_name,
+                **build_kwargs_for(scope, p["prior_transcript"], p["prior_block"]),
+            )
+            for p in prepared
+        ]
+        by_period = {p["current_period"]: p for p in prepared}
+        id_to_period = {item.custom_id: p["current_period"] for item, p in zip(items, prepared)}
+        outcomes = run_batch(
+            client, items, scorer.RESPONSE_MODEL,
+            poll_interval=args.batch_poll_interval, timeout=args.batch_timeout,
+        )
+        retry_periods: list[str] = []
+        for item in items:
+            current_period = id_to_period[item.custom_id]
+            outcome = outcomes.get(item.custom_id)
+            if outcome is None or not outcome.ok:
+                print(f"  ! [{current_period}] batch item failed "
+                      f"({outcome.error if outcome else 'missing'}) — will retry synchronously")
+                retry_periods.append(current_period)
+                continue
+            p = by_period[current_period]
+            scored_by_period[current_period] = scorer.finalize(
+                outcome.parsed, outcome.llm_result, item.custom_id, p["transcript"].raw_text
+            )
+        for current_period in retry_periods:
+            p = by_period[current_period]
+            print(f"[{p['prior_period']} -> {current_period}] scoring narrative change (sync retry)…")
+            scored_by_period[current_period] = scorer.score(
+                p["transcript"], p["prior_period"], company.company_name,
+                **build_kwargs_for(scope, p["prior_transcript"], p["prior_block"]),
+            )
+    else:
+        for p in prepared:
+            print(f"[{p['prior_period']} -> {p['current_period']}] scoring narrative change…")
+            scored_by_period[p["current_period"]] = scorer.score(
+                p["transcript"], p["prior_period"], company.company_name,
+                **build_kwargs_for(scope, p["prior_transcript"], p["prior_block"]),
+            )
+
+    n_written = finalize_and_write(ticker, company, scope, prepared, scored_by_period, model)
+    print(client.usage_summary())
+    return 0 if n_written else 1
 
 
 if __name__ == "__main__":

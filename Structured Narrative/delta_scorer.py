@@ -38,7 +38,7 @@ if str(HERE) not in sys.path:
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from src.llm.anthropic_client import AnthropicClient  # noqa: E402
+from src.llm.anthropic_client import AnthropicClient, BatchRequestItem  # noqa: E402
 from src.schemas.models import EvidenceClaim, LLMResult  # noqa: E402
 from src.validation.rescue_judge import RescueJudge  # noqa: E402
 
@@ -195,6 +195,8 @@ def _build_user_content(
 
 
 class DeltaScorer:
+    RESPONSE_MODEL = TranscriptDeltaSummary
+
     def __init__(
         self,
         client: AnthropicClient,
@@ -212,7 +214,7 @@ class DeltaScorer:
         self.use_rescue = use_rescue
         self.rescue = RescueJudge(client) if use_rescue else None
 
-    def score(
+    def build_request(
         self,
         current: Transcript,
         prior_period: str,
@@ -220,7 +222,9 @@ class DeltaScorer:
         *,
         prior_summary_block: str = "",
         prior_transcript: Transcript | None = None,
-    ) -> ScoredDeltaTranscript:
+    ) -> BatchRequestItem:
+        """Build the LLM request for one transition without making the call
+        (see DimensionScorer.build_request for the batch-runner contract)."""
         user_content = _build_user_content(
             current,
             prior_period,
@@ -230,14 +234,43 @@ class DeltaScorer:
             prior_transcript=prior_transcript,
         )
         label = f"{current.ticker}_{prior_period}_to_{current.fiscal_period}_delta"
-        summary, result = self.client.complete_json(
-            system_prompt=self.system_prompt,
-            user_content=user_content,
-            response_model=TranscriptDeltaSummary,
-            label=label,
+        return BatchRequestItem(
+            custom_id=label, system_prompt=self.system_prompt, user_content=user_content
         )
-        deltas = self._verify(summary, current.raw_text, label)
+
+    def finalize(
+        self,
+        summary: TranscriptDeltaSummary,
+        result: LLMResult,
+        label: str,
+        source_text: str,
+    ) -> ScoredDeltaTranscript:
+        deltas = self._verify(summary, source_text, label)
         return ScoredDeltaTranscript(summary=summary, deltas=deltas, llm_result=result)
+
+    def score(
+        self,
+        current: Transcript,
+        prior_period: str,
+        company_name: str,
+        *,
+        prior_summary_block: str = "",
+        prior_transcript: Transcript | None = None,
+    ) -> ScoredDeltaTranscript:
+        request = self.build_request(
+            current,
+            prior_period,
+            company_name,
+            prior_summary_block=prior_summary_block,
+            prior_transcript=prior_transcript,
+        )
+        summary, result = self.client.complete_json(
+            system_prompt=request.system_prompt,
+            user_content=request.user_content,
+            response_model=self.RESPONSE_MODEL,
+            label=request.custom_id,
+        )
+        return self.finalize(summary, result, request.custom_id, current.raw_text)
 
     def _verify(
         self,

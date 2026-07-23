@@ -6,6 +6,11 @@ Run the full Structured Narrative pipeline for one ticker.
     python "Structured Narrative/run_company_pipeline.py" --ticker AMZN --scope five_year
     python "Structured Narrative/run_company_pipeline.py" --ticker AMZN --new-quarter FY2024-Q4
     python "Structured Narrative/run_company_pipeline.py" --ticker MSFT --skip-llm
+
+Scoring several tickers together? `run_universe_batch.py` combines their LLM
+scoring stages into 2 Anthropic Message Batches total (not one run of this
+script per ticker) — see its docstring and the README's "Cross-ticker batch
+consolidation" section.
 """
 from __future__ import annotations
 
@@ -105,6 +110,27 @@ def main() -> int:
         help="Disable PIT guardrails (post-call revisions, rescue judge).",
     )
     ap.add_argument(
+        "--batch",
+        action="store_true",
+        help="Submit each LLM scoring stage as one Anthropic Message Batch "
+        "(~50%% cheaper; async, can take minutes to ~24h per stage). Passed "
+        "through to run_dimension_scoring.py / run_delta_scoring.py / "
+        "run_surprise_scoring.py / run_novelty_scoring.py.",
+    )
+    ap.add_argument(
+        "--batch-poll-interval",
+        type=float,
+        default=None,
+        help="Seconds between batch status polls, passed through (--batch only).",
+    )
+    ap.add_argument(
+        "--batch-timeout",
+        type=float,
+        default=None,
+        help="Max seconds to wait per batch, passed through (--batch only; "
+        "default: no timeout, up to Anthropic's 24h SLA).",
+    )
+    ap.add_argument(
         "--append-quarters",
         nargs="+",
         default=[],
@@ -148,6 +174,11 @@ def main() -> int:
 
     scope_args = ["--scope", args.scope] if args.scope else []
     force_args = ["--force"] if args.force else []
+    batch_args = ["--batch"] if args.batch else []
+    if args.batch_poll_interval is not None:
+        batch_args.extend(["--batch-poll-interval", str(args.batch_poll_interval)])
+    if args.batch_timeout is not None:
+        batch_args.extend(["--batch-timeout", str(args.batch_timeout)])
     panel_args = [PY, f"{sn}/build_feature_panel.py", "--ticker", ticker, *scope_args]
     if (args.new_quarter or args.quarters or args.from_registry) and not args.scope:
         panel_args.extend(["--from-registry"])
@@ -178,19 +209,19 @@ def main() -> int:
             )
         run_step(
             "Focus 1 dimensions",
-            [PY, f"{sn}/run_dimension_scoring.py", "--ticker", ticker, *scope_args, *force_args, *quarter_args],
+            [PY, f"{sn}/run_dimension_scoring.py", "--ticker", ticker, *scope_args, *force_args, *batch_args, *quarter_args],
         )
         run_step(
             "Focus 2 delta",
-            [PY, f"{sn}/run_delta_scoring.py", "--ticker", ticker, *scope_args, *force_args, *quarter_args],
+            [PY, f"{sn}/run_delta_scoring.py", "--ticker", ticker, *scope_args, *force_args, *batch_args, *quarter_args],
         )
         run_step(
             "Focus 3 surprise",
-            [PY, f"{sn}/run_surprise_scoring.py", "--ticker", ticker, *scope_args, *force_args, *quarter_args],
+            [PY, f"{sn}/run_surprise_scoring.py", "--ticker", ticker, *scope_args, *force_args, *batch_args, *quarter_args],
         )
         run_step(
             "Focus 3b novelty",
-            [PY, f"{sn}/run_novelty_scoring.py", "--ticker", ticker, *scope_args, *force_args, *quarter_args],
+            [PY, f"{sn}/run_novelty_scoring.py", "--ticker", ticker, *scope_args, *force_args, *batch_args, *quarter_args],
         )
 
     if resolve_read_parquet_or_csv(ticker, "dimension_scores", layer="parquet") is not None:
