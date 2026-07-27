@@ -73,6 +73,25 @@ def _subtract_months(day: date, months: int) -> date:
     return date(year, month, last_day)
 
 
+def _subtract_months_keep_day(day: date, months: int, target_day: int) -> date:
+    """Like _subtract_months, but preserves the fiscal year-end's day-of-month
+    instead of always snapping to the last day of the target month.
+
+    _subtract_months()'s end-of-month snap is only correct for FYEs that
+    themselves fall at/near month end (e.g. MSFT's 6/30). For a company whose
+    reported fiscal_year_end day is near the START of the month (e.g. AVGO's
+    11/01, a 52/53-week calendar SEC reports as "1101"), snapping every
+    quarter to end-of-month drifts the expected date ~1 month away from the
+    actual filed report date, so it never matches within tolerance.
+    """
+    year = day.year
+    month = day.month - months
+    while month <= 0:
+        month += 12
+        year -= 1
+    return _safe_fye_date(year, month, target_day)
+
+
 def _last_day_of_month(day: date) -> date:
     last_day = calendar.monthrange(day.year, day.month)[1]
     return date(day.year, day.month, last_day)
@@ -87,8 +106,17 @@ def _offset_fiscal_quarter_end(
 ) -> date:
     q4_end = _safe_fye_date(fiscal_year, fye_month, fye_day)
     months_before_q4 = (4 - quarter_num) * 3
-    target = _subtract_months(q4_end, months_before_q4)
-    return _last_day_of_month(target)
+    # fye_day >= 28 means the FYE is meant as "end of month" (Feb 28/29, or
+    # the 30th/31st of any other month) even though month lengths vary --
+    # every other quarter should likewise snap to end-of-month (this is the
+    # long-standing, still-correct behavior for MSFT-style FYEs). A smaller
+    # fye_day (e.g. AVGO's SEC-reported "1101") means the real FYE floats
+    # near the START of its month, so every other quarter should preserve
+    # that day-of-month instead of drifting to end-of-month.
+    if fye_day >= 28:
+        target = _subtract_months(q4_end, months_before_q4)
+        return _last_day_of_month(target)
+    return _subtract_months_keep_day(q4_end, months_before_q4, fye_day)
 
 
 def _resolve_from_profile(

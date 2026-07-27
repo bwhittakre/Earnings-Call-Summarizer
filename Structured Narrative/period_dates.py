@@ -308,30 +308,9 @@ def apply_investable_cross_section_columns(panel: pd.DataFrame) -> pd.DataFrame:
 
 
 def quarter_cell_html(row: pd.Series) -> str:
-    """Multi-line quarter label for HTML tables."""
+    """Fiscal-period label for HTML tables (dates live in their own columns/detail rows)."""
     fp = row.get("fiscal_period", "")
-    parts = [f'<div class="fp-label">{fp}</div>']
-    ped = format_us_date(row.get("period_end_date"))
-    if ped:
-        parts.append(f'<div class="fp-sub">Period ending {ped}</div>')
-    ecall = format_us_date(row.get("earnings_date"))
-    if ecall:
-        parts.append(f'<div class="fp-sub">Earnings call {ecall}</div>')
-    call_avail = format_us_date(
-        row.get("call_feature_available_date") or row.get("feature_availability_date")
-    )
-    if call_avail:
-        parts.append(f'<div class="fp-sub">Call features {call_avail}</div>')
-    t7_avail = format_us_date(row.get("t7_feature_available_date"))
-    if t7_avail:
-        parts.append(f'<div class="fp-sub">T+7 revision {t7_avail}</div>')
-    asof = format_us_date(row.get("investable_as_of_date"))
-    if asof:
-        parts.append(f'<div class="fp-sub">Investable as-of {asof}</div>')
-    age = row.get("feature_age_days")
-    if age is not None and pd.notna(age):
-        parts.append(f'<div class="fp-sub">Feature age {int(age)}d</div>')
-    return "".join(parts)
+    return f'<div class="fp-label">{fp}</div>'
 
 
 def period_end_sort_columns() -> list[str]:

@@ -557,7 +557,7 @@ def build_consolidated_html(
             )
             hidden = "" if bucket == default_bucket else ' style="display:none"'
             age = meta_row.get("feature_age_days")
-            age_txt = str(int(age)) if age is not None and pd.notna(age) else "&mdash;"
+            age_txt = f"{int(age)}d" if age is not None and pd.notna(age) else "&mdash;"
             any_div = bool(
                 stats["divergence_count"]
                 or (

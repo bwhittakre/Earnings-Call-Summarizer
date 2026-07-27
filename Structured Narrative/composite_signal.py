@@ -76,6 +76,11 @@ def _spearman_ic(x: pd.Series, y: pd.Series) -> float | None:
         return None
     xr = x[mask].rank(method="average")
     yr = y[mask].rank(method="average")
+    if xr.std(ddof=0) == 0 or yr.std(ddof=0) == 0:
+        # Zero-variance ranks (e.g. constant/tied values in this slice) would
+        # make pandas' internal correlation computation divide by a zero
+        # stddev (0/0) -- short-circuit before that call.
+        return None
     corr = xr.corr(yr, method="pearson")
     if corr is None:
         return None

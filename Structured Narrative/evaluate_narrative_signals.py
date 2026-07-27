@@ -88,7 +88,12 @@ SIGNAL_COLUMNS = [
     "quant_guidance_revision_z_pit",
     "narrative_quant_gap",
     "agrees_with_quant",
-    "evidence_confidence",
+    # evidence_confidence deliberately excluded: it is constant at 1.0 across
+    # the sampled spine (see composite_signal.py), so every correlation
+    # attempt against it is mathematically undefined (zero variance) and
+    # wastes a full walk-forward pass per tag/jackknife-fold while flooding
+    # stderr with numpy "invalid value encountered in divide" warnings.
+    # Confirmed via debug session 66d2c6: nunique=1, std=0.0 on every check.
 ]
 
 # Legacy back-compat single-label identifiers (the 0-90d window).
@@ -108,7 +113,6 @@ CALL_DATE_SIGNALS = {
     "quant_z_pit",
     "narrative_quant_gap",
     "agrees_with_quant",
-    "evidence_confidence",
 }
 
 DELAYED_SIGNALS = {"quant_guidance_revision_z_pit"}
@@ -163,7 +167,14 @@ def _pearson_ic(x: pd.Series, y: pd.Series) -> float | None:
     mask = x.notna() & y.notna()
     if mask.sum() < 3:
         return None
-    return _finite(x[mask].corr(y[mask], method="pearson"))
+    xm, ym = x[mask], y[mask]
+    if xm.std(ddof=0) == 0 or ym.std(ddof=0) == 0:
+        # A constant series has zero variance, which makes pandas'/numpy's
+        # internal correlation computation divide by a zero stddev (0/0).
+        # Short-circuit before that call rather than let it warn and then
+        # discard the resulting NaN.
+        return None
+    return _finite(xm.corr(ym, method="pearson"))
 
 
 def _spearman_ic(x: pd.Series, y: pd.Series) -> float | None:
@@ -172,6 +183,10 @@ def _spearman_ic(x: pd.Series, y: pd.Series) -> float | None:
         return None
     xr = x[mask].rank(method="average")
     yr = y[mask].rank(method="average")
+    if xr.std(ddof=0) == 0 or yr.std(ddof=0) == 0:
+        # All-tied ranks (e.g. a boolean signal that's constant within this
+        # period/dimension slice) -- same zero-variance guard as above.
+        return None
     return _finite(xr.corr(yr, method="pearson"))
 
 
@@ -201,18 +216,30 @@ def walk_forward_period_ics(
         periods = sorted(df[period_col].dropna().astype(str).unique())
     has_dim = dimension_col in df.columns
     dimensions = sorted(df[dimension_col].dropna().astype(str).unique()) if has_dim else [None]
+    # Precompute string-cast period/dimension keys once instead of re-casting
+    # the full column on every (period, dimension) iteration -- this was the
+    # dominant cost of this function when done inside the nested loop below.
+    period_key = df[period_col].astype(str)
+    dim_key = df[dimension_col].astype(str) if has_dim else None
 
     for fp in periods:
-        period_mask = df[period_col].astype(str) == str(fp)
+        period_mask = period_key == str(fp)
         for dim in dimensions:
             if dim is None:
                 sub = df[period_mask]
             else:
-                sub = df[period_mask & (df[dimension_col].astype(str) == str(dim))]
-            ic = _pearson_ic(sub[signal], sub[label])
-            rank_ic = _spearman_ic(sub[signal], sub[label])
+                sub = df[period_mask & (dim_key == str(dim))]
+            sig_vals = sub[signal]
+            lab_vals = sub[label]
+            ic = _pearson_ic(sig_vals, lab_vals)
+            rank_ic = _spearman_ic(sig_vals, lab_vals)
             if ic is None and rank_ic is None:
                 continue
+            # Same definition as sub[[signal, label]].dropna().shape[0], but a
+            # boolean-mask sum instead of materializing a filtered DataFrame
+            # just to read its row count; _pearson_ic/_spearman_ic already
+            # compute this identical notna mask internally.
+            n_val = int((sig_vals.notna() & lab_vals.notna()).sum())
             rows.append(
                 {
                     "fiscal_period": str(fp),
@@ -220,7 +247,7 @@ def walk_forward_period_ics(
                     "dimension": dim,
                     "signal": signal,
                     "label": label,
-                    "n": int(sub[[signal, label]].dropna().shape[0]),
+                    "n": n_val,
                     "ic": ic,
                     "rank_ic": rank_ic,
                 }
@@ -364,17 +391,34 @@ def cluster_bootstrap_mean_diff(
     if len(clusters) < 2:
         return out
 
+    # Vectorized cluster bootstrap: resampling whole clusters with replacement
+    # and averaging over the resampled multiset is equivalent to summing each
+    # cluster's per-group (sum, count) as many times as it's drawn, then
+    # dividing -- no need to materialize a resampled DataFrame per draw.
+    # Original per-draw pd.concat loop measured ~1.7s/call (n_boot=2000);
+    # this replaces it with n_boot fully vectorized numpy draws.
+    is_true = sub[group_col] == True  # noqa: E712
+    is_false = sub[group_col] == False  # noqa: E712
+    val = sub[value_col].to_numpy(dtype=float)
+    cluster_idx = pd.Categorical(sub["_cluster"], categories=clusters).codes
+    n_clusters = len(clusters)
+    sum_true = np.bincount(cluster_idx[is_true.to_numpy()], weights=val[is_true.to_numpy()], minlength=n_clusters)
+    cnt_true = np.bincount(cluster_idx[is_true.to_numpy()], minlength=n_clusters)
+    sum_false = np.bincount(cluster_idx[is_false.to_numpy()], weights=val[is_false.to_numpy()], minlength=n_clusters)
+    cnt_false = np.bincount(cluster_idx[is_false.to_numpy()], minlength=n_clusters)
+
     rng = np.random.default_rng(seed)
-    groups = {c: g for c, g in sub.groupby("_cluster")}
-    boot_diffs: list[float] = []
-    for _ in range(n_boot):
-        sample = rng.choice(clusters, size=len(clusters), replace=True)
-        resampled = pd.concat([groups[c] for c in sample], ignore_index=True)
-        r_true = resampled.loc[resampled[group_col] == True, value_col].mean()  # noqa: E712
-        r_false = resampled.loc[resampled[group_col] == False, value_col].mean()  # noqa: E712
-        if pd.isna(r_true) or pd.isna(r_false):
-            continue
-        boot_diffs.append(float(r_true - r_false))
+    draws = rng.integers(0, n_clusters, size=(n_boot, n_clusters))
+    boot_sum_true = sum_true[draws].sum(axis=1)
+    boot_cnt_true = cnt_true[draws].sum(axis=1)
+    boot_sum_false = sum_false[draws].sum(axis=1)
+    boot_cnt_false = cnt_false[draws].sum(axis=1)
+    with np.errstate(invalid="ignore", divide="ignore"):
+        r_true = boot_sum_true / boot_cnt_true
+        r_false = boot_sum_false / boot_cnt_false
+    diffs = r_true - r_false
+    valid = np.isfinite(diffs)
+    boot_diffs = diffs[valid].tolist()
     out["n_boot_used"] = len(boot_diffs)
     if out["n_boot_used"] < max(50, n_boot // 4):
         return out

@@ -42,6 +42,12 @@ output_confidence/edgar_cache/
 /Structured Narrative/output/
 # Raw earnings-call transcripts (manual paste / local provider) — not committed (licensing)
 /Structured Narrative/transcripts_raw/
+# Per-ticker raw transcript folders (scraped/pasted earnings-call text) — not committed (licensing)
+/Structured Narrative/ADBE/
+/Structured Narrative/AVGO/
+/Structured Narrative/CRM/
+/Structured Narrative/IBM/
+/Structured Narrative/ORCL/
 
 # >>> angelo >>>
 # Runtime state and derived caches (source of truth is .memory/ and

@@ -70,6 +70,77 @@ AMZN_FULL_OUTPUT_QUARTERS = AMZN_FIVE_YEAR_OUTPUT_QUARTERS + (
 PILOT_TICKERS = ("AMZN", "MSFT", "NVDA", "AAPL")
 DEFAULT_TICKER = "AMZN"
 
+# ---------------------------------------------------------------------------
+# Phase 3 universe expansion — first wave onboarded from ROIC.ai-scraped
+# transcripts (Structured Narrative/<TICKER>/FYyyyy-Qn.txt). Each ticker's
+# prior_quarters is its single earliest available transcript (delta baseline
+# only, not in published outputs); output_quarters is every other transcript
+# actually on disk, in fiscal order. Some tickers have calendar gaps (ROIC
+# didn't have every quarter, or a scrape attempt was Cloudflare-blocked) —
+# delta scoring treats consecutive *entries in this list* as the transition,
+# so a gap just means that one delta spans more than one calendar quarter;
+# it does not break the pipeline. estpermid/isin/barra_id were resolved via
+# Snowflake (LSEG/IBES + MSCI) on 2026-07-27 once the network policy allowed
+# this environment through; the first surprise-scoring pass for these 4
+# tickers ran *before* that (Snowflake was unreachable — "network policy is
+# required"), so it has agrees_with_quant/narrative_quant_gap = null. A
+# --force re-run of surprise scoring after single_company_extractor.py
+# backfills narrative_quant.parquet will fill those in.
+AVGO_PRIOR_QUARTERS = ("FY2016-Q1",)
+AVGO_OUTPUT_QUARTERS = (
+    "FY2016-Q2", "FY2016-Q3", "FY2016-Q4", "FY2017-Q1", "FY2017-Q2", "FY2017-Q3",
+    "FY2017-Q4", "FY2018-Q1", "FY2018-Q2", "FY2018-Q3", "FY2018-Q4", "FY2019-Q1",
+    "FY2019-Q2", "FY2019-Q3", "FY2019-Q4", "FY2020-Q1", "FY2020-Q2", "FY2020-Q3",
+    "FY2020-Q4", "FY2021-Q1", "FY2021-Q2", "FY2021-Q3", "FY2021-Q4", "FY2022-Q1",
+    "FY2022-Q2", "FY2022-Q3", "FY2022-Q4", "FY2023-Q1", "FY2023-Q2", "FY2023-Q3",
+    "FY2023-Q4", "FY2024-Q1", "FY2024-Q2",
+)
+
+ORCL_PRIOR_QUARTERS = ("FY2016-Q1",)
+ORCL_OUTPUT_QUARTERS = (
+    "FY2016-Q2", "FY2016-Q3", "FY2016-Q4", "FY2017-Q1", "FY2017-Q2", "FY2017-Q3",
+    "FY2017-Q4", "FY2018-Q1", "FY2018-Q2", "FY2018-Q3", "FY2018-Q4", "FY2019-Q1",
+    "FY2019-Q2", "FY2019-Q3", "FY2019-Q4", "FY2020-Q1", "FY2020-Q2", "FY2020-Q3",
+    "FY2020-Q4", "FY2021-Q1", "FY2021-Q2", "FY2021-Q3", "FY2021-Q4", "FY2022-Q1",
+    "FY2022-Q2", "FY2022-Q3", "FY2022-Q4", "FY2023-Q1", "FY2023-Q2", "FY2023-Q3",
+    "FY2023-Q4", "FY2024-Q1", "FY2024-Q2", "FY2024-Q3", "FY2024-Q4",
+)
+
+CRM_PRIOR_QUARTERS = ("FY2016-Q3",)
+CRM_OUTPUT_QUARTERS = (
+    "FY2016-Q4", "FY2017-Q1", "FY2017-Q2", "FY2017-Q3", "FY2017-Q4", "FY2018-Q1",
+    "FY2018-Q2", "FY2018-Q3", "FY2018-Q4", "FY2019-Q1", "FY2019-Q2", "FY2019-Q3",
+    "FY2019-Q4", "FY2020-Q1", "FY2020-Q2", "FY2020-Q3", "FY2020-Q4", "FY2021-Q1",
+    "FY2021-Q2", "FY2021-Q3", "FY2021-Q4", "FY2022-Q1", "FY2022-Q2", "FY2022-Q3",
+    "FY2022-Q4", "FY2023-Q1", "FY2023-Q2", "FY2023-Q3", "FY2023-Q4", "FY2024-Q1",
+    "FY2024-Q2", "FY2024-Q3", "FY2024-Q4", "FY2025-Q1",
+)
+
+# IBM's earliest available transcript moved from FY2017-Q3 to FY2016-Q2 once
+# the fetcher filled in more history, so FY2017-Q3 -- previously the prior-
+# only baseline -- is now an output quarter itself. run_universe_batch.py
+# needs --extra-output-quarters FY2017-Q3 the first time this runs so
+# finalize_and_write() promotes it (flips prior_only/output_scope, backfills
+# CSV rows) instead of leaving it stranded with the old flag.
+IBM_PRIOR_QUARTERS = ("FY2016-Q2",)
+IBM_OUTPUT_QUARTERS = (
+    "FY2016-Q3", "FY2016-Q4", "FY2017-Q1", "FY2017-Q2", "FY2017-Q3", "FY2017-Q4",
+    "FY2018-Q1", "FY2018-Q2", "FY2018-Q3", "FY2018-Q4", "FY2019-Q1", "FY2019-Q2",
+    "FY2019-Q3", "FY2019-Q4", "FY2020-Q1", "FY2020-Q2", "FY2020-Q3", "FY2020-Q4",
+    "FY2021-Q1", "FY2021-Q2", "FY2021-Q3", "FY2021-Q4", "FY2022-Q1", "FY2022-Q2",
+    "FY2022-Q3", "FY2022-Q4", "FY2023-Q3",
+)
+
+ADBE_PRIOR_QUARTERS = ("FY2016-Q1",)
+ADBE_OUTPUT_QUARTERS = (
+    "FY2016-Q2", "FY2016-Q3", "FY2016-Q4", "FY2017-Q1", "FY2017-Q2", "FY2017-Q3",
+    "FY2017-Q4", "FY2018-Q1", "FY2018-Q2", "FY2018-Q3", "FY2018-Q4", "FY2019-Q1",
+    "FY2019-Q2", "FY2019-Q3", "FY2019-Q4", "FY2020-Q1", "FY2020-Q2", "FY2020-Q3",
+    "FY2020-Q4", "FY2021-Q1", "FY2021-Q2", "FY2021-Q3", "FY2021-Q4", "FY2022-Q1",
+    "FY2022-Q2", "FY2022-Q3", "FY2022-Q4", "FY2023-Q1", "FY2023-Q2", "FY2023-Q3",
+    "FY2023-Q4", "FY2024-Q1", "FY2024-Q2", "FY2024-Q3", "FY2024-Q4",
+)
+
 # Core LSEG measures — shared across tickers.
 CORE_MEASURES = {
     20: "Sales",
@@ -158,6 +229,56 @@ COMPANIES: dict[str, CompanyProfile] = {
         barra_id="USAB1X1",
         output_quarters=PILOT_OUTPUT_QUARTERS_WITH_BRIDGE,
         prior_quarters=FY2024_PRIOR_QUARTERS,
+    ),
+    "AVGO": CompanyProfile(
+        ticker="AVGO",
+        company_name="Broadcom Inc.",
+        # IBES carries AVGO under the legacy "AOVG" ticker alias, so
+        # estpermid was resolved directly by ISIN/INSTRPERMID rather than
+        # via lookup_ids_from_lseg()'s ticker-matched query (2026-07-27).
+        estpermid=30064828708,
+        isin="US11135F1012",
+        barra_id="USAAUE1",
+        output_quarters=AVGO_OUTPUT_QUARTERS,
+        prior_quarters=AVGO_PRIOR_QUARTERS,
+    ),
+    "ORCL": CompanyProfile(
+        ticker="ORCL",
+        company_name="Oracle Corporation",
+        estpermid=30064851314,
+        isin="US68389X1054",
+        barra_id="USAKBG1",
+        output_quarters=ORCL_OUTPUT_QUARTERS,
+        prior_quarters=ORCL_PRIOR_QUARTERS,
+    ),
+    "CRM": CompanyProfile(
+        ticker="CRM",
+        company_name="Salesforce, Inc.",
+        # IBES carries CRM under the legacy "CRMN" ticker alias — see AVGO
+        # note above; estpermid resolved directly by ISIN/INSTRPERMID.
+        estpermid=30064834719,
+        isin="US79466L3024",
+        barra_id="USA1MI1",
+        output_quarters=CRM_OUTPUT_QUARTERS,
+        prior_quarters=CRM_PRIOR_QUARTERS,
+    ),
+    "IBM": CompanyProfile(
+        ticker="IBM",
+        company_name="International Business Machines Corporation",
+        estpermid=30064843098,
+        isin="US4592001014",
+        barra_id="USAHC71",
+        output_quarters=IBM_OUTPUT_QUARTERS,
+        prior_quarters=IBM_PRIOR_QUARTERS,
+    ),
+    "ADBE": CompanyProfile(
+        ticker="ADBE",
+        company_name="Adobe Inc.",
+        estpermid=30064827258,
+        isin="US00724F1012",
+        barra_id="USAA821",
+        output_quarters=ADBE_OUTPUT_QUARTERS,
+        prior_quarters=ADBE_PRIOR_QUARTERS,
     ),
 }
 
