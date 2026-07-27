@@ -37,6 +37,8 @@ PILOT_OUTPUT_QUARTERS_WITH_BRIDGE = FY2024_Q4_BRIDGE + PILOT_OUTPUT_QUARTERS
 
 # AMZN 5-year historical run: transcripts in Structured Narrative/AMZN/
 # FY2019-Q2 is prior-only (delta baseline for FY2019-Q3); not in published outputs.
+# Kept as-is (unchanged) because get_company(scope="five_year") below still
+# returns exactly this narrower window for callers that ask for it.
 AMZN_FIVE_YEAR_PRIOR_QUARTERS = ("FY2019-Q2",)
 AMZN_FIVE_YEAR_OUTPUT_QUARTERS = (
     "FY2019-Q3",
@@ -62,13 +64,91 @@ AMZN_FIVE_YEAR_OUTPUT_QUARTERS = (
     "FY2024-Q3",
 )
 
-# AMZN published panel: five-year history + FY2024-Q4 bridge + pilot FY2025–FY2026.
-AMZN_FULL_OUTPUT_QUARTERS = AMZN_FIVE_YEAR_OUTPUT_QUARTERS + (
-    "FY2024-Q4",
-) + PILOT_OUTPUT_QUARTERS
+# 2026-07-27: transcripts extended back to FY2016-Q2 (Structured Narrative/AMZN/).
+# New prior-only baseline is FY2016-Q2; FY2016-Q3..FY2019-Q1 are new output
+# quarters; FY2019-Q2 (the old prior-only baseline) is promoted to a full
+# output quarter — run_universe_batch.py needs --extra-output-quarters
+# FY2019-Q2 the first time this runs, same promotion pattern used for
+# IBM_PRIOR_QUARTERS's FY2017-Q3 above.
+AMZN_EXTENDED_PRIOR_QUARTERS = ("FY2016-Q2",)
+AMZN_EXTENDED_NEW_OUTPUT_QUARTERS = (
+    "FY2016-Q3",
+    "FY2016-Q4",
+    "FY2017-Q1",
+    "FY2017-Q2",
+    "FY2017-Q3",
+    "FY2017-Q4",
+    "FY2018-Q1",
+    "FY2018-Q2",
+    "FY2018-Q3",
+    "FY2018-Q4",
+    "FY2019-Q1",
+)
+
+# AMZN published panel: FY2016-Q3 extended history + promoted FY2019-Q2 +
+# five-year history + FY2024-Q4 bridge (already scored) + pilot FY2025-FY2026.
+AMZN_FULL_OUTPUT_QUARTERS = (
+    AMZN_EXTENDED_NEW_OUTPUT_QUARTERS
+    + ("FY2019-Q2",)
+    + AMZN_FIVE_YEAR_OUTPUT_QUARTERS
+    + ("FY2024-Q4",)
+    + PILOT_OUTPUT_QUARTERS
+)
 
 PILOT_TICKERS = ("AMZN", "MSFT", "NVDA", "AAPL")
 DEFAULT_TICKER = "AMZN"
+
+# ---------------------------------------------------------------------------
+# 2026-07-27: pilot-4 historical backfill. Transcripts in Structured
+# Narrative/<TICKER>/ now extend back to 2016-2017 for AAPL/MSFT/NVDA (mirrors
+# the AMZN five-year-run backfill above and the Phase 3 tickers below). Each
+# ticker's prior_quarters is its single earliest available transcript (delta
+# baseline only); *_NEW_OUTPUT_QUARTERS is every other transcript on disk
+# through FY2024-Q3/Q4, prepended to the existing PILOT tail so the FY2025-
+# FY2026 pilot window and (for MSFT/AAPL) the FY2024-Q4 bridge are unaffected.
+AAPL_PRIOR_QUARTERS = ("FY2016-Q3",)
+AAPL_NEW_OUTPUT_QUARTERS = (
+    "FY2016-Q4", "FY2017-Q1", "FY2017-Q2", "FY2017-Q3", "FY2017-Q4", "FY2018-Q1",
+    "FY2018-Q2", "FY2018-Q3", "FY2018-Q4", "FY2019-Q1", "FY2019-Q2", "FY2019-Q3",
+    "FY2019-Q4", "FY2020-Q1", "FY2020-Q2", "FY2020-Q3", "FY2020-Q4", "FY2021-Q1",
+    "FY2021-Q2", "FY2021-Q3", "FY2021-Q4", "FY2022-Q1", "FY2022-Q2", "FY2022-Q3",
+    "FY2022-Q4", "FY2023-Q1", "FY2023-Q2", "FY2023-Q3", "FY2023-Q4", "FY2024-Q1",
+    "FY2024-Q2", "FY2024-Q3",
+)
+# AAPL's FY2024-Q4 is already scored via PILOT_OUTPUT_QUARTERS_WITH_BRIDGE (see
+# FY2024_Q4_BRIDGE comment above) — do not duplicate it here.
+AAPL_FULL_OUTPUT_QUARTERS = AAPL_NEW_OUTPUT_QUARTERS + PILOT_OUTPUT_QUARTERS_WITH_BRIDGE
+
+MSFT_PRIOR_QUARTERS = ("FY2016-Q4",)
+MSFT_NEW_OUTPUT_QUARTERS = (
+    "FY2017-Q1", "FY2017-Q2", "FY2017-Q3", "FY2017-Q4", "FY2018-Q1", "FY2018-Q2",
+    "FY2018-Q3", "FY2018-Q4", "FY2019-Q1", "FY2019-Q2", "FY2019-Q3", "FY2019-Q4",
+    "FY2020-Q1", "FY2020-Q2", "FY2020-Q3", "FY2020-Q4", "FY2021-Q1", "FY2021-Q2",
+    "FY2021-Q3", "FY2021-Q4", "FY2022-Q1", "FY2022-Q2", "FY2022-Q3", "FY2022-Q4",
+    "FY2023-Q1", "FY2023-Q2", "FY2023-Q3", "FY2023-Q4", "FY2024-Q1", "FY2024-Q2",
+    "FY2024-Q3",
+)
+# MSFT's FY2024-Q4 is already scored via PILOT_OUTPUT_QUARTERS_WITH_BRIDGE — do
+# not duplicate it here.
+MSFT_FULL_OUTPUT_QUARTERS = MSFT_NEW_OUTPUT_QUARTERS + PILOT_OUTPUT_QUARTERS_WITH_BRIDGE
+
+# NVDA now has a real local FY2024-Q4 transcript (previously only a partial
+# dimensions-only score existed with no transcript — see the now-stale
+# FY2024_Q4_BRIDGE comment above, which still applies to MSFT/AAPL only).
+# Because FY2024-Q4 is included directly in NVDA_NEW_OUTPUT_QUARTERS below,
+# NVDA must use the plain PILOT_OUTPUT_QUARTERS tail (NOT
+# PILOT_OUTPUT_QUARTERS_WITH_BRIDGE), or FY2024-Q4 would be duplicated.
+# NVDA also has a new FY2027-Q1 transcript (closest available quarter to the
+# requested 2026-Q1 calendar boundary) appended after the pilot tail.
+NVDA_PRIOR_QUARTERS = ("FY2017-Q2",)
+NVDA_NEW_OUTPUT_QUARTERS = (
+    "FY2017-Q3", "FY2017-Q4", "FY2018-Q1", "FY2018-Q2", "FY2018-Q3", "FY2018-Q4",
+    "FY2019-Q1", "FY2019-Q2", "FY2019-Q3", "FY2019-Q4", "FY2020-Q1", "FY2020-Q2",
+    "FY2020-Q3", "FY2020-Q4", "FY2021-Q1", "FY2021-Q2", "FY2021-Q3", "FY2021-Q4",
+    "FY2022-Q1", "FY2022-Q2", "FY2022-Q3", "FY2022-Q4", "FY2023-Q1", "FY2023-Q2",
+    "FY2023-Q3", "FY2023-Q4", "FY2024-Q1", "FY2024-Q2", "FY2024-Q3", "FY2024-Q4",
+)
+NVDA_FULL_OUTPUT_QUARTERS = NVDA_NEW_OUTPUT_QUARTERS + PILOT_OUTPUT_QUARTERS + ("FY2027-Q1",)
 
 # ---------------------------------------------------------------------------
 # Phase 3 universe expansion — first wave onboarded from ROIC.ai-scraped
@@ -198,7 +278,7 @@ COMPANIES: dict[str, CompanyProfile] = {
         isin="US0231351067",
         barra_id="USAXO31",
         output_quarters=AMZN_FULL_OUTPUT_QUARTERS,
-        prior_quarters=AMZN_FIVE_YEAR_PRIOR_QUARTERS,
+        prior_quarters=AMZN_EXTENDED_PRIOR_QUARTERS,
         candidate_measures=dict(AMZN_CANDIDATE_MEASURES),
     ),
     "MSFT": CompanyProfile(
@@ -207,8 +287,8 @@ COMPANIES: dict[str, CompanyProfile] = {
         estpermid=30064848647,
         isin="US5949181045",
         barra_id="USAJ471",
-        output_quarters=PILOT_OUTPUT_QUARTERS_WITH_BRIDGE,
-        prior_quarters=FY2024_PRIOR_QUARTERS,
+        output_quarters=MSFT_FULL_OUTPUT_QUARTERS,
+        prior_quarters=MSFT_PRIOR_QUARTERS,
     ),
     "NVDA": CompanyProfile(
         ticker="NVDA",
@@ -216,10 +296,11 @@ COMPANIES: dict[str, CompanyProfile] = {
         estpermid=30064850531,
         isin="US67066G1040",
         barra_id="USA2HB1",
-        # FY2024-Q4 transcript sourced + delta/surprise/novelty scored 2026-07-21;
-        # now bridges the 5-year backfill into the pilot window like MSFT/AAPL.
-        output_quarters=PILOT_OUTPUT_QUARTERS_WITH_BRIDGE,
-        prior_quarters=FY2024_PRIOR_QUARTERS,
+        # FY2024-Q4 now has a full local transcript + is scored via the
+        # historical backfill below (NVDA_NEW_OUTPUT_QUARTERS), not the
+        # MSFT/AAPL-style FY2024_Q4_BRIDGE partial-score special case.
+        output_quarters=NVDA_FULL_OUTPUT_QUARTERS,
+        prior_quarters=NVDA_PRIOR_QUARTERS,
     ),
     "AAPL": CompanyProfile(
         ticker="AAPL",
@@ -227,8 +308,8 @@ COMPANIES: dict[str, CompanyProfile] = {
         estpermid=30064826814,
         isin="US0378331005",
         barra_id="USAB1X1",
-        output_quarters=PILOT_OUTPUT_QUARTERS_WITH_BRIDGE,
-        prior_quarters=FY2024_PRIOR_QUARTERS,
+        output_quarters=AAPL_FULL_OUTPUT_QUARTERS,
+        prior_quarters=AAPL_PRIOR_QUARTERS,
     ),
     "AVGO": CompanyProfile(
         ticker="AVGO",
