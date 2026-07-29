@@ -1,0 +1,70 @@
+name: earnings-monitor
+
+x-monitor-common: &monitor-common
+  build:
+    context: .
+    dockerfile: services/earnings_monitor/Dockerfile
+  platform: ${DOCKER_PLATFORM:-linux/arm64}
+  env_file:
+    - services/earnings_monitor/.env.example
+  environment:
+    DATA_DIR: /data
+    EARNINGS_MONITOR_REPO_ROOT: /app
+    EARNINGS_MONITOR_DB: /data/monitor.sqlite3
+    EARNINGS_MONITOR_DATASET: /data/company_quarters.parquet
+    EARNINGS_MONITOR_SMTP_HOST: mailpit
+    EARNINGS_MONITOR_SMTP_PORT: "1025"
+    EARNINGS_MONITOR_SMTP_STARTTLS: "false"
+  volumes:
+    - monitor-data:/data
+    - ./earnings-scraper-main/earnings-scraper-main/inbox:/app/earnings-scraper-main/earnings-scraper-main/inbox
+  restart: unless-stopped
+
+services:
+  history-import:
+    <<: *monitor-common
+    command: ["history-import"]
+    restart: "no"
+
+  monitor:
+    <<: *monitor-common
+    command: ["monitor"]
+    depends_on:
+      mailpit:
+        condition: service_started
+
+  worker:
+    <<: *monitor-common
+    command: ["worker"]
+    depends_on:
+      monitor:
+        condition: service_healthy
+
+  dashboard:
+    <<: *monitor-common
+    command: ["dashboard"]
+    ports:
+      - "${DASHBOARD_PORT:-8501}:8501"
+    depends_on:
+      history-import:
+        condition: service_completed_successfully
+      monitor:
+        condition: service_healthy
+
+  mailpit:
+    image: axllent/mailpit:v1.21
+    platform: ${DOCKER_PLATFORM:-linux/arm64}
+    ports:
+      - "${MAILPIT_SMTP_PORT:-1025}:1025"
+      - "${MAILPIT_UI_PORT:-8025}:8025"
+    volumes:
+      - mailpit-data:/data
+    environment:
+      MP_DATABASE: /data/mailpit.db
+      MP_SMTP_AUTH_ACCEPT_ANY: "1"
+      MP_SMTP_AUTH_ALLOW_INSECURE: "1"
+    restart: unless-stopped
+
+volumes:
+  monitor-data:
+  mailpit-data:

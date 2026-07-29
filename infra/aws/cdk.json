@@ -1,0 +1,17 @@
+{
+  "app": "python app.py",
+  "context": {
+    "region": "us-east-1",
+    "schedule": "cron(0/15 * * * ? *)",
+    "container_image": "public.ecr.aws/docker/library/python:3.12-slim",
+    "certificate_arn": "",
+    "dashboard_domain": "",
+    "cognito_user_pool_arn": "",
+    "cognito_user_pool_client_id": "",
+    "cognito_user_pool_domain": "",
+    "app_secret_arn": "",
+    "ses_identity_arn": "",
+    "@aws-cdk/aws-lambda:recognizeLayerVersion": true,
+    "@aws-cdk/core:checkSecretUsage": true
+  }
+}

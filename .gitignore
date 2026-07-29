@@ -29,6 +29,9 @@ data/transcripts/*
 !data/
 !data/transcripts/
 !data/transcripts/.gitkeep
+# Local monitor datasets and SQLite state are reproducible/runtime-only.
+/data/earnings_monitor/
+/services/earnings_monitor/state/
 output/*
 !output/
 !output/.gitkeep

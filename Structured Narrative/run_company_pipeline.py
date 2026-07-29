@@ -84,6 +84,16 @@ def main() -> int:
     ap.add_argument("--skip-quant", action="store_true", help="Skip Snowflake quant spine.")
     ap.add_argument("--skip-llm", action="store_true", help="Skip LLM scoring steps.")
     ap.add_argument(
+        "--quant-only",
+        action="store_true",
+        help="Prepare quant/z-score/anchor artifacts, then stop before narrative panels.",
+    )
+    ap.add_argument(
+        "--skip-bridge",
+        action="store_true",
+        help="Skip the inbox transcript bridge before LLM scoring.",
+    )
+    ap.add_argument(
         "--scope",
         choices=("five_year",),
         help="Quarter scope preset (five_year: AMZN FY2019-Q2 prior, FY2019-Q3..FY2024-Q3 output).",
@@ -98,6 +108,11 @@ def main() -> int:
         "--new-quarter",
         metavar="FYyyyy-Qn",
         help="Score one new output quarter incrementally (uses quarter registry).",
+    )
+    ap.add_argument(
+        "--baseline-quarter",
+        metavar="FYyyyy-Qn",
+        help="Score one dimensions-only prior quarter for a future call baseline.",
     )
     ap.add_argument(
         "--force",
@@ -150,6 +165,8 @@ def main() -> int:
     args = ap.parse_args()
     ticker = args.ticker.upper()
     sn = str(HERE)
+    if args.quant_only:
+        args.skip_llm = True
 
     if args.no_pit:
         os.environ["NARRATIVE_PIT"] = "0"
@@ -191,6 +208,24 @@ def main() -> int:
         print("PIT mode: ON (expanding quant z; post-call revisions omitted from surprise context)")
     print(f"Output tree ready: output/{ticker}/{{parquet,workbooks,csv,json,reports,audit}}")
 
+    if args.baseline_quarter:
+        baseline_quarter = normalize_fiscal_period(args.baseline_quarter)
+        run_step(
+            "Pre-release baseline dimensions",
+            [
+                PY,
+                f"{sn}/run_dimension_scoring.py",
+                "--ticker",
+                ticker,
+                "--quarters",
+                baseline_quarter,
+                *force_args,
+                *batch_args,
+            ],
+        )
+        print(f"\nDone: {ticker} {baseline_quarter} pre-release baseline complete.")
+        return 0
+
     quant_cmd = [PY, f"{sn}/single_company_extractor.py", "--ticker", ticker]
     if args.append_quarters:
         quant_cmd.extend(["--append-quarters", *args.append_quarters])
@@ -202,7 +237,7 @@ def main() -> int:
     if not args.skip_llm:
         ensure_registry(ticker)
         assert_pit_spine(ticker)
-        if args.scope != "five_year":
+        if args.scope != "five_year" and not args.skip_bridge:
             run_step(
                 "Bridge inbox transcripts",
                 [PY, f"{sn}/export_inbox_to_transcripts_raw.py", "--ticker", ticker],
@@ -229,6 +264,10 @@ def main() -> int:
             "Refresh quant anchors",
             [PY, f"{sn}/refresh_quant_anchors.py", "--ticker", ticker],
         )
+
+    if args.quant_only:
+        print(f"\nDone: {ticker} quant artifacts prepared.")
+        return 0
 
     run_step("Feature panel", panel_args)
 
