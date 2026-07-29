@@ -31,7 +31,14 @@ from output_paths import company_artifact
 
 RETURN_MODEL = "EFMUSALTS"
 MIN_CONSENSUS_QUARTERS = 8
-START_DATE = dt.date(2015, 1, 1)
+# Pushed back from 2015-01-01: narrative_zscore.py's PIT z-scores need
+# MIN_HISTORY=8 strictly-prior quarterly observations before they're defined
+# (see narrative_zscore.py). With a 2015-01-01 floor, most tickers' 8-quarter
+# warmup didn't clear until ~2016-Q4..2017-Q3 (depending on fiscal-calendar
+# offset), bleeding into the requested 2016-Q2 analysis start. 2010-01-01
+# gives 6+ years / 24+ quarters of buffer before 2016-Q2 for every ticker,
+# comfortably covering fiscal-calendar offsets (e.g. ACN Aug FYE).
+START_DATE = dt.date(2010, 1, 1)
 MODEL_DELAY_DAYS = 7
 ALPHA_WINDOWS = [(0, 60), (60, 90), (0, 90)]
 

@@ -70,8 +70,16 @@ AMZN_FIVE_YEAR_OUTPUT_QUARTERS = (
 # output quarter — run_universe_batch.py needs --extra-output-quarters
 # FY2019-Q2 the first time this runs, same promotion pattern used for
 # IBM_PRIOR_QUARTERS's FY2017-Q3 above.
-AMZN_EXTENDED_PRIOR_QUARTERS = ("FY2016-Q2",)
+# 2026-07-29: extended one more quarter back to FY2016-Q1 (Quartr transcript,
+# eventId 63596) so the FY2016-Q1 quant-Z PIT warmup clears comfortably before
+# the requested 2016-Q2 calendar-quarter analysis start (see START_DATE
+# widening in single_company_extractor.py). FY2016-Q2 (the old prior-only
+# baseline) is promoted to a full output quarter, prepended below —
+# run_universe_batch.py needs --extra-output-quarters FY2016-Q2 the first
+# time this runs, same promotion pattern as FY2019-Q2 above.
+AMZN_EXTENDED_PRIOR_QUARTERS = ("FY2016-Q1",)
 AMZN_EXTENDED_NEW_OUTPUT_QUARTERS = (
+    "FY2016-Q2",
     "FY2016-Q3",
     "FY2016-Q4",
     "FY2017-Q1",
@@ -106,8 +114,18 @@ DEFAULT_TICKER = "AMZN"
 # baseline only); *_NEW_OUTPUT_QUARTERS is every other transcript on disk
 # through FY2024-Q3/Q4, prepended to the existing PILOT tail so the FY2025-
 # FY2026 pilot window and (for MSFT/AAPL) the FY2024-Q4 bridge are unaffected.
-AAPL_PRIOR_QUARTERS = ("FY2016-Q3",)
+# 2026-07-29: extended back to FY2016-Q2 (new prior-only baseline), mirroring
+# AMZN_EXTENDED_PRIOR_QUARTERS above. FY2016-Q3 (the old prior-only baseline)
+# is promoted to a full output quarter, prepended to AAPL_NEW_OUTPUT_QUARTERS.
+# 2026-07-29 (later same day): extended one more quarter back to FY2016-Q1
+# (Quartr transcript, eventId 63219) for quant-Z PIT warmup buffer ahead of
+# the 2016-Q2 calendar-quarter analysis start. FY2016-Q2 (the old prior-only
+# baseline) is promoted to output, prepended below — run_universe_batch.py
+# needs --extra-output-quarters FY2016-Q2 the first time this runs.
+AAPL_PRIOR_QUARTERS = ("FY2016-Q1",)
 AAPL_NEW_OUTPUT_QUARTERS = (
+    "FY2016-Q2",
+    "FY2016-Q3",
     "FY2016-Q4", "FY2017-Q1", "FY2017-Q2", "FY2017-Q3", "FY2017-Q4", "FY2018-Q1",
     "FY2018-Q2", "FY2018-Q3", "FY2018-Q4", "FY2019-Q1", "FY2019-Q2", "FY2019-Q3",
     "FY2019-Q4", "FY2020-Q1", "FY2020-Q2", "FY2020-Q3", "FY2020-Q4", "FY2021-Q1",
@@ -119,8 +137,18 @@ AAPL_NEW_OUTPUT_QUARTERS = (
 # FY2024_Q4_BRIDGE comment above) — do not duplicate it here.
 AAPL_FULL_OUTPUT_QUARTERS = AAPL_NEW_OUTPUT_QUARTERS + PILOT_OUTPUT_QUARTERS_WITH_BRIDGE
 
-MSFT_PRIOR_QUARTERS = ("FY2016-Q4",)
+# 2026-07-29: extended back to FY2016-Q2 (new prior-only baseline), mirroring
+# AMZN_EXTENDED_PRIOR_QUARTERS above. FY2016-Q3/Q4 (the old prior-only
+# baseline) are promoted to full output quarters, prepended below.
+# 2026-07-29 (later same day): extended one more quarter back to FY2016-Q1
+# (Quartr transcript, eventId 62736) for quant-Z PIT warmup buffer ahead of
+# the 2016-Q2 calendar-quarter analysis start. FY2016-Q2 (the old prior-only
+# baseline) is promoted to output, prepended below — run_universe_batch.py
+# needs --extra-output-quarters FY2016-Q2 the first time this runs.
+MSFT_PRIOR_QUARTERS = ("FY2016-Q1",)
 MSFT_NEW_OUTPUT_QUARTERS = (
+    "FY2016-Q2",
+    "FY2016-Q3", "FY2016-Q4",
     "FY2017-Q1", "FY2017-Q2", "FY2017-Q3", "FY2017-Q4", "FY2018-Q1", "FY2018-Q2",
     "FY2018-Q3", "FY2018-Q4", "FY2019-Q1", "FY2019-Q2", "FY2019-Q3", "FY2019-Q4",
     "FY2020-Q1", "FY2020-Q2", "FY2020-Q3", "FY2020-Q4", "FY2021-Q1", "FY2021-Q2",
@@ -140,8 +168,18 @@ MSFT_FULL_OUTPUT_QUARTERS = MSFT_NEW_OUTPUT_QUARTERS + PILOT_OUTPUT_QUARTERS_WIT
 # PILOT_OUTPUT_QUARTERS_WITH_BRIDGE), or FY2024-Q4 would be duplicated.
 # NVDA also has a new FY2027-Q1 transcript (closest available quarter to the
 # requested 2026-Q1 calendar boundary) appended after the pilot tail.
-NVDA_PRIOR_QUARTERS = ("FY2017-Q2",)
+# 2026-07-29: extended back to FY2016-Q2 (new prior-only baseline), mirroring
+# AMZN_EXTENDED_PRIOR_QUARTERS above. FY2016-Q3/Q4 and FY2017-Q1/Q2 (the old
+# prior-only baseline) are promoted to full output quarters, prepended below.
+# 2026-07-29 (later same day): extended one more quarter back to FY2016-Q1
+# (Quartr transcript, eventId 63139) for quant-Z PIT warmup buffer ahead of
+# the 2016-Q2 calendar-quarter analysis start. FY2016-Q2 (the old prior-only
+# baseline) is promoted to output, prepended below — run_universe_batch.py
+# needs --extra-output-quarters FY2016-Q2 the first time this runs.
+NVDA_PRIOR_QUARTERS = ("FY2016-Q1",)
 NVDA_NEW_OUTPUT_QUARTERS = (
+    "FY2016-Q2",
+    "FY2016-Q3", "FY2016-Q4", "FY2017-Q1", "FY2017-Q2",
     "FY2017-Q3", "FY2017-Q4", "FY2018-Q1", "FY2018-Q2", "FY2018-Q3", "FY2018-Q4",
     "FY2019-Q1", "FY2019-Q2", "FY2019-Q3", "FY2019-Q4", "FY2020-Q1", "FY2020-Q2",
     "FY2020-Q3", "FY2020-Q4", "FY2021-Q1", "FY2021-Q2", "FY2021-Q3", "FY2021-Q4",
@@ -174,6 +212,9 @@ AVGO_OUTPUT_QUARTERS = (
     "FY2020-Q4", "FY2021-Q1", "FY2021-Q2", "FY2021-Q3", "FY2021-Q4", "FY2022-Q1",
     "FY2022-Q2", "FY2022-Q3", "FY2022-Q4", "FY2023-Q1", "FY2023-Q2", "FY2023-Q3",
     "FY2023-Q4", "FY2024-Q1", "FY2024-Q2",
+    # 2026-07-28: Quartr gap-fill — new transcripts through FY2026-Q2.
+    "FY2024-Q3", "FY2024-Q4", "FY2025-Q1", "FY2025-Q2", "FY2025-Q3", "FY2025-Q4",
+    "FY2026-Q1", "FY2026-Q2",
 )
 
 ORCL_PRIOR_QUARTERS = ("FY2016-Q1",)
@@ -184,6 +225,9 @@ ORCL_OUTPUT_QUARTERS = (
     "FY2020-Q4", "FY2021-Q1", "FY2021-Q2", "FY2021-Q3", "FY2021-Q4", "FY2022-Q1",
     "FY2022-Q2", "FY2022-Q3", "FY2022-Q4", "FY2023-Q1", "FY2023-Q2", "FY2023-Q3",
     "FY2023-Q4", "FY2024-Q1", "FY2024-Q2", "FY2024-Q3", "FY2024-Q4",
+    # 2026-07-28: Quartr gap-fill — new transcripts through FY2026-Q4.
+    "FY2025-Q1", "FY2025-Q2", "FY2025-Q3", "FY2025-Q4",
+    "FY2026-Q1", "FY2026-Q2", "FY2026-Q3", "FY2026-Q4",
 )
 
 CRM_PRIOR_QUARTERS = ("FY2016-Q3",)
@@ -194,6 +238,9 @@ CRM_OUTPUT_QUARTERS = (
     "FY2021-Q2", "FY2021-Q3", "FY2021-Q4", "FY2022-Q1", "FY2022-Q2", "FY2022-Q3",
     "FY2022-Q4", "FY2023-Q1", "FY2023-Q2", "FY2023-Q3", "FY2023-Q4", "FY2024-Q1",
     "FY2024-Q2", "FY2024-Q3", "FY2024-Q4", "FY2025-Q1",
+    # 2026-07-28: Quartr gap-fill — new transcripts through FY2027-Q1.
+    "FY2025-Q2", "FY2025-Q3", "FY2025-Q4",
+    "FY2026-Q1", "FY2026-Q2", "FY2026-Q3", "FY2026-Q4", "FY2027-Q1",
 )
 
 # IBM's earliest available transcript moved from FY2017-Q3 to FY2016-Q2 once
@@ -202,13 +249,27 @@ CRM_OUTPUT_QUARTERS = (
 # needs --extra-output-quarters FY2017-Q3 the first time this runs so
 # finalize_and_write() promotes it (flips prior_only/output_scope, backfills
 # CSV rows) instead of leaving it stranded with the old flag.
-IBM_PRIOR_QUARTERS = ("FY2016-Q2",)
+# 2026-07-29: extended one more quarter back to FY2016-Q1. Quartr's IBM
+# transcript coverage only goes back to Q1 2021 (confirmed via list_documents
+# across 2010-2021; nothing before 2021-04-19) and the Quartr MCP's API key
+# has no ROIC.ai equivalent, so this one came from the user's Playwright/
+# Camoufox ROIC.ai scraper (Transcript retriever/fetcher.py) instead, which
+# had already scraped IBM/FY2016-Q1.txt (dated 2016-04-18) in a prior run --
+# copied verbatim into Structured Narrative/IBM/FY2016-Q1.txt. FY2016-Q2 (the
+# old prior-only baseline) is promoted to a full output quarter, prepended
+# below -- run_universe_batch.py needs --extra-output-quarters FY2016-Q2 the
+# first time this runs, same promotion pattern as AMZN/MSFT/NVDA/AAPL.
+IBM_PRIOR_QUARTERS = ("FY2016-Q1",)
 IBM_OUTPUT_QUARTERS = (
+    "FY2016-Q2",
     "FY2016-Q3", "FY2016-Q4", "FY2017-Q1", "FY2017-Q2", "FY2017-Q3", "FY2017-Q4",
     "FY2018-Q1", "FY2018-Q2", "FY2018-Q3", "FY2018-Q4", "FY2019-Q1", "FY2019-Q2",
     "FY2019-Q3", "FY2019-Q4", "FY2020-Q1", "FY2020-Q2", "FY2020-Q3", "FY2020-Q4",
     "FY2021-Q1", "FY2021-Q2", "FY2021-Q3", "FY2021-Q4", "FY2022-Q1", "FY2022-Q2",
-    "FY2022-Q3", "FY2022-Q4", "FY2023-Q3",
+    "FY2022-Q3", "FY2022-Q4", "FY2023-Q1", "FY2023-Q2", "FY2023-Q3",
+    # 2026-07-28: Quartr gap-fill — new transcripts through FY2026-Q2.
+    "FY2023-Q4", "FY2024-Q1", "FY2024-Q2", "FY2024-Q3", "FY2024-Q4", "FY2025-Q1",
+    "FY2025-Q2", "FY2025-Q3", "FY2025-Q4", "FY2026-Q1", "FY2026-Q2",
 )
 
 ADBE_PRIOR_QUARTERS = ("FY2016-Q1",)
@@ -219,7 +280,159 @@ ADBE_OUTPUT_QUARTERS = (
     "FY2020-Q4", "FY2021-Q1", "FY2021-Q2", "FY2021-Q3", "FY2021-Q4", "FY2022-Q1",
     "FY2022-Q2", "FY2022-Q3", "FY2022-Q4", "FY2023-Q1", "FY2023-Q2", "FY2023-Q3",
     "FY2023-Q4", "FY2024-Q1", "FY2024-Q2", "FY2024-Q3", "FY2024-Q4",
+    # 2026-07-28: Quartr gap-fill — new transcripts through FY2026-Q2.
+    "FY2025-Q1", "FY2025-Q2", "FY2025-Q3", "FY2025-Q4", "FY2026-Q1", "FY2026-Q2",
 )
+
+# ---------------------------------------------------------------------------
+# 2026-07-28: XLK tech-sector universe expansion — 11 new tickers (ACN, TXN,
+# INTU, AMAT, MU, ADI, LRCX, APH, CTSH, ADSK, TEL), completing the sector
+# alongside the already-onboarded MSFT/NVDA/AAPL/AVGO/ORCL/CRM/IBM/ADBE.
+# Transcripts sourced from the same external ROIC.ai scrape used for the
+# Phase 3 tickers above (FY2016-Q1 through ~FY2024-Q1/Q3 locally), then
+# gap-filled via Quartr through each ticker's fiscal quarter closest to the
+# 2026-Q1 calendar target (end of March 2026). Fiscal-quarter-end conventions
+# were verified via the SEC EDGAR fiscal-profile bootstrap
+# (src/ingest/edgar/fiscal_profile.py, cached under
+# output_confidence/edgar_cache/fiscal_profiles/) against each ticker's real
+# 10-Q/10-K reportDate history — all 11 resolved to either plain calendar-year
+# fiscal years (TXN, APH, CTSH) or month-end/near-month-end offset fiscal
+# years (ACN Aug31, INTU Jul31, ADSK Jan31) or 52/53-week offset fiscal years
+# with a non-month-end FYE day (AMAT ~Oct26, MU ~Aug29-Sep3, ADI ~Nov1,
+# LRCX ~Jun28-30, TEL ~Sep25-27) that the existing _offset_fiscal_quarter_end
+# AVGO-style fix (_subtract_months_keep_day) already handles automatically —
+# none of the 11 needed a new config/fiscal_calendars.yaml entry (same as
+# AVGO/ORCL/CRM/IBM/ADBE above, which also have none). TEL (TE Connectivity,
+# a Swiss-domiciled foreign private issuer) was double-checked and DOES file
+# 10-Q/10-K on EDGAR (not 20-F/6-K), so the EDGAR-based fiscal bootstrap and
+# earnings-date tooling both work normally for it. estpermid/isin/barra_id are
+# left unset for all 11 — Snowflake was unreachable for the entire onboarding
+# session ("Network policy is required"), so IDs could not be resolved or
+# verified; run resolve_company_ids()/lookup_ids_from_snowflake() (with an
+# ISIN-based lookup fallback, watching for legacy IBES ticker aliases as with
+# AVGO->"AOVG" and CRM->"CRMN") once Snowflake access is restored.
+ACN_PRIOR_QUARTERS = ("FY2016-Q1",)
+ACN_OUTPUT_QUARTERS = (
+    "FY2016-Q2", "FY2016-Q3", "FY2016-Q4", "FY2017-Q1", "FY2017-Q2", "FY2017-Q3",
+    "FY2017-Q4", "FY2018-Q1", "FY2018-Q2", "FY2018-Q3", "FY2018-Q4", "FY2019-Q1",
+    "FY2019-Q2", "FY2019-Q3", "FY2019-Q4", "FY2020-Q1", "FY2020-Q2", "FY2020-Q3",
+    "FY2020-Q4", "FY2021-Q1", "FY2021-Q2", "FY2021-Q3", "FY2021-Q4", "FY2022-Q1",
+    "FY2022-Q2", "FY2022-Q3", "FY2022-Q4", "FY2023-Q1", "FY2023-Q2", "FY2023-Q3",
+    "FY2023-Q4", "FY2024-Q1", "FY2024-Q2", "FY2024-Q3", "FY2024-Q4", "FY2025-Q1",
+    "FY2025-Q2", "FY2025-Q3", "FY2025-Q4", "FY2026-Q1", "FY2026-Q2",
+)
+
+TXN_PRIOR_QUARTERS = ("FY2016-Q1",)
+TXN_OUTPUT_QUARTERS = (
+    "FY2016-Q2", "FY2016-Q3", "FY2016-Q4", "FY2017-Q1", "FY2017-Q2", "FY2017-Q3",
+    "FY2017-Q4", "FY2018-Q1", "FY2018-Q2", "FY2018-Q3", "FY2018-Q4", "FY2019-Q1",
+    "FY2019-Q2", "FY2019-Q3", "FY2019-Q4", "FY2020-Q1", "FY2020-Q2", "FY2020-Q3",
+    "FY2020-Q4", "FY2021-Q1", "FY2021-Q2", "FY2021-Q3", "FY2021-Q4", "FY2022-Q1",
+    "FY2022-Q2", "FY2022-Q3", "FY2022-Q4", "FY2023-Q1", "FY2023-Q2", "FY2023-Q3",
+    "FY2023-Q4", "FY2024-Q1", "FY2024-Q2", "FY2024-Q3", "FY2024-Q4", "FY2025-Q1",
+    "FY2025-Q2", "FY2025-Q3", "FY2025-Q4", "FY2026-Q1",
+)
+
+INTU_PRIOR_QUARTERS = ("FY2016-Q1",)
+INTU_OUTPUT_QUARTERS = (
+    "FY2016-Q2", "FY2016-Q3", "FY2016-Q4", "FY2017-Q1", "FY2017-Q2", "FY2017-Q3",
+    "FY2017-Q4", "FY2018-Q1", "FY2018-Q2", "FY2018-Q3", "FY2018-Q4", "FY2019-Q1",
+    "FY2019-Q2", "FY2019-Q3", "FY2019-Q4", "FY2020-Q1", "FY2020-Q2", "FY2020-Q3",
+    "FY2020-Q4", "FY2021-Q1", "FY2021-Q2", "FY2021-Q3", "FY2021-Q4", "FY2022-Q1",
+    "FY2022-Q2", "FY2022-Q3", "FY2022-Q4", "FY2023-Q1", "FY2023-Q2", "FY2023-Q3",
+    "FY2023-Q4", "FY2024-Q1", "FY2024-Q2", "FY2024-Q3", "FY2024-Q4", "FY2025-Q1",
+    "FY2025-Q2", "FY2025-Q3", "FY2025-Q4", "FY2026-Q1", "FY2026-Q2", "FY2026-Q3",
+)
+
+AMAT_PRIOR_QUARTERS = ("FY2016-Q1",)
+AMAT_OUTPUT_QUARTERS = (
+    "FY2016-Q2", "FY2016-Q3", "FY2016-Q4", "FY2017-Q1", "FY2017-Q2", "FY2017-Q3",
+    "FY2017-Q4", "FY2018-Q1", "FY2018-Q2", "FY2018-Q3", "FY2018-Q4", "FY2019-Q1",
+    "FY2019-Q2", "FY2019-Q3", "FY2019-Q4", "FY2020-Q1", "FY2020-Q2", "FY2020-Q3",
+    "FY2020-Q4", "FY2021-Q1", "FY2021-Q2", "FY2021-Q3", "FY2021-Q4", "FY2022-Q1",
+    "FY2022-Q2", "FY2022-Q3", "FY2022-Q4", "FY2023-Q1", "FY2023-Q2", "FY2023-Q3",
+    "FY2023-Q4", "FY2024-Q1", "FY2024-Q2", "FY2024-Q3", "FY2024-Q4", "FY2025-Q1",
+    "FY2025-Q2", "FY2025-Q3", "FY2025-Q4", "FY2026-Q1", "FY2026-Q2",
+)
+
+MU_PRIOR_QUARTERS = ("FY2016-Q1",)
+MU_OUTPUT_QUARTERS = (
+    "FY2016-Q2", "FY2016-Q3", "FY2016-Q4", "FY2017-Q1", "FY2017-Q2", "FY2017-Q3",
+    "FY2017-Q4", "FY2018-Q1", "FY2018-Q2", "FY2018-Q3", "FY2018-Q4", "FY2019-Q1",
+    "FY2019-Q2", "FY2019-Q3", "FY2019-Q4", "FY2020-Q1", "FY2020-Q2", "FY2020-Q3",
+    "FY2020-Q4", "FY2021-Q1", "FY2021-Q2", "FY2021-Q3", "FY2021-Q4", "FY2022-Q1",
+    "FY2022-Q2", "FY2022-Q3", "FY2022-Q4", "FY2023-Q1", "FY2023-Q2", "FY2023-Q3",
+    "FY2023-Q4", "FY2024-Q1", "FY2024-Q2", "FY2024-Q3", "FY2024-Q4", "FY2025-Q1",
+    "FY2025-Q2", "FY2025-Q3", "FY2025-Q4", "FY2026-Q1", "FY2026-Q2",
+)
+
+ADI_PRIOR_QUARTERS = ("FY2016-Q1",)
+ADI_OUTPUT_QUARTERS = (
+    "FY2016-Q2", "FY2016-Q3", "FY2016-Q4", "FY2017-Q1", "FY2017-Q2", "FY2017-Q3",
+    "FY2017-Q4", "FY2018-Q1", "FY2018-Q2", "FY2018-Q3", "FY2018-Q4", "FY2019-Q1",
+    "FY2019-Q2", "FY2019-Q3", "FY2019-Q4", "FY2020-Q1", "FY2020-Q2", "FY2020-Q3",
+    "FY2020-Q4", "FY2021-Q1", "FY2021-Q2", "FY2021-Q3", "FY2021-Q4", "FY2022-Q1",
+    "FY2022-Q2", "FY2022-Q3", "FY2022-Q4", "FY2023-Q1", "FY2023-Q2", "FY2023-Q3",
+    "FY2023-Q4", "FY2024-Q1", "FY2024-Q2", "FY2024-Q3", "FY2024-Q4", "FY2025-Q1",
+    "FY2025-Q2", "FY2025-Q3", "FY2025-Q4", "FY2026-Q1", "FY2026-Q2",
+)
+
+LRCX_PRIOR_QUARTERS = ("FY2016-Q1",)
+LRCX_OUTPUT_QUARTERS = (
+    "FY2016-Q2", "FY2016-Q3", "FY2016-Q4", "FY2017-Q1", "FY2017-Q2", "FY2017-Q3",
+    "FY2017-Q4", "FY2018-Q1", "FY2018-Q2", "FY2018-Q3", "FY2018-Q4", "FY2019-Q1",
+    "FY2019-Q2", "FY2019-Q3", "FY2019-Q4", "FY2020-Q1", "FY2020-Q2", "FY2020-Q3",
+    "FY2020-Q4", "FY2021-Q1", "FY2021-Q2", "FY2021-Q3", "FY2021-Q4", "FY2022-Q1",
+    "FY2022-Q2", "FY2022-Q3", "FY2022-Q4", "FY2023-Q1", "FY2023-Q2", "FY2023-Q3",
+    "FY2023-Q4", "FY2024-Q1", "FY2024-Q2", "FY2024-Q3", "FY2024-Q4", "FY2025-Q1",
+    "FY2025-Q2", "FY2025-Q3", "FY2025-Q4", "FY2026-Q1", "FY2026-Q2", "FY2026-Q3",
+)
+
+APH_PRIOR_QUARTERS = ("FY2016-Q1",)
+APH_OUTPUT_QUARTERS = (
+    "FY2016-Q2", "FY2016-Q3", "FY2016-Q4", "FY2017-Q1", "FY2017-Q2", "FY2017-Q3",
+    "FY2017-Q4", "FY2018-Q1", "FY2018-Q2", "FY2018-Q3", "FY2018-Q4", "FY2019-Q1",
+    "FY2019-Q2", "FY2019-Q3", "FY2019-Q4", "FY2020-Q1", "FY2020-Q2", "FY2020-Q3",
+    "FY2020-Q4", "FY2021-Q1", "FY2021-Q2", "FY2021-Q3", "FY2021-Q4", "FY2022-Q1",
+    "FY2022-Q2", "FY2022-Q3", "FY2022-Q4", "FY2023-Q1", "FY2023-Q2", "FY2023-Q3",
+    "FY2023-Q4", "FY2024-Q1", "FY2024-Q2", "FY2024-Q3", "FY2024-Q4", "FY2025-Q1",
+    "FY2025-Q2", "FY2025-Q3", "FY2025-Q4", "FY2026-Q1",
+)
+
+CTSH_PRIOR_QUARTERS = ("FY2016-Q1",)
+CTSH_OUTPUT_QUARTERS = (
+    "FY2016-Q2", "FY2016-Q3", "FY2016-Q4", "FY2017-Q1", "FY2017-Q2", "FY2017-Q3",
+    "FY2017-Q4", "FY2018-Q1", "FY2018-Q2", "FY2018-Q3", "FY2018-Q4", "FY2019-Q1",
+    "FY2019-Q2", "FY2019-Q3", "FY2019-Q4", "FY2020-Q1", "FY2020-Q2", "FY2020-Q3",
+    "FY2020-Q4", "FY2021-Q1", "FY2021-Q2", "FY2021-Q3", "FY2021-Q4", "FY2022-Q1",
+    "FY2022-Q2", "FY2022-Q3", "FY2022-Q4", "FY2023-Q1", "FY2023-Q2", "FY2023-Q3",
+    "FY2023-Q4", "FY2024-Q1", "FY2024-Q2", "FY2024-Q3", "FY2024-Q4", "FY2025-Q1",
+    "FY2025-Q2", "FY2025-Q3", "FY2025-Q4", "FY2026-Q1",
+)
+
+ADSK_PRIOR_QUARTERS = ("FY2016-Q1",)
+ADSK_OUTPUT_QUARTERS = (
+    "FY2016-Q2", "FY2016-Q3", "FY2016-Q4", "FY2017-Q1", "FY2017-Q2", "FY2017-Q3",
+    "FY2017-Q4", "FY2018-Q1", "FY2018-Q2", "FY2018-Q3", "FY2018-Q4", "FY2019-Q1",
+    "FY2019-Q2", "FY2019-Q3", "FY2019-Q4", "FY2020-Q1", "FY2020-Q2", "FY2020-Q3",
+    "FY2020-Q4", "FY2021-Q1", "FY2021-Q2", "FY2021-Q3", "FY2021-Q4", "FY2022-Q1",
+    "FY2022-Q2", "FY2022-Q3", "FY2022-Q4", "FY2023-Q1", "FY2023-Q2", "FY2023-Q3",
+    "FY2023-Q4", "FY2024-Q1", "FY2024-Q2", "FY2024-Q3", "FY2024-Q4", "FY2025-Q1",
+    "FY2025-Q2", "FY2025-Q3", "FY2025-Q4", "FY2026-Q1", "FY2026-Q2", "FY2026-Q3",
+    "FY2026-Q4", "FY2027-Q1",
+)
+
+TEL_PRIOR_QUARTERS = ("FY2016-Q1",)
+TEL_OUTPUT_QUARTERS = (
+    "FY2016-Q2", "FY2016-Q3", "FY2016-Q4", "FY2017-Q1", "FY2017-Q2", "FY2017-Q3",
+    "FY2017-Q4", "FY2018-Q1", "FY2018-Q2", "FY2018-Q3", "FY2018-Q4", "FY2019-Q1",
+    "FY2019-Q2", "FY2019-Q3", "FY2019-Q4", "FY2020-Q1", "FY2020-Q2", "FY2020-Q3",
+    "FY2020-Q4", "FY2021-Q1", "FY2021-Q2", "FY2021-Q3", "FY2021-Q4", "FY2022-Q1",
+    "FY2022-Q2", "FY2022-Q3", "FY2022-Q4", "FY2023-Q1", "FY2023-Q2", "FY2023-Q3",
+    "FY2023-Q4", "FY2024-Q1", "FY2024-Q2", "FY2024-Q3", "FY2024-Q4", "FY2025-Q1",
+    "FY2025-Q2", "FY2025-Q3", "FY2025-Q4", "FY2026-Q1", "FY2026-Q2",
+)
+
 
 # Core LSEG measures — shared across tickers.
 CORE_MEASURES = {
@@ -360,6 +573,112 @@ COMPANIES: dict[str, CompanyProfile] = {
         barra_id="USAA821",
         output_quarters=ADBE_OUTPUT_QUARTERS,
         prior_quarters=ADBE_PRIOR_QUARTERS,
+    ),
+    # 2026-07-28: XLK universe expansion, 11 new tickers. estpermid/isin/
+    # barra_id resolved via Snowflake (IRIS_UNIV direct-ticker lookup missed
+    # all 11; resolved via LSEG PERMISINDATA ISIN lookup instead). 6 matched
+    # VW_IBES2MAPPING directly on the current ticker; 5 needed the legacy
+    # IBES-ticker-alias workaround (same pattern as AVGO->"AOVG",
+    # CRM->"CRMN"): ACN->"ACNT", MU->"DRAM", APH->"APH1", ADSK->"ACAD",
+    # TEL->"TELW".
+    "ACN": CompanyProfile(
+        ticker="ACN",
+        company_name="Accenture plc",
+        estpermid=30064827148,
+        isin="IE00B4BNMY34",
+        barra_id="USA4JB1",
+        output_quarters=ACN_OUTPUT_QUARTERS,
+        prior_quarters=ACN_PRIOR_QUARTERS,
+    ),
+    "TXN": CompanyProfile(
+        ticker="TXN",
+        company_name="Texas Instruments Incorporated",
+        estpermid=30064860313,
+        isin="US8825081040",
+        barra_id="USANM71",
+        output_quarters=TXN_OUTPUT_QUARTERS,
+        prior_quarters=TXN_PRIOR_QUARTERS,
+    ),
+    "INTU": CompanyProfile(
+        ticker="INTU",
+        company_name="Intuit Inc.",
+        estpermid=30064843955,
+        isin="US4612021034",
+        barra_id="USAQ9A1",
+        output_quarters=INTU_OUTPUT_QUARTERS,
+        prior_quarters=INTU_PRIOR_QUARTERS,
+    ),
+    "AMAT": CompanyProfile(
+        ticker="AMAT",
+        company_name="Applied Materials, Inc.",
+        estpermid=30064828322,
+        isin="US0382221051",
+        barra_id="USAB2N1",
+        output_quarters=AMAT_OUTPUT_QUARTERS,
+        prior_quarters=AMAT_PRIOR_QUARTERS,
+    ),
+    "MU": CompanyProfile(
+        ticker="MU",
+        company_name="Micron Technology, Inc.",
+        estpermid=30064836455,
+        isin="US5951121038",
+        barra_id="USAJ4O1",
+        output_quarters=MU_OUTPUT_QUARTERS,
+        prior_quarters=MU_PRIOR_QUARTERS,
+    ),
+    "ADI": CompanyProfile(
+        ticker="ADI",
+        company_name="Analog Devices, Inc.",
+        estpermid=30064827293,
+        isin="US0326541051",
+        barra_id="USAAXZ1",
+        output_quarters=ADI_OUTPUT_QUARTERS,
+        prior_quarters=ADI_PRIOR_QUARTERS,
+    ),
+    "LRCX": CompanyProfile(
+        ticker="LRCX",
+        company_name="Lam Research Corporation",
+        estpermid=30064846429,
+        isin="US5128071082",
+        barra_id="USAHZM1",
+        output_quarters=LRCX_OUTPUT_QUARTERS,
+        prior_quarters=LRCX_PRIOR_QUARTERS,
+    ),
+    "APH": CompanyProfile(
+        ticker="APH",
+        company_name="Amphenol Corporation",
+        estpermid=30064828773,
+        isin="US0320951017",
+        barra_id="USAAX61",
+        output_quarters=APH_OUTPUT_QUARTERS,
+        prior_quarters=APH_PRIOR_QUARTERS,
+    ),
+    "CTSH": CompanyProfile(
+        ticker="CTSH",
+        company_name="Cognizant Technology Solutions Corporation",
+        estpermid=30064835109,
+        isin="US1924461023",
+        barra_id="USAZPE1",
+        output_quarters=CTSH_OUTPUT_QUARTERS,
+        prior_quarters=CTSH_PRIOR_QUARTERS,
+    ),
+    "ADSK": CompanyProfile(
+        ticker="ADSK",
+        company_name="Autodesk, Inc.",
+        estpermid=30064827025,
+        isin="US0527691069",
+        barra_id="USABAQ1",
+        output_quarters=ADSK_OUTPUT_QUARTERS,
+        prior_quarters=ADSK_PRIOR_QUARTERS,
+    ),
+    "TEL": CompanyProfile(
+        ticker="TEL",
+        company_name="TE Connectivity plc",
+        estpermid=30064858946,
+        isin="CH0102993182",
+        barra_id="USAAKZ1",
+        output_quarters=TEL_OUTPUT_QUARTERS,
+        prior_quarters=TEL_PRIOR_QUARTERS,
     ),
 }
 

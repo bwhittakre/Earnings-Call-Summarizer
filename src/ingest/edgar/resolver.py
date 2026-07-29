@@ -70,10 +70,13 @@ def _fiscal_profile_for_fetch(
     submissions: dict,
     *,
     calendars_path: Path,
+    client: EdgarClient | None = None,
 ) -> FiscalProfile | None:
     if ticker_key in _yaml_tickers(calendars_path):
         return None
-    return load_or_bootstrap_fiscal_profile(ticker_key, company_name, submissions)
+    return load_or_bootstrap_fiscal_profile(
+        ticker_key, company_name, submissions, client=client
+    )
 
 
 def expand_fetch_quarters(quarter: str) -> list[str]:
@@ -175,6 +178,7 @@ def plan_quarter_fetch(
         company_name,
         submissions,
         calendars_path=calendars_path,
+        client=edgar_client,
     )
     return build_quarter_fetch_plan(
         ticker=ticker_key,
@@ -210,6 +214,7 @@ def resolve_quarter_end_run_for_companies(
                 ticker_key,
                 company_name,
                 submissions,
+                client=edgar_client,
             )
 
     return build_quarter_end_run(
@@ -242,6 +247,7 @@ def fetch_quarter_package(
         company_name,
         submissions,
         calendars_path=calendars_path,
+        client=edgar_client,
     )
 
     plan = build_quarter_fetch_plan(

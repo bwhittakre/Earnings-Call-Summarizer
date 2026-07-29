@@ -48,6 +48,18 @@ output_confidence/edgar_cache/
 /Structured Narrative/CRM/
 /Structured Narrative/IBM/
 /Structured Narrative/ORCL/
+/Structured Narrative/ACN/
+/Structured Narrative/ADI/
+/Structured Narrative/ADSK/
+/Structured Narrative/AMAT/
+/Structured Narrative/APH/
+/Structured Narrative/CTSH/
+/Structured Narrative/FFIV/
+/Structured Narrative/INTU/
+/Structured Narrative/LRCX/
+/Structured Narrative/MU/
+/Structured Narrative/TEL/
+/Structured Narrative/TXN/
 
 # >>> angelo >>>
 # Runtime state and derived caches (source of truth is .memory/ and

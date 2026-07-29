@@ -48,7 +48,10 @@ def apply_derived_features(panel: pd.DataFrame) -> pd.DataFrame:
     df = panel.copy()
     df["has_quant_z"] = df["quant_z_pit"].notna() if "quant_z_pit" in df.columns else df["quant_z"].notna()
 
-    df["abs_narrative_quant_gap"] = df["narrative_quant_gap"].abs()
+    # narrative_quant_gap can be an all-None object column (e.g. a ticker with
+    # zero quant coverage across every row), which .abs() can't handle directly
+    # (abs(None) raises TypeError) -- coerce to numeric NaN first.
+    df["abs_narrative_quant_gap"] = pd.to_numeric(df["narrative_quant_gap"], errors="coerce").abs()
     df["surprise_quant_interaction"] = df.apply(
         lambda r: (
             round(float(r["surprise_magnitude"]) * float(r.get("quant_z_pit") or r.get("quant_z")), 3)

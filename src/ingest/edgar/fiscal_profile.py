@@ -4,14 +4,18 @@ import json
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-from src.ingest.edgar.submissions import iter_submission_filings
+from src.ingest.edgar.submissions import iter_all_filings, iter_submission_filings
 from src.ingest.filings.fiscal import normalize_quarter_label
 from src.market.fiscal_resolver import (
     _calendar_fiscal_quarter_end,
     _offset_fiscal_quarter_end,
 )
 from src.market.quarter_labels import format_quarter_label
+
+if TYPE_CHECKING:
+    from src.ingest.edgar.client import EdgarClient
 
 DEFAULT_PROFILE_CACHE_DIR = (
     Path(__file__).resolve().parent.parent.parent.parent
@@ -120,7 +124,16 @@ def bootstrap_fiscal_profile(
     ticker: str,
     company_name: str,
     submissions: dict,
+    *,
+    client: "EdgarClient | None" = None,
 ) -> FiscalProfile:
+    """Build a fiscal profile from EDGAR submissions.
+
+    Pass `client` to also pull paginated older filings (`filings.files[]`) via
+    `iter_all_filings`; without it, only the "recent" filings block in the
+    submissions JSON is used, which silently truncates history for companies
+    with more filings than that window covers (e.g. IBM: 27 vs. 105 quarters).
+    """
     ticker_key = ticker.strip().upper()
     fiscal_year_end, fye_month, fye_day = _parse_fiscal_year_end(
         submissions.get("fiscalYearEnd")
@@ -128,12 +141,20 @@ def bootstrap_fiscal_profile(
     calendar_type = _infer_calendar_type(fiscal_year_end)
 
     quarter_ends: dict[str, str] = {}
-    for row in iter_submission_filings(submissions):
+    filings = (
+        iter_all_filings(client, submissions)
+        if client is not None
+        else iter_submission_filings(submissions)
+    )
+    for row in filings:
         form = str(row.get("form", "")).upper()
         if not (form.startswith("10-Q") or form.startswith("10-K")):
             continue
         report_date = _parse_iso_date(row.get("reportDate"))
-        if report_date is None:
+        # normalize_quarter_label's format only accepts years >= 2000; some
+        # long-lived filers (e.g. IBM) have pre-2000 10-Qs once full pagination
+        # is included via `client`, so skip those rather than crash.
+        if report_date is None or report_date.year < 2000:
             continue
         label = _infer_quarter_label(
             report_date,
@@ -197,13 +218,14 @@ def load_or_bootstrap_fiscal_profile(
     *,
     cache_dir: Path = DEFAULT_PROFILE_CACHE_DIR,
     refresh: bool = False,
+    client: "EdgarClient | None" = None,
 ) -> FiscalProfile:
     ticker_key = ticker.strip().upper()
     if not refresh:
         cached = load_cached_fiscal_profile(ticker_key, cache_dir=cache_dir)
         if cached is not None:
             return cached
-    profile = bootstrap_fiscal_profile(ticker_key, company_name, submissions)
+    profile = bootstrap_fiscal_profile(ticker_key, company_name, submissions, client=client)
     save_fiscal_profile(profile, cache_dir=cache_dir)
     return profile
 
@@ -214,6 +236,7 @@ def get_fiscal_profile_for_ticker(
     calendars_path,
     submissions: dict | None = None,
     company_name: str | None = None,
+    client: "EdgarClient | None" = None,
 ) -> FiscalProfile | None:
     from src.market.fiscal_calendar import load_fiscal_calendars
 
@@ -230,4 +253,5 @@ def get_fiscal_profile_for_ticker(
         ticker_key,
         company_name or ticker_key,
         submissions,
+        client=client,
     )

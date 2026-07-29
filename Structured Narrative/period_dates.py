@@ -109,6 +109,28 @@ def filter_min_calendar_quarter(
     return panel.loc[mask].copy()
 
 
+def filter_max_calendar_quarter(
+    panel: pd.DataFrame,
+    max_calendar_quarter: str | None,
+) -> pd.DataFrame:
+    """Drop rows whose period_end_calendar_quarter is after ``max_calendar_quarter``.
+
+    Mirrors ``filter_min_calendar_quarter`` in the opposite direction so a
+    caller can bound a window on both ends (e.g. 2016-Q2..2026-Q1) at the same
+    data-loading stage, before any downstream jackknife/composite/leaderboard
+    computation runs.
+    """
+    if not max_calendar_quarter:
+        return panel
+    if "period_end_calendar_quarter" not in panel.columns:
+        panel = enrich_panel_period_columns(panel)
+    ceiling = calendar_quarter_sort_key(max_calendar_quarter.strip().upper())
+    mask = panel["period_end_calendar_quarter"].map(
+        lambda cq: calendar_quarter_sort_key(str(cq)) <= ceiling if pd.notna(cq) else False
+    )
+    return panel.loc[mask].copy()
+
+
 def calendar_quarter_display(cq: str) -> str:
     """Human label for compare-mode bucket buttons."""
     if not cq or "-Q" not in cq:

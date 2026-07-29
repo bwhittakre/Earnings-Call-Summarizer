@@ -38,6 +38,7 @@ from period_dates import (  # noqa: E402
     apply_investable_cross_section_columns,
     calendar_quarter_sort_key,
     enrich_panel_period_columns,
+    filter_max_calendar_quarter,
     filter_min_calendar_quarter,
 )
 from spine_export import (  # noqa: E402
@@ -239,6 +240,15 @@ def main() -> int:
         ),
     )
     ap.add_argument(
+        "--max-calendar-quarter",
+        metavar="yyyy-Qn",
+        help=(
+            "Drop rows / Compare tabs after this period-end calendar quarter "
+            "(e.g. 2026-Q1), mirroring --min-calendar-quarter in the opposite "
+            "direction so the consolidated panel can be bounded on both ends."
+        ),
+    )
+    ap.add_argument(
         "--research-ticker",
         default="AMZN",
         help="Ticker for separate full-history research spine export (default: AMZN).",
@@ -327,6 +337,16 @@ def main() -> int:
         )
         if stacked.empty:
             print("No rows remain after --min-calendar-quarter filter.", file=sys.stderr)
+            return 1
+    if args.max_calendar_quarter:
+        before = len(stacked)
+        stacked = filter_max_calendar_quarter(stacked, args.max_calendar_quarter)
+        print(
+            f"Max calendar quarter {args.max_calendar_quarter}: "
+            f"kept {len(stacked)}/{before} rows"
+        )
+        if stacked.empty:
+            print("No rows remain after --max-calendar-quarter filter.", file=sys.stderr)
             return 1
     if "call_feature_available_date" not in stacked.columns:
         stacked = apply_feature_availability_dates(stacked)

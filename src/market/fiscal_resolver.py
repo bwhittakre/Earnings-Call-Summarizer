@@ -47,7 +47,10 @@ def _last_sunday_of_month(year: int, month: int) -> date:
 
 
 def _calendar_fiscal_quarter_end(fiscal_year: int, quarter_num: int) -> date:
-    calendar_year = fiscal_year - 1
+    # calendar_fiscal means the fiscal year label equals the calendar year the
+    # quarter falls in (e.g. FY2026-Q1 ends 2026-03-31), unlike offset/nvidia
+    # fiscal types where the FY label leads the calendar year.
+    calendar_year = fiscal_year
     month, day = _CALENDAR_QUARTER_END_MONTHS[quarter_num]
     return date(calendar_year, month, day)
 

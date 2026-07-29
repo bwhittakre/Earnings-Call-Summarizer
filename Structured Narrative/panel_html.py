@@ -481,7 +481,13 @@ def summarize_ticker_quarter(sub: pd.DataFrame) -> dict:
             "divergence_count": 0,
             "max_gap": None,
         }
-    gap_col = sub.get("abs_narrative_quant_gap", sub["narrative_quant_gap"].abs())
+    # dict.get()'s default is evaluated eagerly, so guard the fallback the same
+    # way as quant_panel.apply_derived_features: an all-None narrative_quant_gap
+    # column (zero quant coverage) makes .abs() raise TypeError on raw None.
+    if "abs_narrative_quant_gap" in sub.columns:
+        gap_col = sub["abs_narrative_quant_gap"]
+    else:
+        gap_col = pd.to_numeric(sub["narrative_quant_gap"], errors="coerce").abs()
     return {
         "level_avg": round(float(sub["llm_level"].mean()), 2) if sub["llm_level"].notna().any() else None,
         "delta_avg": round(float(sub["change_magnitude"].mean()), 2) if sub["change_magnitude"].notna().any() else None,

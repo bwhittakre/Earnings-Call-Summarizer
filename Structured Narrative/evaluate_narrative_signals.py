@@ -62,6 +62,7 @@ from period_dates import (  # noqa: E402
     apply_feature_availability_dates,
     apply_investable_cross_section_columns,
     enrich_panel_period_columns,
+    filter_max_calendar_quarter,
     filter_min_calendar_quarter,
 )
 from quant_mapping import CALL_DATE_QUANT_DIMS  # noqa: E402
@@ -623,6 +624,7 @@ def load_eval_frame(
     call_date_only: bool = True,
     quarters: list[str] | None = None,
     min_calendar_quarter: str | None = None,
+    max_calendar_quarter: str | None = None,
     recompute_cross_ticker_asof: bool = True,
     fetch_returns_if_missing: bool = True,
     horizons: list[str] | None = None,
@@ -647,6 +649,8 @@ def load_eval_frame(
         panel = enrich_panel_period_columns(panel)
         if min_calendar_quarter:
             panel = filter_min_calendar_quarter(panel, min_calendar_quarter)
+        if max_calendar_quarter:
+            panel = filter_max_calendar_quarter(panel, max_calendar_quarter)
         if panel.empty:
             continue
         if "call_feature_available_date" not in panel.columns:
@@ -1063,6 +1067,11 @@ def main() -> int:
         help="Drop rows before this period-end calendar quarter (e.g. 2021-Q3).",
     )
     ap.add_argument(
+        "--max-calendar-quarter",
+        metavar="yyyy-Qn",
+        help="Drop rows after this period-end calendar quarter (e.g. 2026-Q1).",
+    )
+    ap.add_argument(
         "--investable-only",
         action=argparse.BooleanOptionalAction,
         default=True,
@@ -1159,7 +1168,7 @@ def main() -> int:
 
     if args.quarters:
         quarters_filter: list[str] | None = list(args.quarters)
-    elif args.min_calendar_quarter:
+    elif args.min_calendar_quarter or args.max_calendar_quarter:
         quarters_filter = None  # full per-ticker history, trimmed by calendar quarter below
     else:
         quarters_filter = list(PILOT_OUTPUT_QUARTERS)
@@ -1192,6 +1201,7 @@ def main() -> int:
             call_date_only=not args.include_delayed,
             quarters=quarters_filter,
             min_calendar_quarter=args.min_calendar_quarter,
+            max_calendar_quarter=args.max_calendar_quarter,
             recompute_cross_ticker_asof=not args.no_recompute_asof,
             horizons=horizon_keys,
         )
@@ -1352,6 +1362,7 @@ def main() -> int:
         },
         "quarter_scope": list(quarters_filter) if quarters_filter else "full_history",
         "min_calendar_quarter": args.min_calendar_quarter,
+        "max_calendar_quarter": args.max_calendar_quarter,
         "call_date_only": not args.include_delayed,
         "investable_only_for_asof": args.investable_only,
         "recompute_cross_ticker_asof": not args.no_recompute_asof,

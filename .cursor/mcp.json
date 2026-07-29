@@ -26,6 +26,9 @@
       "env": {
         "ANGELO_WORKSPACE": "${workspaceFolder}"
       }
+    },
+    "quartr": {
+      "url": "https://mcp.quartr.com/mcp"
     }
   }
 }
