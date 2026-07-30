@@ -69,6 +69,8 @@ def main() -> int:
         ticker,
         "--new-quarter",
         quarter,
+        "--execution-mode",
+        "sync",
     ]
     if args.skip_quant:
         pipeline_cmd.append("--skip-quant")

@@ -20,6 +20,7 @@ don't get the synchronous path's automatic retry loop.
 """
 from __future__ import annotations
 
+import argparse
 import sys
 import time
 from dataclasses import dataclass
@@ -42,6 +43,130 @@ T = TypeVar("T", bound=BaseModel)
 # usual case here) often finish much faster in practice, but there is no
 # guaranteed fast tier, so the default poll loop has no timeout.
 DEFAULT_POLL_INTERVAL_SECONDS = 30.0
+EXECUTION_MODES = ("auto", "sync", "batch")
+# Anthropic Claude API global list prices, USD per million tokens. Cache
+# creation assumes the default 5-minute TTL. Batch mode receives the published
+# 50% discount across token categories.
+MODEL_PRICING_USD_PER_MTOK = {
+    "claude-sonnet-4-6": {
+        "input": 3.00,
+        "output": 15.00,
+        "cache_write": 3.75,
+        "cache_read": 0.30,
+    },
+}
+
+
+@dataclass(frozen=True)
+class ExecutionModeResolution:
+    """Resolved transport and the requested job cardinality that selected it."""
+
+    requested_mode: str
+    resolved_mode: str
+    ticker_count: int
+    quarter_count: int
+
+    @property
+    def item_count(self) -> int:
+        return self.ticker_count * self.quarter_count
+
+    def summary(self) -> str:
+        return (
+            f"Execution mode — requested: {self.requested_mode}, resolved: "
+            f"{self.resolved_mode} | requested job: {self.ticker_count} ticker(s) "
+            f"x {self.quarter_count} quarter(s) = {self.item_count} ticker-quarter(s)"
+        )
+
+
+def add_execution_mode_arguments(parser: argparse.ArgumentParser) -> None:
+    """Add the shared mode interface while retaining ``--batch`` as an alias."""
+    parser.add_argument(
+        "--execution-mode",
+        choices=EXECUTION_MODES,
+        default=None,
+        help="Scoring transport (default: auto; one ticker/quarter uses sync, larger jobs batch).",
+    )
+    parser.add_argument(
+        "--confirm-expensive-sync",
+        action="store_true",
+        help="Confirm full-price synchronous execution for jobs larger than one ticker-quarter.",
+    )
+    parser.add_argument(
+        "--batch",
+        action="store_true",
+        help="Deprecated alias for --execution-mode batch.",
+    )
+
+
+def resolve_execution_mode(
+    requested_mode: str | None,
+    *,
+    ticker_count: int,
+    quarter_count: int,
+    batch_alias: bool = False,
+    confirm_expensive_sync: bool = False,
+) -> ExecutionModeResolution:
+    """Resolve routing from requested cardinality, before registry skips.
+
+    This intentionally does not inspect prepared/scorable items: a historical
+    request with only one remaining registry gap must still use Batch pricing.
+    """
+    if ticker_count < 1 or quarter_count < 1:
+        raise ValueError("Execution-mode routing requires at least one ticker and one quarter.")
+    if batch_alias and requested_mode not in (None, "batch"):
+        raise ValueError(
+            "--batch conflicts with --execution-mode "
+            f"{requested_mode}; remove --batch or select --execution-mode batch."
+        )
+    requested = "batch" if batch_alias else (requested_mode or "auto")
+    resolved = (
+        "sync"
+        if requested == "auto" and ticker_count == 1 and quarter_count == 1
+        else "batch" if requested == "auto" else requested
+    )
+    if resolved == "sync" and ticker_count * quarter_count > 1 and not confirm_expensive_sync:
+        raise ValueError(
+            "Synchronous scoring for more than one ticker-quarter is full-price. "
+            "Use --confirm-expensive-sync to proceed, or select --execution-mode batch."
+        )
+    return ExecutionModeResolution(requested, resolved, ticker_count, quarter_count)
+
+
+def requested_quarter_count(args: argparse.Namespace) -> int:
+    """Return CLI-requested quarter cardinality, conservatively batch by default."""
+    quarters = getattr(args, "quarters", None) or []
+    if quarters:
+        return len(set(quarters))
+    if getattr(args, "new_quarter", None) or getattr(args, "baseline_quarter", None):
+        return 1
+    # Scope presets and unqualified company runs are historical/multi-quarter.
+    return 2
+
+
+def print_usage_report(client: AnthropicClient, mode: str, elapsed_seconds: float) -> None:
+    """Print usage, timing, and a list-price estimate when the model is known."""
+    print(client.usage_summary())
+    print(f"Elapsed: {elapsed_seconds:.2f}s")
+    discount = "Batch API discount applies" if mode == "batch" else "synchronous standard pricing"
+    prices = MODEL_PRICING_USD_PER_MTOK.get(client.model)
+    if prices is None:
+        print(
+            f"Estimated API cost: unavailable (no authoritative pricing map for {client.model}); "
+            f"{discount}."
+        )
+        return
+
+    multiplier = 0.5 if mode == "batch" else 1.0
+    estimated_cost = multiplier * (
+        client.total_input_tokens * prices["input"]
+        + client.total_output_tokens * prices["output"]
+        + client.total_cache_creation_tokens * prices["cache_write"]
+        + client.total_cache_read_tokens * prices["cache_read"]
+    ) / 1_000_000
+    print(
+        f"Estimated API cost: ${estimated_cost:.4f} USD "
+        f"(global list price; 5-minute cache writes; {discount})."
+    )
 
 
 @dataclass

@@ -41,6 +41,7 @@ from __future__ import annotations
 import argparse
 import os
 import sys
+import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
@@ -60,7 +61,13 @@ import run_dimension_scoring as dim_mod  # noqa: E402
 import run_delta_scoring as delta_mod  # noqa: E402
 import run_surprise_scoring as surprise_mod  # noqa: E402
 import run_novelty_scoring as novelty_mod  # noqa: E402
-from batch_scoring import run_batch  # noqa: E402
+from batch_scoring import (  # noqa: E402
+    add_execution_mode_arguments,
+    print_usage_report,
+    requested_quarter_count,
+    resolve_execution_mode,
+    run_batch,
+)
 from company_config import CompanyProfile  # noqa: E402
 from fiscal_period_util import normalize_fiscal_period, prior_fiscal_period  # noqa: E402
 from quarter_registry import ensure_registry  # noqa: E402
@@ -142,6 +149,14 @@ def _run_dimensions_group(
     # loop below just because there's nothing to submit to the Batch API.
     if not all_items:
         print("No dimension-scoring work across any ticker (checking for prior-only promotions)…")
+    elif getattr(args, "resolved_execution_mode", "batch") == "sync":
+        for ticker, prepared in per_ticker_prepared.items():
+            company_name = per_ticker_scope[ticker].company.company_name
+            for p in prepared:
+                print(f"[{ticker} {p['fp']}] scoring dimensions synchronously…")
+                scored_by_ticker[ticker][p["fp"]] = scorer.score(
+                    p["transcript"], company_name
+                )
     else:
         outcomes = run_batch(
             client, all_items, scorer.RESPONSE_MODEL,
@@ -296,14 +311,28 @@ def _run_combined_group(
         print(f"No {'/'.join(stage_names)} work across any ticker.")
         return written
 
-    outcomes = run_batch(
-        client, all_items, response_models,
-        poll_interval=args.batch_poll_interval, timeout=args.batch_timeout,
-    )
-
     scored: dict[tuple[str, str], dict[str, object]] = {}
+    resolved_mode = getattr(args, "resolved_execution_mode", "batch")
+    if resolved_mode == "sync":
+        for (stage, ticker), prepared in prepareds.items():
+            adapter = _COMBINED_ADAPTERS[stage]
+            scorer = scorers[stage]
+            company = scopes[(stage, ticker)].company
+            for p in prepared:
+                key = adapter.key_of(p)
+                print(f"[{stage} {ticker} {key}] scoring synchronously…")
+                scored.setdefault((stage, ticker), {})[key] = adapter.sync_score(
+                    scorer, company, p
+                )
+        outcomes = {}
+    else:
+        outcomes = run_batch(
+            client, all_items, response_models,
+            poll_interval=args.batch_poll_interval, timeout=args.batch_timeout,
+        )
+
     retry: list[tuple[str, str, str]] = []
-    for item in all_items:
+    for item in all_items if resolved_mode == "batch" else []:
         stage, ticker, key = item_owner[item.custom_id]
         outcome = outcomes.get(item.custom_id)
         if outcome is None or not outcome.ok:
@@ -397,9 +426,23 @@ def main() -> int:
         default=None,
         help="Max seconds to wait per batch (default: no timeout, up to Anthropic's 24h SLA).",
     )
+    add_execution_mode_arguments(ap)
     args = ap.parse_args()
 
     tickers = [t.strip().upper() for t in args.tickers]
+    try:
+        execution = resolve_execution_mode(
+            args.execution_mode,
+            ticker_count=len(set(tickers)),
+            quarter_count=requested_quarter_count(args),
+            batch_alias=args.batch,
+            confirm_expensive_sync=args.confirm_expensive_sync,
+        )
+    except ValueError as exc:
+        ap.error(str(exc))
+    args.resolved_execution_mode = execution.resolved_mode
+    print(execution.summary())
+    started = time.monotonic()
     # Preserve canonical dependency order regardless of how --stages was typed.
     stages = [s for s in STAGE_ORDER if s in args.stages]
 
@@ -430,20 +473,24 @@ def main() -> int:
     written: dict[str, dict[str, int]] = {t: {} for t in tickers}
 
     if "dimensions" in stages:
+        stage_started = time.monotonic()
         dims_written = _run_dimensions_group(tickers, per_ticker_args, client, use_rescue, provider, model, args)
+        print(f"Dimensions stage elapsed: {time.monotonic() - stage_started:.2f}s")
         for t, n in dims_written.items():
             written[t]["dimensions"] = n
 
     remaining = [s for s in COMBINED_STAGES if s in stages]
     if remaining:
+        stage_started = time.monotonic()
         combined_written = _run_combined_group(
             remaining, tickers, per_ticker_args, client, use_rescue, delta_context, provider, model, args
         )
+        print(f"Later stages elapsed: {time.monotonic() - stage_started:.2f}s")
         for t, stage_counts in combined_written.items():
             written[t].update(stage_counts)
 
     _print_summary(written)
-    print(client.usage_summary())
+    print_usage_report(client, execution.resolved_mode, time.monotonic() - started)
     return 0
 
 

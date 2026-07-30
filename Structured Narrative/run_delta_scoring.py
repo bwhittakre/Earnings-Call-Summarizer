@@ -30,6 +30,7 @@ import argparse
 import json
 import os
 import sys
+import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -61,7 +62,13 @@ from delta_scorer import (  # noqa: E402
     CONTEXT_BOTH_TRANSCRIPTS,
     VALID_CONTEXTS,
 )
-from batch_scoring import run_batch  # noqa: E402
+from batch_scoring import (  # noqa: E402
+    add_execution_mode_arguments,
+    print_usage_report,
+    requested_quarter_count,
+    resolve_execution_mode,
+    run_batch,
+)
 from company_config import CompanyProfile, get_company  # noqa: E402
 from quant_loader import load_quant_dim_z  # noqa: E402
 from quarter_registry import mark_delta, ensure_registry, has_delta  # noqa: E402
@@ -482,13 +489,7 @@ def main() -> int:
         action="store_true",
         help="Re-score deltas even when the registry marks them complete.",
     )
-    ap.add_argument(
-        "--batch",
-        action="store_true",
-        help="Submit delta-scoring calls as one Anthropic Message Batch "
-        "(~50%% cheaper than synchronous calls; async, can take minutes to "
-        "~24h). Any item that errors in the batch is retried synchronously.",
-    )
+    add_execution_mode_arguments(ap)
     ap.add_argument(
         "--batch-poll-interval",
         type=float,
@@ -503,6 +504,18 @@ def main() -> int:
         "default: no timeout, up to Anthropic's 24h SLA).",
     )
     args = ap.parse_args()
+    try:
+        execution = resolve_execution_mode(
+            args.execution_mode,
+            ticker_count=1,
+            quarter_count=requested_quarter_count(args),
+            batch_alias=args.batch,
+            confirm_expensive_sync=args.confirm_expensive_sync,
+        )
+    except ValueError as exc:
+        ap.error(str(exc))
+    print(execution.summary())
+    started = time.monotonic()
 
     try:
         scope = resolve_scope(args.ticker, args)
@@ -542,7 +555,7 @@ def main() -> int:
     prepared = prepare_items(scope, provider)
 
     scored_by_period: dict[str, ScoredDeltaTranscript] = {}
-    if args.batch and prepared:
+    if execution.resolved_mode == "batch" and prepared:
         items = [
             scorer.build_request(
                 p["transcript"], p["prior_period"], company.company_name,
@@ -585,7 +598,7 @@ def main() -> int:
             )
 
     n_written = finalize_and_write(ticker, company, scope, prepared, scored_by_period, model)
-    print(client.usage_summary())
+    print_usage_report(client, execution.resolved_mode, time.monotonic() - started)
     return 0 if n_written else 1
 
 

@@ -32,6 +32,7 @@ import argparse
 import json
 import os
 import sys
+import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -62,7 +63,13 @@ from dimension_scorer import (  # noqa: E402
     ALL_DIMENSIONS,
     QUANT_COMPARABLE_DIMENSIONS,
 )
-from batch_scoring import run_batch  # noqa: E402
+from batch_scoring import (  # noqa: E402
+    add_execution_mode_arguments,
+    print_usage_report,
+    requested_quarter_count,
+    resolve_execution_mode,
+    run_batch,
+)
 from company_config import CompanyProfile, get_company  # noqa: E402
 from quarter_registry import mark_dimensions, set_prior_only, ensure_registry, has_dimensions  # noqa: E402
 from quarter_merge import (  # noqa: E402
@@ -563,13 +570,7 @@ def main() -> int:
         action="store_true",
         help="Re-score quarters even when the registry marks them complete.",
     )
-    ap.add_argument(
-        "--batch",
-        action="store_true",
-        help="Submit dimension-scoring calls as one Anthropic Message Batch "
-        "(~50%% cheaper than synchronous calls; async, can take minutes to "
-        "~24h). Any item that errors in the batch is retried synchronously.",
-    )
+    add_execution_mode_arguments(ap)
     ap.add_argument(
         "--batch-poll-interval",
         type=float,
@@ -584,6 +585,18 @@ def main() -> int:
         "default: no timeout, up to Anthropic's 24h SLA).",
     )
     args = ap.parse_args()
+    try:
+        execution = resolve_execution_mode(
+            args.execution_mode,
+            ticker_count=1,
+            quarter_count=requested_quarter_count(args),
+            batch_alias=args.batch,
+            confirm_expensive_sync=args.confirm_expensive_sync,
+        )
+    except ValueError as exc:
+        ap.error(str(exc))
+    print(execution.summary())
+    started = time.monotonic()
 
     try:
         scope = resolve_scope(args.ticker, args)
@@ -625,7 +638,7 @@ def main() -> int:
     prepared, failed_coverage = prepare_items(scope, provider)
 
     scored_by_fp: dict[str, ScoredTranscript] = {}
-    if args.batch and prepared:
+    if execution.resolved_mode == "batch" and prepared:
         by_fp = {p["fp"]: p for p in prepared}
         items = [scorer.build_request(p["transcript"], company.company_name) for p in prepared]
         id_to_fp = {item.custom_id: p["fp"] for item, p in zip(items, prepared)}
@@ -656,7 +669,7 @@ def main() -> int:
             scored_by_fp[p["fp"]] = scorer.score(p["transcript"], company.company_name)
 
     n_written = finalize_and_write(ticker, company, scope, prepared, failed_coverage, scored_by_fp, model)
-    print(client.usage_summary())
+    print_usage_report(client, execution.resolved_mode, time.monotonic() - started)
     return 0 if n_written else 1
 
 

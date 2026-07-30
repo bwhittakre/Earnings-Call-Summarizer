@@ -46,7 +46,8 @@ FOCUS_DETAIL_BLOCKS = (
 
 PANEL_TABLE_HEADERS = (
     "<tr><th>Quarter</th><th>Dimension</th><th>Level</th><th>Delta</th><th>Surprise</th>"
-    "<th>Quant z</th><th>Gap</th><th>Flags</th><th></th></tr>"
+    "<th>Novelty</th><th>Quant PIT</th><th>Agree</th><th>Evidence</th>"
+    "<th>Gap</th><th>Flags</th><th></th></tr>"
 )
 
 BASE_CSS = """
@@ -293,7 +294,7 @@ def render_dimension_row(
       <td class="flags">{''.join(flags)}</td>
       <td class="expand"><button type="button" class="toggle" aria-expanded="false" data-target="{esc(row_id)}">+</button></td>
     </tr>
-    <tr class="detail-row" id="{esc(row_id)}" hidden><td colspan="{11 if show_quarter else 10}">{meta_html}{details_html}</td></tr>
+    <tr class="detail-row" id="{esc(row_id)}" hidden><td colspan="{12 if show_quarter else 11}">{meta_html}{details_html}</td></tr>
     """
 
 

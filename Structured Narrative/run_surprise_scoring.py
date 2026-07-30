@@ -26,6 +26,7 @@ import argparse
 import json
 import os
 import sys
+import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -52,7 +53,13 @@ from consensus_context import (  # noqa: E402
     try_load_quant_long,
 )
 from surprise_scorer import SurpriseScorer, ScoredSurpriseTranscript  # noqa: E402
-from batch_scoring import run_batch  # noqa: E402
+from batch_scoring import (  # noqa: E402
+    add_execution_mode_arguments,
+    print_usage_report,
+    requested_quarter_count,
+    resolve_execution_mode,
+    run_batch,
+)
 from company_config import CompanyProfile, get_company  # noqa: E402
 from quarter_merge import (  # noqa: E402
     load_json_obj,
@@ -440,13 +447,7 @@ def main() -> int:
         action="store_true",
         help="Re-score surprise even when the registry marks quarters complete.",
     )
-    ap.add_argument(
-        "--batch",
-        action="store_true",
-        help="Submit surprise-scoring calls as one Anthropic Message Batch "
-        "(~50%% cheaper than synchronous calls; async, can take minutes to "
-        "~24h). Any item that errors in the batch is retried synchronously.",
-    )
+    add_execution_mode_arguments(ap)
     ap.add_argument(
         "--batch-poll-interval",
         type=float,
@@ -461,6 +462,18 @@ def main() -> int:
         "default: no timeout, up to Anthropic's 24h SLA).",
     )
     args = ap.parse_args()
+    try:
+        execution = resolve_execution_mode(
+            args.execution_mode,
+            ticker_count=1,
+            quarter_count=requested_quarter_count(args),
+            batch_alias=args.batch,
+            confirm_expensive_sync=args.confirm_expensive_sync,
+        )
+    except ValueError as exc:
+        ap.error(str(exc))
+    print(execution.summary())
+    started = time.monotonic()
 
     api_key = os.getenv("ANTHROPIC_API_KEY")
     if not api_key:
@@ -500,7 +513,7 @@ def main() -> int:
     prepared = prepare_items(scope, provider)
 
     scored_by_fp: dict[str, ScoredSurpriseTranscript] = {}
-    if args.batch and prepared:
+    if execution.resolved_mode == "batch" and prepared:
         items = [
             scorer.build_request(p["transcript"], p["consensus_block"], company.company_name, p["level_block"])
             for p in prepared
@@ -538,7 +551,7 @@ def main() -> int:
             )
 
     n_written = finalize_and_write(ticker, company, scope, prepared, scored_by_fp, model)
-    print(client.usage_summary())
+    print_usage_report(client, execution.resolved_mode, time.monotonic() - started)
     return 0 if n_written else 1
 
 

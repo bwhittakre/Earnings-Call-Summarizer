@@ -112,11 +112,46 @@ Summary JSON (including scale hooks for future lazy-load sidecars): `output/cros
 
 Past quarters are **not re-scored** unless `--force` is passed. The registry tracks `dimensions_scored_at`, `delta_scored_at`, and `surprise_scored_at` per quarter.
 
-## LLM cost controls — prompt caching + Batch API
+## Dual narrative-scoring pipelines
 
-Two independent, stackable cost levers on `src/llm/anthropic_client.py`, aimed at large historical
-backfills (many company-quarters scored in one run) where LLM spend matters more than turnaround
-speed.
+All pipeline and stage entry points accept `--execution-mode auto|sync|batch` (default: `auto`):
+
+- **Sync, low latency:** exactly one requested ticker and one requested quarter. Dimensions finish
+  first; delta, surprise, and novelty then run synchronously. Live/post-call workflows explicitly
+  select this mode.
+- **Consolidated Batch, lower cost:** multiple requested quarters or tickers. Dimensions finish
+  first, then delta + surprise + novelty share the second batch. Anthropic discounts Message Batch
+  input and output tokens by 50%, with asynchronous turnaround (up to the provider's 24-hour SLA).
+
+Automatic routing uses the *requested* cardinality before registry skips. A historical request for
+eight quarters therefore stays in Batch mode even if only one registry gap remains.
+
+```powershell
+# Live single-quarter scoring (explicit low latency):
+python "Structured Narrative/run_company_pipeline.py" --ticker AMZN --new-quarter FY2026-Q1 --execution-mode sync
+
+# Historical company backfill (explicit Batch pricing):
+python "Structured Narrative/run_company_pipeline.py" --ticker AMZN --quarters FY2025-Q1 FY2025-Q2 --execution-mode batch
+
+# Cross-ticker consolidated Batch run:
+python "Structured Narrative/run_universe_batch.py" --tickers AMZN MSFT NVDA AAPL --new-quarter FY2026-Q1 --execution-mode batch
+```
+
+Explicit modes override `auto`. Full-price sync is guarded for jobs larger than one
+ticker-quarter; acknowledge it deliberately:
+
+```powershell
+python "Structured Narrative/run_company_pipeline.py" --ticker AMZN --quarters FY2025-Q1 FY2025-Q2 --execution-mode sync --confirm-expensive-sync
+```
+
+`--batch` remains a deprecated compatibility alias for `--execution-mode batch`. Combining it with
+a conflicting explicit mode is an error.
+
+Each run reports requested/resolved mode, requested job cardinality, stage and total elapsed time,
+input/output/cache tokens, and estimated USD cost when an authoritative model price is configured.
+Claude Sonnet 4.6 estimates use Anthropic's published global list prices ($3/M input, $15/M
+output, $3.75/M five-minute cache writes, and $0.30/M cache reads); Batch mode applies the
+published 50% discount. Unknown models report cost as unavailable.
 
 **Prompt caching (always on, no flag).** Every `AnthropicClient` call — sync (`complete_json`) or
 batch (`submit_batch`) — sends its `system` prompt as a cache-breakpointed block
@@ -128,18 +163,7 @@ dominates), so this trims a few percent of total spend — small but free; `clie
 reports `cache — write: …, read: …` so you can see the hit rate. `TokenUsage` carries
 `cache_creation_input_tokens` / `cache_read_input_tokens` for anyone parsing audit JSON directly.
 
-**Batch API (`--batch`, opt-in).** Anthropic's Message Batches API discounts **all** tokens
-(input + output, not just the system prompt) by ~50%, at the cost of asynchronous turnaround
-(Anthropic's SLA is "within 24h"; small batches — tens to low hundreds of items, the usual case
-here — often finish much faster in practice, but there's no guaranteed fast tier). Pass `--batch`
-to any of `run_dimension_scoring.py` / `run_delta_scoring.py` / `run_surprise_scoring.py` /
-`run_novelty_scoring.py`, or to `run_company_pipeline.py` to thread it through all four:
-
-```powershell
-python "Structured Narrative/run_company_pipeline.py" --ticker AMZN --scope five_year --batch
-```
-
-Mechanics: each script fetches all pending transcripts (fast/local, unchanged), builds one
+**Batch mechanics.** Each script fetches all pending transcripts (fast/local, unchanged), builds one
 `BatchRequestItem` per quarter via the scorer's `build_request()`, submits them as a single
 `AnthropicClient.submit_batch()` call, polls `get_batch()` until `processing_status == "ended"`
 (`--batch-poll-interval` seconds between polls, default 30; `--batch-timeout` to cap the wait,
@@ -152,10 +176,6 @@ delta/surprise/novelty never read each other's outputs, so nothing stops their b
 combined once dimensions is done (see `run_universe_batch.py` below). Any item that errors inside
 a batch (a request-level failure, or a JSON that fails to parse) is retried synchronously rather
 than failing the whole run — Batch API items don't get the synchronous path's automatic retry loop.
-
-Only use `--batch` for a run where the async wait is acceptable — it's the right default for a
-large backfill (e.g. the 10-year/20-company universe expansion), not for scoring one new quarter
-incrementally where you want the result in seconds.
 
 **Cross-ticker batch consolidation (`run_universe_batch.py`).** The four scripts above each batch
 one ticker's items for one stage — a run across N tickers still submits up to `4 * N` separate
@@ -180,8 +200,9 @@ python "Structured Narrative/run_universe_batch.py" --tickers MSFT NVDA AAPL --q
 python "Structured Narrative/run_universe_batch.py" --tickers AMZN MSFT --stages delta surprise novelty
 ```
 
-This is always a batch run (there's no sync mode) — for a single ticker, or when the async wait
-isn't worth it, use the four individual scripts (or `run_company_pipeline.py --batch`) instead.
+`run_universe_batch.py` also supports sync for a confirmed one-ticker/one-quarter request, but its
+main purpose is consolidated historical/multi-ticker Batch execution. When asynchronous wait is
+undesirable, use `--execution-mode sync` for a single ticker-quarter.
 Quant extraction, feature-panel building, and join/quant validation aren't LLM-batched and stay
 per-ticker via `run_company_pipeline.py --skip-llm` (or run individually) after this script
 finishes the LLM stages.

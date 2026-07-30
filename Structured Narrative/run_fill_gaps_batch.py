@@ -63,6 +63,7 @@ def main() -> int:
             "--ticker", ticker,
             "--skip-quant",
             "--quarters", *gaps,
+            "--execution-mode", "batch",
         ]
         result = subprocess.run(cmd, cwd=REPO)
         if result.returncode != 0:

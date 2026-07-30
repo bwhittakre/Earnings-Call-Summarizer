@@ -30,6 +30,39 @@ def _args(**overrides) -> argparse.Namespace:
 
 
 class DimensionsGroupRoutingTests(unittest.TestCase):
+    def test_sync_mode_scores_directly_without_batch_submission(self):
+        scorer = MagicMock()
+        scorer.build_request.return_value = MagicMock(custom_id="AMZN_dim")
+        scorer.score.return_value = "sync-result"
+        scope = MagicMock()
+        scope.company.company_name = "Amazon"
+        transcript = MagicMock()
+        transcript.raw_text = "text"
+
+        with patch.object(ub.dim_mod, "DimensionScorer", return_value=scorer), \
+             patch.object(ub.dim_mod, "resolve_scope", return_value=scope), \
+             patch.object(
+                 ub.dim_mod,
+                 "prepare_items",
+                 return_value=([{"fp": "FY2025-Q1", "transcript": transcript}], []),
+             ), \
+             patch.object(ub.dim_mod, "finalize_and_write", return_value=1) as finalize, \
+             patch.object(ub, "run_batch") as mock_run_batch:
+            written = ub._run_dimensions_group(
+                ["AMZN"],
+                {"AMZN": argparse.Namespace()},
+                client=MagicMock(),
+                use_rescue=False,
+                provider=MagicMock(),
+                model="test-model",
+                args=_args(resolved_execution_mode="sync"),
+            )
+
+        mock_run_batch.assert_not_called()
+        scorer.score.assert_called_once_with(transcript, "Amazon")
+        self.assertEqual(finalize.call_args.args[5], {"FY2025-Q1": "sync-result"})
+        self.assertEqual(written, {"AMZN": 1})
+
     def test_combines_all_tickers_into_one_batch_and_routes_results(self):
         """AMZN's item succeeds in the batch; MSFT's item is reported failed
         and must fall back to a synchronous scorer.score() retry -- both

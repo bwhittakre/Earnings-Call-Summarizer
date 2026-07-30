@@ -15,6 +15,7 @@ import argparse
 import json
 import os
 import sys
+import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -36,7 +37,13 @@ from delta_scorer import format_prior_summary  # noqa: E402
 from dimension_scorer import NARRATIVE_ONLY_DIMENSIONS  # noqa: E402
 from fiscal_period_util import prior_fiscal_period  # noqa: E402
 from novelty_scorer import NoveltyScorer, ScoredNoveltyTranscript  # noqa: E402
-from batch_scoring import run_batch  # noqa: E402
+from batch_scoring import (  # noqa: E402
+    add_execution_mode_arguments,
+    print_usage_report,
+    requested_quarter_count,
+    resolve_execution_mode,
+    run_batch,
+)
 from output_paths import company_artifact, company_layer, resolve_read_required  # noqa: E402
 from quarter_merge import (  # noqa: E402
     load_json_obj,
@@ -270,16 +277,22 @@ def main() -> int:
     ap.add_argument("--quarters", nargs="+", default=[])
     ap.add_argument("--extra-output-quarters", nargs="+", default=[])
     ap.add_argument("--force", action="store_true")
-    ap.add_argument(
-        "--batch",
-        action="store_true",
-        help="Submit novelty-scoring calls as one Anthropic Message Batch "
-        "(~50%% cheaper than synchronous calls; async, can take minutes to "
-        "~24h). Any item that errors in the batch is retried synchronously.",
-    )
+    add_execution_mode_arguments(ap)
     ap.add_argument("--batch-poll-interval", type=float, default=30.0)
     ap.add_argument("--batch-timeout", type=float, default=None)
     args = ap.parse_args()
+    try:
+        execution = resolve_execution_mode(
+            args.execution_mode,
+            ticker_count=1,
+            quarter_count=requested_quarter_count(args),
+            batch_alias=args.batch,
+            confirm_expensive_sync=args.confirm_expensive_sync,
+        )
+    except ValueError as exc:
+        ap.error(str(exc))
+    print(execution.summary())
+    started = time.monotonic()
 
     api_key = os.getenv("ANTHROPIC_API_KEY")
     if not api_key:
@@ -309,7 +322,7 @@ def main() -> int:
     prepared = prepare_items(scope, provider)
 
     scored_by_fp: dict[str, ScoredNoveltyTranscript] = {}
-    if args.batch and prepared:
+    if execution.resolved_mode == "batch" and prepared:
         items = [
             scorer.build_request(p["transcript"], p["prior_block"], company.company_name)
             for p in prepared
@@ -343,7 +356,7 @@ def main() -> int:
             scored_by_fp[p["fp"]] = scorer.score(p["transcript"], p["prior_block"], company.company_name)
 
     n_written = finalize_and_write(ticker, company, scope, prepared, scored_by_fp, model)
-    print(client.usage_summary())
+    print_usage_report(client, execution.resolved_mode, time.monotonic() - started)
     return 0 if n_written else 1
 
 

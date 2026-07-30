@@ -55,6 +55,7 @@ def main() -> int:
             "--skip-quant",
             "--force",
             "--quarters", *qs,
+            "--execution-mode", "batch",
         ]
         result = subprocess.run(cmd, cwd=REPO)
         if result.returncode != 0:

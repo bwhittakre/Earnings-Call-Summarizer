@@ -80,6 +80,8 @@ def main() -> int:
                     "AMZN",
                     "--quarters",
                     "FY2019-Q2",
+                    "--execution-mode",
+                    "batch",
                 ]
             )
             if code != 0:
@@ -114,6 +116,8 @@ def main() -> int:
                 "--quarters",
                 *qs,
                 "--from-registry",
+                "--execution-mode",
+                "batch",
             ]
         )
         if code != 0:

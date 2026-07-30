@@ -18,6 +18,7 @@ import argparse
 import os
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -32,14 +33,23 @@ from quarter_registry import (  # noqa: E402
     ensure_registry,
     is_quarter_complete,
 )
+from batch_scoring import (  # noqa: E402
+    add_execution_mode_arguments,
+    requested_quarter_count,
+    resolve_execution_mode,
+)
 
 
-def run_step(label: str, cmd: list[str], *, env: dict[str, str] | None = None) -> None:
+def run_step(label: str, cmd: list[str], *, env: dict[str, str] | None = None) -> float:
     print(f"\n=== {label} ===")
     print(" ".join(cmd))
     merged = apply_pit_env(env or os.environ.copy())
     merged.setdefault("TRANSCRIPT_PROVIDER", "local")
+    started = time.monotonic()
     subprocess.run(cmd, cwd=HERE.parent, check=True, env=merged)
+    elapsed = time.monotonic() - started
+    print(f"=== {label} elapsed: {elapsed:.2f}s ===")
+    return elapsed
 
 
 def assert_pit_spine(ticker: str) -> None:
@@ -109,14 +119,7 @@ def main() -> int:
         action="store_true",
         help="Disable PIT guardrails (post-call revisions, rescue judge).",
     )
-    ap.add_argument(
-        "--batch",
-        action="store_true",
-        help="Submit each LLM scoring stage as one Anthropic Message Batch "
-        "(~50%% cheaper; async, can take minutes to ~24h per stage). Passed "
-        "through to run_dimension_scoring.py / run_delta_scoring.py / "
-        "run_surprise_scoring.py / run_novelty_scoring.py.",
-    )
+    add_execution_mode_arguments(ap)
     ap.add_argument(
         "--batch-poll-interval",
         type=float,
@@ -150,6 +153,18 @@ def main() -> int:
     args = ap.parse_args()
     ticker = args.ticker.upper()
     sn = str(HERE)
+    try:
+        execution = resolve_execution_mode(
+            args.execution_mode,
+            ticker_count=1,
+            quarter_count=requested_quarter_count(args),
+            batch_alias=args.batch,
+            confirm_expensive_sync=args.confirm_expensive_sync,
+        )
+    except ValueError as exc:
+        ap.error(str(exc))
+    print(execution.summary())
+    pipeline_started = time.monotonic()
 
     if args.no_pit:
         os.environ["NARRATIVE_PIT"] = "0"
@@ -174,7 +189,11 @@ def main() -> int:
 
     scope_args = ["--scope", args.scope] if args.scope else []
     force_args = ["--force"] if args.force else []
-    batch_args = ["--batch"] if args.batch else []
+    batch_args = ["--execution-mode", execution.resolved_mode]
+    # The company-level resolver owns requested cardinality. A new-quarter run
+    # may insert a prior baseline internally without becoming a historical job.
+    if execution.resolved_mode == "sync":
+        batch_args.append("--confirm-expensive-sync")
     if args.batch_poll_interval is not None:
         batch_args.extend(["--batch-poll-interval", str(args.batch_poll_interval)])
     if args.batch_timeout is not None:
@@ -241,6 +260,7 @@ def main() -> int:
         [PY, f"{sn}/validate_panel_quant.py", "--ticker", ticker],
     )
     print(f"\nDone: {ticker} pipeline complete.")
+    print(f"Total elapsed: {time.monotonic() - pipeline_started:.2f}s")
     return 0
 
 
