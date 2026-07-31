@@ -51,10 +51,19 @@ def render_overview(st: Any, data: DashboardData) -> None:
                 "divergences": row["divergences"],
                 "dimensions": row["dimensions"],
                 "incomplete": row["incomplete"],
+                "quant_ok": row.get("quant_quality_ok", True),
+                "quant_flags": ", ".join(row.get("quant_quality_flags") or ()) or "—",
             }
             for row in scorecards
         ],
     )
+    flagged = [row for row in scorecards if row.get("quant_flagged")]
+    if flagged:
+        st.caption(
+            "Quant quality flags mark quarters where consensus was too small for a "
+            "percent surprise or a member measure was suppressed. Charts use the "
+            "clean decision quant_z."
+        )
     if scorecards:
         try:
             import pandas as pd  # type: ignore
@@ -95,8 +104,34 @@ def render_company_history(st: Any, data: DashboardData) -> None:
         return
     ticker = st.selectbox("Company", data.tickers)
     history = data.company_history(ticker)
-    st.caption(f"{len(history)} imported quarters")
-    _table(st, history)
+    flagged = sum(bool(row.get("quant_flagged")) for row in history)
+    st.caption(
+        f"{len(history)} imported quarters"
+        + (f"; {flagged} with quant quality flags" if flagged else "")
+    )
+    _table(
+        st,
+        [
+            {
+                **{
+                    key: row[key]
+                    for key in (
+                        "fiscal_period",
+                        "earnings_date",
+                        "narrative_level",
+                        "quant_z",
+                        "narrative_quant_gap",
+                        "divergences",
+                        "incomplete",
+                    )
+                    if key in row
+                },
+                "quant_ok": row.get("quant_quality_ok", True),
+                "quant_flags": ", ".join(row.get("quant_quality_flags") or ()) or "—",
+            }
+            for row in history
+        ],
+    )
     chart_rows = [
         {
             "fiscal_period": row["fiscal_period"],

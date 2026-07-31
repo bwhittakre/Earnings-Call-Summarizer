@@ -27,9 +27,12 @@ from output_paths import (  # noqa: E402
     resolve_read_parquet_or_csv,
     resolve_read_required,
 )
-from quant_loader import load_quant_guidance_revision_z_pit, load_quant_z_pit  # noqa: E402
-
-
+from quant_loader import (  # noqa: E402
+    load_quant_guidance_revision_z_pit,
+    load_quant_quality,
+    load_quant_z_pit,
+    load_quant_z_raw,
+)
 from quant_panel import agrees, narrative_quant_gap  # noqa: E402
 
 
@@ -201,23 +204,79 @@ def refresh_surprise(
     print(f"Updated {out}")
 
 
+def refresh_feature_panel_quant(
+    ticker: str,
+    quant_z: dict[str, dict[str, float | None]],
+    quant_z_raw: dict[str, dict[str, float | None]],
+    quant_quality: dict[str, dict[str, dict[str, object]]],
+    guidance_rev: dict[str, float | None],
+) -> None:
+    """Refresh decision/audit quant columns on an existing feature panel."""
+    panel_path = resolve_read_parquet_or_csv(ticker, "feature_panel", layer="parquet")
+    if panel_path is None:
+        print("  ! feature_panel not found; skipping panel quant refresh")
+        return
+    df = pd.read_parquet(panel_path) if panel_path.suffix == ".parquet" else pd.read_csv(panel_path)
+    if df.empty:
+        return
+
+    def row_update(r):
+        dim = str(r.get("dimension"))
+        fp = str(r.get("fiscal_period"))
+        quality = quant_quality.get(fp, {}).get(dim, {})
+        if dim == "guidance":
+            r["quant_z"] = None
+            r["quant_z_pit"] = None
+            r["quant_z_raw"] = None
+            r["quant_guidance_revision_z_pit"] = guidance_rev.get(fp)
+        elif dim in QUANT_COMPARABLE_DIMENSIONS:
+            qz = quant_z.get(fp, {}).get(dim)
+            r["quant_z"] = qz
+            r["quant_z_pit"] = qz
+            r["quant_z_raw"] = quant_z_raw.get(fp, {}).get(dim)
+            r["quant_guidance_revision_z_pit"] = None
+        else:
+            r["quant_z"] = None
+            r["quant_z_pit"] = None
+            r["quant_z_raw"] = None
+            r["quant_guidance_revision_z_pit"] = None
+        r["quant_quality_flags"] = quality.get("flags_json", "[]")
+        r["quant_quality_ok"] = quality.get("ok", True)
+        return r
+
+    df = df.apply(row_update, axis=1)
+    pq_out = company_artifact(ticker, "parquet", "feature_panel", "parquet", mkdir=True)
+    csv_out = company_artifact(ticker, "csv", "feature_panel", "csv", mkdir=True)
+    try:
+        df.to_parquet(pq_out, index=False)
+    except Exception as exc:
+        print(f"  ! feature panel parquet skipped: {exc}")
+    else:
+        print(f"Updated {pq_out}")
+    df.to_csv(csv_out, index=False)
+    print(f"Updated {csv_out}")
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="Refresh PIT quant anchors in LLM outputs.")
     ap.add_argument("--ticker", default="AMZN")
     args = ap.parse_args()
     ticker = args.ticker.upper()
     quant_z = load_quant_z_pit(ticker)
+    quant_z_raw = load_quant_z_raw(ticker)
+    quant_quality = load_quant_quality(ticker)
     guidance_rev = load_quant_guidance_revision_z_pit(ticker)
     if not quant_z:
         print(f"Error: no dimension_scores for {ticker}", file=sys.stderr)
         return 1
     if resolve_read(ticker, "dimension_view", "json", layer="json") is None:
-        print(f"  ! No dimension_view.json for {ticker}; skipping anchor refresh.")
-        return 0
-    refresh_dimension_view(ticker, quant_z)
-    refresh_level_csv(ticker, quant_z)
-    refresh_delta(ticker, quant_z)
-    refresh_surprise(ticker, quant_z, guidance_rev)
+        print(f"  ! No dimension_view.json for {ticker}; skipping LLM anchor refresh.")
+    else:
+        refresh_dimension_view(ticker, quant_z)
+        refresh_level_csv(ticker, quant_z)
+        refresh_delta(ticker, quant_z)
+        refresh_surprise(ticker, quant_z, guidance_rev)
+    refresh_feature_panel_quant(ticker, quant_z, quant_z_raw, quant_quality, guidance_rev)
     print(f"\nDone: refreshed PIT quant anchors for {ticker}.")
     return 0
 

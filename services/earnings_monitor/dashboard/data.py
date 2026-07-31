@@ -59,6 +59,36 @@ def _decode_json(value: Any, default: Any) -> Any:
         return default
 
 
+def _quality_flags(rows: Sequence[Mapping[str, Any]]) -> list[str]:
+    flags: set[str] = set()
+    for row in rows:
+        raw = row.get("quant_quality_flags")
+        parsed = _decode_json(raw, [])
+        if isinstance(parsed, list):
+            flags.update(str(flag) for flag in parsed if flag)
+        elif raw not in (None, ""):
+            flags.update(
+                part.strip() for part in str(raw).split("|") if part.strip()
+            )
+    return sorted(flags)
+
+
+def _quality_summary(rows: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    flags = _quality_flags(rows)
+    if not rows:
+        return {"quant_quality_ok": True, "quant_quality_flags": [], "quant_flagged": False}
+    explicit = [row.get("quant_quality_ok") for row in rows if row.get("quant_quality_ok") is not None]
+    if explicit:
+        ok = all(_truthy(value) for value in explicit) and not flags
+    else:
+        ok = not flags
+    return {
+        "quant_quality_ok": ok,
+        "quant_quality_flags": flags,
+        "quant_flagged": bool(flags) or not ok,
+    }
+
+
 @dataclass
 class DashboardData:
     """A stable dashboard facade over loose record dictionaries."""
@@ -318,6 +348,7 @@ class DashboardData:
         history: list[dict[str, Any]] = []
         for (_, period), rows in self._group_quarters(ticker=ticker).items():
             first = rows[0]
+            quality = _quality_summary(rows)
             history.append(
                 {
                     "fiscal_period": period,
@@ -340,6 +371,9 @@ class DashboardData:
                         for row in rows
                     ),
                     "incomplete": any(_truthy(row.get("history_incomplete")) for row in rows),
+                    "quant_quality_ok": quality["quant_quality_ok"],
+                    "quant_quality_flags": quality["quant_quality_flags"],
+                    "quant_flagged": quality["quant_flagged"],
                 }
             )
         history.sort(key=lambda row: _period_key(row["fiscal_period"]))
@@ -357,6 +391,7 @@ class DashboardData:
                 continue
             period = periods[-1]
             rows = grouped[(ticker, period)]
+            quality = _quality_summary(rows)
             scorecards.append(
                 {
                     "ticker": ticker,
@@ -382,6 +417,9 @@ class DashboardData:
                     "incomplete": any(
                         _truthy(row.get("history_incomplete")) for row in rows
                     ),
+                    "quant_quality_ok": quality["quant_quality_ok"],
+                    "quant_quality_flags": quality["quant_quality_flags"],
+                    "quant_flagged": quality["quant_flagged"],
                 }
             )
         return scorecards

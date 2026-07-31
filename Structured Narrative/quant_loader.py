@@ -8,6 +8,7 @@ import pandas as pd
 from dimension_scorer import QUANT_COMPARABLE_DIMENSIONS
 from quant_mapping import CALL_DATE_QUANT_DIMS
 from output_paths import resolve_read_parquet_or_csv
+from quant_quality import flags_from_storage, flags_to_storage, quality_ok
 
 
 def _read_dimension_scores(ticker: str) -> pd.DataFrame | None:
@@ -101,6 +102,50 @@ def load_quant_guidance_revision_z_pit(ticker: str) -> dict[str, float | None]:
             out[fp] = round(float(r[col]), 3)
         else:
             out[fp] = None
+    return out
+
+
+def load_quant_z_raw(ticker: str) -> dict[str, dict[str, float | None]]:
+    """Audit mean-of-members PIT z (pre-median decision aggregate)."""
+    df = _read_dimension_scores(ticker)
+    if df is None or "fiscal_period" not in df.columns:
+        return {}
+    out: dict[str, dict[str, float | None]] = {}
+    for _, r in df.iterrows():
+        fp = str(r["fiscal_period"])
+        vals: dict[str, float | None] = {}
+        for dim in QUANT_COMPARABLE_DIMENSIONS:
+            if dim == "guidance":
+                vals[dim] = None
+                continue
+            col = f"dim_{dim}_z_mean_audit"
+            if col in df.columns and pd.notna(r[col]):
+                vals[dim] = round(float(r[col]), 3)
+            else:
+                vals[dim] = None
+        out[fp] = vals
+    return out
+
+
+def load_quant_quality(ticker: str) -> dict[str, dict[str, dict[str, object]]]:
+    """fiscal_period -> dimension -> {flags: list[str], ok: bool}."""
+    df = _read_dimension_scores(ticker)
+    if df is None or "fiscal_period" not in df.columns:
+        return {}
+    out: dict[str, dict[str, dict[str, object]]] = {}
+    for _, r in df.iterrows():
+        fp = str(r["fiscal_period"])
+        vals: dict[str, dict[str, object]] = {}
+        for dim in QUANT_COMPARABLE_DIMENSIONS:
+            flag_col = f"dim_{dim}_quality_flags"
+            ok_col = f"dim_{dim}_quality_ok"
+            flags = flags_from_storage(r.get(flag_col)) if flag_col in df.columns else []
+            if ok_col in df.columns and pd.notna(r.get(ok_col)):
+                ok = bool(r.get(ok_col))
+            else:
+                ok = quality_ok(flags)
+            vals[dim] = {"flags": flags, "ok": ok, "flags_json": flags_to_storage(flags)}
+        out[fp] = vals
     return out
 
 

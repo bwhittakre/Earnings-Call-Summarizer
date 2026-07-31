@@ -28,6 +28,7 @@ from company_config import get_company, resolve_company_ids
 from excel_export import write_excel
 from fiscal_period_util import company_fiscal_period
 from output_paths import company_artifact
+from quant_quality import pct_fields_for_consensus
 
 RETURN_MODEL = "EFMUSALTS"
 MIN_CONSENSUS_QUARTERS = 8
@@ -262,17 +263,23 @@ def build(company):
                 pre_mean = _num(pre["defmeanest"]) if pre is not None else None
                 post_mean = _num(post7["defmeanest"]) if post7 is not None else None
 
-                surprise = surprise_pct = None
+                surprise = None
                 if actual_val is not None and pre_mean is not None:
                     surprise = actual_val - pre_mean
-                    if pre_mean != 0:
-                        surprise_pct = surprise / abs(pre_mean)
 
-                revision = revision_pct = None
+                revision = None
                 if pre_mean is not None and post_mean is not None:
                     revision = post_mean - pre_mean
-                    if pre_mean != 0:
-                        revision_pct = revision / abs(pre_mean)
+
+                pct_fields = pct_fields_for_consensus(
+                    surprise=surprise,
+                    revision=revision,
+                    pre_mean=pre_mean,
+                    actual=actual_val,
+                    measure=mcode,
+                )
+                surprise_pct = pct_fields["earnings_surprise_pct"]
+                revision_pct = pct_fields["fwd_estimate_revision_pct"]
 
                 if ptype == 3:
                     tgt_label = company_fiscal_period(ticker, tgt)
@@ -312,6 +319,8 @@ def build(company):
                     "earnings_surprise_pct": surprise_pct,
                     "fwd_estimate_revision": revision,
                     "fwd_estimate_revision_pct": revision_pct,
+                    "pct_surprise_usable": pct_fields["pct_surprise_usable"],
+                    "near_zero_consensus": pct_fields["near_zero_consensus"],
                     "unittype": pre["unittype"] if pre is not None else None,
                     "defscale": _num(pre["defscale"]) if pre is not None else None,
                     **alpha,

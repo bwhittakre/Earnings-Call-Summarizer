@@ -7,7 +7,8 @@ AMZN Narrative-Quant Z-Score / Dimension-Score Analysis Layer
 Read-only layer on top of the extractor output
 (``output/AMZN_narrative_quant.parquet``). It makes the raw point-in-time
 signals *comparative* by standardizing them against AMZN's own history, and
-rolls the standardized measures into a per-quarter "dimension score" vector.
+rolls the standardized measures into a per-quarter "dimension score" vector
+(median of member measure zs; mean retained as audit).
 
 Why z-scores
 ------------
@@ -33,9 +34,10 @@ Grouping is per ``(measure, period_role)``:
 Dimension scores (bridge to the future LLM dimension score)
 ----------------------------------------------------------
 Surviving measures are mapped to fixed business dimensions. A dimension's
-z-score for an event is the mean of its member measure z-scores. The output is
-one vector per fiscal quarter -- deliberately the same shape the LLM narrative
-dimension scores will later occupy, so Focus 1 slots in beside it.
+decision z-score for an event is the median of its member measure z-scores
+(mean retained as ``dim_*_z_mean_audit``). The output is one vector per fiscal
+quarter -- deliberately the same shape the LLM narrative dimension scores will
+later occupy, so Focus 1 slots in beside it.
 
 Sign convention: kept RAW (e.g. a capex "beat" = higher capex stays positive;
 higher stock-based comp stays positive). Dimension-level sign interpretation is
@@ -50,14 +52,21 @@ Usage:
   python narrative_zscore.py --robust   # median/MAD (fat-tail-resistant) z
 """
 
+import argparse
 import os
 import sys
-import argparse
 
 import numpy as np
 import pandas as pd
 
 from output_paths import company_artifact, resolve_read_parquet_or_csv
+from quant_quality import (
+    consensus_usable,
+    dimension_quality_flags,
+    flags_from_storage,
+    flags_to_storage,
+    quality_ok,
+)
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
@@ -145,15 +154,71 @@ def add_group_z(df: pd.DataFrame, roles, val: str, prefix: str, robust: bool):
     return df
 
 
+def apply_consensus_gates(df: pd.DataFrame) -> pd.DataFrame:
+    """Null percent surprise/revision when consensus is not a usable base.
+
+    Re-applies the extractor gate so historical narrative_quant tables can be
+    cleaned without a Snowflake re-pull. Preserves native-unit surprise/revision
+    and keeps ungated percent copies for audit z-scores.
+    """
+    out = df.copy()
+    if "earnings_surprise_pct" in out.columns:
+        out["earnings_surprise_pct_ungated"] = out["earnings_surprise_pct"]
+    if "fwd_estimate_revision_pct" in out.columns:
+        out["fwd_estimate_revision_pct_ungated"] = out["fwd_estimate_revision_pct"]
+    if "consensus_pre_mean" not in out.columns:
+        out["pct_surprise_usable"] = True
+        out["near_zero_consensus"] = False
+        return out
+
+    usable = []
+    near_zero = []
+    for _, row in out.iterrows():
+        ok = consensus_usable(
+            row.get("consensus_pre_mean"),
+            row.get("actual_value"),
+            row.get("measure"),
+        )
+        consensus = row.get("consensus_pre_mean")
+        has_consensus = pd.notna(consensus)
+        usable.append(bool(ok))
+        near_zero.append(bool(has_consensus and not ok))
+    out["pct_surprise_usable"] = usable
+    out["near_zero_consensus"] = near_zero
+    blocked = ~out["pct_surprise_usable"]
+    if "earnings_surprise_pct" in out.columns:
+        out.loc[blocked, "earnings_surprise_pct"] = np.nan
+    if "fwd_estimate_revision_pct" in out.columns:
+        out.loc[blocked, "fwd_estimate_revision_pct"] = np.nan
+    return out
+
+
 # ── Build ───────────────────────────────────────────────────────────────────
 def build_enriched(df: pd.DataFrame, robust: bool) -> pd.DataFrame:
-    df = df.copy()
+    df = apply_consensus_gates(df)
     df["earnings_datetime"] = pd.to_datetime(df["earnings_datetime"])
 
     df = add_group_z(df, [SURPRISE_ROLE], "earnings_surprise_pct",
                      "earnings_surprise_pct", robust)
     df = add_group_z(df, list(REVISION_ROLES), "fwd_estimate_revision_pct",
                      "fwd_estimate_revision_pct", robust)
+    # Ungated audit zs (same PIT method on pre-gate percent surprises).
+    if "earnings_surprise_pct_ungated" in df.columns:
+        df = add_group_z(
+            df,
+            [SURPRISE_ROLE],
+            "earnings_surprise_pct_ungated",
+            "earnings_surprise_pct_ungated",
+            robust,
+        )
+    if "fwd_estimate_revision_pct_ungated" in df.columns:
+        df = add_group_z(
+            df,
+            list(REVISION_ROLES),
+            "fwd_estimate_revision_pct_ungated",
+            "fwd_estimate_revision_pct_ungated",
+            robust,
+        )
 
     # Event-level forward-return (alpha) z, broadcast back to every row.
     ev = (df.dropna(subset=["alpha_spec_0_90"])
@@ -194,33 +259,104 @@ def build_dimension_scores(df: pd.DataFrame) -> pd.DataFrame:
 
     present = set(df["measure"].unique())
 
-    def dim_series(spec, zsuffix):
-        """Mean of member measure z-scores per event for one dimension."""
+    def _member_frame(spec, zsuffix, *, ungated: bool = False):
         fam = spec["family"]
         if fam == "surprise":
-            col = f"earnings_surprise_pct_{zsuffix}"
-            sub = df[df["period_role"] == SURPRISE_ROLE]
+            prefix = (
+                "earnings_surprise_pct_ungated"
+                if ungated
+                else "earnings_surprise_pct"
+            )
+            col = f"{prefix}_{zsuffix}"
+            sub = df[df["period_role"] == SURPRISE_ROLE].copy()
         else:  # revision -> guidance
-            col = f"fwd_estimate_revision_pct_{zsuffix}"
-            sub = df[df["period_role"].isin(GUIDANCE_ROLES)]
+            prefix = (
+                "fwd_estimate_revision_pct_ungated"
+                if ungated
+                else "fwd_estimate_revision_pct"
+            )
+            col = f"{prefix}_{zsuffix}"
+            sub = df[df["period_role"].isin(GUIDANCE_ROLES)].copy()
 
         if spec["measures"] != "all":
             members = [m for m in spec["measures"] if m in present]
             sub = sub[sub["measure"].isin(members)]
+        return sub, col
 
-        return (sub.dropna(subset=[col])
-                   .groupby("fiscal_period")[col].mean())
+    def dim_series(spec, zsuffix, *, how: str, ungated: bool = False):
+        """Aggregate member measure z-scores per event (median decision / mean audit)."""
+        sub, col = _member_frame(spec, zsuffix, ungated=ungated)
+        if col not in sub.columns or sub.empty:
+            return pd.Series(dtype=float)
+        grouped = sub.dropna(subset=[col]).groupby("fiscal_period")[col]
+        if how == "median":
+            return grouped.median()
+        if how == "mean":
+            return grouped.mean()
+        if how == "count":
+            return grouped.count()
+        raise ValueError(f"Unknown aggregation {how!r}")
+
+    def dim_flags(spec) -> pd.Series:
+        """Per-fiscal-period quality flags for one surprise-family dimension."""
+        if spec["family"] != "surprise":
+            return pd.Series(dtype=object)
+        sub, col = _member_frame(spec, "z_pit")
+        if sub.empty or col not in sub.columns:
+            return pd.Series(dtype=object)
+        flag_rows: dict[str, str] = {}
+        for fp, g in sub.groupby("fiscal_period"):
+            member_zs = {
+                int(m): (float(z) if pd.notna(z) else None)
+                for m, z in zip(g["measure"], g[col], strict=False)
+            }
+            # Prefer measure-level near_zero marks; fall back to missing z with
+            # non-usable consensus when the long table carries gate columns.
+            if "near_zero_consensus" in g.columns:
+                near_zero = {
+                    int(m): bool(flag)
+                    for m, flag in zip(g["measure"], g["near_zero_consensus"], strict=False)
+                }
+            else:
+                near_zero = {
+                    int(m): False
+                    for m in g["measure"]
+                }
+            flags = dimension_quality_flags(
+                member_zs_clean=member_zs,
+                member_near_zero=near_zero,
+            )
+            flag_rows[str(fp)] = flags_to_storage(flags)
+        return pd.Series(flag_rows)
 
     for dim, spec in DIMENSIONS.items():
-        pit = dim_series(spec, "z_pit")
-        full = dim_series(spec, "z")
+        pit = dim_series(spec, "z_pit", how="median")
+        full = dim_series(spec, "z", how="median")
+        # Audit mean uses ungated member zs so explosive denominators remain visible.
+        pit_mean = dim_series(spec, "z_pit", how="mean", ungated=True)
+        if pit_mean.empty:
+            pit_mean = dim_series(spec, "z_pit", how="mean", ungated=False)
+        members = dim_series(spec, "z_pit", how="count")
         if dim == "guidance":
             # Call-date quant for guidance is null; revision z is T+7d delayed feature.
             spine["dim_guidance_z"] = np.nan
             spine["dim_guidance_revision_z_pit"] = spine["fiscal_period"].map(pit)
+            spine["dim_guidance_z_mean_audit"] = np.nan
+            spine["dim_guidance_z_members"] = spine["fiscal_period"].map(members)
+            spine["dim_guidance_quality_flags"] = "[]"
+            spine["dim_guidance_quality_ok"] = True
         else:
             spine[f"dim_{dim}_z"] = spine["fiscal_period"].map(pit)
             spine[f"dim_{dim}_z_fullsample"] = spine["fiscal_period"].map(full)
+            spine[f"dim_{dim}_z_mean_audit"] = spine["fiscal_period"].map(pit_mean)
+            spine[f"dim_{dim}_z_members"] = spine["fiscal_period"].map(members)
+            flags = dim_flags(spec)
+            spine[f"dim_{dim}_quality_flags"] = (
+                spine["fiscal_period"].map(flags).fillna("[]")
+            )
+            spine[f"dim_{dim}_quality_ok"] = spine[f"dim_{dim}_quality_flags"].map(
+                lambda raw: quality_ok(flags_from_storage(raw))
+            )
 
     return spine
 
