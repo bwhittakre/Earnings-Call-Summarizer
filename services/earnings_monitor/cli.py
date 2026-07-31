@@ -6,26 +6,48 @@ import argparse
 import json
 import logging
 import time
+from datetime import datetime, timedelta
 
 from .config import MonitorConfig
 from .diagnostics import diagnostics_ok, run_startup_diagnostics
-from .freshness import AlwaysFreshProbe
+from .freshness import StructuredNarrativeFreshnessProbe
+from .models import EarningsEvent
 from .notifications import SMTPMailSender, TwoEmailNotifier
-from .providers import LocalInboxProvider
+from .providers import (
+    LocalInboxProvider,
+    ManualEventProvider,
+    WatchedEventManifestProvider,
+)
 from .service import EarningsMonitor
 from .state import OperationalState
+from .storage import CompletedEventArtifactPublisher, S3ArtifactStore
 from .workflow import LazyStructuredNarrativeWorkflow
 
 
 def build_local_monitor(config: MonitorConfig) -> EarningsMonitor:
-    if config.provider != "local":
+    if config.provider not in {"local", "manual", "watched"}:
         raise RuntimeError(
-            "CLI supports the local provider directly. Inject QuartrAdapter from an API/MCP host."
+            "CLI provider must be 'manual', 'local', or 'watched'."
         )
-    state = OperationalState(config.database_path)
+    state = OperationalState(
+        config.database_path,
+        lease_timeout=timedelta(seconds=config.lease_timeout_seconds),
+    )
     state.initialize()
-    provider = LocalInboxProvider(config.inbox_path)
-    workflow = LazyStructuredNarrativeWorkflow(config.repo_root)
+    transcript_provider = LocalInboxProvider(config.inbox_path)
+    if config.provider == "manual":
+        event_provider = ManualEventProvider()
+    elif config.provider == "watched":
+        if config.event_manifest_path is None:
+            raise RuntimeError("watched provider requires EARNINGS_MONITOR_EVENT_MANIFESTS")
+        config.event_manifest_path.mkdir(parents=True, exist_ok=True)
+        event_provider = WatchedEventManifestProvider(config.event_manifest_path)
+    else:
+        event_provider = transcript_provider
+    freshness = StructuredNarrativeFreshnessProbe(config.repo_root)
+    workflow = LazyStructuredNarrativeWorkflow(
+        config.repo_root, spine_tickers=config.tickers
+    )
     notifier = None
     if config.email_enabled:
         notifier = TwoEmailNotifier(
@@ -33,38 +55,123 @@ def build_local_monitor(config: MonitorConfig) -> EarningsMonitor:
             sender=SMTPMailSender(config),
             sender_address=config.smtp_from or "",
             recipients=config.smtp_to,
+            config=config,
         )
+    artifact_publisher = None
+    if config.r2_enabled:
+        store = S3ArtifactStore(
+            config.r2_bucket or "",
+            prefix=config.r2_prefix,
+            endpoint_url=config.r2_endpoint_url,
+            access_key_id=config.r2_access_key_id,
+            secret_access_key=config.r2_secret_access_key,
+        )
+        artifact_publisher = CompletedEventArtifactPublisher(store, config.repo_root)
     return EarningsMonitor(
         config=config,
         state=state,
-        event_provider=provider,
-        transcript_provider=provider,
-        freshness=AlwaysFreshProbe(),
+        event_provider=event_provider,
+        transcript_provider=transcript_provider,
+        freshness=freshness,
         workflow=workflow,
         notifier=notifier,
+        artifact_publisher=artifact_publisher,
     )
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Local earnings-call monitor")
+    parser = argparse.ArgumentParser(description="Roz local earnings-call monitor")
     parser.add_argument("--verbose", action="store_true")
     subparsers = parser.add_subparsers(dest="command", required=True)
     subparsers.add_parser("diagnose", help="Validate local startup access")
     subparsers.add_parser("once", help="Run one discovery and processing cycle")
+    arm_parser = subparsers.add_parser(
+        "arm", help="Arm or correct one manually scheduled earnings event"
+    )
+    arm_parser.add_argument("--ticker", required=True)
+    arm_parser.add_argument("--period", required=True)
+    arm_parser.add_argument("--report-at", required=True)
+    arm_parser.add_argument("--call-at", required=True)
+    arm_parser.add_argument("--event-id")
+    arm_parser.add_argument("--title", default="")
+    arm_parser.add_argument("--source-url")
     run_parser = subparsers.add_parser("run", help="Run continuously")
     run_parser.add_argument("--interval", type=int, default=None)
+    worker_parser = subparsers.add_parser(
+        "worker", help="Run the local workflow job processor"
+    )
+    worker_parser.add_argument("--interval", type=int, default=None)
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO)
 
     config = MonitorConfig.from_env()
     monitor = build_local_monitor(config)
+    if args.command == "arm":
+        ticker = args.ticker.strip().upper()
+        if ticker not in config.tickers:
+            parser.error(
+                f"{ticker} is not in EARNINGS_MONITOR_TICKERS={config.tickers}"
+            )
+        try:
+            report_at = datetime.fromisoformat(
+                args.report_at.strip().replace("Z", "+00:00")
+            )
+            call_at = datetime.fromisoformat(
+                args.call_at.strip().replace("Z", "+00:00")
+            )
+            if report_at.tzinfo is None or call_at.tzinfo is None:
+                raise ValueError("timestamps must include a UTC offset")
+            event = EarningsEvent(
+                provider_event_id=(
+                    args.event_id or f"manual:{ticker}:{args.period.upper()}"
+                ),
+                ticker=ticker,
+                fiscal_period=args.period.upper(),
+                report_at=report_at,
+                call_at=call_at,
+                title=args.title,
+                source_url=args.source_url,
+            )
+        except ValueError as exc:
+            parser.error(str(exc))
+        monitored = monitor.state.arm_event(event)
+        event = monitored.event
+        print(
+            json.dumps(
+                {
+                    "event_id": event.provider_event_id,
+                    "ticker": event.ticker,
+                    "period": event.fiscal_period,
+                    "report_at": event.report_at.isoformat(),
+                    "call_at": event.call_at.isoformat(),
+                    "state": monitored.state.value,
+                },
+                sort_keys=True,
+            )
+        )
+        return 0
     workflow = monitor.workflow
     diagnostics = run_startup_diagnostics(
         config,
         provider_check=lambda: (
-            config.inbox_path.is_dir(),
-            str(config.inbox_path),
+            (
+                config.inbox_path.is_dir()
+                and (
+                    config.provider != "watched"
+                    or (
+                        config.event_manifest_path is not None
+                        and config.event_manifest_path.is_dir()
+                    )
+                )
+            ),
+            (
+                f"inbox={config.inbox_path}; "
+                f"event_manifests={config.event_manifest_path}"
+                if config.provider == "watched"
+                else str(config.inbox_path)
+            ),
         ),
+        freshness_check=getattr(monitor.freshness, "available", None),
         workflow_check=getattr(workflow, "available", None),
     )
     if args.command == "diagnose":
@@ -76,6 +183,9 @@ def main(argv: list[str] | None = None) -> int:
             if check.required and not check.ok:
                 logging.error("%s: %s", check.name, check.detail)
         return 2
+    for check in diagnostics:
+        if not check.ok:
+            logging.warning("%s: %s", check.name, check.detail)
     if args.command == "once":
         print(json.dumps(monitor.run_cycle(), sort_keys=True))
         return 0
@@ -84,8 +194,17 @@ def main(argv: list[str] | None = None) -> int:
         parser.error("--interval must be positive")
     try:
         while True:
-            logging.info("cycle=%s", monitor.run_cycle())
-            time.sleep(interval)
+            if args.command == "worker":
+                processed = monitor.run_next_job()
+                if processed:
+                    logging.info("processed one workflow job")
+                    continue
+                time.sleep(interval)
+            else:
+                logging.info(
+                    "cycle=%s", monitor.run_cycle(process_jobs=False)
+                )
+                time.sleep(interval)
     except KeyboardInterrupt:
         return 0
 

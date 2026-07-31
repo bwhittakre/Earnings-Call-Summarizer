@@ -12,6 +12,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable, Mapping, Sequence
 
+from .config import PILOT_TICKERS
 from .storage import (
     DatasetWriteResult,
     normalize_company_quarter_record,
@@ -19,7 +20,7 @@ from .storage import (
 )
 
 
-DEFAULT_TICKERS = ("AMZN", "MSFT", "NVDA", "AAPL")
+DEFAULT_TICKERS = PILOT_TICKERS
 REQUIRED_SCORE_STAGES = (
     "dimensions_scored_at",
     "delta_scored_at",
@@ -27,6 +28,19 @@ REQUIRED_SCORE_STAGES = (
     "novelty_scored_at",
 )
 _PERIOD_RE = re.compile(r"^FY(\d{4})-Q([1-4])$", re.IGNORECASE)
+
+
+def configured_tickers() -> tuple[str, ...]:
+    raw = os.environ.get("EARNINGS_MONITOR_TICKERS")
+    if not raw:
+        return DEFAULT_TICKERS
+    return tuple(
+        dict.fromkeys(
+            ticker.strip().upper()
+            for ticker in raw.split(",")
+            if ticker.strip()
+        )
+    )
 
 
 def _utc_now() -> str:
@@ -109,6 +123,10 @@ class HistoryImporter:
         if best_score:
             return best_candidate
         # Keep a deterministic path for useful missing-source diagnostics.
+        # When the caller already pointed at an output directory, do not nest
+        # another Structured Narrative/output segment beneath it.
+        if self.source_root.name.lower() == "output":
+            return self.source_root
         if self.source_root.name.lower() == "structured narrative":
             return self.source_root / "output"
         return self.source_root / "Structured Narrative" / "output"
@@ -277,6 +295,12 @@ class HistoryImporter:
 
     def run(self, *, prefer_parquet: bool = True) -> HistoryImportResult:
         records, missing = self.collect()
+        if not records:
+            raise RuntimeError(
+                "History import found 0 records under "
+                f"{self.output_root}; refusing to overwrite "
+                f"{self.destination}. Check STRUCTURED_NARRATIVE_OUTPUT_DIR."
+            )
         dataset = write_company_quarter_dataset(
             self.destination,
             records,
@@ -328,7 +352,7 @@ def main(argv: Iterable[str] | None = None) -> int:
         default=Path("data/earnings_monitor/company_quarters.parquet"),
         type=Path,
     )
-    parser.add_argument("--tickers", nargs="+", default=list(DEFAULT_TICKERS))
+    parser.add_argument("--tickers", nargs="+", default=list(configured_tickers()))
     parser.add_argument("--jsonl", action="store_true", help="Force portable JSONL output")
     args = parser.parse_args(list(argv) if argv is not None else None)
     result = import_history(

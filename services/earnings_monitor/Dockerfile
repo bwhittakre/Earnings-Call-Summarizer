@@ -4,22 +4,28 @@ FROM python:3.12-slim
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
-    DATA_DIR=/data
+    DATA_DIR=/data \
+    PYTHONPATH=/app \
+    HOME=/home/app \
+    STREAMLIT_BROWSER_GATHER_USAGE_STATS=false
 
 WORKDIR /app
 
 RUN addgroup --system app && adduser --system --ingroup app app \
-    && mkdir -p /data && chown app:app /data
+    && mkdir -p /data /home/app \
+    && chown app:app /data /home/app
 
 COPY requirements.txt /tmp/root-requirements.txt
-COPY "Structured Narrative/requirements.txt" /tmp/structured-narrative-requirements.txt
+COPY ["Structured Narrative/requirements.txt", "/tmp/structured-narrative-requirements.txt"]
 COPY services/earnings_monitor/requirements.txt /tmp/service-requirements.txt
 RUN pip install --requirement /tmp/root-requirements.txt \
     --requirement /tmp/structured-narrative-requirements.txt \
     --requirement /tmp/service-requirements.txt
 
 COPY . /app
-RUN chmod +x /app/deploy/local/entrypoint.sh && chown -R app:app /app /data
+RUN sed -i 's/\r$//' /app/deploy/local/entrypoint.sh \
+    && chmod +x /app/deploy/local/entrypoint.sh \
+    && chown -R app:app /app /data
 
 USER app
 EXPOSE 8501

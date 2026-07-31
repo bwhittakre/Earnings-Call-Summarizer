@@ -8,7 +8,7 @@ import unicodedata
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 
-from .models import TranscriptDocument
+from .models import TranscriptDocument, TranscriptStatus
 
 
 def normalize_transcript(text: str) -> str:
@@ -52,6 +52,13 @@ class TranscriptStabilizer:
         content = normalize_transcript(document.content)
         fingerprint = transcript_fingerprint(content)
         first = first_observed_at or current
+        if document.status != TranscriptStatus.FINAL:
+            return StabilizationDecision(
+                False,
+                f"live:{fingerprint}",
+                "transcript is still live",
+                current,
+            )
         if len(content) < self.minimum_chars:
             return StabilizationDecision(False, fingerprint, "transcript below minimum size", current)
         if previous_fingerprint != fingerprint:

@@ -1,23 +1,31 @@
-name: earnings-monitor
+name: roz
 
 x-monitor-common: &monitor-common
   build:
     context: .
     dockerfile: services/earnings_monitor/Dockerfile
-  platform: ${DOCKER_PLATFORM:-linux/arm64}
+  platform: ${DOCKER_PLATFORM:-linux/amd64}
   env_file:
-    - services/earnings_monitor/.env.example
+    - ${EARNINGS_MONITOR_ENV_FILE:-services/earnings_monitor/.env.example}
   environment:
     DATA_DIR: /data
     EARNINGS_MONITOR_REPO_ROOT: /app
     EARNINGS_MONITOR_DB: /data/monitor.sqlite3
     EARNINGS_MONITOR_DATASET: /data/company_quarters.parquet
-    EARNINGS_MONITOR_SMTP_HOST: mailpit
-    EARNINGS_MONITOR_SMTP_PORT: "1025"
-    EARNINGS_MONITOR_SMTP_STARTTLS: "false"
+    EARNINGS_MONITOR_HISTORY_SOURCE: /history-source/output
+    EARNINGS_SCRAPER_INBOX: /app/earnings-scraper-main/earnings-scraper-main/inbox
+    EARNINGS_MONITOR_EVENT_MANIFESTS: /app/earnings-scraper-main/earnings-scraper-main/inbox/events
   volumes:
     - monitor-data:/data
     - ./earnings-scraper-main/earnings-scraper-main/inbox:/app/earnings-scraper-main/earnings-scraper-main/inbox
+    - type: bind
+      source: ${STRUCTURED_NARRATIVE_ENV_FILE:-./Structured Narrative/.env}
+      target: /app/Structured Narrative/.env
+      read_only: true
+    - type: bind
+      source: ${STRUCTURED_NARRATIVE_OUTPUT_DIR:-./Structured Narrative/output}
+      target: /history-source/output
+      read_only: true
   restart: unless-stopped
 
 services:
@@ -36,6 +44,24 @@ services:
   worker:
     <<: *monitor-common
     command: ["worker"]
+    volumes:
+      - monitor-data:/data
+      - ./earnings-scraper-main/earnings-scraper-main/inbox:/app/earnings-scraper-main/earnings-scraper-main/inbox
+      - type: bind
+        source: ${STRUCTURED_NARRATIVE_ENV_FILE:-./Structured Narrative/.env}
+        target: /app/Structured Narrative/.env
+        read_only: true
+      - type: bind
+        source: ${REPO_ENV_FILE:-./services/earnings_monitor/.env.example}
+        target: /app/.env
+        read_only: true
+      - type: bind
+        source: ${STRUCTURED_NARRATIVE_OUTPUT_DIR:-./Structured Narrative/output}
+        target: /history-source/output
+        read_only: true
+      - type: bind
+        source: ${STRUCTURED_NARRATIVE_OUTPUT_DIR:-./Structured Narrative/output}
+        target: /app/Structured Narrative/output
     depends_on:
       monitor:
         condition: service_healthy
@@ -44,19 +70,38 @@ services:
     <<: *monitor-common
     command: ["dashboard"]
     ports:
-      - "${DASHBOARD_PORT:-8501}:8501"
+      - "127.0.0.1:${DASHBOARD_PORT:-8501}:8501"
     depends_on:
       history-import:
         condition: service_completed_successfully
+      # Dashboard serves local history/ops state and must not wait on Snowflake
+      # connectivity inside the monitor health gate.
       monitor:
+        condition: service_started
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    platform: ${DOCKER_PLATFORM:-linux/amd64}
+    profiles: ["cloudflare"]
+    env_file:
+      - ${EARNINGS_MONITOR_ENV_FILE:-services/earnings_monitor/.env.example}
+    command:
+      - tunnel
+      - --no-autoupdate
+      - run
+      - --token
+      - ${CLOUDFLARE_TUNNEL_TOKEN:-not-configured}
+    depends_on:
+      dashboard:
         condition: service_healthy
+    restart: unless-stopped
 
   mailpit:
     image: axllent/mailpit:v1.21
-    platform: ${DOCKER_PLATFORM:-linux/arm64}
+    platform: ${DOCKER_PLATFORM:-linux/amd64}
     ports:
-      - "${MAILPIT_SMTP_PORT:-1025}:1025"
-      - "${MAILPIT_UI_PORT:-8025}:8025"
+      - "127.0.0.1:${MAILPIT_SMTP_PORT:-1025}:1025"
+      - "127.0.0.1:${MAILPIT_UI_PORT:-8025}:8025"
     volumes:
       - mailpit-data:/data
     environment:

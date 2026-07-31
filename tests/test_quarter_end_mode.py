@@ -1,6 +1,13 @@
 import unittest
-from datetime import date
+from datetime import date, datetime
+from pathlib import Path
+import sys
 
+STRUCTURED_NARRATIVE = Path(__file__).resolve().parents[1] / "Structured Narrative"
+if str(STRUCTURED_NARRATIVE) not in sys.path:
+    sys.path.insert(0, str(STRUCTURED_NARRATIVE))
+
+from fiscal_period_util import company_fiscal_period
 from src.ingest.edgar.fiscal_profile import FiscalProfile
 from src.ingest.edgar.resolver import expand_fetch_quarters
 from src.market.quarter_end_mode import (
@@ -36,9 +43,17 @@ class QuarterEndModeTestCase(unittest.TestCase):
         )
         self.assertEqual(label, "FY2025-Q4")
 
-    def test_amzn_jun_30_2025_resolves_fy2026_q2(self):
+    def test_amzn_jun_30_2025_resolves_fy2025_q2(self):
         label = resolve_quarter_label_for_date("AMZN", date(2025, 6, 30))
-        self.assertEqual(label, "FY2026-Q2")
+        self.assertEqual(label, "FY2025-Q2")
+
+    def test_aapl_jun_30_2026_resolves_fy2026_q3(self):
+        label = resolve_quarter_label_for_date("AAPL", date(2026, 6, 30))
+        self.assertEqual(label, "FY2026-Q3")
+
+    def test_aapl_snowflake_datetime_resolves_fy2026_q3(self):
+        label = company_fiscal_period("AAPL", datetime(2026, 6, 30))
+        self.assertEqual(label, "FY2026-Q3")
 
     def test_build_quarter_end_run_maps_companies(self):
         run = build_quarter_end_run(
@@ -48,7 +63,7 @@ class QuarterEndModeTestCase(unittest.TestCase):
         )
         self.assertEqual(run.anchor_date, date(2025, 6, 30))
         self.assertEqual(run.company_quarters["MSFT"], "FY2025-Q4")
-        self.assertEqual(run.company_quarters["AMZN"], "FY2026-Q2")
+        self.assertEqual(run.company_quarters["AMZN"], "FY2025-Q2")
         self.assertEqual(
             run.date_overrides()["FY2025-Q4"],
             date(2025, 6, 30),

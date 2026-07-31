@@ -44,9 +44,11 @@ class LazyStructuredNarrativeWorkflow:
         repo_root: Path | str,
         *,
         runner: Callable[[Any], None] | None = None,
+        spine_tickers: tuple[str, ...] | None = None,
     ):
         self.repo_root = Path(repo_root)
         self.runner = runner
+        self.spine_tickers = spine_tickers
         self._module: ModuleType | None = None
 
     def _load_module(self, path: Path) -> ModuleType:
@@ -113,12 +115,14 @@ class LazyStructuredNarrativeWorkflow:
             transcript_path = self.persist_transcript(event, transcript)
         else:
             transcript_path = None
-        plan = module.plan_workflow(
-            profile,
-            ticker=event.ticker,
-            quarter=event.fiscal_period,
-            bridge_transcript=False if profile == "post_call" else True,
-        )
+        plan_kwargs = {
+            "ticker": event.ticker,
+            "quarter": event.fiscal_period,
+            "bridge_transcript": False if profile == "post_call" else True,
+        }
+        if self.spine_tickers is not None:
+            plan_kwargs["spine_tickers"] = self.spine_tickers
+        plan = module.plan_workflow(profile, **plan_kwargs)
         module.execute_plan(plan, runner=self.runner)
         return {
             "profile": profile,

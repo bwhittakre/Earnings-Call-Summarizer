@@ -3,10 +3,13 @@ snowflake-connector-python
 pandas
 pyarrow
 python-dotenv
+PyYAML
 reportlab
+PyMuPDF
 openpyxl
 # Transcript dimension-scoring pilot
 requests
+beautifulsoup4
 anthropic
 pydantic
 json-repair

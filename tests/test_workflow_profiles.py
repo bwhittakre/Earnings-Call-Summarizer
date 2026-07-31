@@ -15,6 +15,7 @@ from workflow_profiles import (  # noqa: E402
     execute_plan,
     plan_workflow,
 )
+from export_inbox_to_transcripts_raw import fiscal_period_from_filename  # noqa: E402
 import run_company_pipeline  # noqa: E402
 
 
@@ -27,6 +28,12 @@ class WorkflowProfilePlanningTests(unittest.TestCase):
             python_executable="python",
             structured_narrative_dir=Path("SN"),
             **kwargs,
+        )
+
+    def test_inbox_bridge_accepts_monitor_underscore_filename(self):
+        self.assertEqual(
+            fiscal_period_from_filename(Path("AAPL_FY2026_Q2.txt")),
+            ("AAPL", "FY2026-Q2"),
         )
 
     def test_pre_release_scores_prior_quarter_as_dimensions_only_baseline(self):

@@ -150,6 +150,113 @@ def test_dashboard_modules_import_without_streamlit() -> None:
     assert data.audit(incomplete_only=True)[0]["ticker"] == "MSFT"
 
 
+def test_dashboard_decision_views_summarize_latest_history() -> None:
+    data = DashboardData.from_records(
+        [
+            {
+                "ticker": "AMZN",
+                "fiscal_period": "FY2025-Q4",
+                "dimension": "demand",
+                "llm_level": "1.0",
+                "change_magnitude": "0.5",
+                "quant_z_pit": "0.4",
+                "narrative_quant_gap": "0.6",
+                "history_incomplete": False,
+            },
+            {
+                "ticker": "AMZN",
+                "fiscal_period": "FY2026-Q1",
+                "dimension": "demand",
+                "llm_level": "-1.0",
+                "change_magnitude": "-0.5",
+                "quant_z_pit": "0.5",
+                "narrative_quant_gap": "-1.5",
+                "any_quant_divergence": True,
+                "history_incomplete": True,
+            },
+            {
+                "ticker": "MSFT",
+                "fiscal_period": "FY2026-Q1",
+                "dimension": "margins",
+                "llm_level": "0.5",
+                "change_magnitude": "0.25",
+                "quant_z_pit": "0.3",
+                "narrative_quant_gap": "0.2",
+                "history_incomplete": False,
+            },
+        ],
+        operational_events=[
+            {
+                "provider_event_id": "event-1",
+                "ticker": "MSFT",
+                "fiscal_period": "FY2026-Q2",
+                "state": "awaiting_call",
+            }
+        ],
+    )
+
+    overview = data.overview()
+    assert overview == {
+        "companies": 2,
+        "history_rows": 3,
+        "quarters": 3,
+        "incomplete_quarters": 1,
+        "armed_events": 1,
+        "active_events": 1,
+    }
+    latest = {row["ticker"]: row for row in data.latest_scorecards()}
+    assert latest["AMZN"]["fiscal_period"] == "FY2026-Q1"
+    assert latest["AMZN"]["divergences"] == 1
+    coverage = {row["ticker"]: row for row in data.completeness_coverage()}
+    assert coverage["AMZN"]["coverage_pct"] == 50.0
+    assert coverage["MSFT"]["coverage_pct"] == 100.0
+    cells = data.dimension_heatmap(tickers=("AMZN",), latest_periods=1)
+    assert [(cell["fiscal_period"], cell["dimension"]) for cell in cells] == [
+        ("FY2026-Q1", "demand")
+    ]
+    assert cells[0]["gap"] == -1.5
+    assert cells[0]["divergence"] is True
+    assert data.pipeline_status() == [{"status": "awaiting_call", "events": 1}]
+
+
+def test_cross_company_chart_uses_summary_column() -> None:
+    from services.earnings_monitor.dashboard.views import render_cross_company
+
+    data = DashboardData.from_records(
+        [
+            {
+                "ticker": "MU",
+                "fiscal_period": "FY2026-Q2",
+                "dimension": "demand",
+                "llm_level": "1.0",
+                "quant_z_pit": "0.4",
+            }
+        ]
+    )
+
+    class StreamlitStub:
+        def header(self, value):
+            return None
+
+        def slider(self, *args, **kwargs):
+            return 12
+
+        def dataframe(self, *args, **kwargs):
+            return None
+
+        def bar_chart(self, frame, **kwargs):
+            assert kwargs["y"] in frame.columns
+            assert kwargs["color"] in frame.columns
+
+        def caption(self, value):
+            return None
+
+        def info(self, value):
+            return None
+
+    render_cross_company(StreamlitStub(), data)
+
+
 def test_event_inbox_prefers_live_operational_state(tmp_path: Path) -> None:
     database = tmp_path / "monitor.sqlite3"
     connection = sqlite3.connect(database)

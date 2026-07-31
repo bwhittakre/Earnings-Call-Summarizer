@@ -1,12 +1,21 @@
 # Earnings monitor setup
 
-## Local Apple Silicon
+## Local Windows-first Roz runtime
 
 Prerequisites: Docker Desktop with Compose v2 and at least 4 GB available to
-Docker. The default Compose platform is `linux/arm64`; set
-`DOCKER_PLATFORM=linux/amd64` only when testing the AWS runtime architecture.
+Docker. The default Compose platform is `linux/amd64`, which works with Windows
+Docker Desktop. On Apple Silicon, set `DOCKER_PLATFORM=linux/arm64`.
 
-```bash
+Copy `services/earnings_monitor/.env.example` to an untracked `.env.local`.
+Point Compose at that monitor configuration, the existing Snowflake and
+Anthropic credential files, and the canonical Structured Narrative output
+directory. Set these variables again after opening a new PowerShell session:
+
+```powershell
+$env:EARNINGS_MONITOR_ENV_FILE="services/earnings_monitor/.env.local"
+$env:STRUCTURED_NARRATIVE_ENV_FILE="$PWD\Structured Narrative\.env"
+$env:REPO_ENV_FILE="$PWD\.env"
+$env:STRUCTURED_NARRATIVE_OUTPUT_DIR="$PWD\Structured Narrative\output"
 docker compose build
 docker compose up -d
 docker compose ps
@@ -17,12 +26,120 @@ Open the dashboard at <http://localhost:8501> and Mailpit at
 `mailpit-data` named volumes. `docker compose down` preserves them;
 `docker compose down --volumes` deletes local state.
 
+Mailpit is the default notification transport (`mailpit:1025`, no STARTTLS).
+Messages include both plain-text and HTML alternatives and can be validated
+without external delivery. To use Microsoft 365, copy the example environment
+to an untracked file and set:
+
+```text
+EARNINGS_MONITOR_SMTP_MODE=microsoft365
+EARNINGS_MONITOR_SMTP_HOST=smtp.office365.com
+EARNINGS_MONITOR_SMTP_PORT=587
+EARNINGS_MONITOR_SMTP_STARTTLS=true
+EARNINGS_MONITOR_SMTP_USERNAME=<tenant-approved-mailbox>
+EARNINGS_MONITOR_SMTP_PASSWORD=<secret-or-app-password>
+EARNINGS_MONITOR_SMTP_FROM=<tenant-approved-from-address>
+EARNINGS_MONITOR_SMTP_TO=<comma-separated-recipients>
+```
+
+The Microsoft 365 tenant administrator must enable Authenticated SMTP for the
+mailbox/tenant or provide an allowed equivalent credential flow. MFA,
+Conditional Access, SMTP AUTH policy, sender permissions, mailbox licensing,
+and recipient allow-listing are external setup gates. Keep credentials out of
+Git. The `MailSender` boundary remains transport-neutral so a future Microsoft
+Graph sender can replace SMTP without changing notification assembly.
+Start Compose with `EARNINGS_MONITOR_ENV_FILE` pointing to that untracked file;
+the Compose service does not override its SMTP values.
+
 The one-shot `history-import` service first builds the pilot-four consolidated
 Parquet dataset in the shared data volume. The monitor then runs the repository's
-local-provider CLI and the dashboard reads both that history and live SQLite
-event state. The separate worker remains a safe SQS scaffold: when configured,
-it receives messages without acknowledging them. Wire the cloud job processor
-before any live promotion.
+manual-event scheduler and the dashboard reads both that history and live SQLite
+event state. The worker atomically claims and executes workflow jobs from the
+shared SQLite queue.
+
+Arm an event using confirmed Quartr watchlist times. Re-run the same command to
+correct either time without resetting its processing state:
+
+```powershell
+docker compose run --rm monitor arm `
+  --ticker MU `
+  --period FY2026-Q4 `
+  --report-at 2026-09-24T16:05:00-04:00 `
+  --call-at 2026-09-24T17:00:00-04:00
+```
+
+Manual `arm` always wins over subsequent watched discovery for that event ID.
+To enable automatic assisted arming, set `EARNINGS_MONITOR_PROVIDER=watched`
+and point `EARNINGS_MONITOR_EVENT_MANIFESTS` at a mounted intake directory.
+Compose uses
+`earnings-scraper-main/earnings-scraper-main/inbox/events` on the host. The
+monitor creates that subdirectory on startup. The Quartr-assisted watcher
+publishes one `*.event.json` file per event by writing a temporary file in that
+directory and renaming it only after the JSON is complete:
+
+```json
+{
+  "schema_version": 1,
+  "provider_event_id": "quartr-event-123",
+  "ticker": "MU",
+  "fiscal_period": "FY2026-Q4",
+  "report_at": "2026-09-24T20:05:00Z",
+  "call_at": "2026-09-24T21:00:00Z",
+  "title": "Micron Technology FY2026 Q4 earnings call",
+  "source_url": "https://quartr.com/example"
+}
+```
+
+Republishing the same event is idempotent. A corrected manifest updates event
+metadata and times without resetting lifecycle state or transcript progress.
+Malformed files are logged and ignored; the last valid file by modification
+time wins when duplicate manifests carry the same provider event ID.
+
+The watcher may continue to publish legacy `.txt` transcripts with company and
+period headers (or a name such as `MU-FY2026-Q4.txt`). The preferred handoff is
+an atomically renamed `*.transcript.json` bundle:
+
+```json
+{
+  "schema_version": 1,
+  "provider_event_id": "quartr-event-123",
+  "provider_document_id": "quartr-document-456",
+  "ticker": "MU",
+  "fiscal_period": "FY2026-Q4",
+  "source_url": "https://quartr.com/example/transcript",
+  "status": "final",
+  "observed_at": "2026-09-24T22:15:00Z",
+  "speaker_text": [
+    {"speaker": "Operator", "text": "Good afternoon and welcome."},
+    {"speaker": "Management", "text": "Thank you for joining us."}
+  ]
+}
+```
+
+`status` is `live` or `final`. Live bundles are observed and fingerprinted but
+never sent to Structured Narrative. A later final bundle supersedes live
+versions, stabilizes normally, and is written atomically to
+`Structured Narrative/transcripts_raw/{TICKER}_{FISCAL_PERIOD}.txt`.
+Duplicate delivery and restarts reuse the persisted fingerprint and SQLite
+idempotency keys.
+
+## Optional Cloudflare edge and R2
+
+The default stack remains localhost-only. An opt-in `cloudflare` Compose profile
+adds a Tunnel sidecar, while the worker can publish immutable completed-event
+artifacts to R2 through the existing S3-compatible storage boundary. The
+dashboard remains available on `127.0.0.1` for recovery.
+
+Repository configuration, exact environment variables, verification, and the
+external domain/Tunnel/Access/R2 credential gates are documented in
+[`earnings-monitor-cloudflare.md`](earnings-monitor-cloudflare.md). Cloudflare
+is not an execution target: Python scoring, SQLite, Snowflake, Anthropic, and
+subprocess workflows remain in the local containers.
+
+Roz begins
+quant freshness checks no earlier than the release and 90 minutes before the
+call, begins transcript checks 45 minutes after call start, and times out the
+transcript stage three hours after call start.
 
 ## AWS deployment
 

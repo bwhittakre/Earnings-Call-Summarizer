@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import re
 import sys
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 
 import pandas as pd
@@ -22,6 +22,8 @@ _QUARTER = re.compile(r"^FY(\d{4})-Q([1-4])$", re.IGNORECASE)
 def company_fiscal_period(ticker: str, perend) -> str:
     """Convert a quarter-end date to the company's fiscal label."""
     if isinstance(perend, pd.Timestamp):
+        target = perend.date()
+    elif isinstance(perend, datetime):
         target = perend.date()
     elif isinstance(perend, date):
         target = perend

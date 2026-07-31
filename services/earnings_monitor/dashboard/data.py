@@ -6,9 +6,11 @@ import math
 import os
 import re
 import sqlite3
+from collections import Counter
 from dataclasses import dataclass, field
 from pathlib import Path
 from statistics import fmean
+from datetime import datetime, timezone
 from typing import Any, Iterable, Mapping, Sequence
 
 from ..storage import read_company_quarter_dataset, record_to_dict
@@ -63,6 +65,9 @@ class DashboardData:
 
     rows: list[dict[str, Any]]
     operational_events: list[dict[str, Any]] = field(default_factory=list)
+    job_runs: list[dict[str, Any]] = field(default_factory=list)
+    poll_cycles: list[dict[str, Any]] = field(default_factory=list)
+    artifact_publications: list[dict[str, Any]] = field(default_factory=list)
 
     @classmethod
     def from_records(
@@ -70,10 +75,16 @@ class DashboardData:
         records: Iterable[Any],
         *,
         operational_events: Iterable[Any] = (),
+        job_runs: Iterable[Any] = (),
+        poll_cycles: Iterable[Any] = (),
+        artifact_publications: Iterable[Any] = (),
     ) -> "DashboardData":
         return cls(
             [record_to_dict(record) for record in records],
             [record_to_dict(event) for event in operational_events],
+            [record_to_dict(run) for run in job_runs],
+            [record_to_dict(cycle) for cycle in poll_cycles],
+            [record_to_dict(publication) for publication in artifact_publications],
         )
 
     @property
@@ -95,8 +106,13 @@ class DashboardData:
             grouped.setdefault((row_ticker, period), []).append(row)
         return grouped
 
-    def event_inbox(self, *, limit: int = 100) -> list[dict[str, Any]]:
+    def event_inbox(
+        self, *, limit: int = 100, now: datetime | None = None
+    ) -> list[dict[str, Any]]:
         if self.operational_events:
+            current = now or datetime.now(timezone.utc)
+            stuck_after = int(os.environ.get("EARNINGS_MONITOR_STUCK_EVENT_SECONDS", "7200"))
+            failures = self._repeated_failure_counts()
             events = [
                 {
                     "ticker": str(row.get("ticker", "")).upper(),
@@ -107,6 +123,12 @@ class DashboardData:
                     "last_error": row.get("last_error"),
                     "source_url": row.get("source_url"),
                     "updated_at": row.get("updated_at"),
+                    "stuck": (
+                        str(row.get("state") or "") not in {"complete", "failed"}
+                        and self._age_seconds(row.get("updated_at"), current) >= stuck_after
+                    ),
+                    "age_seconds": self._age_seconds(row.get("updated_at"), current),
+                    "failed_runs": failures[str(row.get("provider_event_id"))],
                 }
                 for row in self.operational_events
             ]
@@ -151,6 +173,147 @@ class DashboardData:
         )
         return events[:limit]
 
+    @staticmethod
+    def _age_seconds(value: Any, now: datetime) -> int:
+        if not value:
+            return 0
+        try:
+            parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+            if parsed.tzinfo is None:
+                parsed = parsed.replace(tzinfo=timezone.utc)
+            return max(0, int((now - parsed.astimezone(timezone.utc)).total_seconds()))
+        except (TypeError, ValueError):
+            return 0
+
+    def run_timeline(
+        self, provider_event_id: str | None = None
+    ) -> list[dict[str, Any]]:
+        runs = self.job_runs
+        if provider_event_id:
+            runs = [
+                run
+                for run in runs
+                if str(run.get("provider_event_id")) == provider_event_id
+            ]
+        timeline = [
+            {
+                "provider_event_id": run.get("provider_event_id"),
+                "stage": run.get("stage"),
+                "attempt": run.get("attempt"),
+                "status": run.get("status"),
+                "started_at": run.get("started_at"),
+                "finished_at": run.get("finished_at"),
+                "duration_ms": run.get("duration_ms"),
+                "result": _decode_json(run.get("result_json"), {}),
+                "error": run.get("error_summary"),
+            }
+            for run in runs
+        ]
+        timeline.sort(key=lambda row: str(row.get("started_at") or ""), reverse=True)
+        return timeline
+
+    def _repeated_failure_counts(self) -> Counter[str]:
+        return self._repeated_failure_episodes()[0]
+
+    def _repeated_failure_episodes(self) -> tuple[Counter[str], dict[str, str]]:
+        by_event: dict[str, list[dict[str, Any]]] = {}
+        for run in self.job_runs:
+            by_event.setdefault(str(run.get("provider_event_id")), []).append(run)
+        counts: Counter[str] = Counter()
+        anchors: dict[str, str] = {}
+        for event_id, runs in by_event.items():
+            runs.sort(key=lambda run: str(run.get("started_at") or ""), reverse=True)
+            for run in runs:
+                if run.get("status") != "failed":
+                    break
+                counts[event_id] += 1
+                # The oldest failure in the current consecutive streak anchors
+                # one incident. A successful run ends it, allowing a later
+                # failure streak to generate a distinct notification.
+                anchors[event_id] = str(
+                    run.get("started_at") or run.get("id") or "unknown"
+                )
+        return counts, anchors
+
+    def operational_alerts(
+        self,
+        *,
+        now: datetime | None = None,
+        stuck_after_seconds: int | None = None,
+        repeated_failure_threshold: int | None = None,
+    ) -> list[dict[str, Any]]:
+        current = now or datetime.now(timezone.utc)
+        stuck_after = stuck_after_seconds or int(
+            os.environ.get("EARNINGS_MONITOR_STUCK_EVENT_SECONDS", "7200")
+        )
+        failure_threshold = repeated_failure_threshold or int(
+            os.environ.get("EARNINGS_MONITOR_REPEATED_FAILURE_THRESHOLD", "2")
+        )
+        alerts: list[dict[str, Any]] = []
+        failed, failure_episodes = self._repeated_failure_episodes()
+        for event in self.operational_events:
+            event_id = str(event.get("provider_event_id"))
+            state = str(event.get("state") or "unknown")
+            age = self._age_seconds(event.get("updated_at"), current)
+            if state not in {"complete", "failed"} and age >= stuck_after:
+                alerts.append(
+                    {
+                        "kind": "stuck_event",
+                        "severity": "warning",
+                        "provider_event_id": event_id,
+                        "ticker": event.get("ticker"),
+                        "state": state,
+                        "age_seconds": age,
+                        "occurrence": event.get("updated_at"),
+                        "detail": f"event unchanged for {age} seconds",
+                    }
+                )
+            if failed[event_id] >= failure_threshold:
+                alerts.append(
+                    {
+                        "kind": "repeated_failure",
+                        "severity": "error",
+                        "provider_event_id": event_id,
+                        "ticker": event.get("ticker"),
+                        "state": state,
+                        "failures": failed[event_id],
+                        "occurrence": failure_episodes.get(event_id),
+                        "detail": f"{failed[event_id]} failed workflow attempts",
+                    }
+                )
+        if self.poll_cycles:
+            latest = max(
+                self.poll_cycles, key=lambda cycle: str(cycle.get("started_at") or "")
+            )
+            poll_seconds = int(os.environ.get("EARNINGS_MONITOR_POLL_SECONDS", "300"))
+            age = self._age_seconds(latest.get("finished_at") or latest.get("started_at"), current)
+            if age >= max(poll_seconds * 2, 600):
+                alerts.append(
+                    {
+                        "kind": "stale_poller",
+                        "severity": "error",
+                        "occurrence": latest.get("id") or latest.get("started_at"),
+                        "age_seconds": age,
+                        "detail": f"no completed poll cycle for {age} seconds",
+                    }
+                )
+        for publication in self.artifact_publications:
+            if publication.get("status") == "failed":
+                alerts.append(
+                    {
+                        "kind": "artifact_publish_failed",
+                        "severity": "error",
+                        "provider_event_id": publication.get("provider_event_id"),
+                        "occurrence": (
+                            publication.get("publication_key")
+                            or publication.get("id")
+                        ),
+                        "failures": publication.get("attempts"),
+                        "detail": publication.get("last_error"),
+                    }
+                )
+        return alerts
+
     def company_history(self, ticker: str) -> list[dict[str, Any]]:
         history: list[dict[str, Any]] = []
         for (_, period), rows in self._group_quarters(ticker=ticker).items():
@@ -167,11 +330,182 @@ class DashboardData:
                     if any(row.get("quant_z_pit") not in (None, "") for row in rows)
                     else _mean(rows, "quant_z"),
                     "narrative_quant_gap": _mean(rows, "narrative_quant_gap"),
+                    "divergences": sum(
+                        _truthy(
+                            row.get(
+                                "any_quant_divergence",
+                                row.get("is_divergence"),
+                            )
+                        )
+                        for row in rows
+                    ),
                     "incomplete": any(_truthy(row.get("history_incomplete")) for row in rows),
                 }
             )
         history.sort(key=lambda row: _period_key(row["fiscal_period"]))
         return history
+
+    def latest_scorecards(self) -> list[dict[str, Any]]:
+        grouped = self._group_quarters()
+        scorecards: list[dict[str, Any]] = []
+        for ticker in self.tickers:
+            periods = sorted(
+                (period for row_ticker, period in grouped if row_ticker == ticker),
+                key=_period_key,
+            )
+            if not periods:
+                continue
+            period = periods[-1]
+            rows = grouped[(ticker, period)]
+            scorecards.append(
+                {
+                    "ticker": ticker,
+                    "fiscal_period": period,
+                    "dimensions": sum(
+                        row.get("dimension") not in (None, "") for row in rows
+                    ),
+                    "narrative_level": _mean(rows, "llm_level"),
+                    "narrative_change": _mean(rows, "change_magnitude"),
+                    "quant_z": _mean(rows, "quant_z_pit")
+                    if any(row.get("quant_z_pit") not in (None, "") for row in rows)
+                    else _mean(rows, "quant_z"),
+                    "narrative_quant_gap": _mean(rows, "narrative_quant_gap"),
+                    "divergences": sum(
+                        _truthy(
+                            row.get(
+                                "any_quant_divergence",
+                                row.get("is_divergence"),
+                            )
+                        )
+                        for row in rows
+                    ),
+                    "incomplete": any(
+                        _truthy(row.get("history_incomplete")) for row in rows
+                    ),
+                }
+            )
+        return scorecards
+
+    def completeness_coverage(self) -> list[dict[str, Any]]:
+        output: list[dict[str, Any]] = []
+        for ticker in self.tickers:
+            history = self.company_history(ticker)
+            incomplete = sum(_truthy(row.get("incomplete")) for row in history)
+            total = len(history)
+            output.append(
+                {
+                    "ticker": ticker,
+                    "quarters": total,
+                    "complete": total - incomplete,
+                    "incomplete": incomplete,
+                    "coverage_pct": round(
+                        100 * (total - incomplete) / total, 1
+                    )
+                    if total
+                    else 0.0,
+                }
+            )
+        return output
+
+    def pipeline_status(self) -> list[dict[str, Any]]:
+        counts = Counter(
+            str(event.get("state") or "unknown") for event in self.operational_events
+        )
+        return [
+            {"status": status, "events": count}
+            for status, count in sorted(counts.items())
+        ]
+
+    def overview(self) -> dict[str, Any]:
+        quarter_count = len(self._group_quarters())
+        incomplete = sum(row["incomplete"] for row in self.completeness_coverage())
+        active_states = {
+            "scheduled",
+            "baseline_queued",
+            "baseline_running",
+            "awaiting_release",
+            "awaiting_quant_data",
+            "quant_queued",
+            "quant_running",
+            "awaiting_call",
+            "transcript_pending",
+            "transcript_unstable",
+            "post_call_queued",
+            "post_call_running",
+        }
+        active_events = sum(
+            str(event.get("state") or "") in active_states
+            for event in self.operational_events
+        )
+        return {
+            "companies": len(self.tickers),
+            "history_rows": len(self.rows),
+            "quarters": quarter_count,
+            "incomplete_quarters": incomplete,
+            "armed_events": len(self.operational_events),
+            "active_events": active_events,
+        }
+
+    def dimension_heatmap(
+        self,
+        *,
+        tickers: Sequence[str] | None = None,
+        latest_periods: int = 8,
+    ) -> list[dict[str, Any]]:
+        allowed = {ticker.upper() for ticker in tickers} if tickers else set(self.tickers)
+        selected_periods: dict[str, set[str]] = {}
+        grouped = self._group_quarters()
+        for ticker in allowed:
+            periods = sorted(
+                (period for row_ticker, period in grouped if row_ticker == ticker),
+                key=_period_key,
+            )
+            selected_periods[ticker] = set(periods[-latest_periods:])
+
+        cells: dict[tuple[str, str, str], list[dict[str, Any]]] = {}
+        for row in self.rows:
+            ticker = str(row.get("ticker") or "").upper()
+            period = str(row.get("fiscal_period") or "")
+            dimension = str(row.get("dimension") or "")
+            if (
+                ticker not in allowed
+                or period not in selected_periods.get(ticker, set())
+                or not dimension
+            ):
+                continue
+            cells.setdefault((ticker, period, dimension), []).append(row)
+
+        output: list[dict[str, Any]] = []
+        for (ticker, period, dimension), rows in cells.items():
+            output.append(
+                {
+                    "ticker": ticker,
+                    "fiscal_period": period,
+                    "dimension": dimension,
+                    "narrative_level": _mean(rows, "llm_level"),
+                    "quant_z": _mean(rows, "quant_z_pit")
+                    if any(row.get("quant_z_pit") not in (None, "") for row in rows)
+                    else _mean(rows, "quant_z"),
+                    "gap": _mean(rows, "narrative_quant_gap"),
+                    "divergence": any(
+                        _truthy(
+                            row.get(
+                                "any_quant_divergence",
+                                row.get("is_divergence"),
+                            )
+                        )
+                        for row in rows
+                    ),
+                }
+            )
+        output.sort(
+            key=lambda row: (
+                row["ticker"],
+                _period_key(row["fiscal_period"]),
+                row["dimension"],
+            )
+        )
+        return output
 
     def cross_company(self, *, latest_periods: int = 12) -> list[dict[str, Any]]:
         summary: list[dict[str, Any]] = []
@@ -301,12 +635,47 @@ def load_operational_events(path: str | os.PathLike[str] | None = None) -> list[
     return [dict(row) for row in rows]
 
 
+def load_operational_history(
+    path: str | os.PathLike[str] | None = None,
+) -> dict[str, list[dict[str, Any]]]:
+    database = Path(path or default_operational_db_path())
+    empty = {"job_runs": [], "poll_cycles": [], "artifact_publications": []}
+    if not database.is_file():
+        return empty
+    try:
+        connection = sqlite3.connect(f"file:{database.resolve()}?mode=ro", uri=True)
+        connection.row_factory = sqlite3.Row
+        try:
+            result: dict[str, list[dict[str, Any]]] = {}
+            for table, order in (
+                ("job_runs", "started_at DESC"),
+                ("poll_cycles", "started_at DESC"),
+                ("artifact_publications", "available_at DESC"),
+            ):
+                try:
+                    rows = connection.execute(
+                        f"SELECT * FROM {table} ORDER BY {order} LIMIT 500"
+                    ).fetchall()
+                except sqlite3.Error:
+                    rows = []
+                result[table] = [dict(row) for row in rows]
+            return result
+        finally:
+            connection.close()
+    except sqlite3.Error:
+        return empty
+
+
 def load_dashboard_data(
     path: str | os.PathLike[str] | None = None,
     *,
     operational_db_path: str | os.PathLike[str] | None = None,
 ) -> DashboardData:
+    history = load_operational_history(operational_db_path)
     return DashboardData.from_records(
         read_company_quarter_dataset(path or default_dataset_path()),
         operational_events=load_operational_events(operational_db_path),
+        job_runs=history["job_runs"],
+        poll_cycles=history["poll_cycles"],
+        artifact_publications=history["artifact_publications"],
     )

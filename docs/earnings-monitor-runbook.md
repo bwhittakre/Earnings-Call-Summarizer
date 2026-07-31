@@ -2,6 +2,57 @@
 
 ## Operating model
 
+Roz V1 is Windows-first and manually armed. The monitor advances event gates
+and enqueues idempotent jobs in SQLite; the worker claims those jobs and runs
+the existing Structured Narrative profiles. The Cursor Quartr watcher writes
+transcripts into the mounted inbox. Snowflake freshness uses the same
+Structured Narrative credentials and source tables as the existing model.
+Partial state appears in the dashboard immediately; the final notification is
+sent only after post-call processing succeeds or the transcript reaches its
+three-hour timeout.
+
+Each monitor pass is recorded in SQLite `poll_cycles`; each claimed job attempt
+is recorded in `job_runs` with stage, duration, result summary, and error.
+Use the dashboard Operations view for the event timeline, stuck-event
+classification, stale poller signal, repeated failures, and R2 publication
+status. The default thresholds are controlled by
+`EARNINGS_MONITOR_STUCK_EVENT_SECONDS` and
+`EARNINGS_MONITOR_REPEATED_FAILURE_THRESHOLD`.
+
+Notifications are multipart plain text + HTML. The quant-ready message reports
+available measures, point-in-time z-scores, freshness/as-of detail, and the
+dashboard link. The final message reads the consolidated company-quarter
+dataset and Structured Narrative registry/artifacts to report dimension
+narrative level/change, quant gaps and divergences, evidence, completeness, and
+dashboard/artifact links. Missing fields are rendered as `n/a` and explicit
+completion issues rather than preventing delivery.
+
+SQLite notification keys suppress repeated cycle alerts and duplicate milestone
+messages. A terminal/stall failure is sent once per event; a later successful
+completion uses a distinct `recovery-success` key and is also sent exactly once.
+Stuck-event, repeated-failure, stale-poller, and failed-publication signals use
+stable operational keys so monitor and worker loops do not send per-cycle noise.
+After correcting an incident, preserve the notification and job history.
+
+Local Compose uses Mailpit. For Microsoft 365 SMTP use
+`smtp.office365.com:587` with STARTTLS and an untracked environment file
+containing the tenant-approved username/password/from/to settings. Run
+`python -m services.earnings_monitor diagnose` before arming a live event.
+Mailbox licensing, SMTP AUTH enablement, MFA/Conditional Access compatibility,
+send-as permissions, and tenant recipient policies remain owner setup gates;
+the monitor does not create or alter Microsoft 365 resources.
+
+Optional Cloudflare Tunnel and R2 operation is documented in
+[`earnings-monitor-cloudflare.md`](earnings-monitor-cloudflare.md). A Tunnel or
+Access incident should be isolated by stopping `cloudflared`; do not stop the
+monitor or worker unless local processing itself is unsafe. An R2 failure does
+not roll back a successful workflow: inspect the artifact publication row,
+correct endpoint/credentials, and restart the worker so persisted retries can
+continue.
+
+The AWS section below describes the retained deployment scaffold, not the active
+Roz V1 runtime.
+
 EventBridge invokes the dispatcher, which asynchronously invokes the poller.
 The poller records a DynamoDB audit row and eventually publishes work to
 SQS. Fargate workers consume SQS; failed jobs move to the DLQ after three
@@ -52,6 +103,21 @@ correct the root cause, then redrive a small sample. Confirm idempotency first.
 **Bad alerts/output:** stop outbound sending, preserve artifacts/logs, set
 shadow mode, and compare the affected event with source evidence.
 
+**Stuck local event:** use the Operations timeline to identify the last
+successful stage and its duration. Check the event's `last_error`, worker logs,
+and whether the current job is pending/running before changing state.
+
+**Repeated workflow failure:** preserve the `job_runs` history and source
+transcript, correct the root cause, then allow the existing bounded SQLite retry
+to proceed. Do not delete the idempotency key or manually rerun scoring merely
+to clear the alert.
+
+**R2 publication failure:** confirm the event workflow is still complete, then
+check endpoint, bucket-scoped credentials, and network access. Content uploads
+are immutable and the completion manifest is written last, so retrying a
+partial publication is safe. Never upload `monitor.sqlite3`, its WAL/SHM files,
+or any other live state as an artifact.
+
 **Credential exposure:** disable affected tasks/Lambdas, rotate the secret at
 the provider and Secrets Manager, review CloudTrail, then redeploy. Never paste
 secret values into tickets or logs.
@@ -64,6 +130,6 @@ before rollback.
 
 AWS deployment, DNS, ACM, Cognito, Secrets Manager values, SES production
 approval, alarm notification routing, and third-party data access all require
-account-owner action. The infrastructure cannot validate these without
-credentials. The monitor discovery and job processor are still explicit
-scaffolds and must be implemented before live processing.
+account-owner action. The AWS Lambda/SQS path remains a scaffold. The local Roz
+scheduler and SQLite worker are implemented independently and must not be
+described as validating that cloud path.

@@ -10,11 +10,12 @@ case "$role" in
       --interval="${EARNINGS_MONITOR_POLL_SECONDS:-300}" "$@"
     ;;
   worker)
-    exec python /app/deploy/local/role_runner.py worker "$@"
+    exec python -m services.earnings_monitor worker \
+      --interval="${WORKER_IDLE_SECONDS:-10}" "$@"
     ;;
   history-import)
     exec python -m services.earnings_monitor.history_import \
-      --source-root=/app \
+      --source-root="${EARNINGS_MONITOR_HISTORY_SOURCE:-/history-source/output}" \
       --destination="${EARNINGS_MONITOR_DATASET:-/data/company_quarters.parquet}" "$@"
     ;;
   dashboard)

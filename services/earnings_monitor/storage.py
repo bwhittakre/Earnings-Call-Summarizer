@@ -12,6 +12,7 @@ import hashlib
 import io
 import json
 import os
+import re
 import tempfile
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
@@ -275,6 +276,9 @@ class S3ArtifactStore(ArtifactStore):
         prefix: str = "",
         client: Any | None = None,
         endpoint_url: str | None = None,
+        access_key_id: str | None = None,
+        secret_access_key: str | None = None,
+        region_name: str = "auto",
     ) -> None:
         self.bucket = bucket
         self.prefix = prefix.strip("/")
@@ -283,7 +287,13 @@ class S3ArtifactStore(ArtifactStore):
                 import boto3  # type: ignore
             except ImportError as exc:
                 raise RuntimeError("boto3 is required when no S3 client is supplied") from exc
-            client = boto3.client("s3", endpoint_url=endpoint_url)
+            client = boto3.client(
+                "s3",
+                endpoint_url=endpoint_url,
+                aws_access_key_id=access_key_id,
+                aws_secret_access_key=secret_access_key,
+                region_name=region_name,
+            )
         self.client = client
 
     def _object_key(self, key: str) -> str:
@@ -379,6 +389,123 @@ class S3ArtifactStore(ArtifactStore):
             token = response.get("NextContinuationToken")
             if not token:
                 break
+
+
+@dataclass(frozen=True)
+class EventPublication:
+    manifest: ArtifactRef
+    artifacts: tuple[ArtifactRef, ...]
+
+
+class CompletedEventArtifactPublisher:
+    """Publish immutable completed-event artifacts and a final marker.
+
+    Content objects are uploaded first under a fingerprinted event prefix. The
+    manifest is written last, so its presence means the publication is complete.
+    Repeating a partially completed publication is safe because every write uses
+    the immutable :class:`ArtifactStore` contract.
+    """
+
+    def __init__(self, store: ArtifactStore, repo_root: str | os.PathLike[str]) -> None:
+        self.store = store
+        self.repo_root = Path(repo_root).resolve()
+
+    @staticmethod
+    def _segment(value: str) -> str:
+        cleaned = re.sub(r"[^A-Za-z0-9._-]+", "-", value).strip("-")
+        return cleaned or "unknown"
+
+    def publish(
+        self,
+        *,
+        event: Any,
+        fingerprint: str,
+        workflow_result: Mapping[str, Any],
+        completed_at: str,
+    ) -> EventPublication:
+        base = PurePosixPath(
+            "events",
+            self._segment(str(event.ticker)),
+            self._segment(str(event.fiscal_period)),
+            self._segment(str(event.provider_event_id)),
+            self._segment(fingerprint),
+        )
+        metadata = {
+            "ticker": str(event.ticker),
+            "fiscal-period": str(event.fiscal_period),
+            "provider-event-id": str(event.provider_event_id),
+            "fingerprint": fingerprint,
+        }
+        artifacts: list[ArtifactRef] = []
+        source_paths: list[Path] = []
+        transcript_path = workflow_result.get("transcript_path")
+        if transcript_path:
+            source_paths.append(Path(str(transcript_path)).resolve())
+        # Workflows may explicitly identify outputs produced for this event.
+        # Never infer them by walking a company directory: those directories
+        # contain historical quarters that are unrelated to this publication.
+        artifact_paths = workflow_result.get("artifact_paths") or ()
+        if isinstance(artifact_paths, (str, bytes)) or not isinstance(
+            artifact_paths, Sequence
+        ):
+            raise StorageError("workflow_result artifact_paths must be a sequence")
+        source_paths.extend(Path(str(path)).resolve() for path in artifact_paths)
+        for path in dict.fromkeys(source_paths):
+            try:
+                relative = path.relative_to(self.repo_root)
+            except ValueError as exc:
+                raise StorageError(f"Artifact is outside repository: {path}") from exc
+            if path.suffix.lower() in {".sqlite", ".sqlite3", ".db", ".db-wal", ".db-shm"}:
+                raise StorageError(f"Refusing to publish live database artifact: {path}")
+            if not path.is_file():
+                raise StorageError(f"Completed event artifact is missing: {path}")
+            artifacts.append(
+                self.store.put_bytes(
+                    (base / "files" / relative.as_posix()).as_posix(),
+                    path.read_bytes(),
+                    metadata=metadata,
+                )
+            )
+
+        result_payload = {
+            "schema": "earnings-monitor/completed-workflow/v1",
+            "provider_event_id": event.provider_event_id,
+            "ticker": event.ticker,
+            "fiscal_period": event.fiscal_period,
+            "fingerprint": fingerprint,
+            "completed_at": completed_at,
+            "workflow_result": dict(workflow_result),
+        }
+        artifacts.append(
+            self.store.put_json(
+                (base / "workflow-result.json").as_posix(),
+                result_payload,
+                metadata=metadata,
+            )
+        )
+        manifest_payload = {
+            "schema": "earnings-monitor/event-publication/v1",
+            "provider_event_id": event.provider_event_id,
+            "ticker": event.ticker,
+            "fiscal_period": event.fiscal_period,
+            "fingerprint": fingerprint,
+            "completed_at": completed_at,
+            "artifacts": [
+                {
+                    "key": ref.key,
+                    "uri": ref.uri,
+                    "size": ref.size,
+                    "sha256": ref.sha256,
+                }
+                for ref in artifacts
+            ],
+        }
+        manifest = self.store.put_json(
+            (base / "complete.json").as_posix(),
+            manifest_payload,
+            metadata=metadata,
+        )
+        return EventPublication(manifest=manifest, artifacts=tuple(artifacts))
 
 
 @dataclass(frozen=True)

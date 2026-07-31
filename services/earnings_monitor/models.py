@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import StrEnum
@@ -28,6 +29,11 @@ class EventState(StrEnum):
     FAILED = "failed"
 
 
+class TranscriptStatus(StrEnum):
+    LIVE = "live"
+    FINAL = "final"
+
+
 TERMINAL_STATES = frozenset({EventState.COMPLETE})
 TRANSITIONS: dict[EventState, frozenset[EventState]] = {
     EventState.SCHEDULED: frozenset({EventState.BASELINE_QUEUED}),
@@ -37,10 +43,18 @@ TRANSITIONS: dict[EventState, frozenset[EventState]] = {
     EventState.AWAITING_QUANT_DATA: frozenset({EventState.QUANT_QUEUED}),
     EventState.QUANT_QUEUED: frozenset({EventState.QUANT_RUNNING, EventState.FAILED}),
     EventState.QUANT_RUNNING: frozenset({EventState.AWAITING_CALL, EventState.FAILED}),
-    EventState.AWAITING_CALL: frozenset({EventState.TRANSCRIPT_PENDING}),
-    EventState.TRANSCRIPT_PENDING: frozenset({EventState.TRANSCRIPT_UNSTABLE}),
+    EventState.AWAITING_CALL: frozenset(
+        {EventState.TRANSCRIPT_PENDING, EventState.FAILED}
+    ),
+    EventState.TRANSCRIPT_PENDING: frozenset(
+        {EventState.TRANSCRIPT_UNSTABLE, EventState.FAILED}
+    ),
     EventState.TRANSCRIPT_UNSTABLE: frozenset(
-        {EventState.TRANSCRIPT_UNSTABLE, EventState.POST_CALL_QUEUED}
+        {
+            EventState.TRANSCRIPT_UNSTABLE,
+            EventState.POST_CALL_QUEUED,
+            EventState.FAILED,
+        }
     ),
     EventState.POST_CALL_QUEUED: frozenset({EventState.POST_CALL_RUNNING, EventState.FAILED}),
     EventState.POST_CALL_RUNNING: frozenset(
@@ -53,6 +67,7 @@ TRANSITIONS: dict[EventState, frozenset[EventState]] = {
         {
             EventState.BASELINE_QUEUED,
             EventState.QUANT_QUEUED,
+            EventState.TRANSCRIPT_PENDING,
             EventState.POST_CALL_QUEUED,
         }
     ),
@@ -75,6 +90,13 @@ class EarningsEvent:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "ticker", self.ticker.strip().upper())
+        object.__setattr__(self, "fiscal_period", self.fiscal_period.strip().upper())
+        if not self.provider_event_id.strip():
+            raise ValueError("provider_event_id is required")
+        if not re.fullmatch(r"[A-Z][A-Z0-9.-]{0,9}", self.ticker):
+            raise ValueError(f"invalid ticker {self.ticker!r}")
+        if not re.fullmatch(r"FY\d{4}-Q[1-4]", self.fiscal_period):
+            raise ValueError(f"invalid fiscal_period {self.fiscal_period!r}")
         if self.report_at.tzinfo is None or self.call_at.tzinfo is None:
             raise ValueError("report_at and call_at must be timezone-aware")
         if self.call_at < self.report_at:
@@ -94,6 +116,7 @@ class MonitoredEvent:
     transcript_observed_at: datetime | None = None
     last_error: str | None = None
     updated_at: datetime = field(default_factory=utc_now)
+    manual_override: bool = False
 
     def transition(self, target: EventState, *, error: str | None = None) -> None:
         if target == self.state and target == EventState.TRANSCRIPT_UNSTABLE:
@@ -122,8 +145,18 @@ class TranscriptDocument:
     source_id: str
     observed_at: datetime = field(default_factory=utc_now)
     source_url: str | None = None
+    provider_event_id: str | None = None
+    status: TranscriptStatus = TranscriptStatus.FINAL
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "ticker", self.ticker.strip().upper())
+        object.__setattr__(self, "fiscal_period", self.fiscal_period.strip().upper())
+        object.__setattr__(self, "status", TranscriptStatus(self.status))
+        if not self.source_id.strip():
+            raise ValueError("source_id is required")
+        if not re.fullmatch(r"[A-Z][A-Z0-9.-]{0,9}", self.ticker):
+            raise ValueError(f"invalid ticker {self.ticker!r}")
+        if not re.fullmatch(r"FY\d{4}-Q[1-4]", self.fiscal_period):
+            raise ValueError(f"invalid fiscal_period {self.fiscal_period!r}")
         if self.observed_at.tzinfo is None:
             raise ValueError("observed_at must be timezone-aware")

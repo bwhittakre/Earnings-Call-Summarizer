@@ -37,8 +37,9 @@ def render_app(
 ) -> None:
     """Render the app with injectable UI/data dependencies for tests."""
     st = st or get_streamlit()
-    st.set_page_config(page_title="Earnings Monitor", layout="wide")
-    st.title("Earnings Monitor")
+    st.set_page_config(page_title="Roz", layout="wide")
+    st.title("Roz")
+    st.caption("Earnings intelligence: live pipeline state and historical scoring")
 
     selected_path = Path(dataset_path or default_dataset_path())
     if data is None:
@@ -52,6 +53,9 @@ def render_app(
             return
 
     st.sidebar.caption(f"Dataset: {selected_path}")
+    st.sidebar.caption(
+        f"{len(data.rows):,} records · {len(data.tickers)} companies"
+    )
     view_name = st.sidebar.radio("View", list(VIEWS))
     VIEWS[view_name](st, data)
 

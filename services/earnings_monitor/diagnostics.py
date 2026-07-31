@@ -42,21 +42,33 @@ def run_startup_diagnostics(
             "inbox",
             inbox.is_dir(),
             str(inbox) if inbox.is_dir() else f"directory not found: {inbox}",
-            required=config.provider == "local",
+            required=config.provider in {"local", "manual"},
         )
     )
     checks.append(
         Diagnostic(
             "smtp",
-            config.email_enabled,
-            "configured" if config.email_enabled else "disabled or incomplete",
+            config.email_enabled and not config.smtp_setup_issues,
+            (
+                f"configured ({config.smtp_mode}, {config.smtp_host}:{config.smtp_port}, "
+                f"STARTTLS={config.smtp_starttls})"
+                if config.email_enabled and not config.smtp_setup_issues
+                else "disabled or incomplete"
+                + (
+                    f"; missing/invalid: {', '.join(config.smtp_setup_issues)}"
+                    if config.smtp_setup_issues
+                    else ""
+                )
+            ),
             required=False,
         )
     )
-    for name, check in (
-        ("provider", provider_check),
-        ("snowflake", freshness_check),
-        ("workflow", workflow_check),
+    for name, check, required in (
+        ("provider", provider_check, True),
+        # Snowflake can be briefly unreachable (VPN/network policy) without
+        # meaning the monitor or dashboard should refuse to start.
+        ("snowflake", freshness_check, False),
+        ("workflow", workflow_check, True),
     ):
         if check is None:
             checks.append(Diagnostic(name, True, "check not configured", required=False))
@@ -64,9 +76,9 @@ def run_startup_diagnostics(
         try:
             result = check()
             ok, detail = result if isinstance(result, tuple) else (bool(result), str(result))
-            checks.append(Diagnostic(name, bool(ok), str(detail)))
+            checks.append(Diagnostic(name, bool(ok), str(detail), required=required))
         except Exception as exc:
-            checks.append(Diagnostic(name, False, str(exc)))
+            checks.append(Diagnostic(name, False, str(exc), required=required))
     return checks
 
 

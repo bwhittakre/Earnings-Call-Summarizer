@@ -6,5 +6,9 @@ MSFT:
   type: offset_fiscal
   fye_month: 6
   fye_day: 30
+AAPL:
+  type: offset_fiscal
+  fye_month: 9
+  fye_day: 30
 TSLA:
   type: calendar_fiscal
