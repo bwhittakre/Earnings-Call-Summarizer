@@ -5,10 +5,50 @@ which keeps these functions importable and easy to exercise in unit tests.
 """
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any, Sequence
 
+from .charts import (
+    heatmap_chart,
+    narrative_quant_scatter,
+    overview_pulse_chart,
+    ranked_bar_chart,
+)
 from .company_labels import format_company_label, with_company_labels
 from .data import DashboardData
+from .report_static import ensure_reports_static_link, static_report_url
+from .research_data import (
+    can_inline_html,
+    html_report_meta,
+    resolve_consolidated_html,
+    resolve_rank_ic_html,
+)
+from .sectors import pad_company_rows
+
+_HEATMAP_MAX_COMPARE = 4
+_HTML_EMBED_HEIGHT = 1000
+
+_SIGNAL_LABELS = {
+    "Narrative level": "narrative_level",
+    "Quant z-score": "quant_z",
+    "Narrative–quant gap": "gap",
+}
+
+_CROSS_SIGNAL_LABELS = {
+    "Mean narrative": "mean_narrative_level",
+    "Mean quant z": "mean_quant_z",
+    "Mean gap": "mean_narrative_quant_gap",
+    "Mean change": "mean_narrative_change",
+    "Divergence rate": "divergence_rate",
+}
+
+
+def _universe(
+    data: DashboardData, sector_tickers: Sequence[str] | None
+) -> list[str]:
+    if sector_tickers is not None:
+        return [str(ticker).upper() for ticker in sector_tickers]
+    return list(data.tickers)
 
 
 def _table(st: Any, rows: list[dict[str, Any]]) -> None:
@@ -44,54 +84,143 @@ def _multi_tickers(
     label: str = "Companies",
     default: Sequence[str] | None = None,
     key: str | None = None,
+    max_selections: int | None = None,
 ) -> list[str]:
     options = list(tickers)
+    chosen_default = list(default if default is not None else options)
+    if max_selections is not None:
+        chosen_default = chosen_default[:max_selections]
     kwargs: dict[str, Any] = {
-        "default": list(default if default is not None else options),
+        "default": chosen_default,
         "format_func": format_company_label,
+        "max_selections": max_selections,
     }
     if key is not None:
         kwargs["key"] = key
-    return list(st.multiselect(label, options, **kwargs))
+    # Streamlit <1.28 may not support max_selections; fall back gracefully.
+    try:
+        return list(st.multiselect(label, options, **kwargs))
+    except TypeError:
+        kwargs.pop("max_selections", None)
+        selected = list(st.multiselect(label, options, **kwargs))
+        if max_selections is not None and len(selected) > max_selections:
+            st.warning(f"Showing the first {max_selections} selected companies.")
+            return selected[:max_selections]
+        return selected
 
 
-def _label_frame_ticker(frame: Any, column: str = "ticker") -> Any:
-    """Replace ticker codes with display labels for chart axes/legends."""
-    if column not in frame.columns:
-        return frame
-    out = frame.copy()
-    out[column] = out[column].map(lambda value: format_company_label(str(value)))
-    return out
+def _altair(st: Any, chart: Any) -> None:
+    try:
+        st.altair_chart(chart, use_container_width=True)
+    except Exception as exc:  # noqa: BLE001 — surface chart dependency issues in UI
+        st.caption(f"Unable to render chart: {exc}")
 
 
-def render_overview(st: Any, data: DashboardData) -> None:
+def _render_html_report(
+    st: Any,
+    path: Path | None,
+    *,
+    missing_hint: str,
+) -> bool:
+    """Embed a self-contained HTML report. Returns True when rendered.
+
+    Large reports (e.g. full consolidated_feature_panel.html) are iframed from
+    Streamlit static serving so we never fall back to a smaller 4-ticker HTML.
+    """
+    if path is None or not path.is_file():
+        st.info(missing_hint)
+        return False
+    meta = html_report_meta(path)
+    size_mb = (meta.get("size_bytes") or 0) / (1024 * 1024)
+    st.caption(
+        f"Report: {meta.get('stem') or path.name} · "
+        f"Generated: {meta.get('generated_at') or '—'} · "
+        f"{size_mb:.1f} MB · Path: {meta.get('path')}"
+    )
+
+    try:
+        import streamlit.components.v1 as components  # type: ignore
+    except Exception:  # noqa: BLE001
+        components = getattr(getattr(st, "components", None), "v1", None)
+
+    # Prefer static iframe (Compose mounts reports into dashboard/static/reports).
+    static_dir = ensure_reports_static_link()
+    use_static = static_dir is not None and (static_dir / path.name).exists()
+    if use_static and components is not None:
+        try:
+            components.iframe(
+                static_report_url(path.name),
+                height=_HTML_EMBED_HEIGHT,
+                scrolling=True,
+            )
+            return True
+        except Exception:  # noqa: BLE001
+            pass
+
+    if not can_inline_html(path):
+        st.warning(
+            f"Report is {size_mb:.1f} MB and static serving is unavailable. "
+            "Enable Streamlit static serving (`--server.enableStaticServing=true`) "
+            "or open the HTML file from the path above."
+        )
+        return False
+
+    try:
+        html_text = path.read_text(encoding="utf-8", errors="replace")
+    except OSError as exc:
+        st.warning(f"Unable to read report: {exc}")
+        return False
+    if components is None:
+        st.warning("Streamlit components unavailable; cannot embed HTML report.")
+        return False
+    try:
+        components.html(html_text, height=_HTML_EMBED_HEIGHT, scrolling=True)
+    except Exception as exc:  # noqa: BLE001
+        st.warning(f"Unable to embed HTML report: {exc}")
+        return False
+    return True
+
+
+def render_overview(
+    st: Any,
+    data: DashboardData,
+    *,
+    sector_tickers: Sequence[str] | None = None,
+) -> None:
     st.header("Roz overview")
+    universe = _universe(data, sector_tickers)
     summary = data.overview()
     companies, quarters, active, incomplete = st.columns(4)
-    companies.metric("Companies", summary["companies"])
+    companies.metric("Companies (sector)", len(universe))
     quarters.metric("Historical quarters", summary["quarters"])
     active.metric("Active events", summary["active_events"])
     incomplete.metric("Incomplete quarters", summary["incomplete_quarters"])
     st.caption(
         f"{summary['history_rows']:,} dimension records are loaded across "
-        f"{summary['armed_events']} operational events."
+        f"{summary['armed_events']} operational events. "
+        f"Comparative views use the Sector filter ({len(universe)} companies)."
     )
 
     st.subheader("Latest company scorecards")
-    scorecards = data.latest_scorecards()
+    scorecards = [
+        row
+        for row in data.latest_scorecards()
+        if str(row.get("ticker", "")).upper() in set(universe)
+    ]
+    scorecards = pad_company_rows(scorecards, universe)
     _table(
         st,
         [
             {
                 "company": format_company_label(row["ticker"]),
-                "latest_period": row["fiscal_period"],
-                "narrative": _fmt(row["narrative_level"]),
-                "change": _fmt(row["narrative_change"]),
-                "quant_z": _fmt(row["quant_z"]),
-                "narrative_quant_gap": _fmt(row["narrative_quant_gap"]),
-                "divergences": row["divergences"],
-                "dimensions": row["dimensions"],
-                "incomplete": row["incomplete"],
+                "latest_period": row.get("fiscal_period"),
+                "narrative": _fmt(row.get("narrative_level")),
+                "change": _fmt(row.get("narrative_change")),
+                "quant_z": _fmt(row.get("quant_z")),
+                "narrative_quant_gap": _fmt(row.get("narrative_quant_gap")),
+                "divergences": row.get("divergences"),
+                "dimensions": row.get("dimensions"),
+                "incomplete": row.get("incomplete"),
                 "quant_ok": row.get("quant_quality_ok", True),
                 "quant_flags": ", ".join(row.get("quant_quality_flags") or ()) or "—",
             }
@@ -105,19 +234,36 @@ def render_overview(st: Any, data: DashboardData) -> None:
             "percent surprise or a member measure was suppressed. Charts use the "
             "clean decision quant_z."
         )
-    if scorecards:
-        try:
-            import pandas as pd  # type: ignore
 
-            frame = pd.DataFrame(scorecards)
-            frame["company"] = frame["ticker"].map(format_company_label)
-            chart = frame.set_index("company")[["narrative_level", "quant_z"]]
-            st.bar_chart(chart, use_container_width=True)
-        except ImportError:
-            st.caption("Install pandas to enable the score comparison chart.")
+    st.subheader("Universe pulse")
+    pulse = pad_company_rows(data.overview_pulse(), universe)
+    # Re-sort after padding: largest abs gap first, nulls last.
+    pulse.sort(
+        key=lambda item: (
+            item.get("abs_gap") is None,
+            -(item.get("abs_gap") or 0.0),
+            str(item.get("ticker", "")),
+        )
+    )
+    if pulse:
+        _altair(st, overview_pulse_chart(pulse))
+        st.caption(
+            "Gap = narrative level − quant z (latest print). "
+            "Ranked by absolute gap; every company in the Sector filter is shown "
+            "(grey = gap unavailable). Flagged = severe quant issues "
+            "(near-zero consensus / member suppressed), not routine sparse dimensions. "
+            "Deep dive: Narrative vs quant / Dimension panel."
+        )
+    else:
+        st.info("No latest scorecards available for the pulse chart.")
 
     st.subheader("Historical completeness")
-    _table(st, with_company_labels(data.completeness_coverage()))
+    coverage = [
+        row
+        for row in data.completeness_coverage()
+        if str(row.get("ticker", "")).upper() in set(universe)
+    ]
+    _table(st, with_company_labels(coverage))
     events = data.event_inbox()
     if events:
         st.subheader("Recent pipeline events")
@@ -128,7 +274,13 @@ def render_overview(st: Any, data: DashboardData) -> None:
         _table(st, with_company_labels(alerts))
 
 
-def render_event_inbox(st: Any, data: DashboardData) -> None:
+def render_event_inbox(
+    st: Any,
+    data: DashboardData,
+    *,
+    sector_tickers: Sequence[str] | None = None,
+) -> None:
+    del sector_tickers  # ops view is not sector-scoped
     st.header("Event inbox")
     events = data.event_inbox()
     statuses = sorted({str(event.get("status")) for event in events if event.get("status")})
@@ -138,12 +290,18 @@ def render_event_inbox(st: Any, data: DashboardData) -> None:
     _table(st, with_company_labels(events))
 
 
-def render_company_history(st: Any, data: DashboardData) -> None:
+def render_company_history(
+    st: Any,
+    data: DashboardData,
+    *,
+    sector_tickers: Sequence[str] | None = None,
+) -> None:
     st.header("Company history")
-    if not data.tickers:
+    universe = _universe(data, sector_tickers) or list(data.tickers)
+    if not universe:
         st.info("No companies are available.")
         return
-    ticker = _select_ticker(st, data.tickers)
+    ticker = _select_ticker(st, universe)
     history = data.company_history(ticker)
     flagged = sum(bool(row.get("quant_flagged")) for row in history)
     st.caption(
@@ -154,21 +312,17 @@ def render_company_history(st: Any, data: DashboardData) -> None:
         st,
         [
             {
-                **{
-                    key: row[key]
-                    for key in (
-                        "fiscal_period",
-                        "earnings_date",
-                        "narrative_level",
-                        "quant_z",
-                        "narrative_quant_gap",
-                        "divergences",
-                        "incomplete",
-                    )
-                    if key in row
-                },
+                "fiscal_period": row["fiscal_period"],
+                "dimensions": row.get("dimensions"),
+                "narrative_level": row.get("narrative_level"),
+                "narrative_change": row.get("narrative_change"),
+                "quant_z": row.get("quant_z"),
+                "narrative_quant_gap": row.get("narrative_quant_gap"),
+                "divergences": row.get("divergences"),
+                "incomplete": row.get("incomplete"),
                 "quant_ok": row.get("quant_quality_ok", True),
-                "quant_flags": ", ".join(row.get("quant_quality_flags") or ()) or "—",
+                "quant_flags": ", ".join(row.get("quant_quality_flags") or ())
+                or "—",
             }
             for row in history
         ],
@@ -190,54 +344,76 @@ def render_company_history(st: Any, data: DashboardData) -> None:
         )
 
 
-def render_dimension_heatmap(st: Any, data: DashboardData) -> None:
-    st.header("Dimension heatmap")
-    selected = _multi_tickers(
-        st, data.tickers, default=data.tickers[:1], key="heatmap_companies"
-    )
+def render_dimension_heatmap(
+    st: Any,
+    data: DashboardData,
+    *,
+    sector_tickers: Sequence[str] | None = None,
+) -> None:
+    st.header("Dimension panel")
+    universe = _universe(data, sector_tickers)
+    if not universe:
+        st.info("No companies are available.")
+        return
+
+    mode = st.radio("Mode", ("Single", "Compare"), horizontal=True, key="dim_mode")
+    if mode == "Single":
+        selected = [_select_ticker(st, universe, key="dim_single_company")]
+        facet = False
+    else:
+        selected = _multi_tickers(
+            st,
+            universe,
+            default=universe[: min(2, len(universe))],
+            key="dim_compare_companies",
+            max_selections=_HEATMAP_MAX_COMPARE,
+        )
+        if not selected:
+            st.info("Select up to four companies to compare.")
+            return
+        if len(selected) > _HEATMAP_MAX_COMPARE:
+            selected = selected[:_HEATMAP_MAX_COMPARE]
+            st.warning(f"Compare mode shows at most {_HEATMAP_MAX_COMPARE} companies.")
+        facet = len(selected) > 1
+
     periods = st.slider("Latest periods", min_value=4, max_value=20, value=8)
     metric_label = st.radio(
         "Signal",
-        ("Narrative level", "Quant z-score", "Narrative–quant gap"),
+        tuple(_SIGNAL_LABELS),
         horizontal=True,
+        key="dim_signal",
     )
-    metric = {
-        "Narrative level": "narrative_level",
-        "Quant z-score": "quant_z",
-        "Narrative–quant gap": "gap",
-    }[metric_label]
+    metric = _SIGNAL_LABELS[metric_label]
     rows = data.dimension_heatmap(
-        tickers=selected or data.tickers,
+        tickers=selected,
         latest_periods=periods,
     )
     if not rows:
         st.info("No dimension history matches the selected companies.")
         return
-    try:
-        import pandas as pd  # type: ignore
 
-        frame = _label_frame_ticker(pd.DataFrame(rows))
-        frame["signal"] = pd.to_numeric(frame[metric], errors="coerce")
-        frame["magnitude"] = frame["signal"].abs().fillna(0) + 0.15
-        st.scatter_chart(
-            frame,
-            x="fiscal_period",
-            y="dimension",
-            color="ticker",
-            size="magnitude",
-            use_container_width=True,
-        )
-    except ImportError:
-        st.caption("Install pandas to enable the heatmap chart.")
+    center_zero = metric in {"quant_z", "gap"}
+    _altair(
+        st,
+        heatmap_chart(
+            rows,
+            metric,
+            title=f"{metric_label} · {' / '.join(format_company_label(t) for t in selected)}",
+            facet_by_company=facet,
+            center_zero=center_zero,
+        ),
+    )
     st.caption(
-        "Bubble size shows absolute signal strength. The table gives direction, "
-        "exact values, and narrative/quant divergence."
+        "X-axis uses period-end calendar quarters (aligned across companies, same "
+        "convention as Consolidated / Signal research). Fiscal period is in the "
+        "tooltip. Color scales are fixed (narrative [-2, +2]; quant z / gap [-3, +3])."
     )
     _table(
         st,
         [
             {
                 "company": format_company_label(row["ticker"]),
+                "calendar_quarter": row.get("calendar_quarter"),
                 "fiscal_period": row["fiscal_period"],
                 "dimension": row["dimension"],
                 metric: row[metric],
@@ -248,63 +424,192 @@ def render_dimension_heatmap(st: Any, data: DashboardData) -> None:
     )
 
 
-def render_cross_company(st: Any, data: DashboardData) -> None:
+def render_cross_company(
+    st: Any,
+    data: DashboardData,
+    *,
+    sector_tickers: Sequence[str] | None = None,
+) -> None:
     st.header("Cross-company")
+    universe = _universe(data, sector_tickers)
     periods = st.slider("Trailing quarters", min_value=1, max_value=40, value=12)
-    rows = data.cross_company(latest_periods=periods)
-    labeled = with_company_labels(rows)
-    _table(st, labeled)
-    if rows:
-        try:
-            import pandas as pd  # type: ignore
+    signal_label = st.selectbox("Signal", list(_CROSS_SIGNAL_LABELS), key="cross_signal")
+    signal_col = _CROSS_SIGNAL_LABELS[signal_label]
+    scope_options = ["All dimensions (avg)", *data.dimensions]
+    scope = st.selectbox("Scope", scope_options, key="cross_scope")
+    dimension = None if scope == "All dimensions (avg)" else scope
 
-            frame = _label_frame_ticker(pd.DataFrame(rows))
-            st.bar_chart(
-                frame,
-                x="ticker",
-                y="mean_narrative_level",
-                color="latest_period",
-                use_container_width=True,
-            )
-        except ImportError:
-            st.caption("Install pandas to enable the comparison chart.")
+    rows = data.cross_company(latest_periods=periods, dimension=dimension)
+    rows = pad_company_rows(rows, universe)
+    if not rows:
+        st.info("No cross-company history is available.")
+        return
+
+    st.caption(
+        f"Window: last {periods} quarters · Scope: {scope} · "
+        f"Sector: {len(universe)} companies (all listed) · Ranking by {signal_label}."
+    )
+    _altair(
+        st,
+        ranked_bar_chart(
+            rows,
+            signal_col,
+            title=f"{signal_label} · {scope}",
+            sort_abs=signal_col == "mean_narrative_quant_gap",
+        ),
+    )
+
+    table_rows = []
+    for row in rows:
+        ordered = {
+            "company": format_company_label(row["ticker"]),
+            signal_col: row.get(signal_col),
+            "latest_period": row.get("latest_period"),
+            "quarters": row.get("quarters"),
+            "scope": row.get("scope"),
+            "mean_narrative_level": row.get("mean_narrative_level"),
+            "mean_quant_z": row.get("mean_quant_z"),
+            "mean_narrative_quant_gap": row.get("mean_narrative_quant_gap"),
+            "mean_narrative_change": row.get("mean_narrative_change"),
+            "divergence_rate": row.get("divergence_rate"),
+            "incomplete_quarters": row.get("incomplete_quarters"),
+        }
+        table_rows.append(ordered)
+    table_rows.sort(
+        key=lambda item: (
+            item.get(signal_col) is None,
+            -(abs(item[signal_col]) if isinstance(item.get(signal_col), (int, float)) else 0)
+            if signal_col == "mean_narrative_quant_gap"
+            else (-(item[signal_col]) if isinstance(item.get(signal_col), (int, float)) else 0),
+        )
+    )
+    _table(st, table_rows)
 
 
-def render_narrative_vs_quant(st: Any, data: DashboardData) -> None:
+def render_narrative_vs_quant(
+    st: Any,
+    data: DashboardData,
+    *,
+    sector_tickers: Sequence[str] | None = None,
+) -> None:
     st.header("Narrative vs quant")
+    universe = _universe(data, sector_tickers)
+    if not universe:
+        st.info("No companies are available.")
+        return
+
+    default = universe[:1]
     selected = _multi_tickers(
-        st, data.tickers, default=data.tickers, key="nvq_companies"
+        st,
+        universe,
+        default=default,
+        key="nvq_companies",
     )
     dimension_options = ["All"] + data.dimensions
-    dimension = st.selectbox("Dimension", dimension_options)
+    dimension = st.selectbox("Dimension", dimension_options, key="nvq_dimension")
+    point_filter = st.radio(
+        "Points",
+        ("All points", "Divergences only"),
+        horizontal=True,
+        key="nvq_points",
+    )
+
     points = data.narrative_vs_quant(
-        tickers=selected,
+        tickers=selected or default,
         dimension=None if dimension == "All" else dimension,
     )
+    if point_filter == "Divergences only":
+        points = [point for point in points if point.get("divergence")]
+
     divergences = sum(bool(point["divergence"]) for point in points)
     left, right = st.columns(2)
     left.metric("Comparable observations", len(points))
     right.metric("Divergences", divergences)
+
+    if len(selected) > 6:
+        st.caption(
+            f"{len(selected)} companies selected — consider narrowing the set for readability."
+        )
+
     if points:
-        try:
-            import pandas as pd  # type: ignore
-
-            frame = _label_frame_ticker(pd.DataFrame(points))
-            st.scatter_chart(
-                frame,
-                x="quant_z",
-                y="narrative_level",
-                color="ticker",
-                size="divergence",
-            )
-        except ImportError:
-            st.caption("Install pandas to enable the scatter chart.")
-        _table(st, with_company_labels(points))
+        _altair(
+            st,
+            narrative_quant_scatter(
+                points,
+                title="Narrative vs quant",
+                color_by_company=len(selected or default) > 1,
+            ),
+        )
+        st.caption(
+            "Aligned points use a fixed readable size; divergences are larger triangles. "
+            "Axes use fixed domains (narrative [-2, +2], quant z [-3, +3]). "
+            "Dashed line is the narrative ≈ quant diagonal."
+        )
+        sorted_points = sorted(
+            points,
+            key=lambda point: (not bool(point.get("divergence")), str(point.get("ticker"))),
+        )
+        _table(st, with_company_labels(sorted_points))
     else:
-        st.info("No rows have both narrative and quantitative values.")
+        st.info("No rows have both narrative and quantitative values for this filter.")
 
 
-def render_audit(st: Any, data: DashboardData) -> None:
+def render_signal_research(
+    st: Any,
+    data: DashboardData,
+    *,
+    sector_tickers: Sequence[str] | None = None,
+) -> None:
+    del data, sector_tickers  # HTML report is the sole research UI
+    st.header("Signal research")
+    st.caption(
+        "Embedded Rank IC report from Structured Narrative "
+        "(``narrative_signal_eval.html``)."
+    )
+    path = resolve_rank_ic_html()
+    _render_html_report(
+        st,
+        path,
+        missing_hint=(
+            "Rank IC HTML report not found under cross_company/reports/. Run: "
+            "python evaluate_narrative_signals.py --tickers <universe> "
+            "--min-calendar-quarter 2016-Q2"
+        ),
+    )
+
+
+def render_consolidated_panel(
+    st: Any,
+    data: DashboardData,
+    *,
+    sector_tickers: Sequence[str] | None = None,
+) -> None:
+    del data, sector_tickers  # HTML report is the sole research UI
+    st.header("Consolidated panel")
+    st.caption(
+        "Embedded consolidated feature panel "
+        "(``consolidated_feature_panel.html`` / ``cross_section_panel.html``)."
+    )
+    path = resolve_consolidated_html()
+    _render_html_report(
+        st,
+        path,
+        missing_hint=(
+            "Consolidated panel HTML not found under cross_company/reports/. "
+            "Expected consolidated_feature_panel.html (full universe). Run: "
+            "python build_consolidated_panel_report.py --tickers <universe> "
+            "--min-calendar-quarter 2016-Q2"
+        ),
+    )
+
+
+def render_audit(
+    st: Any,
+    data: DashboardData,
+    *,
+    sector_tickers: Sequence[str] | None = None,
+) -> None:
+    del sector_tickers
     st.header("Audit")
     incomplete_only = st.checkbox("Show incomplete quarters only", value=False)
     audits = data.audit(incomplete_only=incomplete_only)
@@ -321,7 +626,13 @@ def render_audit(st: Any, data: DashboardData) -> None:
         st.caption("No operational events are armed.")
 
 
-def render_operations(st: Any, data: DashboardData) -> None:
+def render_operations(
+    st: Any,
+    data: DashboardData,
+    *,
+    sector_tickers: Sequence[str] | None = None,
+) -> None:
+    del sector_tickers
     st.header("Operations")
     alerts = data.operational_alerts()
     left, right = st.columns(2)
@@ -371,9 +682,11 @@ VIEWS = {
     "Overview": render_overview,
     "Event inbox": render_event_inbox,
     "Company history": render_company_history,
-    "Dimension heatmap": render_dimension_heatmap,
+    "Dimension panel": render_dimension_heatmap,
     "Cross-company": render_cross_company,
     "Narrative vs quant": render_narrative_vs_quant,
+    "Signal research": render_signal_research,
+    "Consolidated panel": render_consolidated_panel,
     "Operations": render_operations,
     "Audit": render_audit,
 }

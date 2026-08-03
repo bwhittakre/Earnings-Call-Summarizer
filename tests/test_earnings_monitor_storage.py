@@ -235,18 +235,24 @@ def test_cross_company_chart_uses_summary_column() -> None:
     )
 
     class StreamlitStub:
+        def __init__(self):
+            self.charts = []
+
         def header(self, value):
             return None
 
         def slider(self, *args, **kwargs):
             return 12
 
+        def selectbox(self, label, options, **kwargs):
+            return list(options)[0]
+
         def dataframe(self, *args, **kwargs):
             return None
 
-        def bar_chart(self, frame, **kwargs):
-            assert kwargs["y"] in frame.columns
-            assert kwargs["color"] in frame.columns
+        def altair_chart(self, chart, **kwargs):
+            self.charts.append(chart)
+            assert hasattr(chart, "to_dict")
 
         def caption(self, value):
             return None
@@ -254,7 +260,9 @@ def test_cross_company_chart_uses_summary_column() -> None:
         def info(self, value):
             return None
 
-    render_cross_company(StreamlitStub(), data)
+    stub = StreamlitStub()
+    render_cross_company(stub, data)
+    assert stub.charts
 
 
 def test_event_inbox_prefers_live_operational_state(tmp_path: Path) -> None:

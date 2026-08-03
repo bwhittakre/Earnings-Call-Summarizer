@@ -1012,9 +1012,19 @@ def _json_safe(obj: Any) -> Any:
     return obj
 
 
+def _default_eval_tickers() -> list[str]:
+    """Prefer Roz monitor universe when EARNINGS_MONITOR_TICKERS is set."""
+    import os
+
+    raw = os.environ.get("EARNINGS_MONITOR_TICKERS", "").strip()
+    if raw:
+        return [part.strip().upper() for part in raw.split(",") if part.strip()]
+    return list(PILOT_TICKERS)
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="Walk-forward IC/RankIC for narrative signals.")
-    ap.add_argument("--tickers", nargs="+", default=list(PILOT_TICKERS))
+    ap.add_argument("--tickers", nargs="+", default=_default_eval_tickers())
     ap.add_argument(
         "--label",
         default=None,

@@ -71,6 +71,22 @@ services:
     command: ["dashboard"]
     ports:
       - "127.0.0.1:${DASHBOARD_PORT:-8501}:8501"
+    volumes:
+      - monitor-data:/data
+      - ./earnings-scraper-main/earnings-scraper-main/inbox:/app/earnings-scraper-main/earnings-scraper-main/inbox
+      - type: bind
+        source: ${STRUCTURED_NARRATIVE_ENV_FILE:-./Structured Narrative/.env}
+        target: /app/Structured Narrative/.env
+        read_only: true
+      - type: bind
+        source: ${STRUCTURED_NARRATIVE_OUTPUT_DIR:-./Structured Narrative/output}
+        target: /history-source/output
+        read_only: true
+      # Mount reports where Streamlit static serving expects them (no symlink).
+      - type: bind
+        source: ${STRUCTURED_NARRATIVE_OUTPUT_DIR:-./Structured Narrative/output}/cross_company/reports
+        target: /app/services/earnings_monitor/dashboard/static/reports
+        read_only: true
     depends_on:
       history-import:
         condition: service_completed_successfully

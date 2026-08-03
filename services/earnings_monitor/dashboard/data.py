@@ -17,14 +17,27 @@ from ..storage import read_company_quarter_dataset, record_to_dict
 
 
 _PERIOD_RE = re.compile(r"^FY(\d{4})-Q([1-4])$", re.IGNORECASE)
+_CALENDAR_RE = re.compile(r"^(\d{4})-Q([1-4])$", re.IGNORECASE)
+
+# Company-level "Flagged" attention excludes routine sparse_dimension marks.
+# Those mean a composite dimension used fewer member measures — still usable.
+_SEVERE_QUALITY_FLAGS = frozenset(
+    {
+        "near_zero_consensus",
+        "member_suppressed",
+    }
+)
 
 
 def _period_key(value: Any) -> tuple[int, int, str]:
     text = str(value or "")
     match = _PERIOD_RE.match(text)
-    if not match:
-        return (-1, -1, text)
-    return (int(match.group(1)), int(match.group(2)), text)
+    if match:
+        return (int(match.group(1)), int(match.group(2)), text)
+    cal = _CALENDAR_RE.match(text)
+    if cal:
+        return (int(cal.group(1)), int(cal.group(2)), text)
+    return (-1, -1, text)
 
 
 def _number(value: Any) -> float | None:
@@ -75,17 +88,20 @@ def _quality_flags(rows: Sequence[Mapping[str, Any]]) -> list[str]:
 
 def _quality_summary(rows: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
     flags = _quality_flags(rows)
+    severe = [flag for flag in flags if flag in _SEVERE_QUALITY_FLAGS]
     if not rows:
-        return {"quant_quality_ok": True, "quant_quality_flags": [], "quant_flagged": False}
-    explicit = [row.get("quant_quality_ok") for row in rows if row.get("quant_quality_ok") is not None]
-    if explicit:
-        ok = all(_truthy(value) for value in explicit) and not flags
-    else:
-        ok = not flags
+        return {
+            "quant_quality_ok": True,
+            "quant_quality_flags": [],
+            "quant_flagged": False,
+            "quant_severe_flags": [],
+        }
+    # Decision-grade OK / pulse Flagged ignore routine sparse_dimension marks.
     return {
-        "quant_quality_ok": ok,
+        "quant_quality_ok": not severe,
         "quant_quality_flags": flags,
-        "quant_flagged": bool(flags) or not ok,
+        "quant_severe_flags": severe,
+        "quant_flagged": bool(severe),
     }
 
 
@@ -490,35 +506,63 @@ class DashboardData:
         tickers: Sequence[str] | None = None,
         latest_periods: int = 8,
     ) -> list[dict[str, Any]]:
-        allowed = {ticker.upper() for ticker in tickers} if tickers else set(self.tickers)
-        selected_periods: dict[str, set[str]] = {}
-        grouped = self._group_quarters()
-        for ticker in allowed:
-            periods = sorted(
-                (period for row_ticker, period in grouped if row_ticker == ticker),
-                key=_period_key,
-            )
-            selected_periods[ticker] = set(periods[-latest_periods:])
+        """Period × dimension cells for selected tickers.
 
-        cells: dict[tuple[str, str, str], list[dict[str, Any]]] = {}
+        Uses a shared period-end **calendar-quarter** window (same convention as
+        Consolidated / Rank IC) so companies with different fiscal calendars
+        align on the x-axis.
+        """
+        allowed = {ticker.upper() for ticker in tickers} if tickers else set(self.tickers)
+
+        calendar_quarters = sorted(
+            {
+                str(row.get("period_end_calendar_quarter") or "")
+                for row in self.rows
+                if str(row.get("ticker") or "").upper() in allowed
+                and row.get("period_end_calendar_quarter") not in (None, "")
+            },
+            key=_period_key,
+        )
+        use_calendar = bool(calendar_quarters)
+        if use_calendar:
+            selected_window = set(calendar_quarters[-latest_periods:])
+        else:
+            # Fiscal fallback when calendar enrichment is missing.
+            grouped = self._group_quarters()
+            selected_periods: dict[str, set[str]] = {}
+            for ticker in allowed:
+                periods = sorted(
+                    (period for row_ticker, period in grouped if row_ticker == ticker),
+                    key=_period_key,
+                )
+                selected_periods[ticker] = set(periods[-latest_periods:])
+
+        cells: dict[tuple[str, str, str, str], list[dict[str, Any]]] = {}
         for row in self.rows:
             ticker = str(row.get("ticker") or "").upper()
-            period = str(row.get("fiscal_period") or "")
+            fiscal = str(row.get("fiscal_period") or "")
+            calendar = str(row.get("period_end_calendar_quarter") or "")
             dimension = str(row.get("dimension") or "")
-            if (
-                ticker not in allowed
-                or period not in selected_periods.get(ticker, set())
-                or not dimension
-            ):
+            if ticker not in allowed or not dimension:
                 continue
-            cells.setdefault((ticker, period, dimension), []).append(row)
+            if use_calendar:
+                if calendar not in selected_window:
+                    continue
+            else:
+                if fiscal not in selected_periods.get(ticker, set()):
+                    continue
+            key = (ticker, calendar or fiscal, fiscal, dimension)
+            cells.setdefault(key, []).append(row)
 
         output: list[dict[str, Any]] = []
-        for (ticker, period, dimension), rows in cells.items():
+        for (ticker, calendar, fiscal, dimension), rows in cells.items():
             output.append(
                 {
                     "ticker": ticker,
-                    "fiscal_period": period,
+                    "calendar_quarter": calendar or None,
+                    "fiscal_period": fiscal,
+                    # Chart x-axis: prefer calendar quarter for cross-company alignment.
+                    "period": calendar or fiscal,
                     "dimension": dimension,
                     "narrative_level": _mean(rows, "llm_level"),
                     "quant_z": _mean(rows, "quant_z_pit")
@@ -539,30 +583,156 @@ class DashboardData:
         output.sort(
             key=lambda row: (
                 row["ticker"],
-                _period_key(row["fiscal_period"]),
+                _period_key(row.get("period") or row["fiscal_period"]),
                 row["dimension"],
             )
         )
         return output
 
-    def cross_company(self, *, latest_periods: int = 12) -> list[dict[str, Any]]:
+    def cross_company(
+        self,
+        *,
+        latest_periods: int = 12,
+        dimension: str | None = None,
+    ) -> list[dict[str, Any]]:
+        """Universe ranking rows for the cross-company board.
+
+        When *dimension* is None, aggregates quarter-level company history.
+        When set, aggregates that dimension's cells over the trailing window.
+        """
+        if dimension:
+            return self._cross_company_by_dimension(
+                latest_periods=latest_periods,
+                dimension=dimension,
+            )
+
         summary: list[dict[str, Any]] = []
         for ticker in self.tickers:
             history = self.company_history(ticker)
             selected = history[-latest_periods:] if latest_periods > 0 else history
+            dim_counts = [
+                int(row["dimensions"])
+                for row in selected
+                if isinstance(row.get("dimensions"), (int, float))
+            ]
+            div_counts = [
+                int(row["divergences"])
+                for row in selected
+                if isinstance(row.get("divergences"), (int, float))
+            ]
+            total_dims = sum(dim_counts)
+            total_divs = sum(div_counts)
             summary.append(
                 {
                     "ticker": ticker,
-                    "quarters": len(history),
+                    "quarters": len(selected),
                     "latest_period": history[-1]["fiscal_period"] if history else None,
+                    "scope": "all_dimensions",
                     "mean_narrative_level": _mean(selected, "narrative_level"),
                     "mean_narrative_change": _mean(selected, "narrative_change"),
                     "mean_quant_z": _mean(selected, "quant_z"),
                     "mean_narrative_quant_gap": _mean(selected, "narrative_quant_gap"),
-                    "incomplete_quarters": sum(_truthy(row.get("incomplete")) for row in history),
+                    "divergence_rate": round(total_divs / total_dims, 4)
+                    if total_dims
+                    else None,
+                    "incomplete_quarters": sum(
+                        _truthy(row.get("incomplete")) for row in history
+                    ),
                 }
             )
         return summary
+
+    def _cross_company_by_dimension(
+        self,
+        *,
+        latest_periods: int,
+        dimension: str,
+    ) -> list[dict[str, Any]]:
+        cells = self.dimension_heatmap(
+            tickers=self.tickers,
+            latest_periods=latest_periods,
+        )
+        by_ticker: dict[str, list[dict[str, Any]]] = {}
+        for row in cells:
+            if str(row.get("dimension")) != dimension:
+                continue
+            by_ticker.setdefault(str(row["ticker"]).upper(), []).append(row)
+
+        summary: list[dict[str, Any]] = []
+        for ticker in self.tickers:
+            selected = by_ticker.get(ticker, [])
+            if not selected:
+                history = self.company_history(ticker)
+                summary.append(
+                    {
+                        "ticker": ticker,
+                        "quarters": 0,
+                        "latest_period": history[-1]["fiscal_period"]
+                        if history
+                        else None,
+                        "scope": dimension,
+                        "mean_narrative_level": None,
+                        "mean_narrative_change": None,
+                        "mean_quant_z": None,
+                        "mean_narrative_quant_gap": None,
+                        "divergence_rate": None,
+                        "incomplete_quarters": sum(
+                            _truthy(row.get("incomplete")) for row in history
+                        ),
+                    }
+                )
+                continue
+            periods = sorted(
+                {str(row["fiscal_period"]) for row in selected},
+                key=_period_key,
+            )
+            divs = sum(_truthy(row.get("divergence")) for row in selected)
+            summary.append(
+                {
+                    "ticker": ticker,
+                    "quarters": len(periods),
+                    "latest_period": periods[-1] if periods else None,
+                    "scope": dimension,
+                    "mean_narrative_level": _mean(selected, "narrative_level"),
+                    "mean_narrative_change": None,
+                    "mean_quant_z": _mean(selected, "quant_z"),
+                    "mean_narrative_quant_gap": _mean(selected, "gap"),
+                    "divergence_rate": round(divs / len(selected), 4)
+                    if selected
+                    else None,
+                    "incomplete_quarters": sum(
+                        _truthy(row.get("incomplete"))
+                        for row in self.company_history(ticker)
+                    ),
+                }
+            )
+        return summary
+
+    def overview_pulse(self) -> list[dict[str, Any]]:
+        """Latest-print attention rows sorted by absolute narrative–quant gap."""
+        pulse: list[dict[str, Any]] = []
+        for row in self.latest_scorecards():
+            gap = _number(row.get("narrative_quant_gap"))
+            pulse.append(
+                {
+                    "ticker": row["ticker"],
+                    "fiscal_period": row["fiscal_period"],
+                    "gap": gap,
+                    "abs_gap": abs(gap) if gap is not None else None,
+                    "narrative_level": row.get("narrative_level"),
+                    "quant_z": row.get("quant_z"),
+                    "quant_flagged": bool(row.get("quant_flagged")),
+                    "incomplete": bool(row.get("incomplete")),
+                }
+            )
+        pulse.sort(
+            key=lambda item: (
+                item["abs_gap"] is None,
+                -(item["abs_gap"] or 0.0),
+                item["ticker"],
+            )
+        )
+        return pulse
 
     def narrative_vs_quant(
         self,

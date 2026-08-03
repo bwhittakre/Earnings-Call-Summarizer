@@ -15,6 +15,18 @@ from services.earnings_monitor.dashboard.data import (
     default_dataset_path,
     load_dashboard_data,
 )
+from services.earnings_monitor.dashboard.report_static import ensure_reports_static_link
+from services.earnings_monitor.dashboard.research_data import (
+    html_report_meta,
+    load_consolidated_panel,
+    load_rank_ic_bundle,
+    resolve_consolidated_html,
+    resolve_rank_ic_html,
+)
+from services.earnings_monitor.dashboard.sectors import (
+    list_sector_options,
+    resolve_sector_tickers,
+)
 from services.earnings_monitor.dashboard.views import VIEWS
 
 
@@ -52,12 +64,66 @@ def render_app(
             )
             return
 
+    # Ensure local/non-Compose runs can iframe large reports via static serving.
+    ensure_reports_static_link()
+
     st.sidebar.caption(f"Dataset: {selected_path}")
     st.sidebar.caption(
         f"{len(data.rows):,} records · {len(data.tickers)} companies"
     )
+
+    sector_options = list_sector_options()
+    default_sector = (
+        "xlk_tech" if "xlk_tech" in sector_options else sector_options[0]
+    )
+    sector_choice = st.sidebar.selectbox(
+        "Sector",
+        sector_options,
+        index=sector_options.index(default_sector),
+        key="roz_sector",
+    )
+    sector_tickers = resolve_sector_tickers(sector_choice, data.tickers)
+    st.sidebar.caption(
+        f"Sector filter: {sector_choice} · {len(sector_tickers)} companies"
+    )
+
+    rank_html = resolve_rank_ic_html()
+    consolidated_html = resolve_consolidated_html()
+    rank_meta = html_report_meta(rank_html)
+    consol_meta = html_report_meta(consolidated_html)
+
+    if rank_html is not None:
+        st.sidebar.caption(
+            f"Rank IC HTML: {rank_meta.get('generated_at') or 'available'}"
+        )
+    else:
+        # CSV load only when HTML is missing (fallback provenance).
+        rank_ic = load_rank_ic_bundle()
+        if rank_ic.available:
+            st.sidebar.caption(
+                f"Rank IC CSV: {rank_ic.meta.get('generated_at') or 'available'} · "
+                f"HTML missing"
+            )
+        else:
+            st.sidebar.caption("Rank IC: not loaded")
+
+    if consolidated_html is not None:
+        st.sidebar.caption(
+            f"Consolidated HTML: {consol_meta.get('stem') or 'available'} · "
+            f"{consol_meta.get('generated_at') or '—'}"
+        )
+    else:
+        consolidated = load_consolidated_panel()
+        if consolidated.available:
+            st.sidebar.caption(
+                f"Consolidated CSV: {consolidated.meta.get('generated_at') or 'available'} · "
+                f"HTML missing"
+            )
+        else:
+            st.sidebar.caption("Consolidated: not loaded")
+
     view_name = st.sidebar.radio("View", list(VIEWS))
-    VIEWS[view_name](st, data)
+    VIEWS[view_name](st, data, sector_tickers=sector_tickers)
 
 
 def main() -> None:

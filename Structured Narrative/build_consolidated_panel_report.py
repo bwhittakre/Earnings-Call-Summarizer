@@ -72,12 +72,22 @@ def load_sector_tickers(sector: str) -> list[str]:
     return tickers
 
 
+def _default_consolidated_tickers() -> list[str]:
+    """Prefer Roz monitor universe when EARNINGS_MONITOR_TICKERS is set."""
+    import os
+
+    raw = os.environ.get("EARNINGS_MONITOR_TICKERS", "").strip()
+    if raw:
+        return [part.strip().upper() for part in raw.split(",") if part.strip()]
+    return list(PILOT_TICKERS)
+
+
 def resolve_tickers(args) -> tuple[list[str], str | None]:
     if args.sector and args.tickers:
         raise ValueError("Use either --sector or --tickers, not both.")
     if args.sector:
         return load_sector_tickers(args.sector), args.sector
-    tickers = [t.upper() for t in (args.tickers or list(PILOT_TICKERS))]
+    tickers = [t.upper() for t in (args.tickers or _default_consolidated_tickers())]
     return tickers, None
 
 
