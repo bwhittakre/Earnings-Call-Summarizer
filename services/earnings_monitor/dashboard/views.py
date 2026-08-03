@@ -5,8 +5,9 @@ which keeps these functions importable and easy to exercise in unit tests.
 """
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Sequence
 
+from .company_labels import format_company_label, with_company_labels
 from .data import DashboardData
 
 
@@ -21,6 +22,46 @@ def _fmt(value: Any, digits: int = 2) -> str:
     if value is None:
         return "—"
     return f"{float(value):.{digits}f}"
+
+
+def _select_ticker(
+    st: Any,
+    tickers: Sequence[str],
+    *,
+    label: str = "Company",
+    key: str | None = None,
+) -> str:
+    kwargs: dict[str, Any] = {"format_func": format_company_label}
+    if key is not None:
+        kwargs["key"] = key
+    return st.selectbox(label, list(tickers), **kwargs)
+
+
+def _multi_tickers(
+    st: Any,
+    tickers: Sequence[str],
+    *,
+    label: str = "Companies",
+    default: Sequence[str] | None = None,
+    key: str | None = None,
+) -> list[str]:
+    options = list(tickers)
+    kwargs: dict[str, Any] = {
+        "default": list(default if default is not None else options),
+        "format_func": format_company_label,
+    }
+    if key is not None:
+        kwargs["key"] = key
+    return list(st.multiselect(label, options, **kwargs))
+
+
+def _label_frame_ticker(frame: Any, column: str = "ticker") -> Any:
+    """Replace ticker codes with display labels for chart axes/legends."""
+    if column not in frame.columns:
+        return frame
+    out = frame.copy()
+    out[column] = out[column].map(lambda value: format_company_label(str(value)))
+    return out
 
 
 def render_overview(st: Any, data: DashboardData) -> None:
@@ -42,7 +83,7 @@ def render_overview(st: Any, data: DashboardData) -> None:
         st,
         [
             {
-                "ticker": row["ticker"],
+                "company": format_company_label(row["ticker"]),
                 "latest_period": row["fiscal_period"],
                 "narrative": _fmt(row["narrative_level"]),
                 "change": _fmt(row["narrative_change"]),
@@ -68,23 +109,23 @@ def render_overview(st: Any, data: DashboardData) -> None:
         try:
             import pandas as pd  # type: ignore
 
-            frame = pd.DataFrame(scorecards).set_index("ticker")[
-                ["narrative_level", "quant_z"]
-            ]
-            st.bar_chart(frame, use_container_width=True)
+            frame = pd.DataFrame(scorecards)
+            frame["company"] = frame["ticker"].map(format_company_label)
+            chart = frame.set_index("company")[["narrative_level", "quant_z"]]
+            st.bar_chart(chart, use_container_width=True)
         except ImportError:
             st.caption("Install pandas to enable the score comparison chart.")
 
     st.subheader("Historical completeness")
-    _table(st, data.completeness_coverage())
+    _table(st, with_company_labels(data.completeness_coverage()))
     events = data.event_inbox()
     if events:
         st.subheader("Recent pipeline events")
-        _table(st, events[:8])
+        _table(st, with_company_labels(events[:8]))
     alerts = data.operational_alerts()
     if alerts:
         st.subheader("Operational alerts")
-        _table(st, alerts)
+        _table(st, with_company_labels(alerts))
 
 
 def render_event_inbox(st: Any, data: DashboardData) -> None:
@@ -94,7 +135,7 @@ def render_event_inbox(st: Any, data: DashboardData) -> None:
     status = st.selectbox("Status", ("all", *statuses))
     if status != "all":
         events = [event for event in events if event["status"] == status]
-    _table(st, events)
+    _table(st, with_company_labels(events))
 
 
 def render_company_history(st: Any, data: DashboardData) -> None:
@@ -102,11 +143,11 @@ def render_company_history(st: Any, data: DashboardData) -> None:
     if not data.tickers:
         st.info("No companies are available.")
         return
-    ticker = st.selectbox("Company", data.tickers)
+    ticker = _select_ticker(st, data.tickers)
     history = data.company_history(ticker)
     flagged = sum(bool(row.get("quant_flagged")) for row in history)
     st.caption(
-        f"{len(history)} imported quarters"
+        f"{format_company_label(ticker)} · {len(history)} imported quarters"
         + (f"; {flagged} with quant quality flags" if flagged else "")
     )
     _table(
@@ -151,7 +192,9 @@ def render_company_history(st: Any, data: DashboardData) -> None:
 
 def render_dimension_heatmap(st: Any, data: DashboardData) -> None:
     st.header("Dimension heatmap")
-    selected = st.multiselect("Companies", data.tickers, default=data.tickers[:1])
+    selected = _multi_tickers(
+        st, data.tickers, default=data.tickers[:1], key="heatmap_companies"
+    )
     periods = st.slider("Latest periods", min_value=4, max_value=20, value=8)
     metric_label = st.radio(
         "Signal",
@@ -173,7 +216,7 @@ def render_dimension_heatmap(st: Any, data: DashboardData) -> None:
     try:
         import pandas as pd  # type: ignore
 
-        frame = pd.DataFrame(rows)
+        frame = _label_frame_ticker(pd.DataFrame(rows))
         frame["signal"] = pd.to_numeric(frame[metric], errors="coerce")
         frame["magnitude"] = frame["signal"].abs().fillna(0) + 0.15
         st.scatter_chart(
@@ -194,7 +237,7 @@ def render_dimension_heatmap(st: Any, data: DashboardData) -> None:
         st,
         [
             {
-                "ticker": row["ticker"],
+                "company": format_company_label(row["ticker"]),
                 "fiscal_period": row["fiscal_period"],
                 "dimension": row["dimension"],
                 metric: row[metric],
@@ -209,12 +252,13 @@ def render_cross_company(st: Any, data: DashboardData) -> None:
     st.header("Cross-company")
     periods = st.slider("Trailing quarters", min_value=1, max_value=40, value=12)
     rows = data.cross_company(latest_periods=periods)
-    _table(st, rows)
+    labeled = with_company_labels(rows)
+    _table(st, labeled)
     if rows:
         try:
             import pandas as pd  # type: ignore
 
-            frame = pd.DataFrame(rows)
+            frame = _label_frame_ticker(pd.DataFrame(rows))
             st.bar_chart(
                 frame,
                 x="ticker",
@@ -228,7 +272,9 @@ def render_cross_company(st: Any, data: DashboardData) -> None:
 
 def render_narrative_vs_quant(st: Any, data: DashboardData) -> None:
     st.header("Narrative vs quant")
-    selected = st.multiselect("Companies", data.tickers, default=data.tickers)
+    selected = _multi_tickers(
+        st, data.tickers, default=data.tickers, key="nvq_companies"
+    )
     dimension_options = ["All"] + data.dimensions
     dimension = st.selectbox("Dimension", dimension_options)
     points = data.narrative_vs_quant(
@@ -243,7 +289,7 @@ def render_narrative_vs_quant(st: Any, data: DashboardData) -> None:
         try:
             import pandas as pd  # type: ignore
 
-            frame = pd.DataFrame(points)
+            frame = _label_frame_ticker(pd.DataFrame(points))
             st.scatter_chart(
                 frame,
                 x="quant_z",
@@ -253,7 +299,7 @@ def render_narrative_vs_quant(st: Any, data: DashboardData) -> None:
             )
         except ImportError:
             st.caption("Install pandas to enable the scatter chart.")
-        _table(st, points)
+        _table(st, with_company_labels(points))
     else:
         st.info("No rows have both narrative and quantitative values.")
 
@@ -266,11 +312,11 @@ def render_audit(st: Any, data: DashboardData) -> None:
     left, right = st.columns(2)
     left.metric("Quarter records", len(audits))
     right.metric("Incomplete", incomplete)
-    _table(st, audits)
+    _table(st, with_company_labels(audits))
     st.subheader("Pipeline status")
     status = data.pipeline_status()
     if status:
-        _table(st, status)
+        _table(st, with_company_labels(status))
     else:
         st.caption("No operational events are armed.")
 
@@ -282,7 +328,7 @@ def render_operations(st: Any, data: DashboardData) -> None:
     left.metric("Active alerts", len(alerts))
     right.metric("Recorded runs", len(data.job_runs))
     st.subheader("Alerts")
-    _table(st, alerts)
+    _table(st, with_company_labels(alerts))
     st.subheader("Event run timeline")
     event_ids = sorted(
         {
@@ -292,7 +338,12 @@ def render_operations(st: Any, data: DashboardData) -> None:
         }
     )
     selected = st.selectbox("Event", ("all", *event_ids))
-    _table(st, data.run_timeline(None if selected == "all" else selected))
+    _table(
+        st,
+        with_company_labels(
+            data.run_timeline(None if selected == "all" else selected)
+        ),
+    )
     st.subheader("Recent poll cycles")
     _table(st, data.poll_cycles[:50])
     st.subheader("Artifact publications")
