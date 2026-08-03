@@ -34,9 +34,11 @@ from panel_html import (  # noqa: E402
 from quant_loader import (  # noqa: E402
     load_quant_dim_z,
     load_quant_guidance_revision_z_pit,
+    load_quant_quality,
     load_quant_spine_meta,
     load_quant_z_fullsample,
     load_quant_z_pit,
+    load_quant_z_raw,
 )
 from quant_mapping import FEATURE_AVAILABILITY_MANIFEST, quant_family_for, quant_mapping_for  # noqa: E402
 from asof_alpha import apply_asof_alpha_labels  # noqa: E402
@@ -69,6 +71,9 @@ PANEL_COLUMNS = [
     "quant_z",
     "quant_z_pit",
     "quant_z_fullsample",
+    "quant_z_raw",
+    "quant_quality_flags",
+    "quant_quality_ok",
     "quant_guidance_revision_z_pit",
     "alpha_spec_0_90",
     "alpha_spec_0_90_z",
@@ -178,6 +183,8 @@ def _signal_stack(row: pd.Series) -> str:
 def build_spine(quant: pd.DataFrame, ticker: str) -> pd.DataFrame:
     quant_z_pit_map = load_quant_z_pit(ticker)
     quant_z_full_map = load_quant_z_fullsample(ticker)
+    quant_z_raw_map = load_quant_z_raw(ticker)
+    quant_quality_map = load_quant_quality(ticker)
     guidance_rev_map = load_quant_guidance_revision_z_pit(ticker)
     meta_map = load_quant_spine_meta(ticker)
     rows: list[dict] = []
@@ -202,22 +209,32 @@ def build_spine(quant: pd.DataFrame, ticker: str) -> pd.DataFrame:
                 "alpha_spec_0_90_z": row.get("alpha_spec_0_90_z"),
                 "alpha_spec_0_90_complete": row.get("alpha_spec_0_90_complete"),
             }
+            quality = quant_quality_map.get(fp, {}).get(dim, {})
             if dim in QUANT_COMPARABLE_DIMENSIONS:
                 if dim == "guidance":
                     rec["quant_z_pit"] = None
                     rec["quant_z"] = None
                     rec["quant_z_fullsample"] = None
+                    rec["quant_z_raw"] = None
+                    rec["quant_quality_flags"] = quality.get("flags_json", "[]")
+                    rec["quant_quality_ok"] = quality.get("ok", True)
                     rec["quant_guidance_revision_z_pit"] = guidance_rev_map.get(fp)
                 else:
                     qz = quant_z_pit_map.get(fp, {}).get(dim)
                     rec["quant_z_pit"] = qz
                     rec["quant_z"] = qz
                     rec["quant_z_fullsample"] = quant_z_full_map.get(fp, {}).get(dim)
+                    rec["quant_z_raw"] = quant_z_raw_map.get(fp, {}).get(dim)
+                    rec["quant_quality_flags"] = quality.get("flags_json", "[]")
+                    rec["quant_quality_ok"] = quality.get("ok", True)
                     rec["quant_guidance_revision_z_pit"] = None
             else:
                 rec["quant_z_pit"] = None
                 rec["quant_z"] = None
                 rec["quant_z_fullsample"] = None
+                rec["quant_z_raw"] = None
+                rec["quant_quality_flags"] = "[]"
+                rec["quant_quality_ok"] = True
                 rec["quant_guidance_revision_z_pit"] = None
             rows.append(rec)
     return pd.DataFrame(rows)
@@ -239,6 +256,9 @@ def build_spine_from_level(level: pd.DataFrame, ticker: str) -> pd.DataFrame:
             "earnings_date": earn,
             "model_date": None,
             "quant_z": None,
+            "quant_z_raw": None,
+            "quant_quality_flags": "[]",
+            "quant_quality_ok": True,
             "alpha_spec_0_90": None,
             "alpha_spec_0_90_z": None,
             "alpha_spec_0_90_complete": None,
