@@ -252,12 +252,28 @@ def main(argv: list[str] | None = None) -> int:
         )
         payload = result.to_dict()
         if args.arm:
-            if ticker not in config.tickers:
+            monitor = build_local_monitor(config)
+            from .ticker_book import ensure_ticker_in_book, resolve_book_tickers
+
+            book = ensure_ticker_in_book(
+                ticker=ticker,
+                config=config,
+                state=monitor.state,
+                seed_tickers=config.tickers,
+            )
+            payload["ticker_book"] = {
+                "added": book.added,
+                "tickers": list(book.tickers),
+                "sector_updated": book.sector_updated,
+                "env_updated": book.env_updated,
+            }
+            if ticker not in book.tickers and ticker not in resolve_book_tickers(
+                config, monitor.state
+            ):
                 parser.error(
-                    f"{ticker} is not in EARNINGS_MONITOR_TICKERS={config.tickers}. "
+                    f"{ticker} is not in the Roz ticker book after integration. "
                     f"{result.allowlist_guidance}"
                 )
-            monitor = build_local_monitor(config)
             if result.status == "first_print_fallback":
                 initial = EventState.SCHEDULED
                 mode = WorkflowMode.FIRST_PRINT.value
@@ -310,14 +326,27 @@ def main(argv: list[str] | None = None) -> int:
     monitor = build_local_monitor(config)
     if args.command == "arm":
         ticker = args.ticker.strip().upper()
-        if ticker not in config.tickers:
-            parser.error(
-                f"{ticker} is not in EARNINGS_MONITOR_TICKERS={config.tickers}"
-            )
         if bool(getattr(args, "first_print", False)) and bool(
             getattr(args, "onboard", False)
         ):
             parser.error("--first-print and --onboard are mutually exclusive")
+        # First-Print / Onboard integrate the ticker into the shared Roz book
+        # (SQLite meta + sector file + env when writable) before arming.
+        if bool(getattr(args, "first_print", False)) or bool(
+            getattr(args, "onboard", False)
+        ):
+            from .ticker_book import ensure_ticker_in_book
+
+            ensure_ticker_in_book(
+                ticker=ticker,
+                config=config,
+                state=monitor.state,
+                seed_tickers=config.tickers,
+            )
+        elif ticker not in config.tickers:
+            parser.error(
+                f"{ticker} is not in EARNINGS_MONITOR_TICKERS={config.tickers}"
+            )
         try:
             report_at = datetime.fromisoformat(
                 args.report_at.strip().replace("Z", "+00:00")

@@ -242,12 +242,13 @@ def ensure_fiscal_calendar_entry(
 def allowlist_guidance(ticker: str, configured: Sequence[str]) -> str:
     ticker_key = ticker.strip().upper()
     if ticker_key in {t.strip().upper() for t in configured}:
-        return f"{ticker_key} is already in EARNINGS_MONITOR_TICKERS."
+        return f"{ticker_key} is already in the Roz ticker book."
     current = ",".join(t.strip().upper() for t in configured if t.strip())
     suggested = f"{current},{ticker_key}" if current else ticker_key
     return (
-        f"Add {ticker_key} to the monitor allowlist before arming live events:\n"
-        f"  EARNINGS_MONITOR_TICKERS={suggested}"
+        f"{ticker_key} is integrated into the Roz ticker book during Onboard/"
+        f"First-Print (sector file + shared book meta; env "
+        f"EARNINGS_MONITOR_TICKERS={suggested} when writable)."
     )
 
 
@@ -452,6 +453,56 @@ def run_onboard(
         prior_event_count=prior_event_count,
         allowlist_guidance=allowlist_guidance(ticker_key, configured_tickers),
     )
+
+    # First-Print fallthrough and full Onboard both integrate the ticker into
+    # the shared Roz book (sector file + optional env) so research-regen sees it.
+    try:
+        from .config import MonitorConfig
+        from .ticker_book import ensure_ticker_in_book
+
+        seed = tuple(
+            dict.fromkeys(
+                str(t).strip().upper()
+                for t in (configured_tickers or ())
+                if str(t).strip()
+            )
+        )
+        book_config = MonitorConfig(
+            repo_root=Path(repo_root),
+            database_path=Path(repo_root)
+            / "services"
+            / "earnings_monitor"
+            / "state"
+            / "monitor.sqlite3",
+            inbox_path=Path(repo_root)
+            / "earnings-scraper-main"
+            / "earnings-scraper-main"
+            / "inbox",
+            tickers=seed or ("AAPL",),
+            research_sector="xlk_tech",
+        )
+        integration = ensure_ticker_in_book(
+            ticker=ticker_key,
+            config=book_config,
+            seed_tickers=seed,
+        )
+        result.steps.append(
+            {
+                "step": "ticker_book",
+                "added": integration.added,
+                "tickers": list(integration.tickers),
+                "sector_updated": integration.sector_updated,
+                "env_updated": integration.env_updated,
+            }
+        )
+        result.allowlist_guidance = allowlist_guidance(
+            ticker_key, integration.tickers
+        )
+    except Exception as exc:  # noqa: BLE001 — book sync must not abort onboard
+        result.steps.append(
+            {"step": "ticker_book", "error": str(exc), "ticker": ticker_key}
+        )
+        LOG.warning("Roz ticker book integration failed for %s: %s", ticker_key, exc)
 
     if decision.mode == "first_print":
         result.status = "first_print_fallback"

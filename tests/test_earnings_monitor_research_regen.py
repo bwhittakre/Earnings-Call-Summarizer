@@ -112,7 +112,7 @@ def test_post_call_marks_research_book_dirty_when_enabled(tmp_path):
             return transcript
 
     class Workflow:
-        def run(self, profile, requested, transcript=None):
+        def run(self, profile, requested, transcript=None, **kwargs):
             return {"ok": True}
 
     state = OperationalState(tmp_path / "monitor.sqlite3")
@@ -173,7 +173,7 @@ def test_post_call_skips_dirty_mark_when_regen_disabled(tmp_path):
             return transcript
 
     class Workflow:
-        def run(self, profile, requested, transcript=None):
+        def run(self, profile, requested, transcript=None, **kwargs):
             return {}
 
     state = OperationalState(tmp_path / "monitor.sqlite3")

@@ -28,6 +28,10 @@ x-monitor-common: &monitor-common
       source: ${REPO_ENV_FILE:-./.env}
       target: /app/.env
       read_only: true
+    # Live sector book (Onboard / First-Print append tickers here for regen).
+    - type: bind
+      source: ./config/sectors
+      target: /app/config/sectors
     - type: bind
       source: ${STRUCTURED_NARRATIVE_TRANSCRIPTS_DIR:-./Structured Narrative/transcripts_raw}
       target: /app/Structured Narrative/transcripts_raw
@@ -72,6 +76,9 @@ services:
         target: /app/.env
         read_only: true
       - type: bind
+        source: ./config/sectors
+        target: /app/config/sectors
+      - type: bind
         source: ${STRUCTURED_NARRATIVE_TRANSCRIPTS_DIR:-./Structured Narrative/transcripts_raw}
         target: /app/Structured Narrative/transcripts_raw
       - type: bind
@@ -102,6 +109,9 @@ services:
         target: /app/.env
         read_only: true
       - type: bind
+        source: ./config/sectors
+        target: /app/config/sectors
+      - type: bind
         source: ${STRUCTURED_NARRATIVE_TRANSCRIPTS_DIR:-./Structured Narrative/transcripts_raw}
         target: /app/Structured Narrative/transcripts_raw
       - type: bind
@@ -129,6 +139,10 @@ services:
       - type: bind
         source: ${REPO_ENV_FILE:-./.env}
         target: /app/.env
+        read_only: true
+      - type: bind
+        source: ./config/sectors
+        target: /app/config/sectors
         read_only: true
       - type: bind
         source: ${STRUCTURED_NARRATIVE_TRANSCRIPTS_DIR:-./Structured Narrative/transcripts_raw}

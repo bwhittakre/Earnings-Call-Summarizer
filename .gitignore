@@ -1,6 +1,9 @@
 .env
 .env.txt
 *.env.txt
+# Local monitor overrides (Compose EARNINGS_MONITOR_ENV_FILE)
+services/earnings_monitor/.env.local
+services/earnings_monitor/.env.sim.local
 # Structured Narrative secrets & data outputs
 Structured Narrative/.env.txt
 Structured Narrative/Unified/

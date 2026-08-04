@@ -58,13 +58,15 @@ def build_rank_ic_command(
     config: MonitorConfig,
     *,
     python: str | None = None,
+    tickers: Sequence[str] | None = None,
 ) -> list[str]:
     script = _structured_narrative_dir(config.repo_root) / "evaluate_narrative_signals.py"
+    book = tuple(tickers) if tickers is not None else config.tickers
     return [
         python or sys.executable,
         str(script),
         "--tickers",
-        *config.tickers,
+        *book,
         "--min-calendar-quarter",
         config.research_min_calendar_quarter,
     ]
@@ -110,16 +112,18 @@ def regenerate_research_book(
     *,
     triggered_by: str = "manual",
     python: str | None = None,
+    tickers: Sequence[str] | None = None,
 ) -> RegenRunResult:
     """Run Rank IC then consolidated panel for the configured book."""
     sn_dir = _structured_narrative_dir(config.repo_root)
     if not sn_dir.is_dir():
         raise FileNotFoundError(f"Structured Narrative directory missing: {sn_dir}")
+    book = tuple(tickers) if tickers is not None else config.tickers
     started = datetime.now(timezone.utc)
     commands: list[RegenCommandResult] = [
         _run_command(
             "evaluate_narrative_signals",
-            build_rank_ic_command(config, python=python),
+            build_rank_ic_command(config, python=python, tickers=book),
             cwd=sn_dir,
         )
     ]
@@ -195,9 +199,22 @@ def run_research_regen_once(
     trigger = "force" if force else "dirty"
     if dirty and dirty.get("triggers"):
         trigger = ",".join(str(item) for item in dirty["triggers"][-5:])
+    from .ticker_book import resolve_book_tickers, seed_book_if_empty
+
+    seed_book_if_empty(config, state)
+    book_tickers = resolve_book_tickers(config, state)
     regenerate = runner or regenerate_research_book
     try:
-        result = regenerate(config, triggered_by=trigger, python=python)
+        if runner is None:
+            result = regenerate(
+                config,
+                triggered_by=trigger,
+                python=python,
+                tickers=book_tickers,
+            )
+        else:
+            # Tests pass a stub that may not accept tickers=.
+            result = regenerate(config, triggered_by=trigger, python=python)
     except Exception:
         # Clear happened above; restore dirty so the loop can retry.
         state.mark_research_book_dirty(
@@ -231,13 +248,18 @@ def run_research_regen_once(
 
 def run_research_regen_loop(config: MonitorConfig, state: OperationalState) -> None:
     """Poll the dirty flag and regenerate when due."""
+    from .ticker_book import seed_book_if_empty
+
     idle = max(1, int(config.research_regen_idle_seconds))
+    book = seed_book_if_empty(config, state)
     LOG.info(
-        "Research regen loop started (idle=%ss debounce=%ss sector=%s min_cal=%s)",
+        "Research regen loop started (idle=%ss debounce=%ss sector=%s "
+        "min_cal=%s book_tickers=%s)",
         idle,
         config.research_regen_debounce_seconds,
         config.research_sector,
         config.research_min_calendar_quarter,
+        len(book),
     )
     while True:
         result = run_research_regen_once(config, state, force=False, honor_debounce=True)
