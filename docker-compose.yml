@@ -22,9 +22,25 @@ x-monitor-common: &monitor-common
       source: ${STRUCTURED_NARRATIVE_ENV_FILE:-./Structured Narrative/.env}
       target: /app/Structured Narrative/.env
       read_only: true
+    # Repo-root .env (Anthropic, etc.). Monitor knobs stay in env_file above —
+    # do not point this at services/earnings_monitor/.env*.
+    - type: bind
+      source: ${REPO_ENV_FILE:-./.env}
+      target: /app/.env
+      read_only: true
+    - type: bind
+      source: ${STRUCTURED_NARRATIVE_TRANSCRIPTS_DIR:-./Structured Narrative/transcripts_raw}
+      target: /app/Structured Narrative/transcripts_raw
     - type: bind
       source: ${STRUCTURED_NARRATIVE_OUTPUT_DIR:-./Structured Narrative/output}
       target: /history-source/output
+      read_only: true
+    # Same host tree as history-source. Without this, monitor keeps the
+    # image-baked output/ (often AAPL + ZZZ* only) at this path and looks like
+    # the universe is empty. Worker/research-regen override with a writable mount.
+    - type: bind
+      source: ${STRUCTURED_NARRATIVE_OUTPUT_DIR:-./Structured Narrative/output}
+      target: /app/Structured Narrative/output
       read_only: true
   restart: unless-stopped
 
@@ -52,9 +68,12 @@ services:
         target: /app/Structured Narrative/.env
         read_only: true
       - type: bind
-        source: ${REPO_ENV_FILE:-./services/earnings_monitor/.env.example}
+        source: ${REPO_ENV_FILE:-./.env}
         target: /app/.env
         read_only: true
+      - type: bind
+        source: ${STRUCTURED_NARRATIVE_TRANSCRIPTS_DIR:-./Structured Narrative/transcripts_raw}
+        target: /app/Structured Narrative/transcripts_raw
       - type: bind
         source: ${STRUCTURED_NARRATIVE_OUTPUT_DIR:-./Structured Narrative/output}
         target: /history-source/output
@@ -65,6 +84,35 @@ services:
     depends_on:
       monitor:
         condition: service_healthy
+
+  # Async Rank IC + consolidated HTML regen after post_call dirty flag.
+  # Needs writable Structured Narrative/output (monitor history mount is RO).
+  research-regen:
+    <<: *monitor-common
+    command: ["research-regen"]
+    volumes:
+      - monitor-data:/data
+      - ./earnings-scraper-main/earnings-scraper-main/inbox:/app/earnings-scraper-main/earnings-scraper-main/inbox
+      - type: bind
+        source: ${STRUCTURED_NARRATIVE_ENV_FILE:-./Structured Narrative/.env}
+        target: /app/Structured Narrative/.env
+        read_only: true
+      - type: bind
+        source: ${REPO_ENV_FILE:-./.env}
+        target: /app/.env
+        read_only: true
+      - type: bind
+        source: ${STRUCTURED_NARRATIVE_TRANSCRIPTS_DIR:-./Structured Narrative/transcripts_raw}
+        target: /app/Structured Narrative/transcripts_raw
+      - type: bind
+        source: ${STRUCTURED_NARRATIVE_OUTPUT_DIR:-./Structured Narrative/output}
+        target: /history-source/output
+      - type: bind
+        source: ${STRUCTURED_NARRATIVE_OUTPUT_DIR:-./Structured Narrative/output}
+        target: /app/Structured Narrative/output
+    depends_on:
+      monitor:
+        condition: service_started
 
   dashboard:
     <<: *monitor-common
@@ -79,8 +127,20 @@ services:
         target: /app/Structured Narrative/.env
         read_only: true
       - type: bind
+        source: ${REPO_ENV_FILE:-./.env}
+        target: /app/.env
+        read_only: true
+      - type: bind
+        source: ${STRUCTURED_NARRATIVE_TRANSCRIPTS_DIR:-./Structured Narrative/transcripts_raw}
+        target: /app/Structured Narrative/transcripts_raw
+        read_only: true
+      - type: bind
         source: ${STRUCTURED_NARRATIVE_OUTPUT_DIR:-./Structured Narrative/output}
         target: /history-source/output
+        read_only: true
+      - type: bind
+        source: ${STRUCTURED_NARRATIVE_OUTPUT_DIR:-./Structured Narrative/output}
+        target: /app/Structured Narrative/output
         read_only: true
       # Mount reports where Streamlit static serving expects them (no symlink).
       - type: bind

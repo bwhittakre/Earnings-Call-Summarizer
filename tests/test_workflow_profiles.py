@@ -48,6 +48,13 @@ class WorkflowProfilePlanningTests(unittest.TestCase):
         self.assertNotIn("--append-quarters", argv)
         self.assertNotIn("--extra-output-quarters", argv)
 
+    def test_pre_release_no_prior_returns_empty_successful_plan(self):
+        plan = self.plan(WorkflowProfile.PRE_RELEASE, no_prior=True)
+
+        self.assertEqual(plan.commands, ())
+        self.assertEqual(plan.ticker, "MSFT")
+        self.assertEqual(plan.quarter, "FY2026-Q1")
+
     def test_release_to_call_prepares_quant_without_transcript_scoring(self):
         plan = self.plan(WorkflowProfile.RELEASE_TO_CALL)
 
@@ -99,6 +106,17 @@ class WorkflowProfilePlanningTests(unittest.TestCase):
         self.assertEqual(len(plan.commands), 1)
         self.assertIn("--skip-quant", plan.commands[0].argv)
         self.assertIn("--skip-bridge", plan.commands[0].argv)
+
+    def test_post_call_no_prior_passes_flag_to_pipeline(self):
+        plan = self.plan(
+            WorkflowProfile.POST_CALL,
+            bridge_transcript=False,
+            export_spine=False,
+            no_prior=True,
+        )
+
+        self.assertEqual(len(plan.commands), 1)
+        self.assertIn("--no-prior", plan.commands[0].argv)
 
     def test_execute_plan_uses_injected_runner_in_order(self):
         plan = self.plan(
@@ -159,12 +177,40 @@ class WorkflowProfilePlanningTests(unittest.TestCase):
 
         self.assertEqual(result, 0)
         labels = [call.args[0] for call in run_step.call_args_list]
-        self.assertEqual(labels, ["Quant extract", "Quant z-score"])
+        self.assertEqual(labels, ["Quant extract", "Quant z-score", "Feature panel"])
+        self.assertNotIn("Join validation", labels)
+        self.assertNotIn("Panel quant validation", labels)
         extract_command = run_step.call_args_list[0].args[1]
         self.assertEqual(
             extract_command[extract_command.index("--append-quarters") + 1],
             "fy2026-q1",
         )
+        panel_command = run_step.call_args_list[2].args[1]
+        self.assertIn("build_feature_panel.py", panel_command[1])
+        self.assertIn("--from-registry", panel_command)
+        self.assertEqual(
+            panel_command[panel_command.index("--include-quarters") + 1],
+            "FY2026-Q1",
+        )
+
+    def test_resolve_new_quarter_args_no_prior_does_not_prepend(self):
+        with (
+            patch.object(
+                run_company_pipeline,
+                "ensure_registry",
+                return_value={"scored_quarters": {}},
+            ),
+            patch.object(run_company_pipeline, "is_quarter_complete", return_value=False),
+        ):
+            with_prior = run_company_pipeline.resolve_new_quarter_args(
+                "SPCX", "FY2026-Q2", force=False
+            )
+            without_prior = run_company_pipeline.resolve_new_quarter_args(
+                "SPCX", "FY2026-Q2", force=False, no_prior=True
+            )
+
+        self.assertEqual(with_prior, ["--quarters", "FY2026-Q1", "FY2026-Q2"])
+        self.assertEqual(without_prior, ["--quarters", "FY2026-Q2"])
 
 
 if __name__ == "__main__":

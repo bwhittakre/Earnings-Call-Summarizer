@@ -680,6 +680,17 @@ COMPANIES: dict[str, CompanyProfile] = {
         output_quarters=TEL_OUTPUT_QUARTERS,
         prior_quarters=TEL_PRIOR_QUARTERS,
     ),
+    # First public earnings print (FY2026-Q2). No prior transcript / delta baseline.
+    # estpermid from LSEG VW_IBES2MAPPING IBESTICKER=SPCX (2026-08-04 probe).
+    "SPCX": CompanyProfile(
+        ticker="SPCX",
+        company_name="SpaceX",
+        estpermid=30064887281,
+        isin=None,
+        barra_id=None,
+        output_quarters=("FY2026-Q2",),
+        prior_quarters=(),
+    ),
 }
 
 

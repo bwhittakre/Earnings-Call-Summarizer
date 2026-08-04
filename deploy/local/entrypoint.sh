@@ -18,6 +18,9 @@ case "$role" in
       --source-root="${EARNINGS_MONITOR_HISTORY_SOURCE:-/history-source/output}" \
       --destination="${EARNINGS_MONITOR_DATASET:-/data/company_quarters.parquet}" "$@"
     ;;
+  research-regen)
+    exec python -m services.earnings_monitor research-regen-loop "$@"
+    ;;
   dashboard)
     # Streamlit serves <script_dir>/static at /app/static/... when enabled.
     # Compose may already bind-mount reports into dashboard/static/reports.
@@ -46,7 +49,13 @@ EOF
       --server.headless=true \
       --server.enableStaticServing=true "$@"
     ;;
+  # CLI passthrough: arm, diagnose, once, research-regen, etc.
+  # (`docker compose run --rm monitor arm …` overrides the service command
+  # so $1 is the subcommand, not the long-running role name.)
+  arm|diagnose|once|research-regen|research-regen-loop)
+    exec python -m services.earnings_monitor "$role" "$@"
+    ;;
   *)
-    exec "$role" "$@"
+    exec python -m services.earnings_monitor "$role" "$@"
     ;;
 esac

@@ -12,3 +12,13 @@ AAPL:
   fye_day: 30
 TSLA:
   type: calendar_fiscal
+
+TXN:
+  type: calendar_fiscal
+
+CTSH:
+  type: calendar_fiscal
+
+SPCX:
+  type: calendar_fiscal
+

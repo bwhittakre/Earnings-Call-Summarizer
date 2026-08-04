@@ -166,11 +166,26 @@ class DashboardData:
                     "report_at": row.get("report_at"),
                     "call_at": row.get("call_at", row.get("scheduled_at")),
                     "status": row.get("state"),
+                    "workflow_mode": (
+                        row.get("workflow_mode")
+                        or (
+                            "first_print"
+                            if row.get("first_print") in (1, True, "1")
+                            else "standard"
+                        )
+                    ),
+                    "first_print": bool(row.get("first_print")),
                     "last_error": row.get("last_error"),
                     "source_url": row.get("source_url"),
                     "updated_at": row.get("updated_at"),
                     "stuck": (
-                        str(row.get("state") or "") not in {"complete", "failed"}
+                        str(row.get("state") or "")
+                        not in {
+                            "complete",
+                            "failed",
+                            "onboarding",
+                            "onboarding_blocked",
+                        }
                         and self._age_seconds(row.get("updated_at"), current) >= stuck_after
                     ),
                     "age_seconds": self._age_seconds(row.get("updated_at"), current),
@@ -417,6 +432,7 @@ class DashboardData:
                     ),
                     "narrative_level": _mean(rows, "llm_level"),
                     "narrative_change": _mean(rows, "change_magnitude"),
+                    "narrative_surprise": _mean(rows, "surprise_magnitude"),
                     "quant_z": _mean(rows, "quant_z_pit")
                     if any(row.get("quant_z_pit") not in (None, "") for row in rows)
                     else _mean(rows, "quant_z"),
@@ -475,6 +491,8 @@ class DashboardData:
         incomplete = sum(row["incomplete"] for row in self.completeness_coverage())
         active_states = {
             "scheduled",
+            "onboarding",
+            "onboarding_blocked",
             "baseline_queued",
             "baseline_running",
             "awaiting_release",
@@ -709,7 +727,7 @@ class DashboardData:
         return summary
 
     def overview_pulse(self) -> list[dict[str, Any]]:
-        """Latest-print attention rows sorted by absolute narrative–quant gap."""
+        """Latest-print attention rows sorted by absolute surprise–quant gap."""
         pulse: list[dict[str, Any]] = []
         for row in self.latest_scorecards():
             gap = _number(row.get("narrative_quant_gap"))
@@ -720,6 +738,7 @@ class DashboardData:
                     "gap": gap,
                     "abs_gap": abs(gap) if gap is not None else None,
                     "narrative_level": row.get("narrative_level"),
+                    "narrative_surprise": row.get("narrative_surprise"),
                     "quant_z": row.get("quant_z"),
                     "quant_flagged": bool(row.get("quant_flagged")),
                     "incomplete": bool(row.get("incomplete")),
@@ -828,14 +847,26 @@ def load_operational_events(path: str | os.PathLike[str] | None = None) -> list[
         connection = sqlite3.connect(f"file:{database.resolve()}?mode=ro", uri=True)
         connection.row_factory = sqlite3.Row
         try:
-            rows = connection.execute(
-                """
-                SELECT provider_event_id, ticker, fiscal_period, report_at, call_at,
-                       scheduled_at, source_url, state, last_error, updated_at
-                FROM events
-                ORDER BY call_at DESC
-                """
-            ).fetchall()
+            # Prefer workflow_mode / first_print when migrated; fall back if absent.
+            try:
+                rows = connection.execute(
+                    """
+                    SELECT provider_event_id, ticker, fiscal_period, report_at, call_at,
+                           scheduled_at, source_url, state, last_error, updated_at,
+                           workflow_mode, first_print
+                    FROM events
+                    ORDER BY call_at DESC
+                    """
+                ).fetchall()
+            except sqlite3.Error:
+                rows = connection.execute(
+                    """
+                    SELECT provider_event_id, ticker, fiscal_period, report_at, call_at,
+                           scheduled_at, source_url, state, last_error, updated_at
+                    FROM events
+                    ORDER BY call_at DESC
+                    """
+                ).fetchall()
         finally:
             connection.close()
     except sqlite3.Error:

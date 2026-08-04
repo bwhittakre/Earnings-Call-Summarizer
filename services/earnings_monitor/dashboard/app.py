@@ -64,7 +64,7 @@ def render_app(
             )
             return
 
-    # Ensure local/non-Compose runs can iframe large reports via static serving.
+    # Symlink history reports into cwd/static for large HTML iframes.
     ensure_reports_static_link()
 
     st.sidebar.caption(f"Dataset: {selected_path}")
@@ -91,36 +91,32 @@ def render_app(
     consolidated_html = resolve_consolidated_html()
     rank_meta = html_report_meta(rank_html)
     consol_meta = html_report_meta(consolidated_html)
-
+    # Keep CSV provenance captions as a secondary freshness signal.
+    rank_ic = load_rank_ic_bundle()
+    consolidated = load_consolidated_panel()
     if rank_html is not None:
         st.sidebar.caption(
             f"Rank IC HTML: {rank_meta.get('generated_at') or 'available'}"
         )
+    elif rank_ic.available:
+        st.sidebar.caption(
+            f"Rank IC CSV: {rank_ic.meta.get('generated_at') or 'available'} · "
+            f"HTML missing"
+        )
     else:
-        # CSV load only when HTML is missing (fallback provenance).
-        rank_ic = load_rank_ic_bundle()
-        if rank_ic.available:
-            st.sidebar.caption(
-                f"Rank IC CSV: {rank_ic.meta.get('generated_at') or 'available'} · "
-                f"HTML missing"
-            )
-        else:
-            st.sidebar.caption("Rank IC: not loaded")
-
+        st.sidebar.caption("Rank IC: not loaded")
     if consolidated_html is not None:
         st.sidebar.caption(
             f"Consolidated HTML: {consol_meta.get('stem') or 'available'} · "
             f"{consol_meta.get('generated_at') or '—'}"
         )
+    elif consolidated.available:
+        st.sidebar.caption(
+            f"Consolidated CSV: {consolidated.meta.get('generated_at') or 'available'} · "
+            f"HTML missing/too large"
+        )
     else:
-        consolidated = load_consolidated_panel()
-        if consolidated.available:
-            st.sidebar.caption(
-                f"Consolidated CSV: {consolidated.meta.get('generated_at') or 'available'} · "
-                f"HTML missing"
-            )
-        else:
-            st.sidebar.caption("Consolidated: not loaded")
+        st.sidebar.caption("Consolidated: not loaded")
 
     view_name = st.sidebar.radio("View", list(VIEWS))
     VIEWS[view_name](st, data, sector_tickers=sector_tickers)

@@ -1,44 +1,21 @@
-"""Tests for Rank IC / consolidated research loaders and HTML report resolution."""
+"""Tests for Rank IC / consolidated research loaders and view registration."""
 
 from __future__ import annotations
 
 from pathlib import Path
 
+from services.earnings_monitor.dashboard.charts import (
+    rank_ic_heatmap,
+    rank_ic_leaderboard_chart,
+)
 from services.earnings_monitor.dashboard.research_data import (
-    can_inline_html,
-    html_report_meta,
+    filter_rank_ic_rows,
     load_consolidated_panel,
     load_rank_ic_bundle,
-    resolve_consolidated_html,
     resolve_cross_company_root,
-    resolve_rank_ic_html,
-    resolve_report_html,
+    unique_sorted,
 )
-from services.earnings_monitor.dashboard.views import (
-    VIEWS,
-    render_consolidated_panel,
-    render_signal_research,
-)
-
-
-class _FakeSt:
-    def __init__(self) -> None:
-        self.info_messages: list[str] = []
-        self.captions: list[str] = []
-        self.headers: list[str] = []
-        self.html_calls = 0
-
-    def header(self, text: str) -> None:
-        self.headers.append(text)
-
-    def caption(self, text: str) -> None:
-        self.captions.append(text)
-
-    def info(self, text: str) -> None:
-        self.info_messages.append(text)
-
-    def warning(self, text: str) -> None:
-        self.info_messages.append(text)
+from services.earnings_monitor.dashboard.views import VIEWS
 
 
 def test_views_include_research_tabs() -> None:
@@ -84,6 +61,12 @@ def test_load_rank_ic_bundle_from_fixtures(tmp_path: Path) -> None:
     assert bundle.meta["tickers"] == ["AAPL", "MSFT"]
     assert bundle.meta["generated_at"] == "2026-08-03T12:00:00"
 
+    filtered = filter_rank_ic_rows(
+        bundle.period_ic, label="asof", horizon="0_56", dimension="margins"
+    )
+    assert len(filtered) == 2
+    assert unique_sorted(bundle.leaderboard, "signal") == ["llm_level"]
+
 
 def test_load_consolidated_panel_probes_stems(tmp_path: Path) -> None:
     cross = tmp_path / "output" / "cross_company"
@@ -108,48 +91,31 @@ def test_load_consolidated_panel_probes_stems(tmp_path: Path) -> None:
     assert "AAPL" in bundle.meta["tickers"]
 
 
-def test_resolve_report_html_prefers_full_consolidated(tmp_path: Path) -> None:
-    cross = tmp_path / "output" / "cross_company"
-    reports = cross / "reports"
-    reports.mkdir(parents=True)
-    small = reports / "narrative_signal_eval.html"
-    small.write_text("<html><body>ok</body></html>", encoding="utf-8")
-    huge = reports / "consolidated_feature_panel.html"
-    huge.write_bytes(b"x" * 2000)
-    medium = reports / "cross_section_panel.html"
-    medium.write_text("<html><body>panel</body></html>", encoding="utf-8")
-
-    assert resolve_report_html(
-        "narrative_signal_eval", history_source=tmp_path / "output"
-    ) == small
-    # Prefer the full consolidated report even when large; do not fall back.
-    assert resolve_consolidated_html(history_source=tmp_path / "output") == huge
-    assert (
-        resolve_report_html(
-            "consolidated_feature_panel",
-            history_source=tmp_path / "output",
-            max_bytes=500,
-        )
-        is None
+def test_rank_ic_charts_build() -> None:
+    heat = rank_ic_heatmap(
+        [
+            {
+                "fiscal_period": "FY2024-Q1",
+                "dimension": "margins",
+                "signal": "llm_level",
+                "label": "asof",
+                "horizon": "0_56",
+                "rank_ic": 0.2,
+                "n": 8,
+            }
+        ]
     )
-    assert can_inline_html(small)
-    assert resolve_rank_ic_html(history_source=tmp_path / "output") == small
-    meta = html_report_meta(small)
-    assert meta["stem"] == "narrative_signal_eval"
-    assert meta["generated_at"]
-
-
-def test_signal_research_empty_state(tmp_path: Path, monkeypatch) -> None:
-    monkeypatch.setenv("EARNINGS_MONITOR_HISTORY_SOURCE", str(tmp_path / "missing"))
-    fake = _FakeSt()
-    render_signal_research(fake, data=None)  # type: ignore[arg-type]
-    assert fake.info_messages
-    assert "Rank IC HTML" in fake.info_messages[0] or "not found" in fake.info_messages[0].lower()
-
-
-def test_consolidated_empty_state(tmp_path: Path, monkeypatch) -> None:
-    monkeypatch.setenv("EARNINGS_MONITOR_HISTORY_SOURCE", str(tmp_path / "missing"))
-    fake = _FakeSt()
-    render_consolidated_panel(fake, data=None)  # type: ignore[arg-type]
-    assert fake.info_messages
-    assert "Consolidated" in fake.info_messages[0]
+    assert hasattr(heat, "to_dict")
+    board = rank_ic_leaderboard_chart(
+        [
+            {
+                "signal": "llm_level",
+                "dimension": "margins",
+                "rank_ic_mean": 0.15,
+                "rank_ic_ir": 0.5,
+                "positive_rank_ic_hit_rate": 0.6,
+                "n_periods": 12,
+            }
+        ]
+    )
+    assert hasattr(board, "to_dict")

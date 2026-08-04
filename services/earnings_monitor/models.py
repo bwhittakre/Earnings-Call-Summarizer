@@ -14,6 +14,8 @@ def utc_now() -> datetime:
 
 class EventState(StrEnum):
     SCHEDULED = "scheduled"
+    ONBOARDING = "onboarding"
+    ONBOARDING_BLOCKED = "onboarding_blocked"
     BASELINE_QUEUED = "baseline_queued"
     BASELINE_RUNNING = "baseline_running"
     AWAITING_RELEASE = "awaiting_release"
@@ -29,6 +31,12 @@ class EventState(StrEnum):
     FAILED = "failed"
 
 
+class WorkflowMode(StrEnum):
+    STANDARD = "standard"
+    ONBOARD = "onboard"
+    FIRST_PRINT = "first_print"
+
+
 class TranscriptStatus(StrEnum):
     LIVE = "live"
     FINAL = "final"
@@ -36,7 +44,27 @@ class TranscriptStatus(StrEnum):
 
 TERMINAL_STATES = frozenset({EventState.COMPLETE})
 TRANSITIONS: dict[EventState, frozenset[EventState]] = {
-    EventState.SCHEDULED: frozenset({EventState.BASELINE_QUEUED}),
+    EventState.SCHEDULED: frozenset(
+        {
+            EventState.BASELINE_QUEUED,
+            EventState.AWAITING_RELEASE,
+            EventState.ONBOARDING,
+        }
+    ),
+    EventState.ONBOARDING: frozenset(
+        {
+            EventState.SCHEDULED,
+            EventState.ONBOARDING_BLOCKED,
+            EventState.FAILED,
+        }
+    ),
+    EventState.ONBOARDING_BLOCKED: frozenset(
+        {
+            EventState.ONBOARDING,
+            EventState.SCHEDULED,
+            EventState.FAILED,
+        }
+    ),
     EventState.BASELINE_QUEUED: frozenset({EventState.BASELINE_RUNNING, EventState.FAILED}),
     EventState.BASELINE_RUNNING: frozenset({EventState.AWAITING_RELEASE, EventState.FAILED}),
     EventState.AWAITING_RELEASE: frozenset({EventState.AWAITING_QUANT_DATA}),
@@ -69,6 +97,8 @@ TRANSITIONS: dict[EventState, frozenset[EventState]] = {
             EventState.QUANT_QUEUED,
             EventState.TRANSCRIPT_PENDING,
             EventState.POST_CALL_QUEUED,
+            EventState.ONBOARDING,
+            EventState.SCHEDULED,
         }
     ),
 }
@@ -117,6 +147,8 @@ class MonitoredEvent:
     last_error: str | None = None
     updated_at: datetime = field(default_factory=utc_now)
     manual_override: bool = False
+    workflow_mode: str = WorkflowMode.STANDARD.value
+    first_print: bool = False
 
     def transition(self, target: EventState, *, error: str | None = None) -> None:
         if target == self.state and target == EventState.TRANSCRIPT_UNSTABLE:

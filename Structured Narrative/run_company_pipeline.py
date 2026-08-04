@@ -62,7 +62,13 @@ def assert_pit_spine(ticker: str) -> None:
         )
 
 
-def resolve_new_quarter_args(ticker: str, new_quarter: str, force: bool) -> list[str] | None:
+def resolve_new_quarter_args(
+    ticker: str,
+    new_quarter: str,
+    force: bool,
+    *,
+    no_prior: bool = False,
+) -> list[str] | None:
     """Return --quarters args for incremental scoring, or None to skip LLM."""
     fp = normalize_fiscal_period(new_quarter)
     reg = ensure_registry(ticker)
@@ -70,11 +76,16 @@ def resolve_new_quarter_args(ticker: str, new_quarter: str, force: bool) -> list
         print(f"Quarter {fp} already complete in registry — skipping LLM (use --force to re-score).")
         return None
 
-    prior = prior_fiscal_period(fp)
     quarters = [fp]
-    if prior and prior not in reg.get("scored_quarters", {}):
-        quarters.insert(0, prior)
-        print(f"Prior quarter {prior} not in registry — will score it first for delta baseline.")
+    if not no_prior:
+        prior = prior_fiscal_period(fp)
+        if prior and prior not in reg.get("scored_quarters", {}):
+            quarters.insert(0, prior)
+            print(
+                f"Prior quarter {prior} not in registry — will score it first for delta baseline."
+            )
+    else:
+        print(f"First-Print / --no-prior: scoring only {fp} (no prior prepend).")
     return ["--quarters", *quarters]
 
 
@@ -118,6 +129,14 @@ def main() -> int:
         "--force",
         action="store_true",
         help="Re-score even when quarter registry marks the quarter complete.",
+    )
+    ap.add_argument(
+        "--no-prior",
+        action="store_true",
+        help=(
+            "First-Print mode: do not prepend an unscored prior quarter, and "
+            "skip delta/surprise/novelty stages that require prior comparisons."
+        ),
     )
     ap.add_argument(
         "--no-pit",
@@ -175,7 +194,9 @@ def main() -> int:
 
     quarter_args: list[str] = []
     if args.new_quarter:
-        resolved = resolve_new_quarter_args(ticker, args.new_quarter, args.force)
+        resolved = resolve_new_quarter_args(
+            ticker, args.new_quarter, args.force, no_prior=bool(args.no_prior)
+        )
         if resolved is None:
             args.skip_llm = True
         else:
@@ -246,18 +267,24 @@ def main() -> int:
             "Focus 1 dimensions",
             [PY, f"{sn}/run_dimension_scoring.py", "--ticker", ticker, *scope_args, *force_args, *batch_args, *quarter_args],
         )
-        run_step(
-            "Focus 2 delta",
-            [PY, f"{sn}/run_delta_scoring.py", "--ticker", ticker, *scope_args, *force_args, *batch_args, *quarter_args],
-        )
-        run_step(
-            "Focus 3 surprise",
-            [PY, f"{sn}/run_surprise_scoring.py", "--ticker", ticker, *scope_args, *force_args, *batch_args, *quarter_args],
-        )
-        run_step(
-            "Focus 3b novelty",
-            [PY, f"{sn}/run_novelty_scoring.py", "--ticker", ticker, *scope_args, *force_args, *batch_args, *quarter_args],
-        )
+        if args.no_prior:
+            print(
+                "First-Print / --no-prior: soft-skipping Focus 2/3 delta, "
+                "surprise, and novelty (no prior comparisons)."
+            )
+        else:
+            run_step(
+                "Focus 2 delta",
+                [PY, f"{sn}/run_delta_scoring.py", "--ticker", ticker, *scope_args, *force_args, *batch_args, *quarter_args],
+            )
+            run_step(
+                "Focus 3 surprise",
+                [PY, f"{sn}/run_surprise_scoring.py", "--ticker", ticker, *scope_args, *force_args, *batch_args, *quarter_args],
+            )
+            run_step(
+                "Focus 3b novelty",
+                [PY, f"{sn}/run_novelty_scoring.py", "--ticker", ticker, *scope_args, *force_args, *batch_args, *quarter_args],
+            )
 
     if resolve_read_parquet_or_csv(ticker, "dimension_scores", layer="parquet") is not None:
         run_step(
@@ -266,6 +293,15 @@ def main() -> int:
         )
 
     if args.quant_only:
+        # Quant preface: publish feature_panel with new-quarter quant_z rows
+        # (narrative sparse). Skip join/panel validation until post-call rebuild.
+        preface_args = [PY, f"{sn}/build_feature_panel.py", "--ticker", ticker, *scope_args]
+        if not args.scope:
+            preface_args.append("--from-registry")
+        if args.append_quarters:
+            include = [normalize_fiscal_period(q) for q in args.append_quarters]
+            preface_args.extend(["--include-quarters", *include])
+        run_step("Feature panel", preface_args)
         print(f"\nDone: {ticker} quant artifacts prepared.")
         return 0
 

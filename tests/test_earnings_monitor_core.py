@@ -47,6 +47,21 @@ def event(now: datetime) -> EarningsEvent:
     )
 
 
+def seed_prior_transcript(
+    repo_root: Path, ticker: str, prior_period: str, *, text: str = "prior transcript"
+) -> Path:
+    """Create a local prior transcript so pre_release is not auto-skipped."""
+    path = (
+        repo_root
+        / "Structured Narrative"
+        / "transcripts_raw"
+        / f"{ticker.upper()}_{prior_period.upper()}.txt"
+    )
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text + "\n", encoding="utf-8")
+    return path
+
+
 def test_config_parses_configurable_universe_and_environment(tmp_path):
     parsed = MonitorConfig.from_env(
         {
@@ -323,6 +338,7 @@ def test_three_stage_ordering_freshness_gate_and_email_timing(tmp_path):
         call_at=start + timedelta(minutes=30),
     )
     document = [TranscriptDocument("AMZN", "FY2026-Q2", "long enough transcript", "fake", "doc")]
+    seed_prior_transcript(tmp_path, "AMZN", "FY2026-Q1")
 
     class Provider:
         def list_events(self, tickers, *, since, until):
@@ -344,7 +360,7 @@ def test_three_stage_ordering_freshness_gate_and_email_timing(tmp_path):
     class Workflow:
         calls = []
 
-        def run(self, profile, requested, transcript=None):
+        def run(self, profile, requested, transcript=None, *, no_prior=False):
             self.calls.append((profile, transcript.content if transcript else None))
             return {"profile": profile}
 
@@ -432,7 +448,7 @@ def test_transcript_timeout_fails_final_stage_and_notifies(tmp_path):
             return None
 
     class Workflow:
-        def run(self, profile, requested, transcript=None):
+        def run(self, profile, requested, transcript=None, *, no_prior=False):
             return {}
 
     class Notifier:
@@ -492,7 +508,7 @@ def test_transcript_timeout_recovers_when_document_arrives_after_restart(tmp_pat
     class Workflow:
         calls = []
 
-        def run(self, profile, requested, transcript=None):
+        def run(self, profile, requested, transcript=None, *, no_prior=False):
             self.calls.append((profile, transcript.source_id))
             return {}
 
@@ -544,6 +560,7 @@ def test_isolated_tomorrow_shadow_fixture_runs_complete_lifecycle(
 
     report_at = datetime(2026, 7, 31, 13, 0, tzinfo=UTC)
     call_at = datetime(2026, 7, 31, 14, 0, tzinfo=UTC)
+    seed_prior_transcript(tmp_path, "MU", "FY2026-Q2")
     assert monitor_main(
         [
             "arm",
@@ -565,6 +582,7 @@ def test_isolated_tomorrow_shadow_fixture_runs_complete_lifecycle(
     state = OperationalState(database)
     armed = state.get_event("fixture:MU:FY2026-Q3")
     assert armed and armed.state == EventState.SCHEDULED
+    assert armed.first_print is False
 
     current = [report_at - timedelta(hours=2)]
     transcript = TranscriptDocument(
@@ -585,7 +603,7 @@ def test_isolated_tomorrow_shadow_fixture_runs_complete_lifecycle(
     class Workflow:
         calls = []
 
-        def run(self, profile, requested, transcript=None):
+        def run(self, profile, requested, transcript=None, *, no_prior=False):
             self.calls.append(profile)
             return {"profile": profile}
 
@@ -683,6 +701,15 @@ def test_freshness_and_real_workflow_profile_adapter(tmp_path):
     assert result["profile"] == "pre_release"
     assert commands and "--baseline-quarter" in commands[0].argv
 
+    first_print_commands = []
+    first_print_workflow = LazyStructuredNarrativeWorkflow(
+        repo_root, runner=first_print_commands.append
+    )
+    empty = first_print_workflow.run("pre_release", earnings_event, no_prior=True)
+    assert empty["profile"] == "pre_release"
+    assert empty["commands"] == []
+    assert first_print_commands == []
+
     # Post-call transcript persistence uses the exact path consumed by the
     # existing LocalFileProvider, without importing Structured Narrative.
     local_adapter = LazyStructuredNarrativeWorkflow(tmp_path)
@@ -694,3 +721,157 @@ def test_freshness_and_real_workflow_profile_adapter(tmp_path):
         / "AMZN_FY2026-Q2.txt"
     )
     assert path.read_text(encoding="utf-8") == "text\n"
+
+
+def test_first_print_arm_skips_pre_release(tmp_path, monkeypatch, capsys):
+    database = tmp_path / "monitor.sqlite3"
+    monkeypatch.setenv("EARNINGS_MONITOR_REPO_ROOT", str(tmp_path))
+    monkeypatch.setenv("EARNINGS_MONITOR_DB", str(database))
+    monkeypatch.setenv("EARNINGS_MONITOR_TICKERS", "SPCX")
+    report_at = datetime(2026, 8, 4, 20, 0, tzinfo=UTC)
+    call_at = datetime(2026, 8, 4, 21, 0, tzinfo=UTC)
+    assert (
+        monitor_main(
+            [
+                "arm",
+                "--ticker",
+                "SPCX",
+                "--period",
+                "FY2026-Q2",
+                "--event-id",
+                "quartr:692542",
+                "--report-at",
+                report_at.isoformat(),
+                "--call-at",
+                call_at.isoformat(),
+                "--first-print",
+            ]
+        )
+        == 0
+    )
+    payload = __import__("json").loads(capsys.readouterr().out)
+    assert payload["first_print"] is True
+    assert payload["state"] == "scheduled"
+
+    class Provider:
+        def list_events(self, tickers, *, since, until):
+            return []
+
+        def get_transcript(self, requested):
+            return None
+
+    class Workflow:
+        calls = []
+
+        def run(self, profile, requested, transcript=None, *, no_prior=False):
+            self.calls.append((profile, no_prior))
+            return {"profile": profile}
+
+    state = OperationalState(database)
+    workflow = Workflow()
+    service = EarningsMonitor(
+        config=config(tmp_path, tickers=("SPCX",)),
+        state=state,
+        event_provider=Provider(),
+        transcript_provider=Provider(),
+        freshness=AlwaysFreshProbe(),
+        workflow=workflow,
+        clock=lambda: report_at - timedelta(hours=1),
+    )
+    assert service.advance_events() == 0
+    monitored = state.get_event("quartr:692542")
+    assert monitored is not None
+    assert monitored.state == EventState.AWAITING_RELEASE
+    assert monitored.first_print is True
+    assert workflow.calls == []
+    assert state.claim_next_job() is None
+
+
+def test_auto_skip_pre_release_when_prior_transcript_missing(tmp_path):
+    now = datetime(2026, 8, 4, 12, tzinfo=UTC)
+    earnings_event = EarningsEvent(
+        "event-spcx",
+        "SPCX",
+        "FY2026-Q2",
+        report_at=now + timedelta(hours=4),
+        call_at=now + timedelta(hours=5),
+    )
+
+    class Provider:
+        def list_events(self, tickers, *, since, until):
+            return [earnings_event]
+
+        def get_transcript(self, requested):
+            return None
+
+    class Workflow:
+        calls = []
+
+        def run(self, profile, requested, transcript=None, *, no_prior=False):
+            self.calls.append(profile)
+            return {}
+
+    state = OperationalState(tmp_path / "monitor.sqlite3")
+    state.initialize()
+    service = EarningsMonitor(
+        config=config(tmp_path, tickers=("SPCX",)),
+        state=state,
+        event_provider=Provider(),
+        transcript_provider=Provider(),
+        freshness=AlwaysFreshProbe(),
+        workflow=Workflow(),
+        clock=lambda: now,
+    )
+    assert service.discover(since=now, until=now + timedelta(days=1)) == 1
+    assert service.advance_events() == 0
+    monitored = state.get_event("event-spcx")
+    assert monitored.state == EventState.AWAITING_RELEASE
+    assert monitored.first_print is True
+    assert state.claim_next_job() is None
+
+
+def test_arm_first_print_unfails_failed_baseline(tmp_path, monkeypatch, capsys):
+    database = tmp_path / "monitor.sqlite3"
+    state = OperationalState(database)
+    state.initialize()
+    now = datetime(2026, 8, 4, 12, tzinfo=UTC)
+    state.upsert_event(
+        MonitoredEvent(
+            EarningsEvent(
+                "quartr:692542",
+                "SPCX",
+                "FY2026-Q2",
+                report_at=now,
+                call_at=now + timedelta(hours=1),
+            ),
+            state=EventState.FAILED,
+            last_error="prior transcript missing",
+        )
+    )
+    monkeypatch.setenv("EARNINGS_MONITOR_REPO_ROOT", str(tmp_path))
+    monkeypatch.setenv("EARNINGS_MONITOR_DB", str(database))
+    monkeypatch.setenv("EARNINGS_MONITOR_TICKERS", "SPCX")
+    assert (
+        monitor_main(
+            [
+                "arm",
+                "--ticker",
+                "SPCX",
+                "--period",
+                "FY2026-Q2",
+                "--event-id",
+                "quartr:692542",
+                "--report-at",
+                now.isoformat(),
+                "--call-at",
+                (now + timedelta(hours=1)).isoformat(),
+                "--first-print",
+            ]
+        )
+        == 0
+    )
+    armed = state.get_event("quartr:692542")
+    assert armed is not None
+    assert armed.state == EventState.SCHEDULED
+    assert armed.first_print is True
+    assert armed.last_error is None

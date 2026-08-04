@@ -94,6 +94,79 @@ def test_decision_output_reports_missing_dataset_without_raising(tmp_path: Path)
     assert output["dimensions"] == []
 
 
+def test_decision_output_surfaces_quant_preface_rows_without_narrative(
+    tmp_path: Path,
+) -> None:
+    """Email 1 / quant preface: quant_z present, narrative null — still emit rows."""
+    dataset = tmp_path / "company_quarters.parquet"
+    write_company_quarter_dataset(
+        dataset,
+        [
+            {
+                "ticker": "MU",
+                "fiscal_period": "FY2026-Q3",
+                "dimension": "Demand",
+                "quant_z_pit": 1.25,
+                "quant_z": 1.25,
+                "llm_level": None,
+                "change_magnitude": None,
+                "as_of_date": "2026-07-31T11:45:00Z",
+                "history_incomplete": False,
+            },
+            {
+                "ticker": "MU",
+                "fiscal_period": "FY2026-Q3",
+                "dimension": "Margins",
+                "quant_z": -0.4,
+                "llm_level": None,
+                "change_magnitude": None,
+                "history_incomplete": False,
+            },
+        ],
+        prefer_parquet=False,
+    )
+    assembler = DecisionOutputAssembler(dataset, tmp_path / "output")
+    output = assembler.assemble(_event())
+
+    assert len(output["dimensions"]) == 2
+    by_dim = {row["dimension"]: row for row in output["dimensions"]}
+    assert by_dim["Demand"]["quant_z"] == 1.25
+    assert by_dim["Demand"]["measure"] is None
+    assert by_dim["Demand"]["narrative_level"] is None
+    assert by_dim["Margins"]["quant_z"] == -0.4
+
+    state = OperationalState(tmp_path / "monitor.sqlite3")
+    state.initialize()
+
+    class Sender:
+        def __init__(self) -> None:
+            self.messages = []
+
+        def send(self, message) -> None:
+            self.messages.append(message)
+
+    sender = Sender()
+    config = MonitorConfig(
+        repo_root=tmp_path,
+        database_path=tmp_path / "monitor.sqlite3",
+        inbox_path=tmp_path / "inbox",
+        dashboard_url="https://roz.example.test",
+    )
+    notifier = TwoEmailNotifier(
+        state=state,
+        sender=sender,
+        sender_address="roz@example.test",
+        recipients=("investor@example.test",),
+        config=config,
+        assembler=assembler,
+    )
+    assert notifier.pre_call_quant(_event(), detail="quant preface")
+    html = sender.messages[0].get_body(preferencelist=("html",)).get_content()
+    assert "No measures available" not in html
+    assert "Demand" in html
+    assert "1.25" in html
+
+
 def test_multipart_templates_and_recovery_are_idempotent(tmp_path: Path) -> None:
     state = OperationalState(tmp_path / "monitor.sqlite3")
     state.initialize()

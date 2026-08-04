@@ -31,13 +31,13 @@ _HTML_EMBED_HEIGHT = 1000
 _SIGNAL_LABELS = {
     "Narrative level": "narrative_level",
     "Quant z-score": "quant_z",
-    "Narrative–quant gap": "gap",
+    "Surprise–quant gap": "gap",
 }
 
 _CROSS_SIGNAL_LABELS = {
     "Mean narrative": "mean_narrative_level",
     "Mean quant z": "mean_quant_z",
-    "Mean gap": "mean_narrative_quant_gap",
+    "Mean surprise–quant gap": "mean_narrative_quant_gap",
     "Mean change": "mean_narrative_change",
     "Divergence rate": "divergence_rate",
 }
@@ -217,7 +217,7 @@ def render_overview(
                 "narrative": _fmt(row.get("narrative_level")),
                 "change": _fmt(row.get("narrative_change")),
                 "quant_z": _fmt(row.get("quant_z")),
-                "narrative_quant_gap": _fmt(row.get("narrative_quant_gap")),
+                "surprise_quant_gap": _fmt(row.get("narrative_quant_gap")),
                 "divergences": row.get("divergences"),
                 "dimensions": row.get("dimensions"),
                 "incomplete": row.get("incomplete"),
@@ -248,7 +248,9 @@ def render_overview(
     if pulse:
         _altair(st, overview_pulse_chart(pulse))
         st.caption(
-            "Gap = narrative level − quant z (latest print). "
+            "Gap = narrative surprise − quant z (latest print), with quant clipped "
+            "to ±2 before subtracting. It is not narrative level − quant z — level "
+            "is shown in the tooltip for context only. "
             "Ranked by absolute gap; every company in the Sector filter is shown "
             "(grey = gap unavailable). Flagged = severe quant issues "
             "(near-zero consensus / member suppressed), not routine sparse dimensions. "
@@ -317,7 +319,7 @@ def render_company_history(
                 "narrative_level": row.get("narrative_level"),
                 "narrative_change": row.get("narrative_change"),
                 "quant_z": row.get("quant_z"),
-                "narrative_quant_gap": row.get("narrative_quant_gap"),
+                "surprise_quant_gap": row.get("narrative_quant_gap"),
                 "divergences": row.get("divergences"),
                 "incomplete": row.get("incomplete"),
                 "quant_ok": row.get("quant_quality_ok", True),
@@ -332,7 +334,7 @@ def render_company_history(
             "fiscal_period": row["fiscal_period"],
             "narrative_level": row["narrative_level"],
             "quant_z": row["quant_z"],
-            "narrative_quant_gap": row["narrative_quant_gap"],
+            "surprise_quant_gap": row["narrative_quant_gap"],
         }
         for row in history
     ]
@@ -340,7 +342,11 @@ def render_company_history(
         st.line_chart(
             chart_rows,
             x="fiscal_period",
-            y=["narrative_level", "quant_z", "narrative_quant_gap"],
+            y=["narrative_level", "quant_z", "surprise_quant_gap"],
+        )
+        st.caption(
+            "surprise_quant_gap = narrative surprise − quant z (quant clipped to ±2), "
+            "not level − quant."
         )
 
 

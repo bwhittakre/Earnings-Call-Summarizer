@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+import json
 import logging
+import re
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 from typing import Any, Mapping, Protocol
 
 from .config import MonitorConfig
@@ -15,6 +18,71 @@ from .transcripts import TranscriptStabilizer
 from .workflow import Workflow
 
 LOG = logging.getLogger(__name__)
+
+_QUARTER_RE = re.compile(r"^FY(\d{4})-Q([1-4])$", re.IGNORECASE)
+
+
+def prior_fiscal_period(fiscal_period: str) -> str | None:
+    """Return the previous fiscal quarter label, or None if invalid."""
+    match = _QUARTER_RE.match(fiscal_period.strip().upper())
+    if not match:
+        return None
+    year, quarter = int(match.group(1)), int(match.group(2))
+    if quarter == 1:
+        return f"FY{year - 1}-Q4"
+    return f"FY{year}-Q{quarter - 1}"
+
+
+def local_transcript_candidates(
+    repo_root: Path | str, ticker: str, fiscal_period: str
+) -> list[Path]:
+    """Mirror Structured Narrative LocalFileProvider layout candidates."""
+    root = Path(repo_root)
+    sn = root / "Structured Narrative"
+    raw = sn / "transcripts_raw"
+    symbol = ticker.strip().upper()
+    period = fiscal_period.strip().upper()
+    return [
+        raw / f"{symbol}_{period}.txt",
+        sn / symbol / f"{period}.txt",
+        sn / symbol / f"{symbol}_{period}.txt",
+        raw / symbol / f"{period}.txt",
+    ]
+
+
+def local_transcript_exists(
+    repo_root: Path | str, ticker: str, fiscal_period: str
+) -> bool:
+    return any(
+        path.is_file()
+        for path in local_transcript_candidates(repo_root, ticker, fiscal_period)
+    )
+
+
+def prior_quarter_in_registry(
+    repo_root: Path | str, ticker: str, fiscal_period: str
+) -> bool:
+    """True when the prior quarter appears in the company quarter registry."""
+    root = Path(repo_root)
+    symbol = ticker.strip().upper()
+    period = fiscal_period.strip().upper()
+    output = root / "Structured Narrative" / "output"
+    candidates = (
+        output / symbol / "json" / "quarter_registry.json",
+        output / f"{symbol}_quarter_registry.json",
+    )
+    for path in candidates:
+        if not path.is_file():
+            continue
+        try:
+            registry = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError, TypeError):
+            continue
+        scored = registry.get("scored_quarters") or {}
+        prior_only = registry.get("prior_only_quarters") or []
+        if period in scored or period in prior_only:
+            return True
+    return False
 
 
 class Notifier(Protocol):
@@ -166,6 +234,23 @@ class EarningsMonitor:
                 discovered += 1
         return discovered
 
+    def _should_skip_pre_release(self, monitored: MonitoredEvent) -> tuple[bool, str]:
+        """Return whether to skip prior baseline and a short reason."""
+        if monitored.first_print:
+            return True, "first_print"
+        prior = prior_fiscal_period(monitored.event.fiscal_period)
+        if prior is None:
+            return False, ""
+        has_transcript = local_transcript_exists(
+            self.config.repo_root, monitored.event.ticker, prior
+        )
+        in_registry = prior_quarter_in_registry(
+            self.config.repo_root, monitored.event.ticker, prior
+        )
+        if not has_transcript and not in_registry:
+            return True, f"prior_missing:{prior}"
+        return False, ""
+
     def _enqueue_stage(
         self,
         monitored: MonitoredEvent,
@@ -174,13 +259,19 @@ class EarningsMonitor:
         target: EventState,
         payload: dict | None = None,
     ) -> bool:
+        stage_payload = {
+            "stage": stage,
+            "first_print": bool(monitored.first_print),
+            "no_prior": bool(monitored.first_print),
+            **(payload or {}),
+        }
         inserted = self.state.enqueue(
             idempotency_key=(
                 f"{monitored.event.provider_event_id}:{stage}:"
-                f"{(payload or {}).get('fingerprint', 'v1')}"
+                f"{stage_payload.get('fingerprint', 'v1')}"
             ),
             provider_event_id=monitored.event.provider_event_id,
-            payload={"stage": stage, **(payload or {})},
+            payload=stage_payload,
             max_attempts=self.config.max_job_attempts,
             available_at=self.clock(),
         )
@@ -226,6 +317,13 @@ class EarningsMonitor:
         queued = 0
         candidates = self.state.list_events()
         for monitored in candidates:
+            # Onboarding must finish (or hard-block) before any baseline path.
+            if monitored.state in {
+                EventState.ONBOARDING,
+                EventState.ONBOARDING_BLOCKED,
+            }:
+                continue
+
             if monitored.state in {
                 EventState.AWAITING_RELEASE,
                 EventState.AWAITING_QUANT_DATA,
@@ -235,6 +333,24 @@ class EarningsMonitor:
                 self._observe_transcript_while_quant_runs(monitored, now=now)
 
             if monitored.state == EventState.SCHEDULED:
+                skip, reason = self._should_skip_pre_release(monitored)
+                if skip:
+                    LOG.info(
+                        "Skipping pre_release for %s %s (%s); "
+                        "transitioning scheduled -> awaiting_release",
+                        monitored.event.ticker,
+                        monitored.event.fiscal_period,
+                        reason,
+                    )
+                    # Persist First-Print behavior so later stages pass no_prior.
+                    monitored.first_print = True
+                    if reason == "first_print" or not monitored.workflow_mode:
+                        monitored.workflow_mode = "first_print"
+                    elif reason.startswith("prior_missing"):
+                        monitored.workflow_mode = monitored.workflow_mode or "first_print"
+                    monitored.transition(EventState.AWAITING_RELEASE)
+                    self.state.upsert_event(monitored)
+                    continue
                 queued += self._enqueue_stage(
                     monitored, stage="pre_release", target=EventState.BASELINE_QUEUED
                 )
@@ -436,7 +552,20 @@ class EarningsMonitor:
                     monitored.transition(EventState.TRANSCRIPT_UNSTABLE)
                     self.state.upsert_event(monitored)
                     return True
-            result = dict(self.workflow.run(stage, monitored.event, transcript) or {})
+            no_prior = bool(
+                job["payload"].get("no_prior")
+                or job["payload"].get("first_print")
+                or monitored.first_print
+            )
+            result = dict(
+                self.workflow.run(
+                    stage, monitored.event, transcript, no_prior=no_prior
+                )
+                or {}
+            )
+            if no_prior:
+                result["no_prior"] = True
+                result["first_print"] = True
             if stage == "release_to_call" and job["payload"].get("freshness"):
                 result["freshness"] = job["payload"]["freshness"]
             history_refresh = self._refresh_history_dataset()
@@ -478,10 +607,33 @@ class EarningsMonitor:
             if self.notifier and stage == "release_to_call":
                 self.notifier.pre_call_quant(monitored.event, detail=str(result or ""))
             elif self.notifier and stage == "post_call":
+                detail = f"quant=reused; post_call={result or ''}"
+                if monitored.first_print or no_prior:
+                    detail = (
+                        "First-Print / no prior comparisons; "
+                        f"{detail}"
+                    )
                 self.notifier.final_combined(
                     monitored.event,
                     success=True,
-                    detail=f"quant=reused; post_call={result or ''}",
+                    detail=detail,
+                )
+            if stage == "post_call" and self.config.research_regen_after_post_call:
+                # Debounced full-book Rank IC + consolidated HTML regen.
+                # Must not block COMPLETE / email — the research-regen
+                # service (or CLI) picks this up asynchronously.
+                dirty = self.state.mark_research_book_dirty(
+                    reason="post_call",
+                    trigger=(
+                        f"{monitored.event.ticker}:{monitored.event.fiscal_period}"
+                    ),
+                    now=self.clock(),
+                )
+                result["research_book_dirty"] = dirty
+                LOG.info(
+                    "Marked research book dirty after post_call for %s (%s)",
+                    monitored.event.ticker,
+                    monitored.event.fiscal_period,
                 )
         except Exception as exc:
             LOG.exception("Workflow failed for %s", monitored.event.provider_event_id)

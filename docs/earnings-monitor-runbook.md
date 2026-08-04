@@ -64,6 +64,67 @@ The initial infrastructure sets `SHADOW_MODE=true`. The poller discovers zero
 jobs by design and the worker does not delete messages until application
 processing is wired.
 
+## First-Print vs Onboard
+
+Use the mode router mentally (or `services.earnings_monitor.mode_router`) before
+arming a new ticker/period:
+
+| Mode | When | Command |
+|------|------|---------|
+| **First-Print** | Zero prior Quartr/ROIC earnings events and no on-disk transcripts | `arm --first-print` |
+| **Onboard** | Prior history exists (or local transcripts) but the ticker is not fully wired | `onboard` or `arm --onboard` |
+| **Standard** | Already in `CompanyProfile` with scored history | `arm` (default) |
+
+### First-Print (SPCX postmortem)
+
+SpaceX (`SPCX`) FY2026-Q2 was a first public print: empty `prior_quarters`, no
+delta baseline. Arming without `--first-print` queued a prior-quarter baseline
+that could not succeed. Fix:
+
+```bash
+python -m services.earnings_monitor arm \
+  --ticker SPCX --period FY2026-Q2 \
+  --report-at 2026-08-04T20:00:00+00:00 \
+  --call-at 2026-08-04T21:00:00+00:00 \
+  --first-print
+```
+
+First-Print skips pre_release baseline and post-call delta/surprise/novelty
+comparisons that require a prior transcript.
+
+### Onboard
+
+Lookback is **10y** when `report_at - now >= 48h`, else **3y**. The 3y path
+reuses ROIC `fetch_transcripts` + `export_inbox_to_transcripts_raw`; the 10y
+path uses `Structured Narrative/quartr_history_import.py` (needs
+`QUARTR_API_KEY`). Onboard then scaffolds `prior_quarters` /
+`output_quarters`, resolves `estpermid` (hard-fail if missing), bootstraps
+fiscal calendar into `config/fiscal_calendars.yaml` when needed, runs quant +
+batch LLM + `build_feature_panel --from-registry`, and prints the
+`history_import` handoff. If batch work is incomplete at `report_at`, the
+event stays `onboarding_blocked` with a clear error — never a silent baseline
+fail.
+
+```bash
+# Plan only
+python -m services.earnings_monitor onboard \
+  --ticker NEWCO --period FY2026-Q2 \
+  --report-at 2026-09-01T20:00:00+00:00 --dry-run
+
+# Full onboard + arm (ticker must be on EARNINGS_MONITOR_TICKERS)
+python -m services.earnings_monitor arm \
+  --ticker NEWCO --period FY2026-Q2 \
+  --report-at 2026-09-01T20:00:00+00:00 \
+  --call-at 2026-09-01T21:00:00+00:00 \
+  --onboard
+```
+
+### Fiscal calendar
+
+EDGAR fiscal-profile bootstrap (`src/ingest/edgar/fiscal_profile.py`) feeds
+`config/fiscal_calendars.yaml`. Most XLK names need no entry (calendar or
+existing offset logic). Onboard writes an entry only when the ticker is absent.
+
 ## Shadow-live procedure
 
 1. Complete every item in `earnings-monitor-access-validation.md`.

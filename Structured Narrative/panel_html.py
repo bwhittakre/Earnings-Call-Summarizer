@@ -443,7 +443,7 @@ def build_single_ticker_html(panel: pd.DataFrame, summary: dict, lookups: Eviden
   <div class="stats">Coverage: {cov.get('has_level', 0)} level &middot; {cov.get('has_delta', 0)} delta &middot;
     {cov.get('has_surprise', 0)} surprise &middot; {cov.get('is_divergence', 0)} diverges &middot; {summary.get('row_count', 0)} rows</div>
   <div class="controls">{''.join(buttons)}
-    <div class="legend">Click + to expand rationales. Select a quarter to also show claim bullets and transcript quotes. Gap = surprise magnitude minus quant z.</div>
+    <div class="legend">Click + to expand rationales. Select a quarter to also show claim bullets and transcript quotes. Gap = narrative surprise − quant z (quant clipped to ±2); not narrative level − quant.</div>
   </div>
   <table id="main-panel">
     <thead>{PANEL_TABLE_HEADERS}</thead>
@@ -639,7 +639,7 @@ def build_consolidated_html(
     <button class="mbtn" data-mode="browse">Browse by company</button>
     <span id="quarter-controls">{''.join(quarter_buttons)}</span>
     <button class="fbtn" data-filter="div">Diverges only</button>
-    <div class="legend">Compare aligns companies by <strong>calendar quarter of fiscal period-end</strong>, not fiscal quarter label. Click + next to a company to expand its feature panel. Gap = surprise magnitude minus quant z.</div>
+    <div class="legend">Compare aligns companies by <strong>calendar quarter of fiscal period-end</strong>, not fiscal quarter label. Click + next to a company to expand its feature panel. Gap = narrative surprise − quant z (quant clipped to ±2); not narrative level − quant.</div>
   </div>
 
   <div id="mode-compare" class="mode-section active">

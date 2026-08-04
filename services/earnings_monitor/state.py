@@ -54,6 +54,8 @@ class OperationalState:
                     last_error TEXT,
                     updated_at TEXT NOT NULL,
                     manual_override INTEGER NOT NULL DEFAULT 0,
+                    first_print INTEGER NOT NULL DEFAULT 0,
+                    workflow_mode TEXT NOT NULL DEFAULT 'standard',
                     UNIQUE(ticker, fiscal_period)
                 );
                 CREATE TABLE IF NOT EXISTS jobs (
@@ -120,6 +122,11 @@ class OperationalState:
                 );
                 CREATE INDEX IF NOT EXISTS artifact_publications_ready
                     ON artifact_publications(status, available_at, id);
+                CREATE TABLE IF NOT EXISTS monitor_meta (
+                    key TEXT PRIMARY KEY,
+                    value TEXT NOT NULL,
+                    updated_at TEXT NOT NULL
+                );
                 """
             )
             columns = {row["name"] for row in conn.execute("PRAGMA table_info(events)")}
@@ -137,6 +144,22 @@ class OperationalState:
                 # the migration instead of guessing from the event ID format.
                 conn.execute(
                     "UPDATE events SET manual_override=1"
+                )
+            if "first_print" not in columns:
+                conn.execute(
+                    "ALTER TABLE events ADD COLUMN first_print "
+                    "INTEGER NOT NULL DEFAULT 0"
+                )
+            if "workflow_mode" not in columns:
+                conn.execute(
+                    "ALTER TABLE events ADD COLUMN workflow_mode "
+                    "TEXT NOT NULL DEFAULT 'standard'"
+                )
+                # Backfill from First-Print flag when present.
+                conn.execute(
+                    "UPDATE events SET workflow_mode='first_print' "
+                    "WHERE first_print=1 AND "
+                    "(workflow_mode IS NULL OR workflow_mode='standard')"
                 )
             conn.execute(
                 "UPDATE events SET report_at=COALESCE(report_at, scheduled_at), "
@@ -183,8 +206,8 @@ class OperationalState:
                 INSERT INTO events (
                     provider_event_id, ticker, fiscal_period, scheduled_at, report_at, call_at, title,
                     source_url, state, transcript_fingerprint, transcript_observed_at,
-                    last_error, updated_at, manual_override
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    last_error, updated_at, manual_override, first_print, workflow_mode
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(provider_event_id) DO UPDATE SET
                     ticker=excluded.ticker, fiscal_period=excluded.fiscal_period,
                     scheduled_at=excluded.scheduled_at, report_at=excluded.report_at,
@@ -193,7 +216,9 @@ class OperationalState:
                     transcript_fingerprint=excluded.transcript_fingerprint,
                     transcript_observed_at=excluded.transcript_observed_at,
                     last_error=excluded.last_error, updated_at=excluded.updated_at,
-                    manual_override=excluded.manual_override
+                    manual_override=excluded.manual_override,
+                    first_print=excluded.first_print,
+                    workflow_mode=excluded.workflow_mode
                 """,
                 (
                     event.provider_event_id,
@@ -210,12 +235,23 @@ class OperationalState:
                     monitored.last_error,
                     _iso(monitored.updated_at),
                     int(monitored.manual_override),
+                    int(monitored.first_print),
+                    monitored.workflow_mode or "standard",
                 ),
             )
 
-    def arm_event(self, event: EarningsEvent) -> MonitoredEvent:
+    def arm_event(
+        self,
+        event: EarningsEvent,
+        *,
+        first_print: bool = False,
+        workflow_mode: str | None = None,
+        initial_state: EventState | None = None,
+    ) -> MonitoredEvent:
         """Apply a manual schedule while retaining any existing period identity/lifecycle."""
         now = datetime.now(timezone.utc)
+        mode = (workflow_mode or ("first_print" if first_print else "standard")).strip()
+        start_state = (initial_state or EventState.SCHEDULED).value
         with self._connect() as conn:
             conn.execute("BEGIN IMMEDIATE")
             row = conn.execute(
@@ -233,8 +269,8 @@ class OperationalState:
                     INSERT INTO events(
                         provider_event_id, ticker, fiscal_period, scheduled_at,
                         report_at, call_at, title, source_url, state, updated_at,
-                        manual_override
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
+                        manual_override, first_print, workflow_mode
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)
                     """,
                     (
                         event.provider_event_id,
@@ -245,8 +281,10 @@ class OperationalState:
                         _iso(event.call_at),
                         event.title,
                         event.source_url,
-                        EventState.SCHEDULED.value,
+                        start_state,
                         _iso(now),
+                        int(first_print),
+                        mode,
                     ),
                 )
                 effective_id = event.provider_event_id
@@ -255,11 +293,21 @@ class OperationalState:
                 # rows. Keep that identity and update only operator-controlled
                 # schedule metadata and the manual-override flag.
                 effective_id = str(row["provider_event_id"])
+                # First-Print re-arm of a failed baseline can return the event
+                # to SCHEDULED so advance_events can skip pre_release cleanly.
+                reset_failed = first_print and str(row["state"]) == EventState.FAILED.value
+                force_state = initial_state is not None or reset_failed
+                next_state = (
+                    start_state if initial_state is not None else EventState.SCHEDULED.value
+                )
                 conn.execute(
                     """
                     UPDATE events SET ticker=?, fiscal_period=?, scheduled_at=?,
                         report_at=?, call_at=?, title=?, source_url=?,
-                        updated_at=?, manual_override=1
+                        updated_at=?, manual_override=1, first_print=?,
+                        workflow_mode=?,
+                        state=CASE WHEN ? THEN ? ELSE state END,
+                        last_error=CASE WHEN ? THEN NULL ELSE last_error END
                     WHERE provider_event_id=?
                     """,
                     (
@@ -271,6 +319,11 @@ class OperationalState:
                         event.title,
                         event.source_url,
                         _iso(now),
+                        int(bool(row["first_print"]) or first_print),
+                        mode,
+                        int(force_state),
+                        next_state,
+                        int(reset_failed or initial_state is not None),
                         effective_id,
                     ),
                 )
@@ -416,6 +469,18 @@ class OperationalState:
             title=row["title"],
             source_url=row["source_url"],
         )
+        first_print = False
+        try:
+            first_print = bool(row["first_print"])
+        except (IndexError, KeyError):
+            first_print = False
+        workflow_mode = "first_print" if first_print else "standard"
+        try:
+            raw_mode = row["workflow_mode"]
+            if raw_mode:
+                workflow_mode = str(raw_mode)
+        except (IndexError, KeyError):
+            pass
         return MonitoredEvent(
             event=event,
             state=EventState(row["state"]),
@@ -424,6 +489,8 @@ class OperationalState:
             last_error=row["last_error"],
             updated_at=_dt(row["updated_at"]),  # type: ignore[arg-type]
             manual_override=bool(row["manual_override"]),
+            first_print=first_print,
+            workflow_mode=workflow_mode,
         )
 
     def get_event_for_period(
@@ -844,3 +911,78 @@ class OperationalState:
                 (limit,),
             ).fetchall()
         return [dict(row) for row in rows]
+
+    def get_meta(self, key: str) -> str | None:
+        with self._connect() as conn:
+            row = conn.execute(
+                "SELECT value FROM monitor_meta WHERE key=?", (key,)
+            ).fetchone()
+        return None if row is None else str(row["value"])
+
+    def set_meta(self, key: str, value: str, *, now: datetime | None = None) -> None:
+        current = now or datetime.now(timezone.utc)
+        with self._connect() as conn:
+            conn.execute(
+                """
+                INSERT INTO monitor_meta(key, value, updated_at)
+                VALUES (?, ?, ?)
+                ON CONFLICT(key) DO UPDATE SET
+                    value=excluded.value,
+                    updated_at=excluded.updated_at
+                """,
+                (key, value, _iso(current)),
+            )
+
+    def delete_meta(self, key: str) -> None:
+        with self._connect() as conn:
+            conn.execute("DELETE FROM monitor_meta WHERE key=?", (key,))
+
+    def research_book_dirty(self) -> dict | None:
+        """Return dirty-book metadata when Rank IC / consolidated need regen."""
+        raw = self.get_meta("research_book_dirty")
+        if not raw:
+            return None
+        try:
+            payload = json.loads(raw)
+        except (TypeError, ValueError):
+            return {
+                "dirty": True,
+                "marked_at": None,
+                "reason": "invalid_meta",
+                "triggers": [],
+            }
+        if not isinstance(payload, dict) or not payload.get("dirty"):
+            return None
+        return payload
+
+    def mark_research_book_dirty(
+        self,
+        *,
+        reason: str = "post_call",
+        trigger: str = "",
+        now: datetime | None = None,
+    ) -> dict:
+        """Mark the cross-company research book as needing regeneration.
+
+        Multiple successful post-calls coalesce onto one dirty flag so the
+        Rank IC / consolidated rebuild runs once for the full book.
+        """
+        current = now or datetime.now(timezone.utc)
+        existing = self.research_book_dirty() or {}
+        triggers = list(existing.get("triggers") or [])
+        if trigger:
+            triggers.append(str(trigger))
+        # Keep the list bounded so a busy earnings week does not bloat SQLite.
+        triggers = triggers[-50:]
+        payload = {
+            "dirty": True,
+            "marked_at": existing.get("marked_at") or _iso(current),
+            "updated_at": _iso(current),
+            "reason": reason or existing.get("reason") or "post_call",
+            "triggers": triggers,
+        }
+        self.set_meta("research_book_dirty", json.dumps(payload), now=current)
+        return payload
+
+    def clear_research_book_dirty(self) -> None:
+        self.delete_meta("research_book_dirty")

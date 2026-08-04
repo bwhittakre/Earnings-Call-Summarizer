@@ -244,11 +244,12 @@ def ranked_bar_chart(
 def overview_pulse_chart(
     rows: Sequence[dict[str, Any]],
     *,
-    title: str = "Latest print: narrative–quant gap",
+    title: str = "Latest print: surprise−quant gap",
 ) -> Any:
-    """Attention ranking by absolute gap for the latest scorecards.
+    """Attention ranking by absolute surprise−quant gap for latest scorecards.
 
     Companies with a null gap remain in the chart (grey / unavailable).
+    Gap is narrative surprise − quant z (quant clipped to ±2), not level − quant.
     """
     alt = _alt()
     pd = _pd()
@@ -281,12 +282,15 @@ def overview_pulse_chart(
         lambda row: (
             "Gap unavailable"
             if pd.isna(row["gap"])
-            else "gap = narrative − quant_z"
+            else "gap = surprise − quant z (quant clipped to ±2); not level − quant"
         ),
         axis=1,
     )
     frame["narrative_level"] = pd.to_numeric(
         frame.get("narrative_level"), errors="coerce"
+    )
+    frame["narrative_surprise"] = pd.to_numeric(
+        frame.get("narrative_surprise"), errors="coerce"
     )
     frame["quant_z"] = pd.to_numeric(frame.get("quant_z"), errors="coerce")
 
@@ -303,7 +307,7 @@ def overview_pulse_chart(
                 scale=alt.Scale(domain=company_domain),
                 title=None,
             ),
-            x=alt.X("gap:Q", title="Narrative − quant gap"),
+            x=alt.X("gap:Q", title="Surprise − quant gap"),
             color=alt.Color(
                 "attention:N",
                 scale=alt.Scale(
@@ -320,10 +324,15 @@ def overview_pulse_chart(
             tooltip=[
                 alt.Tooltip("company:N", title="Company"),
                 alt.Tooltip("fiscal_period:N", title="Fiscal period"),
-                alt.Tooltip("narrative_level:Q", title="Narrative", format=".3f"),
+                alt.Tooltip(
+                    "narrative_surprise:Q", title="Narrative surprise", format=".3f"
+                ),
                 alt.Tooltip("quant_z:Q", title="Quant z", format=".3f"),
-                alt.Tooltip("gap:Q", title="Gap", format=".3f"),
-                alt.Tooltip("gap_breakdown:N", title="Breakdown"),
+                alt.Tooltip("gap:Q", title="Surprise−quant gap", format=".3f"),
+                alt.Tooltip(
+                    "narrative_level:Q", title="Narrative level (context)", format=".3f"
+                ),
+                alt.Tooltip("gap_breakdown:N", title="Definition"),
                 alt.Tooltip("attention:N", title="Status"),
             ],
         )

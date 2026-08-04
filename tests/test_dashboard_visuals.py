@@ -176,6 +176,7 @@ def test_overview_pulse_keeps_null_gap_and_breakdown() -> None:
                 "gap": 1.2,
                 "abs_gap": 1.2,
                 "narrative_level": 1.0,
+                "narrative_surprise": 0.8,
                 "quant_z": -0.2,
                 "quant_flagged": True,
                 "incomplete": False,
@@ -186,6 +187,7 @@ def test_overview_pulse_keeps_null_gap_and_breakdown() -> None:
                 "gap": None,
                 "abs_gap": None,
                 "narrative_level": None,
+                "narrative_surprise": None,
                 "quant_z": None,
                 "quant_flagged": False,
                 "incomplete": False,
@@ -195,7 +197,8 @@ def test_overview_pulse_keeps_null_gap_and_breakdown() -> None:
     spec = chart.to_dict()
     encoded = str(spec)
     assert "gap_breakdown" in encoded
-    assert "narrative" in encoded.lower() or "narrative_level" in encoded
+    assert "surprise" in encoded.lower()
+    assert "not level" in encoded.lower() or "clipped" in encoded.lower()
     height = spec.get("height") or 0
     assert height >= 22 * 2
 

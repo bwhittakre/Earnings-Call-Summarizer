@@ -74,6 +74,7 @@ def plan_workflow(
     bridge_transcript: bool = True,
     export_spine: bool = True,
     research_labels: bool = False,
+    no_prior: bool = False,
     spine_tickers: Sequence[str] = PILOT_TICKERS,
     python_executable: str = sys.executable,
     structured_narrative_dir: Path = HERE,
@@ -85,6 +86,10 @@ def plan_workflow(
     artifacts without requiring a transcript or Anthropic.
     ``post_call`` scores the transcript while explicitly reusing prepared quant
     data, then optionally refreshes cross-company outputs.
+
+    ``no_prior`` (First-Print) makes ``pre_release`` an empty successful plan and
+    passes ``--no-prior`` into the post-call pipeline so prior comparisons are
+    skipped.
     """
 
     resolved_profile = WorkflowProfile(profile)
@@ -99,6 +104,14 @@ def plan_workflow(
     commands: list[WorkflowCommand] = []
 
     if resolved_profile is WorkflowProfile.PRE_RELEASE:
+        if no_prior:
+            # First-Print: nothing to baseline; empty plan is a successful no-op.
+            return WorkflowPlan(
+                profile=resolved_profile,
+                ticker=normalized_ticker,
+                quarter=normalized_quarter,
+                commands=(),
+            )
         baseline_quarter = prior_fiscal_period(normalized_quarter)
         if baseline_quarter is None:
             raise ValueError(f"Cannot resolve prior fiscal period for {normalized_quarter}")
@@ -163,6 +176,8 @@ def plan_workflow(
             "--skip-quant",
             "--skip-bridge",
         ]
+        if no_prior:
+            score_cmd.append("--no-prior")
         if force:
             score_cmd.append("--force")
         commands.append(WorkflowCommand("Score post-call narrative", tuple(score_cmd)))

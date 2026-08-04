@@ -242,6 +242,33 @@ def load_consolidated_panel(
     )
 
 
+def filter_rank_ic_rows(
+    rows: list[dict[str, Any]],
+    *,
+    label: str | None = None,
+    horizon: str | None = None,
+    dimension: str | None = None,
+    signal: str | None = None,
+) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    for row in rows:
+        if label is not None and str(row.get("label", "")) != label:
+            continue
+        if horizon is not None and str(row.get("horizon", "")) != horizon:
+            continue
+        if dimension is not None and str(row.get("dimension", "")) != dimension:
+            continue
+        if signal is not None and str(row.get("signal", "")) != signal:
+            continue
+        out.append(row)
+    return out
+
+
+def unique_sorted(rows: list[dict[str, Any]], key: str) -> list[str]:
+    values = sorted({str(row.get(key)) for row in rows if row.get(key) not in (None, "")})
+    return values
+
+
 def resolve_report_html(
     stem: str,
     *,

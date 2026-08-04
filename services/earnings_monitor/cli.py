@@ -95,16 +95,218 @@ def main(argv: list[str] | None = None) -> int:
     arm_parser.add_argument("--event-id")
     arm_parser.add_argument("--title", default="")
     arm_parser.add_argument("--source-url")
+    arm_parser.add_argument(
+        "--first-print",
+        action="store_true",
+        help=(
+            "First-Print mode: skip prior-quarter pre_release baseline and "
+            "post-call delta/surprise/novelty comparisons"
+        ),
+    )
+    arm_parser.add_argument(
+        "--onboard",
+        action="store_true",
+        help=(
+            "Onboard mode: pull lookback history, scaffold CompanyProfile, "
+            "run quant + batch LLM + panel before baseline (mutually exclusive "
+            "with --first-print)"
+        ),
+    )
+    arm_parser.add_argument(
+        "--onboard-dry-run",
+        action="store_true",
+        help="With --onboard, plan steps without executing network/LLM work",
+    )
+    onboard_parser = subparsers.add_parser(
+        "onboard",
+        help="Run Onboard orchestrator for a ticker/period (history → score → panel)",
+    )
+    onboard_parser.add_argument("--ticker", required=True)
+    onboard_parser.add_argument("--period", required=True)
+    onboard_parser.add_argument("--report-at", required=True)
+    onboard_parser.add_argument("--call-at", default=None)
+    onboard_parser.add_argument("--company-name", default="")
+    onboard_parser.add_argument("--dry-run", action="store_true")
+    onboard_parser.add_argument("--skip-pull", action="store_true")
+    onboard_parser.add_argument("--skip-ids", action="store_true")
+    onboard_parser.add_argument("--skip-fiscal", action="store_true")
+    onboard_parser.add_argument("--skip-quant", action="store_true")
+    onboard_parser.add_argument("--skip-llm", action="store_true")
+    onboard_parser.add_argument("--skip-panel", action="store_true")
+    onboard_parser.add_argument(
+        "--force-onboard",
+        action="store_true",
+        help="Run Onboard even if mode router would classify as standard",
+    )
+    onboard_parser.add_argument(
+        "--arm",
+        action="store_true",
+        help="After Onboard, arm the event (requires ticker on allowlist)",
+    )
     run_parser = subparsers.add_parser("run", help="Run continuously")
     run_parser.add_argument("--interval", type=int, default=None)
     worker_parser = subparsers.add_parser(
         "worker", help="Run the local workflow job processor"
     )
     worker_parser.add_argument("--interval", type=int, default=None)
+    regen_parser = subparsers.add_parser(
+        "research-regen",
+        help="Regenerate Rank IC + consolidated HTML once (dirty book or --force)",
+    )
+    regen_parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Regenerate even when the research book is not marked dirty",
+    )
+    regen_parser.add_argument(
+        "--no-debounce",
+        action="store_true",
+        help="Ignore debounce delay when the book is dirty",
+    )
+    subparsers.add_parser(
+        "research-regen-loop",
+        help="Poll the dirty flag and regenerate Rank IC + consolidated HTML",
+    )
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO)
 
     config = MonitorConfig.from_env()
+    if args.command in {"research-regen", "research-regen-loop"}:
+        from .research_regen import run_research_regen_loop, run_research_regen_once
+
+        state = OperationalState(
+            config.database_path,
+            lease_timeout=timedelta(seconds=config.lease_timeout_seconds),
+        )
+        state.initialize()
+        if args.command == "research-regen-loop":
+            try:
+                run_research_regen_loop(config, state)
+            except KeyboardInterrupt:
+                return 0
+            return 0
+        result = run_research_regen_once(
+            config,
+            state,
+            force=bool(args.force),
+            honor_debounce=not bool(args.no_debounce),
+        )
+        print(
+            json.dumps(
+                {
+                    "ok": result.ok,
+                    "skipped": result.skipped,
+                    "skip_reason": result.skip_reason,
+                    "triggered_by": result.triggered_by,
+                    "started_at": result.started_at,
+                    "finished_at": result.finished_at,
+                    "commands": [
+                        {
+                            "name": item.name,
+                            "returncode": item.returncode,
+                            "duration_seconds": round(item.duration_seconds, 3),
+                        }
+                        for item in result.commands
+                    ],
+                },
+                sort_keys=True,
+            )
+        )
+        return 0 if result.ok else 1
+
+    if args.command == "onboard":
+        from .models import EventState, WorkflowMode
+        from .onboard import run_onboard
+
+        ticker = args.ticker.strip().upper()
+        try:
+            report_at = datetime.fromisoformat(
+                args.report_at.strip().replace("Z", "+00:00")
+            )
+            if report_at.tzinfo is None:
+                raise ValueError("report_at must include a UTC offset")
+            call_raw = args.call_at or args.report_at
+            call_at = datetime.fromisoformat(
+                str(call_raw).strip().replace("Z", "+00:00")
+            )
+            if call_at.tzinfo is None:
+                raise ValueError("call_at must include a UTC offset")
+        except ValueError as exc:
+            parser.error(str(exc))
+
+        result = run_onboard(
+            repo_root=config.repo_root,
+            ticker=ticker,
+            fiscal_period=args.period.upper(),
+            report_at=report_at,
+            company_name=args.company_name or ticker,
+            dry_run=bool(args.dry_run),
+            skip_pull=bool(args.skip_pull),
+            skip_ids=bool(args.skip_ids),
+            skip_fiscal=bool(args.skip_fiscal),
+            skip_quant=bool(args.skip_quant),
+            skip_llm=bool(args.skip_llm),
+            skip_panel=bool(args.skip_panel),
+            force_mode="onboard" if args.force_onboard else None,
+            configured_tickers=config.tickers,
+        )
+        payload = result.to_dict()
+        if args.arm:
+            if ticker not in config.tickers:
+                parser.error(
+                    f"{ticker} is not in EARNINGS_MONITOR_TICKERS={config.tickers}. "
+                    f"{result.allowlist_guidance}"
+                )
+            monitor = build_local_monitor(config)
+            if result.status == "first_print_fallback":
+                initial = EventState.SCHEDULED
+                mode = WorkflowMode.FIRST_PRINT.value
+                first_print = True
+            elif result.status == "onboarding_blocked":
+                initial = EventState.ONBOARDING_BLOCKED
+                mode = WorkflowMode.ONBOARD.value
+                first_print = False
+            elif result.status in {"completed", "already_standard"}:
+                initial = EventState.SCHEDULED
+                mode = (
+                    WorkflowMode.STANDARD.value
+                    if result.status == "already_standard"
+                    else WorkflowMode.ONBOARD.value
+                )
+                first_print = False
+            else:
+                initial = EventState.ONBOARDING_BLOCKED
+                mode = WorkflowMode.ONBOARD.value
+                first_print = False
+            event = EarningsEvent(
+                provider_event_id=f"manual:{ticker}:{args.period.upper()}",
+                ticker=ticker,
+                fiscal_period=args.period.upper(),
+                report_at=report_at,
+                call_at=call_at,
+            )
+            monitored = monitor.state.arm_event(
+                event,
+                first_print=first_print,
+                workflow_mode=mode,
+                initial_state=initial,
+            )
+            if result.error and initial == EventState.ONBOARDING_BLOCKED:
+                monitored.last_error = result.error
+                monitor.state.upsert_event(monitored)
+            payload["armed"] = {
+                "event_id": monitored.event.provider_event_id,
+                "state": monitored.state.value,
+                "workflow_mode": monitored.workflow_mode,
+                "first_print": monitored.first_print,
+            }
+        print(json.dumps(payload, sort_keys=True, default=str))
+        if result.status == "first_print_fallback":
+            return 3
+        if result.status in {"onboarding_blocked", "failed"}:
+            return 2
+        return 0
+
     monitor = build_local_monitor(config)
     if args.command == "arm":
         ticker = args.ticker.strip().upper()
@@ -112,6 +314,10 @@ def main(argv: list[str] | None = None) -> int:
             parser.error(
                 f"{ticker} is not in EARNINGS_MONITOR_TICKERS={config.tickers}"
             )
+        if bool(getattr(args, "first_print", False)) and bool(
+            getattr(args, "onboard", False)
+        ):
+            parser.error("--first-print and --onboard are mutually exclusive")
         try:
             report_at = datetime.fromisoformat(
                 args.report_at.strip().replace("Z", "+00:00")
@@ -134,7 +340,63 @@ def main(argv: list[str] | None = None) -> int:
             )
         except ValueError as exc:
             parser.error(str(exc))
-        monitored = monitor.state.arm_event(event)
+
+        onboard_payload = None
+        initial_state = None
+        workflow_mode = "first_print" if args.first_print else "standard"
+        if args.onboard:
+            from .models import EventState, WorkflowMode
+            from .onboard import run_onboard
+
+            # Park the event in ONBOARDING so the poller never starts baseline
+            # while history/batch work is still running.
+            monitored = monitor.state.arm_event(
+                event,
+                first_print=False,
+                workflow_mode=WorkflowMode.ONBOARD.value,
+                initial_state=EventState.ONBOARDING,
+            )
+            result = run_onboard(
+                repo_root=config.repo_root,
+                ticker=ticker,
+                fiscal_period=args.period.upper(),
+                report_at=report_at,
+                dry_run=bool(args.onboard_dry_run),
+                force_mode="onboard",
+                configured_tickers=config.tickers,
+            )
+            onboard_payload = result.to_dict()
+            if result.status == "first_print_fallback":
+                workflow_mode = WorkflowMode.FIRST_PRINT.value
+                initial_state = EventState.SCHEDULED
+                monitored = monitor.state.arm_event(
+                    event,
+                    first_print=True,
+                    workflow_mode=workflow_mode,
+                    initial_state=initial_state,
+                )
+                monitored.last_error = result.error
+                monitor.state.upsert_event(monitored)
+            elif result.status in {"onboarding_blocked", "failed"}:
+                workflow_mode = WorkflowMode.ONBOARD.value
+                monitored.workflow_mode = workflow_mode
+                monitored.transition(
+                    EventState.ONBOARDING_BLOCKED, error=result.error
+                )
+                monitor.state.upsert_event(monitored)
+            else:
+                workflow_mode = WorkflowMode.ONBOARD.value
+                monitored.workflow_mode = workflow_mode
+                monitored.transition(EventState.SCHEDULED)
+                monitored.last_error = None
+                monitor.state.upsert_event(monitored)
+        else:
+            monitored = monitor.state.arm_event(
+                event,
+                first_print=bool(args.first_print),
+                workflow_mode=workflow_mode,
+                initial_state=initial_state,
+            )
         event = monitored.event
         print(
             json.dumps(
@@ -145,10 +407,21 @@ def main(argv: list[str] | None = None) -> int:
                     "report_at": event.report_at.isoformat(),
                     "call_at": event.call_at.isoformat(),
                     "state": monitored.state.value,
+                    "first_print": monitored.first_print,
+                    "workflow_mode": monitored.workflow_mode,
+                    "onboard": onboard_payload,
                 },
                 sort_keys=True,
+                default=str,
             )
         )
+        if onboard_payload and onboard_payload.get("status") in {
+            "onboarding_blocked",
+            "failed",
+        }:
+            return 2
+        if onboard_payload and onboard_payload.get("status") == "first_print_fallback":
+            return 3
         return 0
     workflow = monitor.workflow
     diagnostics = run_startup_diagnostics(

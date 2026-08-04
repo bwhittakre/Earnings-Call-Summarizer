@@ -45,6 +45,11 @@ class MonitorConfig:
     transcript_start_delay_seconds: int = 45 * 60
     transcript_timeout_seconds: int = 3 * 60 * 60
     refresh_history_after_workflow: bool = False
+    research_regen_after_post_call: bool = True
+    research_regen_debounce_seconds: int = 60
+    research_regen_idle_seconds: int = 30
+    research_min_calendar_quarter: str = "2016-Q2"
+    research_sector: str = "xlk_tech"
     workflow_profile: str = "new_quarter"
     r2_account_id: str | None = None
     r2_endpoint_url: str | None = None
@@ -166,6 +171,24 @@ class MonitorConfig:
             refresh_history_after_workflow=_bool(
                 values.get("EARNINGS_MONITOR_REFRESH_HISTORY"), False
             ),
+            research_regen_after_post_call=_bool(
+                values.get("EARNINGS_MONITOR_RESEARCH_REGEN"), True
+            ),
+            research_regen_debounce_seconds=_int(
+                values.get("EARNINGS_MONITOR_RESEARCH_REGEN_DEBOUNCE_SECONDS"),
+                60,
+                minimum=0,
+            ),
+            research_regen_idle_seconds=_int(
+                values.get("EARNINGS_MONITOR_RESEARCH_REGEN_IDLE_SECONDS"),
+                30,
+            ),
+            research_min_calendar_quarter=values.get(
+                "EARNINGS_MONITOR_RESEARCH_MIN_CALENDAR_QUARTER", "2016-Q2"
+            ).strip(),
+            research_sector=values.get(
+                "EARNINGS_MONITOR_RESEARCH_SECTOR", "xlk_tech"
+            ).strip(),
             workflow_profile=values.get("EARNINGS_MONITOR_WORKFLOW", "new_quarter").strip(),
             r2_account_id=account_id,
             r2_endpoint_url=endpoint,

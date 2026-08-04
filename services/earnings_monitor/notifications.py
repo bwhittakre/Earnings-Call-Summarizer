@@ -193,9 +193,20 @@ class TwoEmailNotifier:
                 f"{event.ticker}/{event.fiscal_period}"
             )
         outcome = "recovered and completed" if prior_failure else "completed"
+        monitored = self.state.get_event(event.provider_event_id)
+        first_print = bool(monitored and monitored.first_print) or (
+            "first-print" in detail.lower() or "no prior" in detail.lower()
+        )
+        first_print_note = (
+            "Mode: First-Print (no prior-quarter baseline or "
+            "delta/surprise/novelty comparisons).\n"
+            if first_print
+            else ""
+        )
         text = (
             f"Combined quant and post-call narrative processing {outcome}.\n\n"
             f"Ticker: {event.ticker}\nFiscal period: {event.fiscal_period}\n"
+            f"{first_print_note}"
             f"Completion: {'complete' if completion['complete'] else 'incomplete'}\n"
             f"Issues: {', '.join(completion['issues']) or 'none'}\n\n"
             "Dimension scorecard:\n"
@@ -237,6 +248,17 @@ class TwoEmailNotifier:
             html=_html_page(
                 f"{event.ticker} {event.fiscal_period} {outcome}",
                 [
+                    *(
+                        [
+                            (
+                                "Mode",
+                                "First-Print — level narrative and quant only; "
+                                "no prior-quarter comparisons.",
+                            )
+                        ]
+                        if first_print
+                        else []
+                    ),
                     (
                         "Completion",
                         escape(

@@ -23,6 +23,7 @@ if str(HERE) not in sys.path:
 from company_config import get_company  # noqa: E402
 from quarter_registry import is_quarter_complete, load_registry  # noqa: E402
 from dimension_scorer import ALL_DIMENSIONS, QUANT_COMPARABLE_DIMENSIONS  # noqa: E402
+from fiscal_period_util import normalize_fiscal_period  # noqa: E402
 from spine_export import standardize_surprise_novelty_exclusivity  # noqa: E402
 from dimension_order import prepare_consolidated_panel  # noqa: E402
 from output_paths import company_artifact, resolve_read, resolve_read_parquet_or_csv  # noqa: E402
@@ -274,7 +275,33 @@ def _read_optional(ticker: str, stem: str, *, layer: str = "parquet") -> pd.Data
         return None
 
 
+_LEVEL_OUT_COLS = [
+    "ticker",
+    "fiscal_period",
+    "dimension",
+    "as_of_date",
+    "llm_level",
+    "level_rationale",
+    "level_evidence_supported_pct",
+]
+_DELTA_OUT_COLS = [
+    "ticker",
+    "fiscal_period",
+    "dimension",
+    "as_of_date",
+    "prior_period",
+    "change_direction",
+    "change_magnitude",
+    "score_delta",
+    "quant_z_delta",
+    "delta_rationale",
+    "delta_evidence_supported_pct",
+]
+
+
 def prepare_level(level: pd.DataFrame) -> pd.DataFrame:
+    if level is None or level.empty:
+        return pd.DataFrame(columns=_LEVEL_OUT_COLS)
     df = level.copy()
     df["level_evidence_supported_pct"] = df.apply(
         lambda r: _evidence_pct(r.get("n_evidence_verified"), r.get("n_evidence"), r.get("evidence_verified")),
@@ -285,40 +312,18 @@ def prepare_level(level: pd.DataFrame) -> pd.DataFrame:
             "score": "llm_level",
             "rationale": "level_rationale",
         }
-    )[
-        [
-            "ticker",
-            "fiscal_period",
-            "dimension",
-            "as_of_date",
-            "llm_level",
-            "level_rationale",
-            "level_evidence_supported_pct",
-        ]
-    ]
+    )[_LEVEL_OUT_COLS]
 
 
 def prepare_delta(delta: pd.DataFrame) -> pd.DataFrame:
+    if delta is None or delta.empty:
+        return pd.DataFrame(columns=_DELTA_OUT_COLS)
     df = delta.copy()
     df["delta_evidence_supported_pct"] = df.apply(
         lambda r: _evidence_pct(r.get("n_evidence_verified"), r.get("n_evidence"), r.get("evidence_verified")),
         axis=1,
     )
-    return df.rename(columns={"rationale": "delta_rationale"})[
-        [
-            "ticker",
-            "fiscal_period",
-            "dimension",
-            "as_of_date",
-            "prior_period",
-            "change_direction",
-            "change_magnitude",
-            "score_delta",
-            "quant_z_delta",
-            "delta_rationale",
-            "delta_evidence_supported_pct",
-        ]
-    ]
+    return df.rename(columns={"rationale": "delta_rationale"})[_DELTA_OUT_COLS]
 
 
 def prepare_surprise(surprise: pd.DataFrame) -> pd.DataFrame:
@@ -341,6 +346,36 @@ def prepare_surprise(surprise: pd.DataFrame) -> pd.DataFrame:
             "surprise_evidence_supported_pct",
         ]
     ]
+
+
+def resolve_panel_keep_quarters(
+    *,
+    include_quarters: set[str],
+    from_registry: bool,
+    ticker: str,
+    output_quarters: set[str] | None,
+) -> set[str] | None:
+    """Fiscal periods to retain after merge, or None to keep the full panel.
+
+    When ``output_quarters`` (scope) is set, return scope ∪ include.
+    When ``from_registry`` and/or ``include_quarters``: return include ∪
+    registry-complete output quarters (if from_registry). An empty set means
+    "no quarters matched" — callers should skip filtering in that case.
+    """
+    if output_quarters is not None:
+        return set(output_quarters) | set(include_quarters)
+    if not (from_registry or include_quarters):
+        return None
+    fps = set(include_quarters)
+    if from_registry:
+        reg = load_registry(ticker)
+        prior_only = set(reg.get("prior_only_quarters", []))
+        fps |= {
+            fp
+            for fp in reg.get("scored_quarters", {})
+            if is_quarter_complete(reg, fp) and fp not in prior_only
+        }
+    return fps
 
 
 def prepare_novelty(novelty: pd.DataFrame) -> pd.DataFrame:
@@ -545,15 +580,42 @@ def main() -> int:
         action="store_true",
         help="Filter panel to output quarters marked complete in quarter_registry.json.",
     )
+    parser.add_argument(
+        "--include-quarters",
+        nargs="+",
+        default=[],
+        help=(
+            "Always keep these fiscal periods in the panel (e.g. a new quarter "
+            "after quant-only, before narrative scores exist). Unioned with "
+            "--from-registry / scope filters."
+        ),
+    )
     args = parser.parse_args()
     ticker = args.ticker.upper()
-
     try:
-        level = _read(ticker, "llm_dimension_scores", layer="csv")
-        delta = _read(ticker, "dimension_delta", layer="csv")
-    except FileNotFoundError as exc:
+        include_quarters = {
+            normalize_fiscal_period(q) for q in (args.include_quarters or [])
+        }
+    except ValueError as exc:
         print(f"Error: {exc}", file=sys.stderr)
         return 1
+    allow_sparse_llm = bool(include_quarters)
+
+    level = _read_optional(ticker, "llm_dimension_scores", layer="csv")
+    delta = _read_optional(ticker, "dimension_delta", layer="csv")
+    if level is None or delta is None:
+        if not allow_sparse_llm:
+            missing = "llm_dimension_scores" if level is None else "dimension_delta"
+            print(
+                f"Error: Missing csv/{missing} for {ticker} "
+                "(also checked legacy flat path).",
+                file=sys.stderr,
+            )
+            return 1
+        if level is None:
+            level = pd.DataFrame()
+        if delta is None:
+            delta = pd.DataFrame()
 
     quant = _read_optional(ticker, "dimension_scores", layer="parquet")
     surprise_df = _read_optional(ticker, "dimension_surprise", layer="parquet")
@@ -595,6 +657,13 @@ def main() -> int:
     if quant is not None and not args.llm_only:
         spine = build_spine(quant, ticker)
     elif args.llm_only or quant is None:
+        if allow_sparse_llm and quant is None:
+            print(
+                f"Error: quant preface requires {ticker}_dimension_scores "
+                "(run quant extract / z-score first).",
+                file=sys.stderr,
+            )
+            return 1
         if quant is None and not args.llm_only:
             print(
                 f"Note: {ticker}_dimension_scores not found; building LLM-only panel "
@@ -609,7 +678,8 @@ def main() -> int:
     company = get_company(ticker, scope=args.scope) if args.scope else None
     output_quarters = set(company.output_quarters) if company else None
     # Scoped runs emit only scored output quarters (prior-only quarters stay delta-only inputs).
-    full_spine = args.full_spine and output_quarters is None
+    # Quant preface (--include-quarters) must keep narrative-sparse spine rows.
+    full_spine = (args.full_spine and output_quarters is None) or allow_sparse_llm
 
     panel = merge_panel(
         spine,
@@ -619,20 +689,15 @@ def main() -> int:
         prepare_novelty(novelty_df),
         full_spine=full_spine,
     )
-    if output_quarters is not None:
-        panel = panel.loc[panel["fiscal_period"].isin(output_quarters)].copy()
+    keep = resolve_panel_keep_quarters(
+        include_quarters=include_quarters,
+        from_registry=args.from_registry,
+        ticker=ticker,
+        output_quarters=output_quarters,
+    )
+    if keep:
+        panel = panel.loc[panel["fiscal_period"].isin(keep)].copy()
         panel = prepare_consolidated_panel(panel)
-    elif args.from_registry:
-        reg = load_registry(ticker)
-        fps = [
-            fp
-            for fp, rec in reg.get("scored_quarters", {}).items()
-            if is_quarter_complete(reg, fp)
-            and fp not in set(reg.get("prior_only_quarters", []))
-        ]
-        if fps:
-            panel = panel.loc[panel["fiscal_period"].isin(fps)].copy()
-            panel = prepare_consolidated_panel(panel)
 
     summary = build_summary(panel, ticker)
     lookups = build_evidence_lookups(ticker)
