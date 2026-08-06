@@ -1,0 +1,31 @@
+{
+  "folders": [
+    {
+      "name": "Call-Ticker Reaction",
+      "path": "C:/Users/BobbyWhittaker/OneDrive - Cassius Capital/Desktop/Earnings Call Summarizer/Structured Narrative"
+    },
+    {
+      "name": "Live Ticker Reaction",
+      "path": "C:/Users/BobbyWhittaker/OneDrive - Cassius Capital/Desktop/Earnings Call Summarizer/Live Ticker Reaction"
+    },
+    {
+      "name": "Repo tests",
+      "path": "C:/Users/BobbyWhittaker/OneDrive - Cassius Capital/Desktop/Earnings Call Summarizer/tests"
+    }
+  ],
+  "settings": {
+    "files.exclude": {
+      "**/__pycache__": true,
+      "**/.pytest_cache": true,
+      "**/output": true,
+      "**/*.pyc": true
+    },
+    "search.exclude": {
+      "**/output": true,
+      "**/__pycache__": true
+    },
+    "python.analysis.extraPaths": [
+      "C:/Users/BobbyWhittaker/OneDrive - Cassius Capital/Desktop/Earnings Call Summarizer/Structured Narrative"
+    ]
+  }
+}

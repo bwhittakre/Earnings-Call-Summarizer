@@ -1,0 +1,31 @@
+---
+description: Call-Ticker Reaction workspace focus (offline tape × timed transcript join)
+globs:
+  - ticker_reaction/**
+  - run_ticker_reaction.py
+  - ../Live Ticker Reaction/**
+  - ../tests/test_ticker_reaction.py
+alwaysApply: false
+---
+
+# Call-Ticker Reaction
+
+This Cursor workspace is for the **offline** call/tape reaction tool under Structured Narrative — not the Roz earnings monitor.
+
+## Scope
+
+- Code: `ticker_reaction/`, `run_ticker_reaction.py`
+- Data/outputs: `Live Ticker Reaction/` (bars Excel, timed Quartr JSON, anchors, `Output/`)
+- Tests: `tests/test_ticker_reaction.py`
+
+## Product stance
+
+- Manual Bloomberg Excel bars for now (no BB API, no paid tape).
+- Timed Quartr paragraphs + event anchors on disk; join via `run_ticker_reaction.py`.
+- Not a live product; for missed-call / company dig analysis.
+
+## Do not
+
+- Do not wire into Roz `post_call` unless explicitly asked.
+- Do not create a separate git repo or move ticker_reaction out of Structured Narrative.
+- Do not auto-commit (repo rule: user controls commits).
