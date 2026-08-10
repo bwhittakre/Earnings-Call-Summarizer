@@ -68,6 +68,36 @@ docker compose run --rm monitor arm `
   --call-at 2026-09-24T17:00:00-04:00
 ```
 
+## Onboard a new company (Quartr MCP default)
+
+History transcripts are **not** pulled via Quartr REST or ROIC by default.
+Seed lookback files with Cursor Quartr MCP into
+`Structured Narrative/transcripts_raw/{TICKER}_FY….txt`, then run Onboard:
+
+```powershell
+# After MCP wrote STRW_FY….txt into transcripts_raw:
+docker compose run --rm monitor onboard `
+  --ticker STRW `
+  --period FY2026-Q2 `
+  --report-at 2026-08-06T16:00:00-04:00 `
+  --isin US8631821019 `
+  --skip-pull `
+  --force-onboard
+```
+
+Defaults:
+
+- Mode classification uses the on-disk MCP transcript count (no Quartr REST).
+- Empty `transcripts_raw` fails with instructions to seed MCP (ROIC is not tried).
+- Pass `--isin` for Snowflake/LSEG resolve so recycled `IBESTICKER` values cannot
+  win (e.g. STRW). Overlay IDs are reused unless `--refresh-ids`.
+- Fiscal calendar skips EDGAR when the ticker is already in
+  `config/fiscal_calendars.yaml`.
+
+Opt-in only when needed: `--use-quartr-rest`, `--allow-roic-fallback`,
+`--estpermid` / `--barra-id`. `arm --onboard` accepts the same flags plus
+`--skip-pull`.
+
 Manual `arm` always wins over subsequent watched discovery for that event ID.
 To enable automatic assisted arming, set `EARNINGS_MONITOR_PROVIDER=watched`
 and point `EARNINGS_MONITOR_EVENT_MANIFESTS` at a mounted intake directory.

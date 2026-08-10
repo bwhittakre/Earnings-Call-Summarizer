@@ -390,7 +390,30 @@ def test_pull_history_uses_mcp_seeded_disk_for_3y_lookback(tmp_path: Path):
     assert seen == []
 
 
-def test_pull_history_roic_fallback_when_mcp_disk_empty(tmp_path: Path):
+def test_pull_history_hard_fails_when_mcp_disk_empty_without_roic_opt_in(tmp_path: Path):
+    sn = tmp_path / "Structured Narrative"
+    (sn / "transcripts_raw").mkdir(parents=True)
+    report = datetime(2026, 8, 7, 16, 0, tzinfo=UTC)
+    seen: list[list[str]] = []
+
+    def fake_run(argv, *, cwd, dry_run, env=None):
+        seen.append(list(argv))
+        return {"argv": list(argv), "cwd": str(cwd), "dry_run": dry_run, "returncode": 0}
+
+    with pytest.raises(OnboardError, match="Seed via Quartr MCP"):
+        _pull_history_transcripts(
+            repo_root=tmp_path,
+            ticker="STRW",
+            report_at=report,
+            lookback_years=3,
+            dry_run=False,
+            run_command=fake_run,
+            allow_roic_fallback=False,
+        )
+    assert seen == []
+
+
+def test_pull_history_roic_opt_in_when_mcp_disk_empty(tmp_path: Path):
     sn = tmp_path / "Structured Narrative"
     (sn / "transcripts_raw").mkdir(parents=True)
     fetch = (
@@ -421,6 +444,7 @@ def test_pull_history_roic_fallback_when_mcp_disk_empty(tmp_path: Path):
         lookback_years=3,
         dry_run=False,
         run_command=fake_run,
+        allow_roic_fallback=True,
     )
     assert steps[0]["step"] == "quartr_mcp_seed"
     assert steps[0]["on_disk"] == []
@@ -449,7 +473,37 @@ def test_pull_history_dry_run_does_not_call_quartr_rest(tmp_path: Path):
     )
     assert steps[0]["step"] == "quartr_mcp_seed"
     assert steps[1]["step"] == "roic_fallback"
+    assert steps[1]["allow_roic_fallback"] is False
     assert seen == []
+
+
+def test_run_onboard_classifies_from_on_disk_mcp_without_quartr_rest(tmp_path: Path):
+    raw = tmp_path / "Structured Narrative" / "transcripts_raw"
+    raw.mkdir(parents=True)
+    (raw / "STRW_FY2025-Q1.txt").write_text("mcp\n", encoding="utf-8")
+    (raw / "STRW_FY2025-Q2.txt").write_text("mcp\n", encoding="utf-8")
+    report = datetime(2026, 9, 1, tzinfo=UTC)
+
+    result = run_onboard(
+        repo_root=tmp_path,
+        ticker="STRW",
+        fiscal_period="FY2026-Q2",
+        report_at=report,
+        now=report - timedelta(days=10),
+        dry_run=True,
+        skip_pull=True,
+        skip_ids=True,
+        skip_fiscal=True,
+        skip_quant=True,
+        skip_llm=True,
+        skip_panel=True,
+        force_mode="onboard",
+    )
+    assert result.mode == "onboard"
+    assert result.prior_event_count == 2
+    count_step = next(s for s in result.steps if s.get("step") == "count_prior_events")
+    assert count_step["source"] == "on_disk_mcp"
+    assert result.status == "completed"
 
 
 def test_sync_book_after_onboard_imports_and_marks_dirty(tmp_path: Path, monkeypatch):

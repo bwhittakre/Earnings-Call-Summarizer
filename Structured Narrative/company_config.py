@@ -880,10 +880,34 @@ def lookup_ids_from_lseg(cur, profile: CompanyProfile) -> dict[str, str | int]:
 
 
 def resolve_company_ids(cur, profile: CompanyProfile) -> CompanyProfile:
-    """Fill or validate IDs from Snowflake mapping tables when possible."""
-    looked = lookup_ids_from_snowflake(cur, profile.ticker)
-    if not looked:
-        looked = lookup_ids_from_lseg(cur, profile)
+    """Fill or validate IDs from Snowflake mapping tables when possible.
+
+    When ``profile.isin`` is set, LSEG ISIN→INSTRPERMID→primary IBES mapping is
+    authoritative for ESTPERMID. IRIS may only fill missing BARRA_ID / ISIN —
+    it never overrides an ISIN-resolved ESTPERMID (recycled exchange tickers
+    like STRW make IRIS-first unsafe).
+
+    Without ISIN: try IRIS by exchange ticker, then LSEG IBESTICKER fallback
+    (risky; prefer passing ISIN at onboard).
+    """
+    looked: dict[str, str | int] = {}
+    if profile.isin:
+        looked = dict(lookup_ids_from_lseg(cur, profile) or {})
+        if looked.get("estpermid"):
+            iris = lookup_ids_from_snowflake(cur, profile.ticker)
+            if iris:
+                if not looked.get("barra_id") and iris.get("barra_id"):
+                    looked["barra_id"] = iris["barra_id"]
+                if not looked.get("isin") and iris.get("isin"):
+                    looked["isin"] = iris["isin"]
+        else:
+            # ISIN known but LSEG miss — IRIS as secondary only.
+            looked = dict(lookup_ids_from_snowflake(cur, profile.ticker) or looked)
+    else:
+        looked = dict(lookup_ids_from_snowflake(cur, profile.ticker) or {})
+        if not looked.get("estpermid"):
+            looked = dict(lookup_ids_from_lseg(cur, profile) or looked)
+
     if not looked:
         return profile
     return CompanyProfile(

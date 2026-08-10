@@ -117,6 +117,35 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="With --onboard, plan steps without executing network/LLM work",
     )
+    arm_parser.add_argument(
+        "--skip-pull",
+        action="store_true",
+        help="With --onboard, skip transcript pull (use MCP-seeded transcripts_raw)",
+    )
+    arm_parser.add_argument(
+        "--allow-roic-fallback",
+        action="store_true",
+        help="With --onboard, allow ROIC fetch when transcripts_raw is empty (opt-in)",
+    )
+    arm_parser.add_argument(
+        "--use-quartr-rest",
+        action="store_true",
+        help="With --onboard, count prior events via Quartr REST (opt-in; default is on-disk MCP)",
+    )
+    arm_parser.add_argument(
+        "--prior-event-count",
+        type=int,
+        default=None,
+        help="With --onboard, override prior-event count for mode classification",
+    )
+    arm_parser.add_argument("--isin", default=None, help="With --onboard, ISIN for Snowflake/LSEG resolve")
+    arm_parser.add_argument("--estpermid", type=int, default=None, help="With --onboard, ESTPERMID override")
+    arm_parser.add_argument("--barra-id", default=None, help="With --onboard, BARRA_ID override")
+    arm_parser.add_argument(
+        "--refresh-ids",
+        action="store_true",
+        help="With --onboard, ignore cached company overlay IDs and re-query Snowflake",
+    )
     onboard_parser = subparsers.add_parser(
         "onboard",
         help="Run Onboard orchestrator for a ticker/period (history → score → panel)",
@@ -133,6 +162,34 @@ def main(argv: list[str] | None = None) -> int:
     onboard_parser.add_argument("--skip-quant", action="store_true")
     onboard_parser.add_argument("--skip-llm", action="store_true")
     onboard_parser.add_argument("--skip-panel", action="store_true")
+    onboard_parser.add_argument(
+        "--allow-roic-fallback",
+        action="store_true",
+        help="Allow ROIC fetch when transcripts_raw is empty (opt-in; default is MCP-only)",
+    )
+    onboard_parser.add_argument(
+        "--use-quartr-rest",
+        action="store_true",
+        help="Count prior events via Quartr REST (opt-in; default uses on-disk MCP count)",
+    )
+    onboard_parser.add_argument(
+        "--prior-event-count",
+        type=int,
+        default=None,
+        help="Override prior-event count for mode classification",
+    )
+    onboard_parser.add_argument(
+        "--isin",
+        default=None,
+        help="ISIN for Snowflake/LSEG resolve (recommended; avoids recycled IBESTICKER)",
+    )
+    onboard_parser.add_argument("--estpermid", type=int, default=None, help="ESTPERMID override")
+    onboard_parser.add_argument("--barra-id", default=None, help="BARRA_ID override")
+    onboard_parser.add_argument(
+        "--refresh-ids",
+        action="store_true",
+        help="Ignore cached company overlay IDs and re-query Snowflake",
+    )
     onboard_parser.add_argument(
         "--force-onboard",
         action="store_true",
@@ -225,7 +282,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "onboard":
         from .models import EventState, WorkflowMode
-        from .onboard import make_quartr_event_lister, run_onboard
+        from .onboard import run_onboard
 
         ticker = args.ticker.strip().upper()
         try:
@@ -257,7 +314,13 @@ def main(argv: list[str] | None = None) -> int:
             skip_llm=bool(args.skip_llm),
             skip_panel=bool(args.skip_panel),
             force_mode="onboard" if args.force_onboard else None,
-            event_lister=make_quartr_event_lister(config.repo_root),
+            use_quartr_rest=bool(args.use_quartr_rest),
+            allow_roic_fallback=bool(args.allow_roic_fallback),
+            prior_event_count=args.prior_event_count,
+            isin=args.isin,
+            estpermid=args.estpermid,
+            barra_id=args.barra_id,
+            refresh_ids=bool(args.refresh_ids),
             configured_tickers=config.tickers,
         )
         payload = result.to_dict()
@@ -385,7 +448,7 @@ def main(argv: list[str] | None = None) -> int:
         workflow_mode = "first_print" if args.first_print else "standard"
         if args.onboard:
             from .models import EventState, WorkflowMode
-            from .onboard import make_quartr_event_lister, run_onboard
+            from .onboard import run_onboard
 
             # Park the event in ONBOARDING so the poller never starts baseline
             # while history/batch work is still running.
@@ -402,7 +465,14 @@ def main(argv: list[str] | None = None) -> int:
                 report_at=report_at,
                 dry_run=bool(args.onboard_dry_run),
                 force_mode="onboard",
-                event_lister=make_quartr_event_lister(config.repo_root),
+                skip_pull=bool(args.skip_pull),
+                use_quartr_rest=bool(args.use_quartr_rest),
+                allow_roic_fallback=bool(args.allow_roic_fallback),
+                prior_event_count=args.prior_event_count,
+                isin=args.isin,
+                estpermid=args.estpermid,
+                barra_id=args.barra_id,
+                refresh_ids=bool(args.refresh_ids),
                 configured_tickers=config.tickers,
             )
             onboard_payload = result.to_dict()

@@ -387,6 +387,26 @@ def _run_command(
     return step
 
 
+def _read_overlay_ids(
+    repo_root: Path, ticker: str
+) -> tuple[int | None, str | None, str | None]:
+    path = _overlay_path(repo_root, ticker)
+    if not path.is_file():
+        return None, None, None
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None, None, None
+    est = data.get("estpermid")
+    isin = data.get("isin") or None
+    barra = data.get("barra_id") or None
+    try:
+        est_i = int(est) if est is not None else None
+    except (TypeError, ValueError):
+        est_i = None
+    return est_i, (str(isin) if isin else None), (str(barra) if barra else None)
+
+
 def _resolve_ids(
     repo_root: Path,
     *,
@@ -395,15 +415,43 @@ def _resolve_ids(
     prior_quarters: Sequence[str],
     output_quarters: Sequence[str],
     connect: Callable[[], Any] | None,
-) -> tuple[int, str | None, str | None]:
+    isin: str | None = None,
+    estpermid: int | None = None,
+    barra_id: str | None = None,
+    refresh_ids: bool = False,
+) -> tuple[int, str | None, str | None, str]:
+    """Resolve ESTPERMID / ISIN / BARRA_ID.
+
+    Returns ``(estpermid, isin, barra_id, source)`` where source is one of
+    ``override``, ``overlay``, or ``snowflake``.
+    """
+    ticker_key = ticker.strip().upper()
+    isin_key = (isin or "").strip().upper() or None
+    barra_key = (barra_id or "").strip() or None
+
+    if estpermid is not None and int(estpermid) > 0:
+        return int(estpermid), isin_key, barra_key, "override"
+
+    if not refresh_ids:
+        ov_est, ov_isin, ov_barra = _read_overlay_ids(repo_root, ticker_key)
+        if ov_est:
+            return (
+                ov_est,
+                isin_key or ov_isin,
+                barra_key or ov_barra,
+                "overlay",
+            )
+
     sn = repo_root / "Structured Narrative"
     if str(sn) not in sys.path:
         sys.path.insert(0, str(sn))
     from company_config import CompanyProfile, resolve_company_ids  # type: ignore
 
     profile = CompanyProfile(
-        ticker=ticker.upper(),
+        ticker=ticker_key,
         company_name=company_name,
+        isin=isin_key,
+        barra_id=barra_key,
         prior_quarters=tuple(prior_quarters),
         output_quarters=tuple(output_quarters),
     )
@@ -429,11 +477,22 @@ def _resolve_ids(
             close()
 
     if not resolved.estpermid:
-        raise OnboardError(
-            f"estpermid missing for {ticker.upper()} after Snowflake/LSEG lookup; "
-            "refusing to continue Onboard."
+        hint = (
+            f" Pass --isin <ISIN> (recommended; IBESTICKER can be recycled, e.g. STRW) "
+            f"or --estpermid / --barra-id overrides."
+            if not isin_key
+            else " Check LSEG/MSCI share access for this ISIN."
         )
-    return int(resolved.estpermid), resolved.isin, resolved.barra_id
+        raise OnboardError(
+            f"estpermid missing for {ticker_key} after Snowflake/LSEG lookup; "
+            f"refusing to continue Onboard.{hint}"
+        )
+    return (
+        int(resolved.estpermid),
+        resolved.isin or isin_key,
+        resolved.barra_id or barra_key,
+        "snowflake",
+    )
 
 
 def _bootstrap_fiscal(
@@ -641,16 +700,17 @@ def _pull_history_transcripts(
     lookback_years: int,
     dry_run: bool,
     run_command: Callable[..., dict[str, Any]],
+    allow_roic_fallback: bool = False,
 ) -> list[dict[str, Any]]:
     """Accept lookback transcripts already in ``transcripts_raw`` (Quartr MCP).
 
-    Roz does **not** call the Quartr REST API here. History is seeded the same
-    way as live CSCO onboard: Cursor Quartr MCP → flat
-    ``transcripts_raw/{TICKER}_FY….txt`` files that ``LocalFileProvider`` reads.
-    Use ``--skip-pull`` when the agent has already written those files.
+    Default path is MCP-only: Cursor Quartr MCP → flat
+    ``transcripts_raw/{TICKER}_FY….txt`` for ``LocalFileProvider``. Neither
+    Quartr REST (``quartr_history_import``) nor ROIC runs automatically.
 
-    If the disk is empty, fall back to ROIC ``fetch_transcripts`` + inbox export
-    only. Never invoke ``quartr_history_import.py`` (REST) from this path.
+    Pass ``allow_roic_fallback=True`` (CLI ``--allow-roic-fallback``) only when
+    an explicit ROIC fetch + inbox export is required. Use ``--skip-pull`` when
+    the agent has already written the MCP files.
     """
     del report_at  # window sizing is an agent/MCP concern; disk is source of truth
     ticker_key = ticker.strip().upper()
@@ -664,8 +724,9 @@ def _pull_history_transcripts(
             "lookback_years": lookback_years,
             "on_disk": on_disk,
             "note": (
-                "Expect Quartr MCP → transcripts_raw/{TICKER}_FY….txt "
-                "(LocalFileProvider). REST quartr_history_import is not used."
+                "Default: Quartr MCP → transcripts_raw/{TICKER}_FY….txt "
+                "(LocalFileProvider). Quartr REST and ROIC are not used unless "
+                "explicitly opted in."
             ),
         }
     )
@@ -674,13 +735,28 @@ def _pull_history_transcripts(
             {
                 "step": "roic_fallback",
                 "skipped": "dry_run",
-                "note": "ROIC runs only when transcripts_raw has zero periods for ticker",
+                "allow_roic_fallback": allow_roic_fallback,
+                "note": (
+                    "ROIC is opt-in via --allow-roic-fallback when "
+                    "transcripts_raw is empty"
+                ),
             }
         )
         return steps
 
     if on_disk:
         return steps
+
+    if not allow_roic_fallback:
+        raise OnboardError(
+            f"No transcripts on disk for {ticker_key}. Seed via Quartr MCP into "
+            f"Structured Narrative/transcripts_raw/{ticker_key}_FY….txt "
+            f"(LocalFileProvider layout), then re-run onboard "
+            f"(optionally with --skip-pull). "
+            f"ROIC is not tried by default; pass --allow-roic-fallback only if "
+            f"you intentionally want the ROIC inbox path. "
+            f"Quartr REST (quartr_history_import) is never used here."
+        )
 
     fetch_script = (
         repo_root
@@ -736,10 +812,10 @@ def _pull_history_transcripts(
     on_disk = discover_on_disk_periods(repo_root, ticker_key)
     if not on_disk:
         raise OnboardError(
-            f"No transcripts on disk for {ticker_key}. Seed via Quartr MCP into "
+            f"No transcripts on disk for {ticker_key} after opt-in ROIC fallback. "
+            f"Seed via Quartr MCP into "
             f"Structured Narrative/transcripts_raw/{ticker_key}_FY….txt "
-            f"(same LocalFileProvider layout Roz uses), then re-run with "
-            f"--skip-pull, or provide ROIC inbox fallback."
+            f"and re-run (optionally with --skip-pull)."
         )
     return steps
 
@@ -762,6 +838,12 @@ def run_onboard(
     force_mode: str | None = None,
     prior_event_count: int | None = None,
     event_lister: Callable[[str, datetime, datetime], int] | None = None,
+    use_quartr_rest: bool = False,
+    allow_roic_fallback: bool = False,
+    isin: str | None = None,
+    estpermid: int | None = None,
+    barra_id: str | None = None,
+    refresh_ids: bool = False,
     connect: Callable[[], Any] | None = None,
     configured_tickers: Sequence[str] = (),
     run_command: Callable[..., dict[str, Any]] | None = None,
@@ -781,64 +863,80 @@ def run_onboard(
     lookback_years = choose_lookback_years(report_at, now=current)
     since = current - timedelta(days=lookback_years * 365 + 2)
     history_steps: list[dict[str, Any]] = []
+    on_disk = discover_on_disk_periods(repo_root, ticker_key)
     if prior_event_count is None:
         lister = event_lister
-        if lister is None:
+        if lister is None and use_quartr_rest:
             lister = make_quartr_event_lister(repo_root)
-        try:
-            prior_event_count = count_prior_provider_events(
-                ticker=ticker_key,
-                since=since,
-                until=report_at,
-                event_lister=lister,
-            )
+        if lister is not None:
+            try:
+                prior_event_count = count_prior_provider_events(
+                    ticker=ticker_key,
+                    since=since,
+                    until=report_at,
+                    event_lister=lister,
+                )
+                history_steps.append(
+                    {
+                        "step": "count_prior_events",
+                        "prior_event_count": prior_event_count,
+                        "source": "quartr_rest" if use_quartr_rest else "event_lister",
+                        "since": since.isoformat(),
+                        "until": report_at.isoformat(),
+                    }
+                )
+            except ProviderHistoryUnavailable as exc:
+                if force_mode:
+                    LOG.warning(
+                        "Prior-event count unavailable for %s under force_mode=%s: %s",
+                        ticker_key,
+                        force_mode,
+                        exc,
+                    )
+                    prior_event_count = 0
+                    history_steps.append(
+                        {
+                            "step": "count_prior_events",
+                            "prior_event_count": 0,
+                            "warning": str(exc),
+                            "forced": force_mode,
+                        }
+                    )
+                else:
+                    result = OnboardResult(
+                        ticker=ticker_key,
+                        fiscal_period=period,
+                        mode="unknown",
+                        status="failed",
+                        lookback_years=lookback_years,
+                        reason="Provider history unavailable for mode classification",
+                        prior_event_count=0,
+                        allowlist_guidance=allowlist_guidance(
+                            ticker_key, configured_tickers
+                        ),
+                        error=str(exc),
+                        steps=[
+                            {
+                                "step": "count_prior_events",
+                                "error": str(exc),
+                            }
+                        ],
+                    )
+                    return result
+        else:
+            # Default: classify from Quartr MCP-seeded transcripts_raw only.
+            prior_event_count = len(on_disk)
             history_steps.append(
                 {
                     "step": "count_prior_events",
                     "prior_event_count": prior_event_count,
-                    "since": since.isoformat(),
-                    "until": report_at.isoformat(),
+                    "source": "on_disk_mcp",
+                    "note": (
+                        "Quartr REST is opt-in (--use-quartr-rest). "
+                        "Mode uses on-disk MCP transcript count."
+                    ),
                 }
             )
-        except ProviderHistoryUnavailable as exc:
-            if force_mode:
-                LOG.warning(
-                    "Prior-event count unavailable for %s under force_mode=%s: %s",
-                    ticker_key,
-                    force_mode,
-                    exc,
-                )
-                prior_event_count = 0
-                history_steps.append(
-                    {
-                        "step": "count_prior_events",
-                        "prior_event_count": 0,
-                        "warning": str(exc),
-                        "forced": force_mode,
-                    }
-                )
-            else:
-                result = OnboardResult(
-                    ticker=ticker_key,
-                    fiscal_period=period,
-                    mode="unknown",
-                    status="failed",
-                    lookback_years=lookback_years,
-                    reason="Provider history unavailable for mode classification",
-                    prior_event_count=0,
-                    allowlist_guidance=allowlist_guidance(
-                        ticker_key, configured_tickers
-                    ),
-                    error=str(exc),
-                    steps=[
-                        {
-                            "step": "count_prior_events",
-                            "error": str(exc),
-                        }
-                    ],
-                )
-                return result
-    on_disk = discover_on_disk_periods(repo_root, ticker_key)
 
     in_registry = False
     has_scored = False
@@ -971,7 +1069,7 @@ def run_onboard(
         )
         _deadline_guard("classify")
 
-        # ---- Pull transcripts (Quartr first; ROIC only as fallback) ----
+        # ---- Pull transcripts (MCP default; ROIC only with --allow-roic-fallback) ----
         if not skip_pull:
             _deadline_guard("pull_transcripts")
             pull_steps = _pull_history_transcripts(
@@ -981,6 +1079,7 @@ def run_onboard(
                 lookback_years=lookback_years,
                 dry_run=dry_run,
                 run_command=runner,
+                allow_roic_fallback=allow_roic_fallback,
             )
             result.steps.extend(pull_steps)
 
@@ -999,33 +1098,38 @@ def run_onboard(
         )
 
         # ---- IDs ----
-        estpermid: int | None = None
-        isin: str | None = None
-        barra_id: str | None = None
+        resolved_est: int | None = None
+        resolved_isin: str | None = None
+        resolved_barra: str | None = None
         if skip_ids or dry_run:
-            estpermid = 0 if dry_run else None
+            resolved_est = 0 if dry_run else None
             result.steps.append({"step": "resolve_ids", "skipped": True})
         else:
             _deadline_guard("resolve_ids")
-            estpermid, isin, barra_id = _resolve_ids(
+            resolved_est, resolved_isin, resolved_barra, id_source = _resolve_ids(
                 repo_root,
                 ticker=ticker_key,
                 company_name=name,
                 prior_quarters=prior_q,
                 output_quarters=output_q,
                 connect=connect,
+                isin=isin,
+                estpermid=estpermid,
+                barra_id=barra_id,
+                refresh_ids=refresh_ids,
             )
-            result.estpermid = estpermid
+            result.estpermid = resolved_est
             result.steps.append(
                 {
                     "step": "resolve_ids",
-                    "estpermid": estpermid,
-                    "isin": isin,
-                    "barra_id": barra_id,
+                    "estpermid": resolved_est,
+                    "isin": resolved_isin,
+                    "barra_id": resolved_barra,
+                    "source": id_source,
                 }
             )
 
-        if not dry_run and not skip_ids and not estpermid:
+        if not dry_run and not skip_ids and not resolved_est:
             raise OnboardError(f"estpermid missing for {ticker_key}")
 
         overlay = write_company_overlay(
@@ -1034,9 +1138,9 @@ def run_onboard(
             company_name=name,
             prior_quarters=prior_q,
             output_quarters=output_q,
-            estpermid=None if dry_run and not estpermid else estpermid,
-            isin=isin,
-            barra_id=barra_id,
+            estpermid=None if dry_run and not resolved_est else resolved_est,
+            isin=resolved_isin,
+            barra_id=resolved_barra,
         )
         if not dry_run:
             register_overlay_profile(repo_root, ticker_key)
@@ -1049,24 +1153,41 @@ def run_onboard(
             if dry_run:
                 result.steps.append({"step": "fiscal_calendar", "skipped": "dry_run"})
             else:
-                cal_type, fye_month, fye_day = _bootstrap_fiscal(repo_root, ticker_key, name)
-                wrote = ensure_fiscal_calendar_entry(
-                    calendars,
-                    ticker_key,
-                    calendar_type=cal_type,
-                    fye_month=fye_month,
-                    fye_day=fye_day,
-                )
-                result.fiscal_calendar_written = wrote
-                result.steps.append(
-                    {
-                        "step": "fiscal_calendar",
-                        "written": wrote,
-                        "calendar_type": cal_type,
-                        "fye_month": fye_month,
-                        "fye_day": fye_day,
-                    }
-                )
+                existing_cals = {}
+                if calendars.is_file():
+                    loaded = yaml.safe_load(calendars.read_text(encoding="utf-8")) or {}
+                    if isinstance(loaded, dict):
+                        existing_cals = loaded
+                if ticker_key in existing_cals:
+                    result.fiscal_calendar_written = False
+                    result.steps.append(
+                        {
+                            "step": "fiscal_calendar",
+                            "written": False,
+                            "skipped": "already_configured",
+                        }
+                    )
+                else:
+                    cal_type, fye_month, fye_day = _bootstrap_fiscal(
+                        repo_root, ticker_key, name
+                    )
+                    wrote = ensure_fiscal_calendar_entry(
+                        calendars,
+                        ticker_key,
+                        calendar_type=cal_type,
+                        fye_month=fye_month,
+                        fye_day=fye_day,
+                    )
+                    result.fiscal_calendar_written = wrote
+                    result.steps.append(
+                        {
+                            "step": "fiscal_calendar",
+                            "written": wrote,
+                            "calendar_type": cal_type,
+                            "fye_month": fye_month,
+                            "fye_day": fye_day,
+                        }
+                    )
 
         # ---- Quant ----
         if not skip_quant:
