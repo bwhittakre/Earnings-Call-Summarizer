@@ -46,7 +46,8 @@ FOCUS_DETAIL_BLOCKS = (
 
 PANEL_TABLE_HEADERS = (
     "<tr><th>Quarter</th><th>Dimension</th><th>Level</th><th>Delta</th><th>Surprise</th>"
-    "<th>Quant z</th><th>Gap</th><th>Flags</th><th></th></tr>"
+    "<th>Novelty</th><th>Quant PIT</th><th>Agree</th><th>Evidence</th>"
+    "<th>Gap</th><th>Flags</th><th></th></tr>"
 )
 
 BASE_CSS = """
@@ -92,6 +93,9 @@ BASE_CSS = """
   tr.company-row { background: #f8f9fb; }
   tr.company-row td.ticker { font-size: 14px; }
   .legend { font-size: 11px; color: #777; margin-top: 8px; }
+  .company-filter-label { font-size: 12px; color: #555; margin: 0 6px 0 12px; }
+  .company-filter { font-size: 13px; padding: 6px 10px; margin: 0 6px 6px 0; border: 1px solid #ccc;
+          border-radius: 6px; background: #f7f7f7; max-width: 180px; }
   .mode-section { display: none; }
   .mode-section.active { display: block; }
 """
@@ -293,7 +297,7 @@ def render_dimension_row(
       <td class="flags">{''.join(flags)}</td>
       <td class="expand"><button type="button" class="toggle" aria-expanded="false" data-target="{esc(row_id)}">+</button></td>
     </tr>
-    <tr class="detail-row" id="{esc(row_id)}" hidden><td colspan="{11 if show_quarter else 10}">{meta_html}{details_html}</td></tr>
+    <tr class="detail-row" id="{esc(row_id)}" hidden><td colspan="{12 if show_quarter else 11}">{meta_html}{details_html}</td></tr>
     """
 
 
@@ -443,7 +447,7 @@ def build_single_ticker_html(panel: pd.DataFrame, summary: dict, lookups: Eviden
   <div class="stats">Coverage: {cov.get('has_level', 0)} level &middot; {cov.get('has_delta', 0)} delta &middot;
     {cov.get('has_surprise', 0)} surprise &middot; {cov.get('is_divergence', 0)} diverges &middot; {summary.get('row_count', 0)} rows</div>
   <div class="controls">{''.join(buttons)}
-    <div class="legend">Click + to expand rationales. Select a quarter to also show claim bullets and transcript quotes. Gap = narrative surprise − quant z (quant clipped to ±2); not narrative level − quant.</div>
+    <div class="legend">Click + to expand rationales. Select a quarter to also show claim bullets and transcript quotes. Gap = surprise magnitude minus quant z.</div>
   </div>
   <table id="main-panel">
     <thead>{PANEL_TABLE_HEADERS}</thead>
@@ -520,7 +524,14 @@ def build_consolidated_html(
             f'<button class="fbtn qbtn{sel}" data-period-bucket="{esc(bucket)}" '
             f'title="{esc(label)}">{esc(bucket)}</button>'
         )
-    quarter_buttons.append('<button class="fbtn qbtn" data-period-bucket="ALL">All buckets</button>')
+    quarter_buttons.append(
+        f'<button class="fbtn qbtn{" active" if default_bucket == "ALL" else ""}" '
+        f'data-period-bucket="ALL">All buckets</button>'
+    )
+
+    company_options = ['<option value="ALL">All companies</option>']
+    for ticker in sorted(tickers):
+        company_options.append(f'<option value="{esc(ticker)}">{esc(ticker)}</option>')
 
     compare_rows: list[str] = []
     browse_rows: list[str] = []
@@ -561,7 +572,9 @@ def build_consolidated_html(
                 table_class="inner-panel",
                 dimension_order=dimension_order,
             )
-            hidden = "" if bucket == default_bucket else ' style="display:none"'
+            hidden = ""
+            if default_bucket != "ALL" and bucket != default_bucket:
+                hidden = ' style="display:none"'
             age = meta_row.get("feature_age_days")
             age_txt = f"{int(age)}d" if age is not None and pd.notna(age) else "&mdash;"
             any_div = bool(
@@ -638,8 +651,10 @@ def build_consolidated_html(
     <button class="mbtn active" data-mode="compare">Compare by period-end quarter</button>
     <button class="mbtn" data-mode="browse">Browse by company</button>
     <span id="quarter-controls">{''.join(quarter_buttons)}</span>
+    <label class="company-filter-label" for="company-filter">Company</label>
+    <select id="company-filter" class="company-filter" title="Filter rows by ticker">{''.join(company_options)}</select>
     <button class="fbtn" data-filter="div">Diverges only</button>
-    <div class="legend">Compare aligns companies by <strong>calendar quarter of fiscal period-end</strong>, not fiscal quarter label. Click + next to a company to expand its feature panel. Gap = narrative surprise − quant z (quant clipped to ±2); not narrative level − quant.</div>
+    <div class="legend">Compare aligns companies by <strong>calendar quarter of fiscal period-end</strong>, not fiscal quarter label. Click + next to a company to expand its feature panel. Gap = surprise magnitude minus quant z.</div>
   </div>
 
   <div id="mode-compare" class="mode-section active">
@@ -668,6 +683,31 @@ def build_consolidated_html(
   var mode = 'compare';
   var selectedBucket = {json.dumps(default_bucket)};
   var filterDivOnly = false;
+  var selectedCompany = 'ALL';
+  var urlTickerSet = null;
+
+  function initUrlTickers() {{
+    try {{
+      var params = new URLSearchParams(window.location.search);
+      var raw = params.get('tickers');
+      if (!raw) return;
+      var list = raw.split(',').map(function (s) {{ return s.trim().toUpperCase(); }}).filter(Boolean);
+      if (!list.length) return;
+      urlTickerSet = {{}};
+      list.forEach(function (t) {{ urlTickerSet[t] = true; }});
+      var sel = document.getElementById('company-filter');
+      if (sel && list.length === 1) {{
+        sel.value = list[0];
+        selectedCompany = list[0];
+      }}
+    }} catch (e) {{}}
+  }}
+
+  function companyMatches(ticker) {{
+    if (!ticker) return false;
+    if (urlTickerSet) return !!urlTickerSet[ticker];
+    return selectedCompany === 'ALL' || selectedCompany === ticker;
+  }}
 
   function bindToggles(scope) {{
     (scope || document).querySelectorAll('.toggle').forEach(function (btn) {{
@@ -688,9 +728,11 @@ def build_consolidated_html(
   function applyCompareQuarter() {{
     document.querySelectorAll('.cmp-row').forEach(function (tr) {{
       var q = tr.getAttribute('data-period-bucket');
+      var ticker = tr.getAttribute('data-ticker');
       var showQ = (selectedBucket === 'ALL') || (q === selectedBucket);
       var showDiv = !filterDivOnly || tr.getAttribute('data-div') === '1';
-      tr.style.display = (showQ && showDiv) ? '' : 'none';
+      var showTicker = companyMatches(ticker);
+      tr.style.display = (showQ && showDiv && showTicker) ? '' : 'none';
       var next = tr.nextElementSibling;
       if (next && next.classList.contains('detail-row') && (!showQ || !showDiv)) {{
         next.hidden = true;
@@ -709,7 +751,8 @@ def build_consolidated_html(
 
   function applyBrowseFilter() {{
     document.querySelectorAll('.br-row').forEach(function (tr) {{
-      var show = !filterDivOnly || tr.getAttribute('data-div') === '1';
+      var ticker = tr.getAttribute('data-ticker');
+      var show = (!filterDivOnly || tr.getAttribute('data-div') === '1') && companyMatches(ticker);
       tr.style.display = show ? '' : 'none';
       var next = tr.nextElementSibling;
       if (next && next.classList.contains('detail-row') && !show) {{
@@ -748,8 +791,46 @@ def build_consolidated_html(
     }});
   }});
 
+  var companyFilter = document.getElementById('company-filter');
+  if (companyFilter) {{
+    companyFilter.addEventListener('change', function () {{
+      selectedCompany = companyFilter.value || 'ALL';
+      urlTickerSet = null;
+      if (mode === 'compare') applyCompareQuarter();
+      else applyBrowseFilter();
+    }});
+  }}
+
+  initUrlTickers();
   bindToggles(document);
   applyCompareQuarter();
+
+  // region agent log
+  (function () {{
+    var sel = document.getElementById('company-filter');
+    var opts = sel ? Array.prototype.map.call(sel.options, function (o) {{ return o.value; }}) : [];
+    fetch('http://127.0.0.1:7928/ingest/adf425df-9c20-432c-aa24-bfb984287cd1', {{
+      method: 'POST',
+      headers: {{ 'Content-Type': 'application/json', 'X-Debug-Session-Id': '059d80' }},
+      body: JSON.stringify({{
+        sessionId: '059d80',
+        runId: 'pre-fix',
+        hypothesisId: 'H5-H6',
+        location: 'panel_html.js:init',
+        message: 'company-filter options at load',
+        data: {{
+          optionCount: opts.length,
+          hasCSCO: opts.indexOf('CSCO') >= 0,
+          cscoIndex: opts.indexOf('CSCO'),
+          options: opts,
+          selectedBucket: selectedBucket,
+          search: window.location.search
+        }},
+        timestamp: Date.now()
+      }})
+    }}).catch(function () {{}});
+  }})();
+  // endregion
 }})();
 </script>
 </body>

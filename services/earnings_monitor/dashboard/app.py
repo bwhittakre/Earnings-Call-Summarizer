@@ -17,9 +17,12 @@ from services.earnings_monitor.dashboard.data import (
 )
 from services.earnings_monitor.dashboard.report_static import ensure_reports_static_link
 from services.earnings_monitor.dashboard.research_data import (
+    artifact_universe_status,
+    format_universe_stale_message,
     html_report_meta,
     load_consolidated_panel,
     load_rank_ic_bundle,
+    load_research_book_dirty,
     resolve_consolidated_html,
     resolve_rank_ic_html,
 )
@@ -117,6 +120,26 @@ def render_app(
         )
     else:
         st.sidebar.caption("Consolidated: not loaded")
+
+    universe_status = artifact_universe_status(
+        data.tickers,
+        rank_ic.meta if rank_ic.available else None,
+        consolidated.meta if consolidated.available else None,
+    )
+    stale_msg = format_universe_stale_message(universe_status)
+    if stale_msg:
+        st.sidebar.warning(stale_msg)
+
+    dirty = load_research_book_dirty()
+    if dirty:
+        triggers = dirty.get("triggers") or []
+        trigger_txt = ", ".join(str(t) for t in triggers[-3:]) if triggers else "—"
+        st.sidebar.warning(
+            "Research book regen pending "
+            f"(reason={dirty.get('reason') or '—'}; recent={trigger_txt}). "
+            "Wait for the research-regen loop or run "
+            "`python -m services.earnings_monitor research-regen --force`."
+        )
 
     view_name = st.sidebar.radio("View", list(VIEWS))
     VIEWS[view_name](st, data, sector_tickers=sector_tickers)

@@ -22,3 +22,11 @@ CTSH:
 SPCX:
   type: calendar_fiscal
 
+CSCO:
+  type: offset_fiscal
+  fye_month: 7
+  fye_day: 31
+
+STRW:
+  type: calendar_fiscal
+

@@ -1,7 +1,10 @@
 # Quartr historical transcript importer
 
-Scripted client for long-lookback (typically 10y) earnings-call history when
-ROIC’s shorter window is not enough.
+Optional REST helper for unattended pulls when a Quartr API key exists.
+**Live Roz onboard does not use this path.** History is seeded via the Cursor
+Quartr MCP into `transcripts_raw/{TICKER}_FY….txt` (same `LocalFileProvider`
+layout), then Onboard runs with `--skip-pull`. ROIC is only a disk-empty
+fallback.
 
 ## Setup
 
@@ -29,9 +32,9 @@ python "Structured Narrative/quartr_history_import.py" \
   --ticker TXN --start 2016-01-01 --end 2026-08-01 --layout nested --dry-run --json
 ```
 
-The Onboard orchestrator (`python -m services.earnings_monitor onboard`) calls
-this importer for the 10y path and ROIC `fetch_transcripts` +
-`export_inbox_to_transcripts_raw` for the 3y path.
+The Onboard orchestrator expects MCP-seeded `transcripts_raw` files (or
+`--skip-pull` after an agent wrote them). It does not invoke this REST
+importer. Keep the script for optional API-key environments only.
 
 ## API surface used
 

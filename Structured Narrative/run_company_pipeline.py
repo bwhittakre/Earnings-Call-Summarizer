@@ -220,6 +220,20 @@ def main() -> int:
     panel_args = [PY, f"{sn}/build_feature_panel.py", "--ticker", ticker, *scope_args]
     if (args.new_quarter or args.quarters or args.from_registry) and not args.scope:
         panel_args.extend(["--from-registry"])
+    if args.no_prior and args.new_quarter:
+        # First-Print soft-skips delta/surprise/novelty, so allow a sparse panel
+        # without requiring dimension_delta.csv.
+        panel_args.extend(
+            ["--include-quarters", normalize_fiscal_period(args.new_quarter)]
+        )
+        # post_call often runs with --skip-quant after transcript stagnation;
+        # if the quant spine is not on disk yet, finish with an LLM-only panel
+        # instead of failing the whole First-Print run.
+        if args.skip_quant or (
+            resolve_read_parquet_or_csv(ticker, "dimension_scores", layer="parquet")
+            is None
+        ):
+            panel_args.append("--llm-only")
 
     ensure_company_tree(ticker)
     if args.scope == "five_year":
@@ -307,14 +321,25 @@ def main() -> int:
 
     run_step("Feature panel", panel_args)
 
-    run_step(
-        "Join validation",
-        [PY, f"{sn}/validate_transcript_join.py", "--ticker", ticker, *scope_args],
+    has_quant_spine = (
+        resolve_read_parquet_or_csv(ticker, "dimension_scores", layer="parquet")
+        is not None
     )
-    run_step(
-        "Panel quant validation",
-        [PY, f"{sn}/validate_panel_quant.py", "--ticker", ticker],
-    )
+    if args.no_prior and not has_quant_spine:
+        # First-Print can finish narrative panel before Snowflake quant lands.
+        print(
+            "\nFirst-Print / no quant spine yet: soft-skipping join + panel "
+            "quant validation (re-run after quant extract to harden)."
+        )
+    else:
+        run_step(
+            "Join validation",
+            [PY, f"{sn}/validate_transcript_join.py", "--ticker", ticker, *scope_args],
+        )
+        run_step(
+            "Panel quant validation",
+            [PY, f"{sn}/validate_panel_quant.py", "--ticker", ticker],
+        )
     print(f"\nDone: {ticker} pipeline complete.")
     return 0
 

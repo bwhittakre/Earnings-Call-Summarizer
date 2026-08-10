@@ -346,3 +346,95 @@ def html_report_meta(path: Path | None) -> dict[str, Any]:
         "size_bytes": path.stat().st_size,
         "stem": path.stem,
     }
+
+
+def _ticker_set(values: Any) -> set[str]:
+    if not values:
+        return set()
+    if isinstance(values, str):
+        return {values.strip().upper()} if values.strip() else set()
+    out: set[str] = set()
+    for item in values:
+        text = str(item or "").strip().upper()
+        if text:
+            out.add(text)
+    return out
+
+
+def artifact_universe_status(
+    expected_tickers: Any,
+    rank_meta: dict[str, Any] | None = None,
+    consol_meta: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Compare onboarded/dataset tickers to Rank IC / consolidated artifact universes.
+
+    Returns missing tickers (in expected but not in artifact meta). When an
+    artifact has no ticker metadata yet, that side is treated as unavailable
+    rather than stale (avoids false alarms on empty loads).
+    """
+    expected = sorted(_ticker_set(expected_tickers))
+    expected_set = set(expected)
+    rank_tickers = _ticker_set((rank_meta or {}).get("tickers"))
+    consol_tickers = _ticker_set((consol_meta or {}).get("tickers"))
+    rank_available = bool(rank_tickers)
+    consol_available = bool(consol_tickers)
+    missing_from_rank = (
+        sorted(expected_set - rank_tickers) if rank_available else []
+    )
+    missing_from_consol = (
+        sorted(expected_set - consol_tickers) if consol_available else []
+    )
+    stale = bool(missing_from_rank or missing_from_consol)
+    return {
+        "expected": expected,
+        "rank_tickers": sorted(rank_tickers),
+        "consol_tickers": sorted(consol_tickers),
+        "rank_available": rank_available,
+        "consol_available": consol_available,
+        "missing_from_rank": missing_from_rank,
+        "missing_from_consol": missing_from_consol,
+        "stale": stale,
+        "ok": not stale,
+    }
+
+
+def load_research_book_dirty(
+    database_path: str | os.PathLike[str] | None = None,
+) -> dict[str, Any] | None:
+    """Read SQLite ``research_book_dirty`` meta when the operational DB exists."""
+    from services.earnings_monitor.dashboard.data import default_operational_db_path
+    from services.earnings_monitor.state import OperationalState
+
+    path = Path(database_path or default_operational_db_path())
+    if not path.is_file():
+        return None
+    try:
+        state = OperationalState(path)
+        return state.research_book_dirty()
+    except Exception:  # noqa: BLE001 — dashboard must stay up if DB is locked/corrupt
+        return None
+
+
+def format_universe_stale_message(status: dict[str, Any]) -> str | None:
+    """Human-readable warning when research HTML/CSV lag the dataset universe."""
+    if not status.get("stale"):
+        return None
+    parts: list[str] = []
+    missing_rank = status.get("missing_from_rank") or []
+    missing_consol = status.get("missing_from_consol") or []
+    if missing_rank:
+        parts.append(
+            "Rank IC missing: " + ", ".join(missing_rank)
+        )
+    if missing_consol:
+        parts.append(
+            "Consolidated panel missing: " + ", ".join(missing_consol)
+        )
+    if not parts:
+        return None
+    return (
+        "Research artifacts are stale vs the loaded dataset. "
+        + "; ".join(parts)
+        + ". Run: python -m services.earnings_monitor research-regen --force "
+        "(or wait for the research-regen loop after onboard)."
+    )

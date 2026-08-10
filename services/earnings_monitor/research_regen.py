@@ -24,6 +24,39 @@ from .state import OperationalState
 LOG = logging.getLogger(__name__)
 
 
+# #region agent log
+def _agent_debug_log(
+    location: str,
+    message: str,
+    data: dict,
+    *,
+    hypothesis_id: str,
+    run_id: str = "pre-fix",
+) -> None:
+    import json
+
+    payload = {
+        "sessionId": "059d80",
+        "timestamp": int(time.time() * 1000),
+        "location": location,
+        "message": message,
+        "data": data,
+        "hypothesisId": hypothesis_id,
+        "runId": run_id,
+    }
+    for root in (Path.cwd(), Path(__file__).resolve().parents[2]):
+        log_path = root / "debug-059d80.log"
+        try:
+            with log_path.open("a", encoding="utf-8") as handle:
+                handle.write(json.dumps(payload) + "\n")
+            break
+        except OSError:
+            continue
+
+
+# #endregion
+
+
 @dataclass(frozen=True)
 class RegenCommandResult:
     name: str
@@ -59,10 +92,18 @@ def build_rank_ic_command(
     *,
     python: str | None = None,
     tickers: Sequence[str] | None = None,
+    fast_regen: bool = True,
 ) -> list[str]:
+    """Build evaluate_narrative_signals argv for dashboard research-regen.
+
+    ``fast_regen`` (default True) skips leave-one-ticker jackknife and lowers
+    bootstrap counts. Profiling showed jackknife dominates at book size ≥ ~10:
+    ~22 held-out ``evaluate_signals`` passes per horizon × 5 horizons ≈ 93%% of
+    Rank IC wall time on a 22-name book.
+    """
     script = _structured_narrative_dir(config.repo_root) / "evaluate_narrative_signals.py"
     book = tuple(tickers) if tickers is not None else config.tickers
-    return [
+    cmd = [
         python or sys.executable,
         str(script),
         "--tickers",
@@ -70,6 +111,17 @@ def build_rank_ic_command(
         "--min-calendar-quarter",
         config.research_min_calendar_quarter,
     ]
+    if fast_regen:
+        cmd.extend(
+            [
+                "--no-jackknife",
+                "--agreement-bootstrap",
+                "500",
+                "--primary-hypothesis-bootstrap",
+                "500",
+            ]
+        )
+    return cmd
 
 
 def build_consolidated_command(
@@ -93,12 +145,39 @@ def build_consolidated_command(
 def _run_command(name: str, command: Sequence[str], *, cwd: Path) -> RegenCommandResult:
     started = time.perf_counter()
     LOG.info("Running %s: %s", name, " ".join(command))
+    # #region agent log
+    _agent_debug_log(
+        "research_regen.py:_run_command:start",
+        "regen subprocess starting",
+        {
+            "name": name,
+            "cwd": str(cwd),
+            "ticker_arg_count": sum(
+                1 for i, part in enumerate(command) if i and command[i - 1] == "--tickers"
+            ),
+            "argv_len": len(command),
+        },
+        hypothesis_id="A",
+    )
+    # #endregion
     completed = subprocess.run(list(command), cwd=str(cwd), check=False)
     duration = time.perf_counter() - started
     if completed.returncode != 0:
         LOG.error("%s failed with exit code %s", name, completed.returncode)
     else:
         LOG.info("%s finished in %.1fs", name, duration)
+    # #region agent log
+    _agent_debug_log(
+        "research_regen.py:_run_command:done",
+        "regen subprocess finished",
+        {
+            "name": name,
+            "duration_seconds": round(duration, 3),
+            "returncode": int(completed.returncode),
+        },
+        hypothesis_id="A" if name == "evaluate_narrative_signals" else "B",
+    )
+    # #endregion
     return RegenCommandResult(
         name=name,
         command=tuple(command),
@@ -113,17 +192,36 @@ def regenerate_research_book(
     triggered_by: str = "manual",
     python: str | None = None,
     tickers: Sequence[str] | None = None,
+    fast_regen: bool = True,
 ) -> RegenRunResult:
     """Run Rank IC then consolidated panel for the configured book."""
     sn_dir = _structured_narrative_dir(config.repo_root)
     if not sn_dir.is_dir():
         raise FileNotFoundError(f"Structured Narrative directory missing: {sn_dir}")
     book = tuple(tickers) if tickers is not None else config.tickers
+    # #region agent log
+    _agent_debug_log(
+        "research_regen.py:regenerate_research_book",
+        "research book regen scope",
+        {
+            "triggered_by": triggered_by,
+            "book_size": len(book),
+            "tickers": list(book),
+            "min_calendar_quarter": config.research_min_calendar_quarter,
+            "sector": config.research_sector,
+            "fast_regen": fast_regen,
+        },
+        hypothesis_id="A",
+        run_id="post-fix" if fast_regen else "pre-fix",
+    )
+    # #endregion
     started = datetime.now(timezone.utc)
     commands: list[RegenCommandResult] = [
         _run_command(
             "evaluate_narrative_signals",
-            build_rank_ic_command(config, python=python, tickers=book),
+            build_rank_ic_command(
+                config, python=python, tickers=book, fast_regen=fast_regen
+            ),
             cwd=sn_dir,
         )
     ]
@@ -167,6 +265,7 @@ def run_research_regen_once(
     honor_debounce: bool = True,
     python: str | None = None,
     runner=None,
+    fast_regen: bool = True,
 ) -> RegenRunResult:
     """Clear dirty (if any) and regenerate, or skip when clean / still debouncing."""
     dirty = state.research_book_dirty()
@@ -211,6 +310,7 @@ def run_research_regen_once(
                 triggered_by=trigger,
                 python=python,
                 tickers=book_tickers,
+                fast_regen=fast_regen,
             )
         else:
             # Tests pass a stub that may not accept tickers=.

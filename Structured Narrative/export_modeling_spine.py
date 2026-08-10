@@ -115,7 +115,13 @@ def main() -> int:
 
     frames: list[pd.DataFrame] = []
     for ticker in tickers:
-        panel = load_panel(ticker)
+        try:
+            panel = load_panel(ticker)
+        except FileNotFoundError as exc:
+            # Stub / placeholder tickers in the Roz book (e.g. ZZZZ) often lack
+            # panels; skip them so a live post_call export is not blocked.
+            print(f"Skipping {ticker}: {exc}", file=sys.stderr)
+            continue
         panel = filter_registry_complete(panel, ticker)
         panel = panel[panel["fiscal_period"].isin(quarter_set)].copy()
         frames.append(panel)

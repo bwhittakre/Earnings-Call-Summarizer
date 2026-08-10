@@ -28,6 +28,7 @@ import argparse
 import json
 import math
 import sys
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -38,6 +39,37 @@ import pandas as pd
 HERE = Path(__file__).resolve().parent
 if str(HERE) not in sys.path:
     sys.path.insert(0, str(HERE))
+
+
+# #region agent log
+def _agent_debug_log(
+    location: str,
+    message: str,
+    data: dict,
+    *,
+    hypothesis_id: str,
+    run_id: str = "pre-fix",
+) -> None:
+    payload = {
+        "sessionId": "059d80",
+        "timestamp": int(time.time() * 1000),
+        "location": location,
+        "message": message,
+        "data": data,
+        "hypothesisId": hypothesis_id,
+        "runId": run_id,
+    }
+    for root in (Path.cwd(), HERE.parent):
+        log_path = root / "debug-059d80.log"
+        try:
+            with log_path.open("a", encoding="utf-8") as handle:
+                handle.write(json.dumps(payload) + "\n")
+            break
+        except OSError:
+            continue
+
+
+# #endregion
 
 from asof_alpha import (  # noqa: E402
     ASOF_ALPHA_COLUMNS,
@@ -640,6 +672,10 @@ def load_eval_frame(
     quarter_set = set(quarters) if quarters else None
     windows = [w for w in HORIZON_WINDOWS if w[0] in horizons] if horizons else list(HORIZON_WINDOWS)
     frames: list[pd.DataFrame] = []
+    # #region agent log
+    _load_started = time.perf_counter()
+    _fetch_misses = 0
+    # #endregion
     for ticker in tickers:
         panel = load_panel(ticker)
         panel = filter_registry_complete(panel, ticker)
@@ -675,6 +711,20 @@ def load_eval_frame(
         raise FileNotFoundError("No feature panels loaded.")
     stacked = pd.concat(frames, ignore_index=True)
     stacked = stacked.sort_values(["ticker", "fiscal_period", "dimension"]).reset_index(drop=True)
+    # #region agent log
+    _agent_debug_log(
+        "evaluate_narrative_signals.py:load_eval_frame:panels",
+        "panels loaded",
+        {
+            "ticker_count": len(tickers),
+            "frames": len(frames),
+            "stacked_rows": int(len(stacked)),
+            "load_seconds": round(time.perf_counter() - _load_started, 3),
+        },
+        hypothesis_id="A",
+    )
+    _asof_started = time.perf_counter()
+    # #endregion
 
     if "earnings_date_calendar_quarter" not in stacked.columns:
         stacked = enrich_panel_period_columns(stacked)
@@ -691,6 +741,19 @@ def load_eval_frame(
         stacked = apply_event_multi_horizon_labels(
             stacked, windows=windows, fetch_if_missing=fetch_returns_if_missing
         )
+    # #region agent log
+    _agent_debug_log(
+        "evaluate_narrative_signals.py:load_eval_frame:labels",
+        "cross-ticker label rebuild finished",
+        {
+            "recompute_cross_ticker_asof": recompute_cross_ticker_asof,
+            "fetch_returns_if_missing": fetch_returns_if_missing,
+            "asof_seconds": round(time.perf_counter() - _asof_started, 3),
+            "horizon_count": len(windows),
+        },
+        hypothesis_id="D",
+    )
+    # #endregion
 
     if call_date_only:
         call_col = (
@@ -1206,6 +1269,9 @@ def main() -> int:
                     )
 
     try:
+        # #region agent log
+        _eval_started = time.perf_counter()
+        # #endregion
         df = load_eval_frame(
             tickers,
             call_date_only=not args.include_delayed,
@@ -1215,6 +1281,19 @@ def main() -> int:
             recompute_cross_ticker_asof=not args.no_recompute_asof,
             horizons=horizon_keys,
         )
+        # #region agent log
+        _agent_debug_log(
+            "evaluate_narrative_signals.py:main:load_eval_frame",
+            "eval frame ready",
+            {
+                "ticker_count": len(tickers),
+                "rows": int(len(df)),
+                "load_eval_seconds": round(time.perf_counter() - _eval_started, 3),
+            },
+            hypothesis_id="A",
+        )
+        _signal_started = time.perf_counter()
+        # #endregion
     except FileNotFoundError as exc:
         print(f"Error: {exc}", file=sys.stderr)
         return 1
@@ -1326,6 +1405,18 @@ def main() -> int:
     if not label_blocks:
         print("Error: no labels evaluated.", file=sys.stderr)
         return 1
+
+    # #region agent log
+    _agent_debug_log(
+        "evaluate_narrative_signals.py:main:signal_eval",
+        "signal evaluation finished",
+        {
+            "label_spec_count": len(label_specs),
+            "signal_eval_seconds": round(time.perf_counter() - _signal_started, 3),
+        },
+        hypothesis_id="A",
+    )
+    # #endregion
 
     board = leaderboard_rows(label_blocks)
     overlap = label_overlap_stats(df)

@@ -257,6 +257,21 @@ class PeriodEndBucketTests(unittest.TestCase):
         self.assertIn('data-period-bucket="2024-Q3"', html)
         self.assertIn("calendar quarter of fiscal period-end", html)
         self.assertIn("Period ending", html)
+        self.assertIn('id="company-filter"', html)
+        self.assertIn('<option value="AMZN">AMZN</option>', html)
+
+    def test_default_period_bucket_all_when_partial_cohort(self):
+        from build_consolidated_panel_report import default_period_bucket
+
+        stacked = pd.concat(
+            [
+                _sample_panel("CSCO", "FY2026-Q3", period_end="2026-04-26"),
+                _sample_panel("NVDA", "FY2026-Q2", period_end="2026-07-31"),
+            ],
+            ignore_index=True,
+        )
+        stacked = enrich_panel_period_columns(stacked)
+        self.assertEqual(default_period_bucket(stacked), "ALL")
 
 
 class ConsolidatedPanelReportTests(unittest.TestCase):
@@ -292,6 +307,7 @@ class ConsolidatedPanelReportTests(unittest.TestCase):
         self.assertIn('data-mode="compare"', html)
         self.assertIn("Call features", html)
         self.assertIn("Investable as-of", html)
+        self.assertIn('id="company-filter"', html)
 
     def test_build_script_runs_if_panels_exist(self):
         """Smoke-test the CLI entry point with a narrow --tickers MSFT run.

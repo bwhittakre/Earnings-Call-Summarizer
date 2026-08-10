@@ -342,10 +342,13 @@ def test_regen_once_force_runs_even_when_clean(tmp_path):
 def test_regen_command_builders_use_book_defaults(tmp_path):
     cfg = _config(tmp_path)
     rank = build_rank_ic_command(cfg, python="python")
+    rank_full = build_rank_ic_command(cfg, python="python", fast_regen=False)
     consol = build_consolidated_command(cfg, python="python")
     assert "--min-calendar-quarter" in rank
     assert "2016-Q2" in rank
     assert "AAPL" in rank and "MSFT" in rank
+    assert "--no-jackknife" in rank
+    assert "--no-jackknife" not in rank_full
     assert "--sector" in consol
     assert "xlk_tech" in consol
     assert "2016-Q2" in consol

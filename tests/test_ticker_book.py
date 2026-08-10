@@ -76,6 +76,21 @@ def test_ensure_ticker_in_book_updates_meta_sector_env(tmp_path: Path, monkeypat
     assert "SPCX" in load_sector_tickers(sector)
 
 
+def test_candidate_env_files_include_repo_env(tmp_path: Path, monkeypatch):
+    from services.earnings_monitor.ticker_book import _candidate_env_files
+
+    root_env = tmp_path / ".env"
+    root_env.write_text("EARNINGS_MONITOR_TICKERS=AAPL\n", encoding="utf-8")
+    pointed = tmp_path / "pointed.env"
+    pointed.write_text("EARNINGS_MONITOR_TICKERS=AAPL\n", encoding="utf-8")
+    monkeypatch.setenv("REPO_ENV_FILE", str(pointed))
+    monkeypatch.delenv("EARNINGS_MONITOR_TICKER_ENV_FILE", raising=False)
+    monkeypatch.delenv("EARNINGS_MONITOR_ENV_FILE", raising=False)
+    candidates = _candidate_env_files(_config(tmp_path))
+    assert pointed in candidates
+    assert root_env in candidates
+
+
 def test_seed_book_if_empty_then_resolve(tmp_path: Path):
     sector = tmp_path / "config" / "sectors" / "xlk_tech.txt"
     sector.parent.mkdir(parents=True)

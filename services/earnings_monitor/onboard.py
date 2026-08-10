@@ -31,6 +31,10 @@ class OnboardBlocked(OnboardError):
     """Onboarding did not finish before report_at; baseline must not proceed."""
 
 
+class ProviderHistoryUnavailable(OnboardError):
+    """Prior Quartr/ROIC event history could not be counted for mode classification."""
+
+
 @dataclass
 class OnboardResult:
     ticker: str
@@ -123,6 +127,93 @@ def discover_on_disk_periods(repo_root: Path, ticker: str) -> list[str]:
     return sorted(periods, key=_period_sort_key)
 
 
+def _ensure_structured_narrative_path(repo_root: Path) -> Path:
+    sn = Path(repo_root) / "Structured Narrative"
+    sn_str = str(sn)
+    if sn_str not in sys.path:
+        sys.path.insert(0, sn_str)
+    return sn
+
+
+def _parse_provider_event_at(row: Mapping[str, Any]) -> datetime | None:
+    raw = row.get("date") or row.get("scheduled_at") or row.get("call_at")
+    if not isinstance(raw, (str, datetime)):
+        return None
+    parsed = raw if isinstance(raw, datetime) else datetime.fromisoformat(
+        str(raw).replace("Z", "+00:00")
+    )
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed.astimezone(timezone.utc)
+
+
+def make_quartr_event_lister(
+    repo_root: Path | None = None,
+    *,
+    client: Any | None = None,
+    api_key: str | None = None,
+) -> Callable[[str, datetime, datetime], int]:
+    """Build a Quartr-backed ``(ticker, since, until) -> count`` event lister.
+
+    Counts events in ``[since, until)`` that normalize to a fiscal period
+    (earnings-like rows). Raises ``ProviderHistoryUnavailable`` when the API
+    key is missing or Quartr cannot resolve/list the company.
+    """
+
+    def _count(ticker: str, since: datetime, until: datetime) -> int:
+        try:
+            if repo_root is not None:
+                _ensure_structured_narrative_path(repo_root)
+            from quartr_history_import import (  # type: ignore
+                QuartrApiClient,
+                normalize_fiscal_period,
+            )
+        except ImportError as exc:  # pragma: no cover - packaging/env issue
+            raise ProviderHistoryUnavailable(
+                "quartr_history_import is unavailable; cannot count prior "
+                f"provider events ({exc})"
+            ) from exc
+
+        try:
+            api = client or QuartrApiClient(api_key=api_key)
+            if not getattr(api, "api_key", None) and client is None:
+                raise ProviderHistoryUnavailable(
+                    "QUARTR_API_KEY is not set; cannot count prior provider "
+                    "events for mode classification. Export QUARTR_API_KEY, "
+                    "pass event_lister=/prior_event_count=, or use "
+                    "arm --first-print for true first prints."
+                )
+            company_id = api.resolve_company_id(ticker)
+            rows = api.iter_events(company_id=company_id, start=since, end=until)
+        except ProviderHistoryUnavailable:
+            raise
+        except Exception as exc:  # noqa: BLE001 — surface provider failures clearly
+            raise ProviderHistoryUnavailable(
+                f"Quartr prior-event lookup failed for {ticker.strip().upper()}: {exc}"
+            ) from exc
+
+        until_utc = until if until.tzinfo else until.replace(tzinfo=timezone.utc)
+        until_utc = until_utc.astimezone(timezone.utc)
+        count = 0
+        for row in rows:
+            if not isinstance(row, Mapping):
+                continue
+            period = normalize_fiscal_period(
+                fiscal_year=row.get("fiscalYear"),
+                fiscal_period=row.get("fiscalPeriod") or row.get("fiscal_period"),
+                title=str(row.get("title") or ""),
+            )
+            if not period:
+                continue
+            event_at = _parse_provider_event_at(row)
+            if event_at is not None and event_at >= until_utc:
+                continue
+            count += 1
+        return count
+
+    return _count
+
+
 def count_prior_provider_events(
     *,
     ticker: str,
@@ -130,9 +221,20 @@ def count_prior_provider_events(
     until: datetime,
     event_lister: Callable[[str, datetime, datetime], int] | None = None,
 ) -> int:
-    """Count prior earnings events from an injectable Quartr/ROIC lister."""
+    """Count prior earnings events from an injectable Quartr/ROIC lister.
+
+    ``event_lister`` is required — callers must pass a lister (see
+    ``make_quartr_event_lister``) or supply ``prior_event_count`` to
+    ``run_onboard`` instead. Silent ``0`` when unwired is intentionally not
+    supported (it mis-classifies names with real provider history as First-Print).
+    """
     if event_lister is None:
-        return 0
+        raise ProviderHistoryUnavailable(
+            "event_lister is required to count prior provider events. "
+            "Wire make_quartr_event_lister(), pass event_lister=, or set "
+            "prior_event_count= explicitly. For true first prints use "
+            "arm --first-print."
+        )
     return max(0, int(event_lister(ticker, since, until)))
 
 
@@ -368,6 +470,280 @@ def _bootstrap_fiscal(
     return profile.calendar_type, profile.fye_month, profile.fye_day
 
 
+def _monitor_paths(repo_root: Path) -> tuple[Path, Path]:
+    """Resolve operational DB and history dataset paths (env-aware)."""
+    db = Path(
+        os.environ.get(
+            "EARNINGS_MONITOR_DB",
+            str(
+                Path(repo_root)
+                / "services"
+                / "earnings_monitor"
+                / "state"
+                / "monitor.sqlite3"
+            ),
+        )
+    )
+    dataset = Path(
+        os.environ.get(
+            "EARNINGS_MONITOR_DATASET",
+            str(
+                Path(repo_root)
+                / "data"
+                / "earnings_monitor"
+                / "company_quarters.parquet"
+            ),
+        )
+    )
+    return db, dataset
+
+
+def sync_book_after_onboard(
+    *,
+    repo_root: Path,
+    ticker: str,
+    fiscal_period: str,
+    configured_tickers: Sequence[str] = (),
+    dry_run: bool = False,
+    import_history_fn: Callable[..., Any] | None = None,
+) -> list[dict[str, Any]]:
+    """Wire sector/env/SQLite book, refresh history parquet, mark research dirty.
+
+    History import writes the full book (not just *ticker*): ``import_history``
+    overwrites the destination dataset, so a single-ticker import would wipe peers.
+    Failures are recorded as steps and never raised to the caller.
+    """
+    from .config import MonitorConfig
+    from .history_import import import_history
+    from .state import OperationalState
+    from .ticker_book import ensure_ticker_in_book
+
+    ticker_key = ticker.strip().upper()
+    period = fiscal_period.strip().upper()
+    steps: list[dict[str, Any]] = []
+    seed = tuple(
+        dict.fromkeys(
+            str(t).strip().upper()
+            for t in (configured_tickers or ())
+            if str(t).strip()
+        )
+    )
+    db_path, dataset_path = _monitor_paths(repo_root)
+    book_config = MonitorConfig(
+        repo_root=Path(repo_root),
+        database_path=db_path,
+        inbox_path=Path(repo_root)
+        / "earnings-scraper-main"
+        / "earnings-scraper-main"
+        / "inbox",
+        tickers=seed or (ticker_key,),
+        research_sector="xlk_tech",
+    )
+    book_tickers: tuple[str, ...] = seed or (ticker_key,)
+
+    if dry_run:
+        steps.append(
+            {
+                "step": "book_sync",
+                "dry_run": True,
+                "ticker": ticker_key,
+                "dataset": str(dataset_path),
+            }
+        )
+        return steps
+
+    try:
+        state = OperationalState(db_path)
+        state.initialize()
+        integration = ensure_ticker_in_book(
+            ticker=ticker_key,
+            config=book_config,
+            state=state,
+            seed_tickers=seed,
+        )
+        book_tickers = integration.tickers
+        steps.append(
+            {
+                "step": "book_sync",
+                "added": integration.added,
+                "tickers": list(integration.tickers),
+                "sector_updated": integration.sector_updated,
+                "env_updated": integration.env_updated,
+                "meta_updated": integration.meta_updated,
+            }
+        )
+    except Exception as exc:  # noqa: BLE001
+        steps.append({"step": "book_sync", "error": str(exc), "ticker": ticker_key})
+        LOG.warning("Post-onboard book sync failed for %s: %s", ticker_key, exc)
+        state = None
+
+    importer = import_history_fn or import_history
+    try:
+        hist = importer(
+            repo_root,
+            dataset_path,
+            tickers=book_tickers,
+        )
+        steps.append(
+            {
+                "step": "history_import",
+                "records": getattr(hist, "records", None),
+                "tickers": list(getattr(hist, "tickers", book_tickers)),
+                "missing_tickers": list(getattr(hist, "missing_tickers", ()) or ()),
+                "destination": str(dataset_path),
+            }
+        )
+    except Exception as exc:  # noqa: BLE001
+        steps.append(
+            {
+                "step": "history_import",
+                "error": str(exc),
+                "tickers": list(book_tickers),
+                "destination": str(dataset_path),
+            }
+        )
+        LOG.warning("Post-onboard history_import failed for %s: %s", ticker_key, exc)
+
+    if state is not None:
+        try:
+            dirty = state.mark_research_book_dirty(
+                reason="onboard",
+                trigger=f"{ticker_key}:{period}",
+            )
+            steps.append(
+                {
+                    "step": "research_dirty",
+                    "reason": dirty.get("reason"),
+                    "triggers": list(dirty.get("triggers") or []),
+                }
+            )
+        except Exception as exc:  # noqa: BLE001
+            steps.append({"step": "research_dirty", "error": str(exc)})
+            LOG.warning(
+                "Post-onboard research dirty mark failed for %s: %s", ticker_key, exc
+            )
+    else:
+        steps.append(
+            {
+                "step": "research_dirty",
+                "error": "skipped: operational state unavailable",
+            }
+        )
+
+    return steps
+
+
+def _pull_history_transcripts(
+    *,
+    repo_root: Path,
+    ticker: str,
+    report_at: datetime,
+    lookback_years: int,
+    dry_run: bool,
+    run_command: Callable[..., dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Accept lookback transcripts already in ``transcripts_raw`` (Quartr MCP).
+
+    Roz does **not** call the Quartr REST API here. History is seeded the same
+    way as live CSCO onboard: Cursor Quartr MCP → flat
+    ``transcripts_raw/{TICKER}_FY….txt`` files that ``LocalFileProvider`` reads.
+    Use ``--skip-pull`` when the agent has already written those files.
+
+    If the disk is empty, fall back to ROIC ``fetch_transcripts`` + inbox export
+    only. Never invoke ``quartr_history_import.py`` (REST) from this path.
+    """
+    del report_at  # window sizing is an agent/MCP concern; disk is source of truth
+    ticker_key = ticker.strip().upper()
+    sn = repo_root / "Structured Narrative"
+    py = sys.executable
+    steps: list[dict[str, Any]] = []
+    on_disk = discover_on_disk_periods(repo_root, ticker_key)
+    steps.append(
+        {
+            "step": "quartr_mcp_seed",
+            "lookback_years": lookback_years,
+            "on_disk": on_disk,
+            "note": (
+                "Expect Quartr MCP → transcripts_raw/{TICKER}_FY….txt "
+                "(LocalFileProvider). REST quartr_history_import is not used."
+            ),
+        }
+    )
+    if dry_run:
+        steps.append(
+            {
+                "step": "roic_fallback",
+                "skipped": "dry_run",
+                "note": "ROIC runs only when transcripts_raw has zero periods for ticker",
+            }
+        )
+        return steps
+
+    if on_disk:
+        return steps
+
+    fetch_script = (
+        repo_root
+        / "earnings-scraper-main"
+        / "earnings-scraper-main"
+        / "scripts"
+        / "fetch_transcripts.py"
+    )
+    if fetch_script.is_file():
+        try:
+            step = run_command(
+                [py, str(fetch_script), ticker_key, "--all", "--no-fallback"],
+                cwd=fetch_script.parent.parent,
+                dry_run=False,
+            )
+            step["step"] = "roic_fetch_transcripts"
+            step["fallback_for"] = "quartr_mcp_seed"
+            steps.append(step)
+        except OnboardError as exc:
+            steps.append(
+                {
+                    "step": "roic_fetch_transcripts",
+                    "fallback_for": "quartr_mcp_seed",
+                    "error": str(exc),
+                }
+            )
+            LOG.warning("ROIC fallback fetch failed for %s: %s", ticker_key, exc)
+
+    try:
+        step = run_command(
+            [
+                py,
+                str(sn / "export_inbox_to_transcripts_raw.py"),
+                "--ticker",
+                ticker_key,
+            ],
+            cwd=repo_root,
+            dry_run=False,
+        )
+        step["step"] = "export_inbox_to_transcripts_raw"
+        step["fallback_for"] = "quartr_mcp_seed"
+        steps.append(step)
+    except OnboardError as exc:
+        steps.append(
+            {
+                "step": "export_inbox_to_transcripts_raw",
+                "fallback_for": "quartr_mcp_seed",
+                "error": str(exc),
+            }
+        )
+        LOG.warning("ROIC inbox export failed for %s: %s", ticker_key, exc)
+
+    on_disk = discover_on_disk_periods(repo_root, ticker_key)
+    if not on_disk:
+        raise OnboardError(
+            f"No transcripts on disk for {ticker_key}. Seed via Quartr MCP into "
+            f"Structured Narrative/transcripts_raw/{ticker_key}_FY….txt "
+            f"(same LocalFileProvider layout Roz uses), then re-run with "
+            f"--skip-pull, or provide ROIC inbox fallback."
+        )
+    return steps
+
+
 def run_onboard(
     *,
     repo_root: Path,
@@ -389,6 +765,7 @@ def run_onboard(
     connect: Callable[[], Any] | None = None,
     configured_tickers: Sequence[str] = (),
     run_command: Callable[..., dict[str, Any]] | None = None,
+    import_history_fn: Callable[..., Any] | None = None,
 ) -> OnboardResult:
     """Execute the Onboard flow. Never silently falls through to baseline on failure."""
     ticker_key = ticker.strip().upper()
@@ -403,20 +780,70 @@ def run_onboard(
 
     lookback_years = choose_lookback_years(report_at, now=current)
     since = current - timedelta(days=lookback_years * 365 + 2)
+    history_steps: list[dict[str, Any]] = []
     if prior_event_count is None:
-        prior_event_count = count_prior_provider_events(
-            ticker=ticker_key,
-            since=since,
-            until=report_at,
-            event_lister=event_lister,
-        )
+        lister = event_lister
+        if lister is None:
+            lister = make_quartr_event_lister(repo_root)
+        try:
+            prior_event_count = count_prior_provider_events(
+                ticker=ticker_key,
+                since=since,
+                until=report_at,
+                event_lister=lister,
+            )
+            history_steps.append(
+                {
+                    "step": "count_prior_events",
+                    "prior_event_count": prior_event_count,
+                    "since": since.isoformat(),
+                    "until": report_at.isoformat(),
+                }
+            )
+        except ProviderHistoryUnavailable as exc:
+            if force_mode:
+                LOG.warning(
+                    "Prior-event count unavailable for %s under force_mode=%s: %s",
+                    ticker_key,
+                    force_mode,
+                    exc,
+                )
+                prior_event_count = 0
+                history_steps.append(
+                    {
+                        "step": "count_prior_events",
+                        "prior_event_count": 0,
+                        "warning": str(exc),
+                        "forced": force_mode,
+                    }
+                )
+            else:
+                result = OnboardResult(
+                    ticker=ticker_key,
+                    fiscal_period=period,
+                    mode="unknown",
+                    status="failed",
+                    lookback_years=lookback_years,
+                    reason="Provider history unavailable for mode classification",
+                    prior_event_count=0,
+                    allowlist_guidance=allowlist_guidance(
+                        ticker_key, configured_tickers
+                    ),
+                    error=str(exc),
+                    steps=[
+                        {
+                            "step": "count_prior_events",
+                            "error": str(exc),
+                        }
+                    ],
+                )
+                return result
     on_disk = discover_on_disk_periods(repo_root, ticker_key)
 
     in_registry = False
     has_scored = False
     try:
-        if str(sn) not in sys.path:
-            sys.path.insert(0, str(sn))
+        _ensure_structured_narrative_path(repo_root)
         from company_config import COMPANIES  # type: ignore
 
         in_registry = ticker_key in COMPANIES or _overlay_path(repo_root, ticker_key).is_file()
@@ -452,6 +879,7 @@ def run_onboard(
         reason=decision.reason,
         prior_event_count=prior_event_count,
         allowlist_guidance=allowlist_guidance(ticker_key, configured_tickers),
+        steps=list(history_steps),
     )
 
     # First-Print fallthrough and full Onboard both integrate the ticker into
@@ -543,58 +971,18 @@ def run_onboard(
         )
         _deadline_guard("classify")
 
-        # ---- Pull transcripts ----
+        # ---- Pull transcripts (Quartr first; ROIC only as fallback) ----
         if not skip_pull:
             _deadline_guard("pull_transcripts")
-            if lookback_years >= 10:
-                start = report_at - timedelta(days=lookback_years * 365 + 2)
-                step = runner(
-                    [
-                        py,
-                        str(sn / "quartr_history_import.py"),
-                        "--ticker",
-                        ticker_key,
-                        "--start",
-                        start.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-                        "--end",
-                        report_at.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-                        "--layout",
-                        "flat",
-                        "--json",
-                    ],
-                    cwd=repo_root,
-                    dry_run=dry_run,
-                )
-                step["step"] = "quartr_history_import"
-                result.steps.append(step)
-            else:
-                fetch_script = (
-                    repo_root
-                    / "earnings-scraper-main"
-                    / "earnings-scraper-main"
-                    / "scripts"
-                    / "fetch_transcripts.py"
-                )
-                if fetch_script.is_file():
-                    step = runner(
-                        [py, str(fetch_script), ticker_key, "--all", "--no-fallback"],
-                        cwd=fetch_script.parent.parent,
-                        dry_run=dry_run,
-                    )
-                    step["step"] = "roic_fetch_transcripts"
-                    result.steps.append(step)
-                step = runner(
-                    [
-                        py,
-                        str(sn / "export_inbox_to_transcripts_raw.py"),
-                        "--ticker",
-                        ticker_key,
-                    ],
-                    cwd=repo_root,
-                    dry_run=dry_run,
-                )
-                step["step"] = "export_inbox_to_transcripts_raw"
-                result.steps.append(step)
+            pull_steps = _pull_history_transcripts(
+                repo_root=repo_root,
+                ticker=ticker_key,
+                report_at=report_at,
+                lookback_years=lookback_years,
+                dry_run=dry_run,
+                run_command=runner,
+            )
+            result.steps.extend(pull_steps)
 
         on_disk = discover_on_disk_periods(repo_root, ticker_key)
         result.transcripts_pulled = len(on_disk)
@@ -732,7 +1120,7 @@ def run_onboard(
                 step["step"] = "run_company_pipeline_batch"
                 result.steps.append(step)
 
-        # ---- Panel + history_import handoff ----
+        # ---- Panel + auto-wire book / history / research dirty ----
         if not skip_panel:
             _deadline_guard("feature_panel")
             step = runner(
@@ -748,17 +1136,33 @@ def run_onboard(
             )
             step["step"] = "build_feature_panel"
             result.steps.append(step)
-            result.history_import_note = (
-                "Handoff: refresh the monitor dataset with history_import after panel build:\n"
-                f"  python -m services.earnings_monitor.history_import "
-                f"--source-root \"{repo_root}\" --tickers {ticker_key}"
+            sync_steps = sync_book_after_onboard(
+                repo_root=repo_root,
+                ticker=ticker_key,
+                fiscal_period=period,
+                configured_tickers=configured_tickers,
+                dry_run=dry_run,
+                import_history_fn=import_history_fn,
             )
-            result.steps.append(
-                {
-                    "step": "history_import_handoff",
-                    "note": result.history_import_note,
-                }
+            result.steps.extend(sync_steps)
+            hist_step = next(
+                (s for s in sync_steps if s.get("step") == "history_import"),
+                None,
             )
+            if hist_step and not hist_step.get("error"):
+                result.history_import_note = (
+                    f"History dataset refreshed at {hist_step.get('destination')} "
+                    f"({hist_step.get('records')} records). Research book marked dirty; "
+                    "run research-regen (or wait for the regen loop) for Rank IC / "
+                    "consolidated HTML."
+                )
+            else:
+                err = (hist_step or {}).get("error") or "history_import not run"
+                result.history_import_note = (
+                    f"History import incomplete ({err}). Retry:\n"
+                    f"  python -m services.earnings_monitor.history_import "
+                    f"--source-root \"{repo_root}\""
+                )
 
         _deadline_guard("complete")
         result.status = "completed"

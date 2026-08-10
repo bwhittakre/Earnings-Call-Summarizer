@@ -177,6 +177,7 @@ def _candidate_env_files(config: MonitorConfig) -> list[Path]:
     for key in (
         "EARNINGS_MONITOR_TICKER_ENV_FILE",
         "EARNINGS_MONITOR_ENV_FILE",
+        "REPO_ENV_FILE",
     ):
         raw = os.environ.get(key)
         if raw:
@@ -184,6 +185,7 @@ def _candidate_env_files(config: MonitorConfig) -> list[Path]:
     root = Path(config.repo_root)
     candidates.extend(
         [
+            root / ".env",
             root / "services" / "earnings_monitor" / ".env.sim.local",
             root / "services" / "earnings_monitor" / ".env.local",
             root / "services" / "earnings_monitor" / ".env",

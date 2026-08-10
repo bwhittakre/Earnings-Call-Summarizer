@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Scripted Quartr historical transcript importer.
+"""Scripted Quartr historical transcript importer (primary Onboard pull path).
 
 Pulls earnings-call transcripts for a company over a date window and writes
 files in the layouts ``LocalFileProvider`` accepts:
@@ -42,6 +42,16 @@ from urllib.request import Request, urlopen
 HERE = Path(__file__).resolve().parent
 DEFAULT_OUT = HERE / "transcripts_raw"
 DEFAULT_BASE = os.environ.get("QUARTR_API_BASE", "https://api.quartr.com").rstrip("/")
+
+
+def _load_quartr_env() -> None:
+    """Load QUARTR_* from Structured Narrative /.env and repo-root .env if present."""
+    try:
+        from dotenv import load_dotenv
+    except ImportError:  # pragma: no cover
+        return
+    load_dotenv(HERE / ".env")
+    load_dotenv(HERE.parent / ".env")
 
 _PERIOD_RE = re.compile(r"^FY(\d{4})-Q([1-4])$", re.IGNORECASE)
 _Q_ONLY_RE = re.compile(r"^Q([1-4])$", re.IGNORECASE)
@@ -183,8 +193,14 @@ class QuartrApiClient:
         http_get: HttpGet | None = None,
         pause_seconds: float = 0.15,
     ) -> None:
+        if not api_key:
+            _load_quartr_env()
         self.api_key = (api_key or os.environ.get("QUARTR_API_KEY") or "").strip()
-        self.base_url = base_url.rstrip("/")
+        self.base_url = (base_url or DEFAULT_BASE).rstrip("/")
+        if not api_key:
+            env_base = os.environ.get("QUARTR_API_BASE", "").strip()
+            if env_base:
+                self.base_url = env_base.rstrip("/")
         self.http_get = http_get or _default_http_get
         self.pause_seconds = pause_seconds
 

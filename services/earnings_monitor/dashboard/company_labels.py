@@ -19,6 +19,7 @@ COMPANY_BRANDS: dict[str, str] = {
     "APH": "Amphenol",
     "AVGO": "Broadcom",
     "CRM": "Salesforce",
+    "CSCO": "Cisco",
     "CTSH": "Cognizant",
     "IBM": "IBM",
     "INTU": "Intuit",

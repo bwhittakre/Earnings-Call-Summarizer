@@ -163,6 +163,14 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Ignore debounce delay when the book is dirty",
     )
+    regen_parser.add_argument(
+        "--full",
+        action="store_true",
+        help=(
+            "Full Rank IC eval (leave-one-ticker jackknife + 2000 bootstrap resamples). "
+            "Default dashboard regen skips jackknife for speed on large books."
+        ),
+    )
     subparsers.add_parser(
         "research-regen-loop",
         help="Poll the dirty flag and regenerate Rank IC + consolidated HTML",
@@ -190,6 +198,7 @@ def main(argv: list[str] | None = None) -> int:
             state,
             force=bool(args.force),
             honor_debounce=not bool(args.no_debounce),
+            fast_regen=not bool(getattr(args, "full", False)),
         )
         print(
             json.dumps(
@@ -216,7 +225,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "onboard":
         from .models import EventState, WorkflowMode
-        from .onboard import run_onboard
+        from .onboard import make_quartr_event_lister, run_onboard
 
         ticker = args.ticker.strip().upper()
         try:
@@ -248,6 +257,7 @@ def main(argv: list[str] | None = None) -> int:
             skip_llm=bool(args.skip_llm),
             skip_panel=bool(args.skip_panel),
             force_mode="onboard" if args.force_onboard else None,
+            event_lister=make_quartr_event_lister(config.repo_root),
             configured_tickers=config.tickers,
         )
         payload = result.to_dict()
@@ -375,7 +385,7 @@ def main(argv: list[str] | None = None) -> int:
         workflow_mode = "first_print" if args.first_print else "standard"
         if args.onboard:
             from .models import EventState, WorkflowMode
-            from .onboard import run_onboard
+            from .onboard import make_quartr_event_lister, run_onboard
 
             # Park the event in ONBOARDING so the poller never starts baseline
             # while history/batch work is still running.
@@ -392,6 +402,7 @@ def main(argv: list[str] | None = None) -> int:
                 report_at=report_at,
                 dry_run=bool(args.onboard_dry_run),
                 force_mode="onboard",
+                event_lister=make_quartr_event_lister(config.repo_root),
                 configured_tickers=config.tickers,
             )
             onboard_payload = result.to_dict()

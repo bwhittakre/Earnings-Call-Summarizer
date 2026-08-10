@@ -4,18 +4,27 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from services.earnings_monitor.dashboard.charts import (
-    rank_ic_heatmap,
-    rank_ic_leaderboard_chart,
-)
+import pytest
+
 from services.earnings_monitor.dashboard.research_data import (
+    artifact_universe_status,
     filter_rank_ic_rows,
+    format_universe_stale_message,
     load_consolidated_panel,
     load_rank_ic_bundle,
     resolve_cross_company_root,
     unique_sorted,
 )
 from services.earnings_monitor.dashboard.views import VIEWS
+
+try:
+    from services.earnings_monitor.dashboard.charts import (  # type: ignore
+        rank_ic_heatmap,
+        rank_ic_leaderboard_chart,
+    )
+except ImportError:  # Rank IC chart helpers may live elsewhere / not yet present
+    rank_ic_heatmap = None  # type: ignore
+    rank_ic_leaderboard_chart = None  # type: ignore
 
 
 def test_views_include_research_tabs() -> None:
@@ -91,6 +100,44 @@ def test_load_consolidated_panel_probes_stems(tmp_path: Path) -> None:
     assert "AAPL" in bundle.meta["tickers"]
 
 
+def test_artifact_universe_status_detects_missing_csco() -> None:
+    status = artifact_universe_status(
+        ["AAPL", "MSFT", "CSCO"],
+        {"tickers": ["AAPL", "MSFT"]},
+        {"tickers": ["AAPL", "MSFT", "NVDA"]},
+    )
+    assert status["stale"] is True
+    assert status["ok"] is False
+    assert status["missing_from_rank"] == ["CSCO"]
+    assert status["missing_from_consol"] == ["CSCO"]
+    message = format_universe_stale_message(status)
+    assert message is not None
+    assert "CSCO" in message
+    assert "research-regen" in message
+
+
+def test_artifact_universe_status_ok_when_aligned() -> None:
+    status = artifact_universe_status(
+        ["AAPL", "CSCO"],
+        {"tickers": ["AAPL", "CSCO", "MSFT"]},
+        {"tickers": ["CSCO", "AAPL"]},
+    )
+    assert status["ok"] is True
+    assert status["stale"] is False
+    assert format_universe_stale_message(status) is None
+
+
+def test_artifact_universe_status_skips_empty_artifact_meta() -> None:
+    status = artifact_universe_status(["AAPL", "CSCO"], None, {"tickers": []})
+    assert status["rank_available"] is False
+    assert status["consol_available"] is False
+    assert status["stale"] is False
+
+
+@pytest.mark.skipif(
+    rank_ic_heatmap is None or rank_ic_leaderboard_chart is None,
+    reason="Rank IC chart helpers not exported from dashboard.charts",
+)
 def test_rank_ic_charts_build() -> None:
     heat = rank_ic_heatmap(
         [

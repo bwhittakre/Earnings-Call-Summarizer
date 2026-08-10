@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Any, Sequence
+from urllib.parse import urlencode
 
 from .charts import (
     heatmap_chart,
@@ -18,8 +19,12 @@ from .company_labels import format_company_label, with_company_labels
 from .data import DashboardData
 from .report_static import ensure_reports_static_link, static_report_url
 from .research_data import (
+    artifact_universe_status,
     can_inline_html,
+    format_universe_stale_message,
     html_report_meta,
+    load_consolidated_panel,
+    load_rank_ic_bundle,
     resolve_consolidated_html,
     resolve_rank_ic_html,
 )
@@ -121,6 +126,7 @@ def _render_html_report(
     path: Path | None,
     *,
     missing_hint: str,
+    iframe_query: dict[str, str] | None = None,
 ) -> bool:
     """Embed a self-contained HTML report. Returns True when rendered.
 
@@ -148,8 +154,16 @@ def _render_html_report(
     use_static = static_dir is not None and (static_dir / path.name).exists()
     if use_static and components is not None:
         try:
+            # Cache-bust: browsers aggressively cache this ~90MB HTML; without a
+            # version query, regenerating the report is invisible in the iframe.
+            query: dict[str, str] = dict(iframe_query or {})
+            try:
+                query["v"] = str(int(path.stat().st_mtime))
+            except OSError:
+                query["v"] = "1"
+            iframe_src = f"{static_report_url(path.name)}?{urlencode(query)}"
             components.iframe(
-                static_report_url(path.name),
+                iframe_src,
                 height=_HTML_EMBED_HEIGHT,
                 scrolling=True,
             )
@@ -560,18 +574,33 @@ def render_narrative_vs_quant(
         st.info("No rows have both narrative and quantitative values for this filter.")
 
 
+def _warn_research_universe(st: Any, data: DashboardData) -> None:
+    """Surface Rank IC / consolidated ticker lag vs the loaded parquet dataset."""
+    rank_ic = load_rank_ic_bundle()
+    consolidated = load_consolidated_panel()
+    status = artifact_universe_status(
+        data.tickers,
+        rank_ic.meta if rank_ic.available else None,
+        consolidated.meta if consolidated.available else None,
+    )
+    message = format_universe_stale_message(status)
+    if message:
+        st.warning(message)
+
+
 def render_signal_research(
     st: Any,
     data: DashboardData,
     *,
     sector_tickers: Sequence[str] | None = None,
 ) -> None:
-    del data, sector_tickers  # HTML report is the sole research UI
+    del sector_tickers
     st.header("Signal research")
     st.caption(
         "Embedded Rank IC report from Structured Narrative "
         "(``narrative_signal_eval.html``)."
     )
+    _warn_research_universe(st, data)
     path = resolve_rank_ic_html()
     _render_html_report(
         st,
@@ -590,13 +619,30 @@ def render_consolidated_panel(
     *,
     sector_tickers: Sequence[str] | None = None,
 ) -> None:
-    del data, sector_tickers  # HTML report is the sole research UI
+    universe = _universe(data, sector_tickers)
     st.header("Consolidated panel")
     st.caption(
         "Embedded consolidated feature panel "
-        "(``consolidated_feature_panel.html`` / ``cross_section_panel.html``)."
+        "(``consolidated_feature_panel.html`` / ``cross_section_panel.html``). "
+        "The Sector sidebar filter scopes the company list when it is narrower "
+        "than the full dataset."
     )
+    _warn_research_universe(st, data)
+    if universe and len(universe) < len(data.tickers):
+        missing = sorted(set(data.tickers) - set(universe))
+        if missing:
+            st.warning(
+                f"Sector filter excludes {len(missing)} loaded companies: "
+                f"{', '.join(missing)}. Update the sector book or choose All Companies."
+            )
+        st.caption(
+            f"Showing {len(universe)} of {len(data.tickers)} companies from the "
+            f"Sector filter: {', '.join(universe)}."
+        )
     path = resolve_consolidated_html()
+    iframe_query: dict[str, str] | None = None
+    if universe and len(universe) < len(data.tickers):
+        iframe_query = {"tickers": ",".join(universe)}
     _render_html_report(
         st,
         path,
@@ -606,6 +652,7 @@ def render_consolidated_panel(
             "python build_consolidated_panel_report.py --tickers <universe> "
             "--min-calendar-quarter 2016-Q2"
         ),
+        iframe_query=iframe_query,
     )
 
 

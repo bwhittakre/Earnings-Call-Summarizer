@@ -657,7 +657,10 @@ def main() -> int:
     if quant is not None and not args.llm_only:
         spine = build_spine(quant, ticker)
     elif args.llm_only or quant is None:
-        if allow_sparse_llm and quant is None:
+        # Quant preface (--include-quarters without --llm-only) still requires
+        # dimension_scores. Explicit --llm-only (First-Print post_call before
+        # Snowflake lands) may build from LLM levels alone.
+        if allow_sparse_llm and quant is None and not args.llm_only:
             print(
                 f"Error: quant preface requires {ticker}_dimension_scores "
                 "(run quant extract / z-score first).",
@@ -667,6 +670,12 @@ def main() -> int:
         if quant is None and not args.llm_only:
             print(
                 f"Note: {ticker}_dimension_scores not found; building LLM-only panel "
+                "(quant/surprise columns will be sparse).",
+                file=sys.stderr,
+            )
+        elif args.llm_only and quant is None:
+            print(
+                f"Note: building LLM-only panel for {ticker} "
                 "(quant/surprise columns will be sparse).",
                 file=sys.stderr,
             )
