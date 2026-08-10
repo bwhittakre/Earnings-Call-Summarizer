@@ -30,3 +30,6 @@ CSCO:
 STRW:
   type: calendar_fiscal
 
+OPAL:
+  type: calendar_fiscal
+

@@ -11,7 +11,7 @@ from typing import Any, Mapping, Protocol
 
 from .config import MonitorConfig
 from .freshness import FreshnessProbe
-from .models import EventState, MonitoredEvent
+from .models import EventState, MonitoredEvent, TranscriptStatus
 from .providers import EventProvider, TranscriptProvider
 from .state import OperationalState
 from .transcripts import TranscriptStabilizer
@@ -137,6 +137,7 @@ class EarningsMonitor:
         self.stabilizer = TranscriptStabilizer(
             stable_for=timedelta(seconds=config.stabilization_seconds),
             minimum_chars=config.minimum_transcript_chars,
+            require_live_growth=config.require_live_growth,
         )
 
     def _refresh_history_dataset(self) -> dict | None:
@@ -471,8 +472,16 @@ class EarningsMonitor:
             )
             monitored.transcript_fingerprint = decision.fingerprint
             monitored.transcript_observed_at = decision.first_observed_at
+            is_live = document.status == TranscriptStatus.LIVE
+            live_already_scored = bool(monitored.live_post_call_fingerprint)
             if monitored.state == EventState.COMPLETE:
                 if fingerprint_before == decision.fingerprint:
+                    continue
+                # After the first LIVE post_call, further live growth is
+                # observed (fingerprint updated above) but must not re-open
+                # the revision path until the inbox status becomes final.
+                if is_live and live_already_scored:
+                    self.state.upsert_event(monitored)
                     continue
                 monitored.transition(EventState.TRANSCRIPT_UNSTABLE)
                 self.state.upsert_event(monitored)
@@ -484,8 +493,18 @@ class EarningsMonitor:
                     monitored.transition(EventState.TRANSCRIPT_UNSTABLE)
                 self.state.upsert_event(monitored)
                 continue
+            if is_live and live_already_scored:
+                # Stagnation may fire again after more growth; still do not
+                # enqueue a second LIVE post_call.
+                self.state.upsert_event(monitored)
+                continue
             if monitored.state == EventState.TRANSCRIPT_PENDING:
                 monitored.transition(EventState.TRANSCRIPT_UNSTABLE)
+            if is_live:
+                # Persist the one-live-score gate with the enqueue upsert so a
+                # crash mid-cycle still blocks further LIVE post_calls.
+                monitored.live_post_call_fingerprint = decision.fingerprint
+                monitored.live_scored_at = now
             queued += self._enqueue_stage(
                 monitored,
                 stage="post_call",

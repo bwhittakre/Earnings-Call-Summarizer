@@ -38,6 +38,7 @@ class MonitorConfig:
     poll_interval_seconds: int = 300
     stabilization_seconds: int = 300
     minimum_transcript_chars: int = 1_000
+    require_live_growth: bool = True
     max_job_attempts: int = 3
     retry_base_seconds: int = 60
     lease_timeout_seconds: int = 60 * 60
@@ -147,6 +148,9 @@ class MonitorConfig:
             poll_interval_seconds=_int(values.get("EARNINGS_MONITOR_POLL_SECONDS"), 300),
             stabilization_seconds=_int(values.get("EARNINGS_MONITOR_STABILIZATION_SECONDS"), 300, minimum=0),
             minimum_transcript_chars=_int(values.get("EARNINGS_MONITOR_MIN_CHARS"), 1_000),
+            require_live_growth=_bool(
+                values.get("EARNINGS_MONITOR_REQUIRE_LIVE_GROWTH"), True
+            ),
             max_job_attempts=_int(values.get("EARNINGS_MONITOR_MAX_ATTEMPTS"), 3),
             retry_base_seconds=_int(
                 values.get("EARNINGS_MONITOR_RETRY_BASE_SECONDS"), 60

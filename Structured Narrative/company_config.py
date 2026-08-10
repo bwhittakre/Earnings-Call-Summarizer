@@ -3,7 +3,16 @@
 """Per-ticker registry for the Structured Narrative multi-company pilot."""
 from __future__ import annotations
 
+import json
+import logging
 from dataclasses import dataclass, field, replace
+from pathlib import Path
+
+LOG = logging.getLogger(__name__)
+
+# Onboard writes per-ticker JSON here; get_company lazy-loads so subprocess
+# quant/LLM scoring does not depend on an in-process register_overlay call.
+OVERLAY_DIR = Path(__file__).resolve().parent / "config" / "company_overlays"
 
 
 FY2025_OUTPUT_QUARTERS = (
@@ -758,12 +767,66 @@ COMPANIES: dict[str, CompanyProfile] = {
 }
 
 
-def get_company(ticker: str | None = None, *, scope: str | None = None) -> CompanyProfile:
+def load_company_overlay(
+    ticker: str,
+    *,
+    overlay_dir: Path | None = None,
+) -> CompanyProfile | None:
+    """Load a CompanyProfile from config/company_overlays/{TICKER}.json.
+
+    Returns None when the file is missing or unreadable. Does not mutate
+    COMPANIES — callers (get_company / onboard) decide whether to cache.
+    """
+    key = ticker.strip().upper()
+    path = (overlay_dir or OVERLAY_DIR) / f"{key}.json"
+    if not path.is_file():
+        return None
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError, TypeError) as exc:
+        LOG.warning("Ignoring unreadable company overlay %s: %s", path, exc)
+        return None
+    if not isinstance(data, dict):
+        LOG.warning("Ignoring malformed company overlay %s: not an object", path)
+        return None
+    try:
+        estpermid = data.get("estpermid")
+        return CompanyProfile(
+            ticker=str(data.get("ticker") or key).strip().upper(),
+            company_name=str(data.get("company_name") or data.get("ticker") or key),
+            estpermid=int(estpermid) if estpermid is not None else None,
+            isin=(str(data["isin"]) if data.get("isin") else None),
+            barra_id=(str(data["barra_id"]) if data.get("barra_id") else None),
+            prior_quarters=tuple(data.get("prior_quarters") or ()),
+            output_quarters=tuple(data.get("output_quarters") or ()),
+        )
+    except (TypeError, ValueError) as exc:
+        LOG.warning("Ignoring invalid company overlay %s: %s", path, exc)
+        return None
+
+
+def get_company(
+    ticker: str | None = None,
+    *,
+    scope: str | None = None,
+    overlay_dir: Path | None = None,
+) -> CompanyProfile:
+    """Resolve a company profile, preferring on-disk overlays when present.
+
+    Overlay JSON (written by onboard) wins over hardcoded COMPANIES entries so
+    subprocess scoring picks up quarter/ID updates without editing this module.
+    Successful overlay loads are cached into COMPANIES for the process lifetime.
+    """
     key = (ticker or DEFAULT_TICKER).strip().upper()
-    if key not in COMPANIES:
+    overlay = load_company_overlay(key, overlay_dir=overlay_dir)
+    if overlay is not None:
+        COMPANIES[key] = overlay
+        profile = overlay
+    elif key in COMPANIES:
+        profile = COMPANIES[key]
+    else:
         known = ", ".join(sorted(COMPANIES))
         raise KeyError(f"Unknown ticker {key!r}. Known: {known}")
-    profile = COMPANIES[key]
     if scope == "five_year":
         if key != "AMZN":
             raise ValueError(f"scope 'five_year' is only defined for AMZN (got {key}).")

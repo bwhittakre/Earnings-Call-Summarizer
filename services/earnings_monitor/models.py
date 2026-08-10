@@ -149,6 +149,10 @@ class MonitoredEvent:
     manual_override: bool = False
     workflow_mode: str = WorkflowMode.STANDARD.value
     first_print: bool = False
+    # Fingerprint of the first LIVE-ready post_call enqueue. While set and the
+    # inbox bundle is still LIVE, further growth is observed but not re-scored.
+    live_post_call_fingerprint: str | None = None
+    live_scored_at: datetime | None = None
 
     def transition(self, target: EventState, *, error: str | None = None) -> None:
         if target == self.state and target == EventState.TRANSCRIPT_UNSTABLE:

@@ -274,23 +274,13 @@ def register_overlay_profile(repo_root: Path, ticker: str) -> Any:
     sn = repo_root / "Structured Narrative"
     if str(sn) not in sys.path:
         sys.path.insert(0, str(sn))
-    from company_config import COMPANIES, CompanyProfile  # type: ignore
+    from company_config import get_company  # type: ignore
 
     path = _overlay_path(repo_root, ticker)
     if not path.is_file():
         raise OnboardError(f"Missing company overlay: {path}")
-    data = json.loads(path.read_text(encoding="utf-8"))
-    profile = CompanyProfile(
-        ticker=str(data["ticker"]).upper(),
-        company_name=str(data.get("company_name") or data["ticker"]),
-        estpermid=int(data["estpermid"]) if data.get("estpermid") is not None else None,
-        isin=data.get("isin") or None,
-        barra_id=data.get("barra_id") or None,
-        prior_quarters=tuple(data.get("prior_quarters") or ()),
-        output_quarters=tuple(data.get("output_quarters") or ()),
-    )
-    COMPANIES[profile.ticker] = profile
-    return profile
+    # get_company prefers on-disk overlays and caches into COMPANIES.
+    return get_company(ticker, overlay_dir=path.parent)
 
 
 def ensure_fiscal_calendar_entry(
@@ -1102,8 +1092,22 @@ def run_onboard(
         resolved_isin: str | None = None
         resolved_barra: str | None = None
         if skip_ids or dry_run:
-            resolved_est = 0 if dry_run else None
-            result.steps.append({"step": "resolve_ids", "skipped": True})
+            resolved_est = (
+                0
+                if dry_run
+                else (int(estpermid) if estpermid is not None else None)
+            )
+            resolved_isin = (isin or "").strip().upper() or None
+            resolved_barra = (barra_id or "").strip() or None
+            result.steps.append(
+                {
+                    "step": "resolve_ids",
+                    "skipped": True,
+                    "estpermid": resolved_est,
+                    "isin": resolved_isin,
+                    "barra_id": resolved_barra,
+                }
+            )
         else:
             _deadline_guard("resolve_ids")
             resolved_est, resolved_isin, resolved_barra, id_source = _resolve_ids(

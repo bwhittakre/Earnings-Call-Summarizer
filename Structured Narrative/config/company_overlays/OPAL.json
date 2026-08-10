@@ -1,0 +1,24 @@
+{
+  "barra_id": "USBN9L1",
+  "company_name": "OPAL Fuels",
+  "estpermid": 30064882442,
+  "isin": "US68347P1030",
+  "output_quarters": [
+    "FY2023-Q3",
+    "FY2023-Q4",
+    "FY2024-Q1",
+    "FY2024-Q2",
+    "FY2024-Q3",
+    "FY2024-Q4",
+    "FY2025-Q1",
+    "FY2025-Q2",
+    "FY2025-Q3",
+    "FY2025-Q4",
+    "FY2026-Q1"
+  ],
+  "prior_quarters": [
+    "FY2023-Q2"
+  ],
+  "ticker": "OPAL",
+  "updated_at": "2026-08-10T15:10:00+00:00"
+}

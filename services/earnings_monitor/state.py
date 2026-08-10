@@ -56,6 +56,8 @@ class OperationalState:
                     manual_override INTEGER NOT NULL DEFAULT 0,
                     first_print INTEGER NOT NULL DEFAULT 0,
                     workflow_mode TEXT NOT NULL DEFAULT 'standard',
+                    live_post_call_fingerprint TEXT,
+                    live_scored_at TEXT,
                     UNIQUE(ticker, fiscal_period)
                 );
                 CREATE TABLE IF NOT EXISTS jobs (
@@ -161,6 +163,12 @@ class OperationalState:
                     "WHERE first_print=1 AND "
                     "(workflow_mode IS NULL OR workflow_mode='standard')"
                 )
+            if "live_post_call_fingerprint" not in columns:
+                conn.execute(
+                    "ALTER TABLE events ADD COLUMN live_post_call_fingerprint TEXT"
+                )
+            if "live_scored_at" not in columns:
+                conn.execute("ALTER TABLE events ADD COLUMN live_scored_at TEXT")
             conn.execute(
                 "UPDATE events SET report_at=COALESCE(report_at, scheduled_at), "
                 "call_at=COALESCE(call_at, scheduled_at)"
@@ -206,8 +214,9 @@ class OperationalState:
                 INSERT INTO events (
                     provider_event_id, ticker, fiscal_period, scheduled_at, report_at, call_at, title,
                     source_url, state, transcript_fingerprint, transcript_observed_at,
-                    last_error, updated_at, manual_override, first_print, workflow_mode
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    last_error, updated_at, manual_override, first_print, workflow_mode,
+                    live_post_call_fingerprint, live_scored_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(provider_event_id) DO UPDATE SET
                     ticker=excluded.ticker, fiscal_period=excluded.fiscal_period,
                     scheduled_at=excluded.scheduled_at, report_at=excluded.report_at,
@@ -218,7 +227,9 @@ class OperationalState:
                     last_error=excluded.last_error, updated_at=excluded.updated_at,
                     manual_override=excluded.manual_override,
                     first_print=excluded.first_print,
-                    workflow_mode=excluded.workflow_mode
+                    workflow_mode=excluded.workflow_mode,
+                    live_post_call_fingerprint=excluded.live_post_call_fingerprint,
+                    live_scored_at=excluded.live_scored_at
                 """,
                 (
                     event.provider_event_id,
@@ -237,6 +248,8 @@ class OperationalState:
                     int(monitored.manual_override),
                     int(monitored.first_print),
                     monitored.workflow_mode or "standard",
+                    monitored.live_post_call_fingerprint,
+                    _iso(monitored.live_scored_at),
                 ),
             )
 
@@ -481,6 +494,16 @@ class OperationalState:
                 workflow_mode = str(raw_mode)
         except (IndexError, KeyError):
             pass
+        live_fp = None
+        live_scored_at = None
+        try:
+            live_fp = row["live_post_call_fingerprint"]
+        except (IndexError, KeyError):
+            live_fp = None
+        try:
+            live_scored_at = _dt(row["live_scored_at"])
+        except (IndexError, KeyError):
+            live_scored_at = None
         return MonitoredEvent(
             event=event,
             state=EventState(row["state"]),
@@ -491,6 +514,8 @@ class OperationalState:
             manual_override=bool(row["manual_override"]),
             first_print=first_print,
             workflow_mode=workflow_mode,
+            live_post_call_fingerprint=live_fp,
+            live_scored_at=live_scored_at,
         )
 
     def get_event_for_period(

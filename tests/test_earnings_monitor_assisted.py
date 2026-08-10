@@ -266,7 +266,7 @@ def test_final_bundle_restart_recovery_and_duplicate_delivery(tmp_path):
     class Workflow:
         calls: list[str] = []
 
-        def run(self, profile, requested, transcript=None):
+        def run(self, profile, requested, transcript=None, *, no_prior=False):
             self.calls.append(transcript.source_id)
             return {}
 
@@ -295,10 +295,16 @@ def test_final_bundle_restart_recovery_and_duplicate_delivery(tmp_path):
 
     write_transcript_bundle_atomic(
         inbox / "AAPL-FY2026-Q3.transcript.json",
-        _bundle(status="final", observed_at=now, document_id="final-1"),
+        _bundle(
+            status="final",
+            observed_at=now,
+            document_id="final-1",
+            text="Final polished transcript after the call ended.",
+        ),
     )
     restarted = service()
     restarted.state.initialize()
+    # New final content: first poll observes, second stagnates and enqueues.
     assert restarted.advance_events() == 0
     assert restarted.advance_events() == 1
     assert restarted.run_next_job()
@@ -309,10 +315,137 @@ def test_final_bundle_restart_recovery_and_duplicate_delivery(tmp_path):
     # a second post-call job because both fingerprint and job key are durable.
     write_transcript_bundle_atomic(
         inbox / "AAPL_FY2026_Q3.transcript.json",
-        _bundle(status="final", observed_at=now, document_id="final-duplicate"),
+        _bundle(
+            status="final",
+            observed_at=now,
+            document_id="final-duplicate",
+            text="Final polished transcript after the call ended.",
+        ),
     )
     final_restart = service()
     final_restart.state.initialize()
     assert final_restart.advance_events() == 0
     assert not final_restart.run_next_job()
     assert workflow.calls == ["final-1"]
+
+
+def test_one_live_post_call_then_final_rescore(tmp_path):
+    """LIVE scores at most once; FINAL with new fingerprint may re-score."""
+    inbox = tmp_path / "inbox"
+    inbox.mkdir()
+    now = datetime(2026, 7, 30, 23, 0, tzinfo=UTC)
+    event = EarningsEvent(
+        "quartr:event-live-1",
+        "AAPL",
+        "FY2026-Q3",
+        report_at=now - timedelta(hours=2),
+        call_at=now - timedelta(hours=1),
+    )
+    state = OperationalState(tmp_path / "monitor.sqlite3")
+    state.initialize()
+    state.upsert_event(MonitoredEvent(event, state=EventState.AWAITING_CALL))
+
+    class Workflow:
+        calls: list[str] = []
+
+        def run(self, profile, requested, transcript=None, *, no_prior=False):
+            self.calls.append(transcript.source_id)
+            return {}
+
+    workflow = Workflow()
+    config = MonitorConfig(
+        repo_root=tmp_path,
+        database_path=tmp_path / "monitor.sqlite3",
+        inbox_path=inbox,
+        event_manifest_path=tmp_path / "events",
+        tickers=("AAPL",),
+        provider="watched",
+        stabilization_seconds=0,
+        minimum_transcript_chars=10,
+        require_live_growth=False,
+        transcript_start_delay_seconds=0,
+        transcript_timeout_seconds=3600,
+    )
+
+    def service() -> EarningsMonitor:
+        return EarningsMonitor(
+            config=config,
+            state=OperationalState(tmp_path / "monitor.sqlite3"),
+            event_provider=WatchedEventManifestProvider(tmp_path / "events"),
+            transcript_provider=LocalInboxProvider(inbox),
+            freshness=AlwaysFreshProbe(),
+            workflow=workflow,
+            clock=lambda: now,
+        )
+
+    def live_bundle(document_id: str, text: str) -> dict:
+        row = _bundle(status="live", observed_at=now, document_id=document_id, text=text)
+        row["provider_event_id"] = event.provider_event_id
+        return row
+
+    def final_bundle(document_id: str, text: str) -> dict:
+        row = _bundle(status="final", observed_at=now, document_id=document_id, text=text)
+        row["provider_event_id"] = event.provider_event_id
+        return row
+
+    write_transcript_bundle_atomic(
+        inbox / "AAPL-FY2026-Q3.transcript.json",
+        live_bundle("live-1", "First live draft of the call."),
+    )
+    monitor = service()
+    monitor.state.initialize()
+    assert monitor.advance_events() == 0  # AWAITING_CALL → TRANSCRIPT_PENDING
+    assert monitor.advance_events() == 0  # first observation: not ready
+    assert monitor.advance_events() == 1  # stagnated LIVE → one post_call
+    assert monitor.run_next_job()
+    assert workflow.calls == ["live-1"]
+    scored = monitor.state.get_event(event.provider_event_id)
+    assert scored is not None
+    assert scored.state == EventState.COMPLETE
+    assert scored.live_post_call_fingerprint
+    assert scored.live_scored_at is not None
+
+    # Further LIVE growth must not enqueue another post_call.
+    write_transcript_bundle_atomic(
+        inbox / "AAPL-FY2026-Q3.transcript.json",
+        live_bundle("live-2", "Second live draft with more Q&A content."),
+    )
+    monitor = service()
+    monitor.state.initialize()
+    assert monitor.advance_events() == 0
+    assert monitor.advance_events() == 0
+    assert not monitor.run_next_job()
+    assert workflow.calls == ["live-1"]
+    still = monitor.state.get_event(event.provider_event_id)
+    assert still is not None
+    assert still.state == EventState.COMPLETE
+    assert still.live_post_call_fingerprint == scored.live_post_call_fingerprint
+
+    # FINAL with a new fingerprint may re-score.
+    write_transcript_bundle_atomic(
+        inbox / "AAPL-FY2026-Q3.transcript.json",
+        final_bundle("final-1", "Final polished transcript after the call."),
+    )
+    monitor = service()
+    monitor.state.initialize()
+    # COMPLETE → UNSTABLE on new fingerprint; next poll stagnates and enqueues.
+    assert monitor.advance_events() == 0
+    assert monitor.advance_events() == 1
+    assert monitor.run_next_job()
+    assert workflow.calls == ["live-1", "final-1"]
+    assert monitor.state.get_event(event.provider_event_id).state == EventState.COMPLETE
+
+
+def test_require_live_growth_wired_from_env(tmp_path):
+    parsed = MonitorConfig.from_env(
+        {
+            "EARNINGS_MONITOR_PROVIDER": "manual",
+            "EARNINGS_MONITOR_INBOX": str(tmp_path / "inbox"),
+            "EARNINGS_MONITOR_TICKERS": "AAPL",
+            "EARNINGS_MONITOR_REQUIRE_LIVE_GROWTH": "0",
+        },
+        repo_root=tmp_path,
+    )
+    assert parsed.require_live_growth is False
+    monitor = build_local_monitor(parsed)
+    assert monitor.stabilizer.require_live_growth is False

@@ -93,6 +93,11 @@ Defaults:
   win (e.g. STRW). Overlay IDs are reused unless `--refresh-ids`.
 - Fiscal calendar skips EDGAR when the ticker is already in
   `config/fiscal_calendars.yaml`.
+- Onboard writes `Structured Narrative/config/company_overlays/{TICKER}.json`.
+  `get_company` lazy-loads that file (overlay wins over hardcoded
+  `COMPANIES` entries), so subprocess quant/LLM scoring does not need an
+  in-process `register_overlay_profile` call. Hardcoding a ticker in
+  `company_config.py` is optional convenience, not required for scoring.
 
 Opt-in only when needed: `--use-quartr-rest`, `--allow-roic-fallback`,
 `--estpermid` / `--barra-id`. `arm --onboard` accepts the same flags plus
@@ -146,12 +151,43 @@ an atomically renamed `*.transcript.json` bundle:
 }
 ```
 
-`status` is `live` or `final`. Live bundles are observed and fingerprinted but
-never sent to Structured Narrative. A later final bundle supersedes live
-versions, stabilizes normally, and is written atomically to
-`Structured Narrative/transcripts_raw/{TICKER}_{FISCAL_PERIOD}.txt`.
-Duplicate delivery and restarts reuse the persisted fingerprint and SQLite
-idempotency keys.
+`status` is `live` or `final`. Scoring policy for live vs final:
+
+- After stagnation (and, by default, at least one live content growth —
+  `EARNINGS_MONITOR_REQUIRE_LIVE_GROWTH`), the monitor may enqueue **one**
+  LIVE `post_call`. Further live growth updates the fingerprint for the
+  dashboard but does **not** enqueue another score.
+- When the inbox bundle becomes `final`, a new fingerprint may enqueue
+  another `post_call` (final re-score). Operators can also force a re-score
+  via the Structured Narrative `--force` path.
+- Final bundles are written atomically to
+  `Structured Narrative/transcripts_raw/{TICKER}_{FISCAL_PERIOD}.txt`.
+  Duplicate delivery and restarts reuse the persisted fingerprint and SQLite
+  idempotency keys.
+
+### Quartr live sweep (MCP → inbox)
+
+Keep Quartr access outside the Docker scoring path. Dump MCP
+`read_transcript` JSON (or refresh the dump in a loop), then write an atomic
+inbox bundle:
+
+```bash
+python -m services.earnings_monitor.quartr_sweep \
+  --event-id 692045 --ticker STRW --period FY2026-Q2 \
+  --inbox earnings-scraper-main/earnings-scraper-main/inbox \
+  --from-json path/to/mcp_read_transcript.json
+
+# Poll until isLive is false (re-read the same dump path each tick), then finalize:
+python -m services.earnings_monitor.quartr_sweep \
+  --event-id 692045 --ticker STRW --period FY2026-Q2 \
+  --inbox earnings-scraper-main/earnings-scraper-main/inbox \
+  --from-json path/to/mcp_read_transcript.json \
+  --loop --interval-seconds 30
+```
+
+`JsonDumpGateway` / `CallableGateway` implement the sweep `QuartrGateway`;
+`RestQuartrGateway` is a stub for a later REST client. The monitor continues
+to use `LocalInboxProvider` only.
 
 ## Optional Cloudflare edge and R2
 
