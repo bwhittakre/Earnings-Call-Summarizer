@@ -62,6 +62,21 @@ def seed_prior_transcript(
     return path
 
 
+def seed_overlay(repo_root: Path, ticker: str) -> Path:
+    """Create a minimal company overlay so discover eligibility passes."""
+    path = (
+        repo_root
+        / "Structured Narrative"
+        / "config"
+        / "company_overlays"
+        / f"{ticker.upper()}.json"
+    )
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if not path.is_file():
+        path.write_text("{}", encoding="utf-8")
+    return path
+
+
 def test_config_parses_configurable_universe_and_environment(tmp_path):
     parsed = MonitorConfig.from_env(
         {
@@ -184,6 +199,7 @@ def test_manual_arm_updates_existing_period_without_replacing_identity_or_lifecy
     monkeypatch.setenv("EARNINGS_MONITOR_REPO_ROOT", str(tmp_path))
     monkeypatch.setenv("EARNINGS_MONITOR_DB", str(database))
     monkeypatch.setenv("EARNINGS_MONITOR_TICKERS", "AMZN")
+    seed_overlay(tmp_path, "AMZN")
 
     assert monitor_main(
         [
@@ -339,6 +355,7 @@ def test_three_stage_ordering_freshness_gate_and_email_timing(tmp_path):
     )
     document = [TranscriptDocument("AMZN", "FY2026-Q2", "long enough transcript", "fake", "doc")]
     seed_prior_transcript(tmp_path, "AMZN", "FY2026-Q1")
+    seed_overlay(tmp_path, "AMZN")
 
     class Provider:
         def list_events(self, tickers, *, since, until):
@@ -379,7 +396,7 @@ def test_three_stage_ordering_freshness_gate_and_email_timing(tmp_path):
     state.initialize()
     workflow, freshness, notifier = Workflow(), Freshness(), Notifier()
     service = EarningsMonitor(
-        config=config(tmp_path),
+        config=config(tmp_path, tickers=("AMZN",)),
         state=state,
         event_provider=Provider(),
         transcript_provider=Provider(),
@@ -561,6 +578,7 @@ def test_isolated_tomorrow_shadow_fixture_runs_complete_lifecycle(
     report_at = datetime(2026, 7, 31, 13, 0, tzinfo=UTC)
     call_at = datetime(2026, 7, 31, 14, 0, tzinfo=UTC)
     seed_prior_transcript(tmp_path, "MU", "FY2026-Q2")
+    seed_overlay(tmp_path, "MU")
     assert monitor_main(
         [
             "arm",
@@ -789,6 +807,7 @@ def test_first_print_arm_skips_pre_release(tmp_path, monkeypatch, capsys):
 
 def test_auto_skip_pre_release_when_prior_transcript_missing(tmp_path):
     now = datetime(2026, 8, 4, 12, tzinfo=UTC)
+    seed_overlay(tmp_path, "SPCX")
     earnings_event = EarningsEvent(
         "event-spcx",
         "SPCX",

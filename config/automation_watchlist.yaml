@@ -1,0 +1,11 @@
+# Host automation membership (calendar publish + live dispatch).
+# Empty entries = automate nothing (safe default).
+# ticker-only: all upcoming earnings quarters for that company (still overlay-gated).
+# ticker + period: only that fiscal quarter (e.g. FY2026-Q2).
+#
+# Manage via:
+#   python -m services.earnings_monitor.host_automation watchlist list
+#   python -m services.earnings_monitor.host_automation watchlist add --ticker OPAL
+#   python -m services.earnings_monitor.host_automation watchlist add --ticker STRW --period FY2026-Q2
+#   python -m services.earnings_monitor.host_automation watchlist remove --ticker OPAL
+entries: []

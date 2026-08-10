@@ -28,10 +28,14 @@ x-monitor-common: &monitor-common
       source: ${REPO_ENV_FILE:-./.env}
       target: /app/.env
       read_only: true
-    # Live sector book (Onboard / First-Print append tickers here for regen).
+    # Fiscal calendars + sector book (Onboard / First-Print append tickers).
     - type: bind
-      source: ./config/sectors
-      target: /app/config/sectors
+      source: ./config
+      target: /app/config
+    # Company overlays (get_company lazy-load); must be writable for onboard.
+    - type: bind
+      source: ./Structured Narrative/config
+      target: /app/Structured Narrative/config
     - type: bind
       source: ${STRUCTURED_NARRATIVE_TRANSCRIPTS_DIR:-./Structured Narrative/transcripts_raw}
       target: /app/Structured Narrative/transcripts_raw
@@ -76,8 +80,11 @@ services:
         target: /app/.env
         read_only: true
       - type: bind
-        source: ./config/sectors
-        target: /app/config/sectors
+        source: ./config
+        target: /app/config
+      - type: bind
+        source: ./Structured Narrative/config
+        target: /app/Structured Narrative/config
       - type: bind
         source: ${STRUCTURED_NARRATIVE_TRANSCRIPTS_DIR:-./Structured Narrative/transcripts_raw}
         target: /app/Structured Narrative/transcripts_raw
@@ -109,8 +116,11 @@ services:
         target: /app/.env
         read_only: true
       - type: bind
-        source: ./config/sectors
-        target: /app/config/sectors
+        source: ./config
+        target: /app/config
+      - type: bind
+        source: ./Structured Narrative/config
+        target: /app/Structured Narrative/config
       - type: bind
         source: ${STRUCTURED_NARRATIVE_TRANSCRIPTS_DIR:-./Structured Narrative/transcripts_raw}
         target: /app/Structured Narrative/transcripts_raw
@@ -141,8 +151,12 @@ services:
         target: /app/.env
         read_only: true
       - type: bind
-        source: ./config/sectors
-        target: /app/config/sectors
+        source: ./config
+        target: /app/config
+        read_only: true
+      - type: bind
+        source: ./Structured Narrative/config
+        target: /app/Structured Narrative/config
         read_only: true
       - type: bind
         source: ${STRUCTURED_NARRATIVE_TRANSCRIPTS_DIR:-./Structured Narrative/transcripts_raw}

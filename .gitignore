@@ -7,6 +7,8 @@ services/earnings_monitor/.env.sim.local
 # Generated Quartr → sector sync sidecar
 config/sectors/.quartr_watchlists_meta.json
 config/sectors/quartr_*.txt
+# Host MCP dumps / due worklists (calendar + live automation runtime)
+/host_quartr/
 # Structured Narrative secrets & data outputs
 Structured Narrative/.env.txt
 Structured Narrative/Unified/

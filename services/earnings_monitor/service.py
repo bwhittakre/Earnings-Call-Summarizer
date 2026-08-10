@@ -205,10 +205,18 @@ class EarningsMonitor:
             method(alert)
 
     def discover(self, *, since: datetime, until: datetime) -> int:
+        from .eligibility import eligible_discovery_tickers
+
+        # Book ∩ overlays so onboarded names stay discoverable after book sync
+        # without requiring a full env rewrite of EARNINGS_MONITOR_TICKERS.
+        tickers = eligible_discovery_tickers(self.config, self.state)
+        eligible = set(tickers)
         discovered = 0
         for event in self.event_provider.list_events(
-            self.config.tickers, since=since, until=until
+            tickers, since=since, until=until
         ):
+            if event.ticker not in eligible:
+                continue
             existing = self.state.get_event(event.provider_event_id)
             if existing is None:
                 period_match = self.state.get_event_for_period(

@@ -104,6 +104,11 @@ Opt-in only when needed: `--use-quartr-rest`, `--allow-roic-fallback`,
 `--skip-pull`.
 
 Manual `arm` always wins over subsequent watched discovery for that event ID.
+For the full automatic loop (watchlist → host calendar publish → watched
+discover → concurrent live dispatch), see
+[`earnings-monitor-auto-loop.md`](earnings-monitor-auto-loop.md) and
+[`earnings-monitor-host-automation.md`](earnings-monitor-host-automation.md).
+
 To enable automatic assisted arming, set `EARNINGS_MONITOR_PROVIDER=watched`
 and point `EARNINGS_MONITOR_EVENT_MANIFESTS` at a mounted intake directory.
 Compose uses

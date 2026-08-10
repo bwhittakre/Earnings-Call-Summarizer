@@ -61,7 +61,22 @@ def _bundle(
     }
 
 
+def _seed_overlay(tmp_path: Path, ticker: str = "AAPL") -> Path:
+    path = (
+        tmp_path
+        / "Structured Narrative"
+        / "config"
+        / "company_overlays"
+        / f"{ticker.upper()}.json"
+    )
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if not path.is_file():
+        path.write_text("{}", encoding="utf-8")
+    return path
+
+
 def _config(tmp_path: Path) -> MonitorConfig:
+    _seed_overlay(tmp_path, "AAPL")
     return MonitorConfig(
         repo_root=tmp_path,
         database_path=tmp_path / "monitor.sqlite3",

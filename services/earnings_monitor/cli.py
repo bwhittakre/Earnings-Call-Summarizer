@@ -416,10 +416,26 @@ def main(argv: list[str] | None = None) -> int:
                 state=monitor.state,
                 seed_tickers=config.tickers,
             )
-        elif ticker not in config.tickers:
-            parser.error(
-                f"{ticker} is not in EARNINGS_MONITOR_TICKERS={config.tickers}"
+        else:
+            from .eligibility import (
+                default_overlay_dir,
+                eligible_discovery_tickers,
+                list_overlay_tickers,
             )
+
+            eligible = eligible_discovery_tickers(config, monitor.state)
+            if ticker not in eligible:
+                overlays = list_overlay_tickers(default_overlay_dir(config.repo_root))
+                if ticker not in overlays:
+                    parser.error(
+                        f"{ticker} has no company overlay "
+                        f"(onboard first → Structured Narrative/config/company_overlays/{ticker}.json)"
+                    )
+                parser.error(
+                    f"{ticker} is not in the Roz book/allowlist ∩ overlays "
+                    f"(eligible={eligible or '∅'}; "
+                    f"EARNINGS_MONITOR_TICKERS={config.tickers})"
+                )
         try:
             report_at = datetime.fromisoformat(
                 args.report_at.strip().replace("Z", "+00:00")

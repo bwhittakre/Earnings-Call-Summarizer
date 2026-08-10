@@ -2,7 +2,10 @@
 
 ## Operating model
 
-Roz V1 is Windows-first and manually armed. The monitor advances event gates
+Roz V1 is Windows-first. Onboarded tickers can auto-arm via host
+`calendar_publish` + `EARNINGS_MONITOR_PROVIDER=watched` (see
+[`earnings-monitor-auto-loop.md`](earnings-monitor-auto-loop.md)); manual `arm`
+remains available and wins on override. The monitor advances event gates
 and enqueues idempotent jobs in SQLite; the worker claims those jobs and runs
 the existing Structured Narrative profiles. The Cursor Quartr watcher writes
 transcripts into the mounted inbox. Snowflake freshness uses the same
