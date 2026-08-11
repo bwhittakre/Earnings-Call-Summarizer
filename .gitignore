@@ -9,6 +9,14 @@ config/sectors/.quartr_watchlists_meta.json
 config/sectors/quartr_*.txt
 # Host MCP dumps / due worklists (calendar + live automation runtime)
 /host_quartr/
+# One-off agent/onboard scratch at repo root (helpers, logs, MCP dumps)
+/_*/
+/_*.py
+/_*.ps1
+/_*.log
+/_*.json
+/debug-*.log
+/Structured Narrative/debug-*.log
 # Structured Narrative secrets & data outputs
 Structured Narrative/.env.txt
 Structured Narrative/Unified/
