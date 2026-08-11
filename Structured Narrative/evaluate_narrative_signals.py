@@ -28,7 +28,6 @@ import argparse
 import json
 import math
 import sys
-import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -39,37 +38,6 @@ import pandas as pd
 HERE = Path(__file__).resolve().parent
 if str(HERE) not in sys.path:
     sys.path.insert(0, str(HERE))
-
-
-# #region agent log
-def _agent_debug_log(
-    location: str,
-    message: str,
-    data: dict,
-    *,
-    hypothesis_id: str,
-    run_id: str = "pre-fix",
-) -> None:
-    payload = {
-        "sessionId": "059d80",
-        "timestamp": int(time.time() * 1000),
-        "location": location,
-        "message": message,
-        "data": data,
-        "hypothesisId": hypothesis_id,
-        "runId": run_id,
-    }
-    for root in (Path.cwd(), HERE.parent):
-        log_path = root / "debug-059d80.log"
-        try:
-            with log_path.open("a", encoding="utf-8") as handle:
-                handle.write(json.dumps(payload) + "\n")
-            break
-        except OSError:
-            continue
-
-
-# #endregion
 
 from asof_alpha import (  # noqa: E402
     ASOF_ALPHA_COLUMNS,
@@ -103,9 +71,12 @@ from rank_ic_html import (  # noqa: E402
     build_rank_ic_report_html,
     company_period_signal_rows,
 )
+from signal_pack import load_signal_pack  # noqa: E402
 from spine_export import panel_to_spine, standardize_surprise_novelty_exclusivity  # noqa: E402
 
 HORIZON_KEYS = [k for k, _a, _b, _n in HORIZON_WINDOWS]
+_SIGNAL_PACK = load_signal_pack()
+SIGNAL_PACK_ID = _SIGNAL_PACK.pack_id
 
 # Legacy single-window columns — the only alpha_spec_* pair baked into the
 # per-ticker feature_panel.csv on disk. Every other horizon is computed on the
@@ -153,36 +124,12 @@ DELAYED_SIGNALS = {"quant_guidance_revision_z_pit"}
 # Pre-specified primary hypotheses (superior's feedback, item 4), evaluated and
 # reported SEPARATELY from the full exploratory signal × dimension × horizon
 # grid, with its own multiple-testing (FDR) correction — see
-# primary_hypothesis_report() / benjamini_hochberg(). The exploratory grid
-# stays uncorrected (standard practice for a screening pass); only THIS
-# pre-specified family gets the FDR treatment, per the plan.
-PRIMARY_HYPOTHESES: tuple[dict[str, str], ...] = (
-    {
-        "signal": "quant_z_pit",
-        "dimension": "demand",
-        "hypothesis": "Demand quantitative z-score (quant_z_pit) predicts forward specific return",
-    },
-    {
-        "signal": "agrees_with_quant",
-        "dimension": "demand",
-        "hypothesis": "Demand narrative/quantitative agreement predicts forward specific return",
-    },
-    {
-        "signal": "agrees_with_quant",
-        "dimension": "margins",
-        "hypothesis": "Margins narrative/quantitative agreement predicts forward specific return",
-    },
-    {
-        "signal": "agrees_with_quant",
-        "dimension": "guidance",
-        "hypothesis": "Guidance narrative/quantitative agreement predicts forward specific return",
-    },
-)
-
+# primary_hypothesis_report() / benjamini_hochberg(). Source of truth is
+# config/signal_packs/production_v1.yaml (see signal_pack.py).
+PRIMARY_HYPOTHESES: tuple[dict[str, str], ...] = _SIGNAL_PACK.hypotheses
 
 def is_primary_hypothesis(signal: str, dimension: str | None) -> bool:
     return any(h["signal"] == signal and h["dimension"] == dimension for h in PRIMARY_HYPOTHESES)
-
 
 def _finite(x: Any) -> float | None:
     if x is None:
@@ -194,7 +141,6 @@ def _finite(x: Any) -> float | None:
     if math.isnan(v) or math.isinf(v):
         return None
     return v
-
 
 def _pearson_ic(x: pd.Series, y: pd.Series) -> float | None:
     mask = x.notna() & y.notna()
@@ -209,7 +155,6 @@ def _pearson_ic(x: pd.Series, y: pd.Series) -> float | None:
         return None
     return _finite(xm.corr(ym, method="pearson"))
 
-
 def _spearman_ic(x: pd.Series, y: pd.Series) -> float | None:
     mask = x.notna() & y.notna()
     if mask.sum() < 3:
@@ -221,7 +166,6 @@ def _spearman_ic(x: pd.Series, y: pd.Series) -> float | None:
         # period/dimension slice) -- same zero-variance guard as above.
         return None
     return _finite(xr.corr(yr, method="pearson"))
-
 
 def walk_forward_period_ics(
     df: pd.DataFrame,
@@ -287,7 +231,6 @@ def walk_forward_period_ics(
             )
     return pd.DataFrame(rows)
 
-
 def summarize_ics(period_ics: pd.DataFrame) -> dict:
     if period_ics.empty:
         return {"n_periods": 0, "positive_rank_ic_periods": 0, "positive_rank_ic_hit_rate": None}
@@ -318,7 +261,6 @@ def summarize_ics(period_ics: pd.DataFrame) -> dict:
         out["positive_rank_ic_hit_rate"] = None
     return out
 
-
 def quintile_spread(df: pd.DataFrame, signal: str, label: str, n_q: int = 5) -> dict:
     sub = df[[signal, label]].dropna()
     if len(sub) < n_q * 2:
@@ -337,7 +279,6 @@ def quintile_spread(df: pd.DataFrame, signal: str, label: str, n_q: int = 5) -> 
         "quintile_means": [round(float(v), 6) for v in means.tolist()],
     }
 
-
 def divergence_hit_rate(df: pd.DataFrame, label: str) -> dict:
     """Legacy pooled agree/disagree mean-return check (see agreement_effect_stats for the CI)."""
     sub = df[df["agrees_with_quant"].notna() & df[label].notna()].copy()
@@ -352,7 +293,6 @@ def divergence_hit_rate(df: pd.DataFrame, label: str) -> dict:
         "mean_label_divergence": round(float(div[label].mean()), 6) if len(div) else None,
         "mean_label_agree": round(float(agree[label].mean()), 6) if len(agree) else None,
     }
-
 
 def _cluster_key_series(df: pd.DataFrame, cluster_col: str) -> pd.Series:
     """Map a logical cluster key to the resampling-unit series for that key.
@@ -379,7 +319,6 @@ def _cluster_key_series(df: pd.DataFrame, cluster_col: str) -> pd.Series:
     if cluster_col == "company_period":
         return df["ticker"].astype(str).str.upper() + "::" + df[period_col].astype(str)
     raise ValueError(f"Unknown cluster_col {cluster_col!r} (expected ticker/calendar_period/company_period)")
-
 
 def cluster_bootstrap_mean_diff(
     df: pd.DataFrame,
@@ -467,7 +406,6 @@ def cluster_bootstrap_mean_diff(
     out["p_value"] = round(min(p, 1.0), 6)
     return out
 
-
 def bootstrap_rank_ic_mean(period_ics: pd.DataFrame, *, n_boot: int = 2000, seed: int = 13) -> dict:
     """Cluster-bootstrap CI + two-sided p-value for a walk-forward RankIC mean.
 
@@ -493,7 +431,6 @@ def bootstrap_rank_ic_mean(period_ics: pd.DataFrame, *, n_boot: int = 2000, seed
     out["p_value"] = round(min(p, 1.0), 6)
     return out
 
-
 def benjamini_hochberg(p_values: list[float | None], *, alpha: float = 0.05) -> list[dict]:
     """Benjamini-Hochberg FDR correction, returned in the ORIGINAL input order.
 
@@ -518,7 +455,6 @@ def benjamini_hochberg(p_values: list[float | None], *, alpha: float = 0.05) -> 
         q = q_by_index[i_orig]
         result[i_orig] = {"p_value": p, "q_value": round(float(q), 6), "reject": bool(q <= alpha)}
     return result
-
 
 def primary_hypothesis_rows(
     period_df: pd.DataFrame,
@@ -581,7 +517,6 @@ def primary_hypothesis_rows(
                 }
             )
     return rows
-
 
 def agreement_effect_stats(
     df: pd.DataFrame,
@@ -649,7 +584,6 @@ def agreement_effect_stats(
         "cluster_col": cluster_col,
     }
 
-
 def load_eval_frame(
     tickers: list[str],
     *,
@@ -672,10 +606,6 @@ def load_eval_frame(
     quarter_set = set(quarters) if quarters else None
     windows = [w for w in HORIZON_WINDOWS if w[0] in horizons] if horizons else list(HORIZON_WINDOWS)
     frames: list[pd.DataFrame] = []
-    # #region agent log
-    _load_started = time.perf_counter()
-    _fetch_misses = 0
-    # #endregion
     for ticker in tickers:
         panel = load_panel(ticker)
         panel = filter_registry_complete(panel, ticker)
@@ -711,20 +641,6 @@ def load_eval_frame(
         raise FileNotFoundError("No feature panels loaded.")
     stacked = pd.concat(frames, ignore_index=True)
     stacked = stacked.sort_values(["ticker", "fiscal_period", "dimension"]).reset_index(drop=True)
-    # #region agent log
-    _agent_debug_log(
-        "evaluate_narrative_signals.py:load_eval_frame:panels",
-        "panels loaded",
-        {
-            "ticker_count": len(tickers),
-            "frames": len(frames),
-            "stacked_rows": int(len(stacked)),
-            "load_seconds": round(time.perf_counter() - _load_started, 3),
-        },
-        hypothesis_id="A",
-    )
-    _asof_started = time.perf_counter()
-    # #endregion
 
     if "earnings_date_calendar_quarter" not in stacked.columns:
         stacked = enrich_panel_period_columns(stacked)
@@ -741,19 +657,6 @@ def load_eval_frame(
         stacked = apply_event_multi_horizon_labels(
             stacked, windows=windows, fetch_if_missing=fetch_returns_if_missing
         )
-    # #region agent log
-    _agent_debug_log(
-        "evaluate_narrative_signals.py:load_eval_frame:labels",
-        "cross-ticker label rebuild finished",
-        {
-            "recompute_cross_ticker_asof": recompute_cross_ticker_asof,
-            "fetch_returns_if_missing": fetch_returns_if_missing,
-            "asof_seconds": round(time.perf_counter() - _asof_started, 3),
-            "horizon_count": len(windows),
-        },
-        hypothesis_id="D",
-    )
-    # #endregion
 
     if call_date_only:
         call_col = (
@@ -766,7 +669,6 @@ def load_eval_frame(
         ].copy()
     return stacked
 
-
 def _signal_eval_frame(df: pd.DataFrame, signal: str) -> pd.DataFrame:
     """Restrict delayed revision signals to rows with T+7 availability."""
     if signal not in DELAYED_SIGNALS:
@@ -775,7 +677,6 @@ def _signal_eval_frame(df: pd.DataFrame, signal: str) -> pd.DataFrame:
     if "t7_feature_available_date" in out.columns:
         out = out[out["t7_feature_available_date"].notna()].copy()
     return out
-
 
 def evaluate_signals(
     df: pd.DataFrame,
@@ -863,7 +764,6 @@ def evaluate_signals(
     period_df = pd.concat(period_frames, ignore_index=True) if period_frames else pd.DataFrame()
     return signal_summary, period_df
 
-
 def leave_one_ticker_out(
     df: pd.DataFrame,
     signals: list[str],
@@ -905,7 +805,6 @@ def leave_one_ticker_out(
                     }
                 )
     return rows
-
 
 def leaderboard_rows(label_blocks: dict[str, dict[str, dict[str, dict]]]) -> list[dict]:
     """Flatten label × horizon × signal × dimension summaries into leaderboard rows.
@@ -968,7 +867,6 @@ def leaderboard_rows(label_blocks: dict[str, dict[str, dict[str, dict]]]) -> lis
     )
     return rows
 
-
 def cross_section_counts(df: pd.DataFrame, period_col: str) -> dict[str, int]:
     """Distinct ticker count per period value — the actual cross-section size
     behind every RankIC number (item 7: "the number of companies in each
@@ -981,7 +879,6 @@ def cross_section_counts(df: pd.DataFrame, period_col: str) -> dict[str, int]:
         return {}
     counts = df.groupby(period_col)["ticker"].nunique()
     return {str(k): int(v) for k, v in counts.items()}
-
 
 def apply_dev_holdout_split(
     df: pd.DataFrame,
@@ -1036,7 +933,6 @@ def apply_dev_holdout_split(
     # strictly between an explicit dev_cutoff and holdout_start.
     return df[dev_mask | holdout_mask].copy()
 
-
 def label_overlap_stats(df: pd.DataFrame) -> dict:
     """How often the legacy 0-90d event vs asof alphas differ after cross-ticker rebuild."""
     if EVENT_LABEL not in df.columns or ASOF_LABEL not in df.columns:
@@ -1052,7 +948,6 @@ def label_overlap_stats(df: pd.DataFrame) -> dict:
         "max_abs_diff": round(float(diff.max()), 6) if len(diff) else None,
         "mean_abs_diff": round(float(diff.mean()), 6) if len(diff) else None,
     }
-
 
 def _json_safe(obj: Any) -> Any:
     if isinstance(obj, dict):
@@ -1074,7 +969,6 @@ def _json_safe(obj: Any) -> Any:
         return bool(obj)
     return obj
 
-
 def _default_eval_tickers() -> list[str]:
     """Prefer Roz monitor universe when EARNINGS_MONITOR_TICKERS is set."""
     import os
@@ -1083,7 +977,6 @@ def _default_eval_tickers() -> list[str]:
     if raw:
         return [part.strip().upper() for part in raw.split(",") if part.strip()]
     return list(PILOT_TICKERS)
-
 
 def main() -> int:
     ap = argparse.ArgumentParser(description="Walk-forward IC/RankIC for narrative signals.")
@@ -1269,9 +1162,6 @@ def main() -> int:
                     )
 
     try:
-        # #region agent log
-        _eval_started = time.perf_counter()
-        # #endregion
         df = load_eval_frame(
             tickers,
             call_date_only=not args.include_delayed,
@@ -1281,19 +1171,6 @@ def main() -> int:
             recompute_cross_ticker_asof=not args.no_recompute_asof,
             horizons=horizon_keys,
         )
-        # #region agent log
-        _agent_debug_log(
-            "evaluate_narrative_signals.py:main:load_eval_frame",
-            "eval frame ready",
-            {
-                "ticker_count": len(tickers),
-                "rows": int(len(df)),
-                "load_eval_seconds": round(time.perf_counter() - _eval_started, 3),
-            },
-            hypothesis_id="A",
-        )
-        _signal_started = time.perf_counter()
-        # #endregion
     except FileNotFoundError as exc:
         print(f"Error: {exc}", file=sys.stderr)
         return 1
@@ -1406,18 +1283,6 @@ def main() -> int:
         print("Error: no labels evaluated.", file=sys.stderr)
         return 1
 
-    # #region agent log
-    _agent_debug_log(
-        "evaluate_narrative_signals.py:main:signal_eval",
-        "signal evaluation finished",
-        {
-            "label_spec_count": len(label_specs),
-            "signal_eval_seconds": round(time.perf_counter() - _signal_started, 3),
-        },
-        hypothesis_id="A",
-    )
-    # #endregion
-
     board = leaderboard_rows(label_blocks)
     overlap = label_overlap_stats(df)
 
@@ -1482,6 +1347,7 @@ def main() -> int:
         "composite_min_periods": args.composite_min_periods,
         "composite_weights": composite_weights_by_label,
         "cross_section_counts": cross_section_counts_by_label,
+        "pack_id": SIGNAL_PACK_ID,
         "primary_hypotheses": [dict(h) for h in PRIMARY_HYPOTHESES],
         "primary_hypothesis_report": primary_hypothesis_report,
         "fdr_alpha": args.fdr_alpha,
@@ -1569,7 +1435,6 @@ def main() -> int:
                     f"(n_dims={dm.get('n_dimensions')})"
                 )
     return 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

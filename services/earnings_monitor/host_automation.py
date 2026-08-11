@@ -6,6 +6,7 @@ import argparse
 import json
 import logging
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -24,8 +25,10 @@ from .calendar_publish import (
 )
 from .eligibility import default_overlay_dir
 from .live_print_dispatch import load_worklist, run_dispatch
+from .ops_health import default_host_health_path, write_host_health
 
 LOG = logging.getLogger(__name__)
+UTC = timezone.utc
 
 DEFAULT_HOST_ROOT = Path("host_quartr")
 
@@ -36,6 +39,7 @@ def _default_paths(repo_root: Path) -> dict[str, Path]:
         "calendar_dir": host / "calendar",
         "dumps_dir": host / "transcripts",
         "worklist": host / "worklists" / "due_sweep.json",
+        "health": default_host_health_path(repo_root),
         "events_dir": repo_root
         / "earnings-scraper-main"
         / "earnings-scraper-main"
@@ -91,6 +95,7 @@ def cmd_watchlist(args: argparse.Namespace) -> int:
 
 
 def cmd_calendar(args: argparse.Namespace) -> int:
+    started = datetime.now(UTC)
     repo_root = (args.repo_root or Path.cwd()).resolve()
     defaults = _default_paths(repo_root)
     calendar_dir = Path(args.calendar_dir or defaults["calendar_dir"])
@@ -110,8 +115,18 @@ def cmd_calendar(args: argparse.Namespace) -> int:
         sector=args.sector,
         watchlist=watchlist,
     )
+    failures: list[dict[str, Any]] = []
     if not calendar_dir.is_dir():
         print(f"error: calendar dump dir not found: {calendar_dir}", file=sys.stderr)
+        write_host_health(
+            defaults["health"],
+            job="calendar",
+            ok=False,
+            started_at=started,
+            finished_at=datetime.now(UTC),
+            counts={"tickers": len(tickers)},
+            failures=[{"error": "calendar_dir_missing", "path": str(calendar_dir)}],
+        )
         return 2
     gateway = MergedJsonDirGateway(calendar_dir)
     published = publish_calendar(
@@ -129,6 +144,8 @@ def cmd_calendar(args: argparse.Namespace) -> int:
         watchlist=watchlist,
     )
     wrote = write_due_worklist(worklist_out, due)
+    if not tickers:
+        failures.append({"error": "empty_publish_universe", "detail": "watchlist∩overlays empty"})
     payload: dict[str, Any] = {
         "tickers": list(tickers),
         "published": [item.__dict__ for item in published],
@@ -137,12 +154,28 @@ def cmd_calendar(args: argparse.Namespace) -> int:
         "events_dir": str(events_dir),
         "calendar_dir": str(calendar_dir),
         "dry_run": bool(args.dry_run),
+        "ok": not failures,
     }
+    write_host_health(
+        defaults["health"],
+        job="calendar",
+        ok=not failures,
+        started_at=started,
+        finished_at=datetime.now(UTC),
+        counts={
+            "tickers": len(tickers),
+            "published": len(published),
+            "due": len(due),
+        },
+        failures=failures,
+        extra={"worklist_out": str(wrote)},
+    )
     print(json.dumps(payload, indent=2))
-    return 0
+    return 1 if failures else 0
 
 
 def cmd_live(args: argparse.Namespace) -> int:
+    started = datetime.now(UTC)
     repo_root = (args.repo_root or Path.cwd()).resolve()
     defaults = _default_paths(repo_root)
     worklist_path = Path(args.worklist_file or defaults["worklist"])
@@ -152,23 +185,77 @@ def cmd_live(args: argparse.Namespace) -> int:
     watchlist = None if args.no_watchlist else load_watchlist(wl_path)
     if not worklist_path.is_file():
         print(f"error: worklist not found: {worklist_path}", file=sys.stderr)
+        write_host_health(
+            defaults["health"],
+            job="live",
+            ok=False,
+            started_at=started,
+            finished_at=datetime.now(UTC),
+            failures=[{"error": "worklist_missing", "path": str(worklist_path)}],
+        )
         return 2
     targets = load_worklist(worklist_path)
+    # Production default: loop live→final. --once / --final are escape hatches.
+    use_loop = bool(args.loop) or not bool(args.once)
+    if args.final and not args.once:
+        # --final without --once: treat as once+final escape hatch.
+        use_loop = False
+    once = not use_loop
+    require_dump: bool | None
+    if args.require_dump:
+        require_dump = True
+    elif args.allow_missing_dump:
+        require_dump = False
+    else:
+        require_dump = None  # hard-fail only near call_at
     results = run_dispatch(
         targets,
         dumps_dir=dumps_dir,
         inbox=inbox,
         watchlist=watchlist,
         max_workers=args.max_workers,
-        once=not bool(args.loop),
+        once=once,
         force_final=bool(args.final),
         wait_timeout_seconds=args.wait_timeout_seconds,
         wait_poll_seconds=args.wait_poll_seconds,
         sweep_interval_seconds=args.interval_seconds,
         sweep_max_minutes=args.max_minutes,
-        require_dump=bool(args.require_dump),
+        require_dump=require_dump,
+        max_dump_age_minutes=(
+            None if args.max_dump_age_minutes <= 0 else args.max_dump_age_minutes
+        ),
     )
     hard_fail = any(not row.ok for row in results)
+    failures = [
+        {
+            "event_id": row.event_id,
+            "ticker": row.ticker,
+            "fiscal_period": row.fiscal_period,
+            "error": row.error,
+            "skipped_reason": row.skipped_reason,
+        }
+        for row in results
+        if not row.ok
+    ]
+    write_host_health(
+        defaults["health"],
+        job="live",
+        ok=not hard_fail,
+        started_at=started,
+        finished_at=datetime.now(UTC),
+        counts={
+            "targets": len(targets),
+            "ok": sum(1 for row in results if row.ok),
+            "failed": len(failures),
+            "mode": "loop" if use_loop else "once",
+            "force_final": bool(args.final),
+        },
+        failures=failures,
+        extra={
+            "worklist": str(worklist_path),
+            "dumps_dir": str(dumps_dir),
+        },
+    )
     print(
         json.dumps(
             {
@@ -176,8 +263,11 @@ def cmd_live(args: argparse.Namespace) -> int:
                 "dumps_dir": str(dumps_dir),
                 "inbox": str(inbox),
                 "targets": len(targets),
+                "mode": "loop" if use_loop else "once",
+                "force_final": bool(args.final),
                 "results": [row.__dict__ for row in results],
                 "ok": not hard_fail,
+                "health": str(defaults["health"]),
             },
             indent=2,
         )
@@ -221,18 +311,49 @@ def build_arg_parser() -> argparse.ArgumentParser:
     cal.add_argument("--dry-run", action="store_true")
     cal.add_argument("--no-watchlist", action="store_true")
 
-    live = sub.add_parser("live", help="Concurrent live_print_dispatch from worklist")
+    live = sub.add_parser(
+        "live",
+        help="Concurrent live→final dispatch from worklist (default: --loop)",
+    )
     live.add_argument("--worklist-file", type=Path, default=None)
     live.add_argument("--dumps-dir", type=Path, default=None)
     live.add_argument("--inbox", type=Path, default=None)
     live.add_argument("--max-workers", type=int, default=4)
-    live.add_argument("--loop", action="store_true")
-    live.add_argument("--final", action="store_true")
+    live.add_argument(
+        "--loop",
+        action="store_true",
+        help="Poll live→final (default when --once/--final not set)",
+    )
+    live.add_argument(
+        "--once",
+        action="store_true",
+        help="Single sweep only (escape hatch)",
+    )
+    live.add_argument(
+        "--final",
+        action="store_true",
+        help="Force FINAL write (skips LIVE; escape hatch, implies once)",
+    )
     live.add_argument("--wait-timeout-seconds", type=float, default=60.0)
     live.add_argument("--wait-poll-seconds", type=float, default=1.0)
     live.add_argument("--interval-seconds", type=float, default=30.0)
     live.add_argument("--max-minutes", type=float, default=None)
-    live.add_argument("--require-dump", action="store_true")
+    live.add_argument(
+        "--require-dump",
+        action="store_true",
+        help="Hard-fail every missing dump (not only near-call)",
+    )
+    live.add_argument(
+        "--allow-missing-dump",
+        action="store_true",
+        help="Soft-skip missing dumps even near call_at",
+    )
+    live.add_argument(
+        "--max-dump-age-minutes",
+        type=float,
+        default=45.0,
+        help="Near-call dump mtime older than this → stale_dump (0 disables)",
+    )
     live.add_argument("--no-watchlist", action="store_true")
     return parser
 

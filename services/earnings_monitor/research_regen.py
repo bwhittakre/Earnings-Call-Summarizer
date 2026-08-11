@@ -23,40 +23,6 @@ from .state import OperationalState
 
 LOG = logging.getLogger(__name__)
 
-
-# #region agent log
-def _agent_debug_log(
-    location: str,
-    message: str,
-    data: dict,
-    *,
-    hypothesis_id: str,
-    run_id: str = "pre-fix",
-) -> None:
-    import json
-
-    payload = {
-        "sessionId": "059d80",
-        "timestamp": int(time.time() * 1000),
-        "location": location,
-        "message": message,
-        "data": data,
-        "hypothesisId": hypothesis_id,
-        "runId": run_id,
-    }
-    for root in (Path.cwd(), Path(__file__).resolve().parents[2]):
-        log_path = root / "debug-059d80.log"
-        try:
-            with log_path.open("a", encoding="utf-8") as handle:
-                handle.write(json.dumps(payload) + "\n")
-            break
-        except OSError:
-            continue
-
-
-# #endregion
-
-
 @dataclass(frozen=True)
 class RegenCommandResult:
     name: str
@@ -67,7 +33,6 @@ class RegenCommandResult:
     @property
     def ok(self) -> bool:
         return self.returncode == 0
-
 
 @dataclass(frozen=True)
 class RegenRunResult:
@@ -82,10 +47,8 @@ class RegenRunResult:
     def ok(self) -> bool:
         return self.skipped or all(item.ok for item in self.commands)
 
-
 def _structured_narrative_dir(repo_root: Path) -> Path:
     return repo_root / "Structured Narrative"
-
 
 def build_rank_ic_command(
     config: MonitorConfig,
@@ -123,68 +86,83 @@ def build_rank_ic_command(
         )
     return cmd
 
-
 def build_consolidated_command(
     config: MonitorConfig,
     *,
     python: str | None = None,
+    tickers: Sequence[str] | None = None,
 ) -> list[str]:
+    """Build consolidated panel argv for the same ticker universe as Rank IC.
+
+    Prefer an explicit book ticker list (onboard → ``roz_book_tickers``) so newly
+    onboarded names are included automatically. ``--sector`` alone can lag the
+    SQLite book when overlays land before the sector file is rewritten.
+    """
     script = (
         _structured_narrative_dir(config.repo_root) / "build_consolidated_panel_report.py"
     )
-    return [
+    book = tuple(tickers) if tickers is not None else config.tickers
+    cmd = [
         python or sys.executable,
         str(script),
-        "--sector",
-        config.research_sector,
         "--min-calendar-quarter",
         config.research_min_calendar_quarter,
     ]
+    if book:
+        cmd.extend(["--tickers", *book])
+    else:
+        cmd.extend(["--sector", config.research_sector])
+    return cmd
 
+def sync_onboarded_book_members(
+    config: MonitorConfig,
+    state: OperationalState,
+) -> tuple[str, ...]:
+    """Ensure sector names that already have overlays are on the Roz book.
+
+    Onboard on one host (or an older Docker volume) can leave ``roz_book_tickers``
+    missing CSCO/OPAL/etc. even though overlays + sector membership exist.
+    Research-regen heals that gap before Rank IC / consolidated rebuild.
+    """
+    from .eligibility import default_overlay_dir, list_overlay_tickers
+    from .ticker_book import (
+        ensure_ticker_in_book,
+        load_sector_tickers,
+        resolve_book_tickers,
+        sector_tickers_path,
+    )
+
+    overlays = list_overlay_tickers(default_overlay_dir(config.repo_root))
+    sector = load_sector_tickers(
+        sector_tickers_path(config.repo_root, config.research_sector)
+    )
+    seed = resolve_book_tickers(config, state)
+    for ticker in sector:
+        if ticker in overlays:
+            ensure_ticker_in_book(
+                ticker=ticker,
+                config=config,
+                state=state,
+                seed_tickers=seed,
+            )
+            seed = resolve_book_tickers(config, state)
+    return resolve_book_tickers(config, state)
 
 def _run_command(name: str, command: Sequence[str], *, cwd: Path) -> RegenCommandResult:
     started = time.perf_counter()
     LOG.info("Running %s: %s", name, " ".join(command))
-    # #region agent log
-    _agent_debug_log(
-        "research_regen.py:_run_command:start",
-        "regen subprocess starting",
-        {
-            "name": name,
-            "cwd": str(cwd),
-            "ticker_arg_count": sum(
-                1 for i, part in enumerate(command) if i and command[i - 1] == "--tickers"
-            ),
-            "argv_len": len(command),
-        },
-        hypothesis_id="A",
-    )
-    # #endregion
     completed = subprocess.run(list(command), cwd=str(cwd), check=False)
     duration = time.perf_counter() - started
     if completed.returncode != 0:
         LOG.error("%s failed with exit code %s", name, completed.returncode)
     else:
         LOG.info("%s finished in %.1fs", name, duration)
-    # #region agent log
-    _agent_debug_log(
-        "research_regen.py:_run_command:done",
-        "regen subprocess finished",
-        {
-            "name": name,
-            "duration_seconds": round(duration, 3),
-            "returncode": int(completed.returncode),
-        },
-        hypothesis_id="A" if name == "evaluate_narrative_signals" else "B",
-    )
-    # #endregion
     return RegenCommandResult(
         name=name,
         command=tuple(command),
         returncode=int(completed.returncode),
         duration_seconds=duration,
     )
-
 
 def regenerate_research_book(
     config: MonitorConfig,
@@ -199,22 +177,6 @@ def regenerate_research_book(
     if not sn_dir.is_dir():
         raise FileNotFoundError(f"Structured Narrative directory missing: {sn_dir}")
     book = tuple(tickers) if tickers is not None else config.tickers
-    # #region agent log
-    _agent_debug_log(
-        "research_regen.py:regenerate_research_book",
-        "research book regen scope",
-        {
-            "triggered_by": triggered_by,
-            "book_size": len(book),
-            "tickers": list(book),
-            "min_calendar_quarter": config.research_min_calendar_quarter,
-            "sector": config.research_sector,
-            "fast_regen": fast_regen,
-        },
-        hypothesis_id="A",
-        run_id="post-fix" if fast_regen else "pre-fix",
-    )
-    # #endregion
     started = datetime.now(timezone.utc)
     commands: list[RegenCommandResult] = [
         _run_command(
@@ -231,10 +193,25 @@ def regenerate_research_book(
         commands.append(
             _run_command(
                 "build_consolidated_panel_report",
-                build_consolidated_command(config, python=python),
+                build_consolidated_command(config, python=python, tickers=book),
                 cwd=sn_dir,
             )
         )
+        try:
+            from .book_ranks import build_book_ranks_command
+        except ImportError:
+            # Image may lag the host worktree; Rank IC + consolidated still count.
+            LOG.warning(
+                "book_ranks module unavailable; skipping book ranks step"
+            )
+        else:
+            commands.append(
+                _run_command(
+                    "build_book_ranks",
+                    build_book_ranks_command(config, python=python, tickers=book),
+                    cwd=sn_dir,
+                )
+            )
     finished = datetime.now(timezone.utc)
     return RegenRunResult(
         triggered_by=triggered_by,
@@ -242,7 +219,6 @@ def regenerate_research_book(
         finished_at=finished.isoformat(),
         commands=tuple(commands),
     )
-
 
 def _dirty_age_seconds(dirty: dict, *, now: datetime) -> float | None:
     marked_at = dirty.get("marked_at")
@@ -255,7 +231,6 @@ def _dirty_age_seconds(dirty: dict, *, now: datetime) -> float | None:
     if stamped.tzinfo is None:
         stamped = stamped.replace(tzinfo=timezone.utc)
     return max(0.0, (now - stamped.astimezone(timezone.utc)).total_seconds())
-
 
 def run_research_regen_once(
     config: MonitorConfig,
@@ -298,10 +273,10 @@ def run_research_regen_once(
     trigger = "force" if force else "dirty"
     if dirty and dirty.get("triggers"):
         trigger = ",".join(str(item) for item in dirty["triggers"][-5:])
-    from .ticker_book import resolve_book_tickers, seed_book_if_empty
+    from .ticker_book import seed_book_if_empty
 
     seed_book_if_empty(config, state)
-    book_tickers = resolve_book_tickers(config, state)
+    book_tickers = sync_onboarded_book_members(config, state)
     regenerate = runner or regenerate_research_book
     try:
         if runner is None:
@@ -345,7 +320,6 @@ def run_research_regen_once(
         )
     return result
 
-
 def run_research_regen_loop(config: MonitorConfig, state: OperationalState) -> None:
     """Poll the dirty flag and regenerate when due."""
     from .ticker_book import seed_book_if_empty
@@ -364,6 +338,18 @@ def run_research_regen_loop(config: MonitorConfig, state: OperationalState) -> N
     while True:
         result = run_research_regen_once(config, state, force=False, honor_debounce=True)
         if result.skipped:
+            # Unblock official book ranks when investable_as_of_date arrives
+            # even if Rank IC is not dirty.
+            try:
+                from .book_ranks import maybe_run_pending_investable_ranks
+
+                pending = maybe_run_pending_investable_ranks(config)
+                if pending and pending.get("ok"):
+                    LOG.info("Pending investable-asof book ranks rebuilt")
+                elif pending and not pending.get("ok"):
+                    LOG.error("Pending investable-asof book ranks failed: %s", pending)
+            except Exception:  # noqa: BLE001
+                LOG.exception("Pending investable-asof book ranks check failed")
             time.sleep(idle)
             continue
         if result.ok:

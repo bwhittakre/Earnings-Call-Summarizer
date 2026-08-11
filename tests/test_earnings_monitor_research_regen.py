@@ -20,6 +20,7 @@ from services.earnings_monitor.research_regen import (
     build_consolidated_command,
     build_rank_ic_command,
     run_research_regen_once,
+    sync_onboarded_book_members,
 )
 from services.earnings_monitor.service import EarningsMonitor
 from services.earnings_monitor.state import OperationalState
@@ -339,18 +340,44 @@ def test_regen_once_force_runs_even_when_clean(tmp_path):
     assert state.research_book_dirty() is None
 
 
+def test_sync_onboarded_book_members_adds_overlay_sector_names(tmp_path):
+    sector = tmp_path / "config" / "sectors" / "xlk_tech.txt"
+    sector.parent.mkdir(parents=True)
+    sector.write_text("AAPL\nCSCO\nZZZ\n", encoding="utf-8")
+    overlays = tmp_path / "Structured Narrative" / "config" / "company_overlays"
+    overlays.mkdir(parents=True)
+    (overlays / "CSCO.json").write_text("{}", encoding="utf-8")
+    (overlays / "AAPL.json").write_text("{}", encoding="utf-8")
+    state = OperationalState(tmp_path / "monitor.sqlite3")
+    state.initialize()
+    state.set_meta(
+        "roz_book_tickers",
+        '{"tickers": ["AAPL"]}',
+    )
+    book = sync_onboarded_book_members(_config(tmp_path), state)
+    assert "CSCO" in book
+    assert "AAPL" in book
+    assert "ZZZ" not in book  # on sector but no overlay
+
+
 def test_regen_command_builders_use_book_defaults(tmp_path):
     cfg = _config(tmp_path)
     rank = build_rank_ic_command(cfg, python="python")
     rank_full = build_rank_ic_command(cfg, python="python", fast_regen=False)
     consol = build_consolidated_command(cfg, python="python")
+    consol_sector = build_consolidated_command(
+        _config(tmp_path, tickers=()), python="python"
+    )
     assert "--min-calendar-quarter" in rank
     assert "2016-Q2" in rank
     assert "AAPL" in rank and "MSFT" in rank
     assert "--no-jackknife" in rank
     assert "--no-jackknife" not in rank_full
-    assert "--sector" in consol
-    assert "xlk_tech" in consol
+    assert "--tickers" in consol
+    assert "AAPL" in consol and "MSFT" in consol
+    assert "--sector" not in consol
+    assert "--sector" in consol_sector
+    assert "xlk_tech" in consol_sector
     assert "2016-Q2" in consol
 
 

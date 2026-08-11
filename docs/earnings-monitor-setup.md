@@ -109,6 +109,11 @@ discover → concurrent live dispatch), see
 [`earnings-monitor-auto-loop.md`](earnings-monitor-auto-loop.md) and
 [`earnings-monitor-host-automation.md`](earnings-monitor-host-automation.md).
 
+Book ranks on FINAL (production signal pack → cross-section ranks) are
+documented in [`book-ranks.md`](book-ranks.md). Live-loop hardening
+(state-aware stuck alerts, host health JSON, LIVE retry) is covered in the
+auto-loop / host-automation docs.
+
 To enable automatic assisted arming, set `EARNINGS_MONITOR_PROVIDER=watched`
 and point `EARNINGS_MONITOR_EVENT_MANIFESTS` at a mounted intake directory.
 Compose uses

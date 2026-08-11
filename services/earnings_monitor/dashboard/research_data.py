@@ -167,6 +167,135 @@ def load_rank_ic_bundle(
     )
 
 
+@dataclass
+class BookRanksBundle:
+    rows: list[dict[str, Any]] = field(default_factory=list)
+    meta: dict[str, Any] = field(default_factory=dict)
+    missing: list[str] = field(default_factory=list)
+
+    @property
+    def available(self) -> bool:
+        return bool(self.rows) or bool(self.meta.get("built_at"))
+
+    @property
+    def empty_message(self) -> str:
+        return (
+            "Book ranks not found under cross_company/. "
+            "Run after a FINAL post_call or: "
+            "python build_book_ranks.py --tickers <universe>"
+        )
+
+
+_BOOK_RANKS_CSV_ALIASES = {
+    "Ticker": "ticker",
+    "Fiscal period": "fiscal_period",
+    "Period bucket": "period_bucket",
+    "As-of date": "as_of_date",
+    "Rank mode": "rank_mode",
+    "Signal": "signal",
+    "Dimension": "dimension",
+    "Hypothesis": "hypothesis",
+    "Rank (1=highest)": "rank",
+    "Cross-section z": "cs_z",
+    "Raw signal": "raw",
+    "Peer count": "n_peers",
+    "Eligible": "eligible",
+    "Pack": "pack_id",
+    "Trigger ticker": "trigger_ticker",
+    "Trigger period": "trigger_period",
+    "Built at (UTC)": "built_at",
+}
+
+
+def _normalize_book_ranks_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Map human-readable CSV headers (and drop legend columns) to machine keys."""
+    out: list[dict[str, Any]] = []
+    for row in rows:
+        normalized: dict[str, Any] = {}
+        for key, value in row.items():
+            if key in {None, "", "Metric", "Meaning"}:
+                continue
+            dest = _BOOK_RANKS_CSV_ALIASES.get(str(key), str(key))
+            normalized[dest] = value
+        # Skip pure legend spacer rows with no ticker.
+        if not str(normalized.get("ticker") or "").strip():
+            continue
+        out.append(normalized)
+    return out
+
+
+def load_book_ranks_bundle(
+    *,
+    history_source: str | os.PathLike[str] | None = None,
+) -> BookRanksBundle:
+    """Load latest book ranks (parquet preferred, else readable CSV) + summary."""
+    root = resolve_cross_company_root(history_source)
+    csv_path = root / "csv" / "book_ranks.csv"
+    parquet_path = root / "parquet" / "book_ranks.parquet"
+    json_path = root / "json" / "book_ranks_summary.json"
+    html_path = root / "reports" / "book_ranks.html"
+    missing: list[str] = []
+    if not csv_path.is_file() and not parquet_path.is_file():
+        missing.append(str(csv_path))
+    if not json_path.is_file():
+        missing.append(str(json_path))
+
+    rows: list[dict[str, Any]] = []
+    if parquet_path.is_file():
+        try:
+            import pandas as pd  # type: ignore
+
+            frame = pd.read_parquet(parquet_path)
+            if not frame.empty:
+                rows = frame.to_dict(orient="records")
+        except Exception:  # noqa: BLE001
+            rows = []
+    if not rows:
+        rows = _normalize_book_ranks_rows(_read_csv_rows(csv_path))
+
+    meta: dict[str, Any] = {
+        "root": str(root),
+        "csv_path": str(csv_path),
+        "parquet_path": str(parquet_path),
+        "json_path": str(json_path),
+        "html_path": str(html_path),
+        "generated_at": (
+            _mtime_iso(parquet_path) or _mtime_iso(csv_path) or _mtime_iso(json_path)
+        ),
+    }
+    if json_path.is_file():
+        try:
+            payload = json.loads(json_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            payload = {}
+        if isinstance(payload, dict):
+            meta.update(
+                {
+                    "pack_id": payload.get("pack_id"),
+                    "rank_mode": payload.get("rank_mode"),
+                    "period_bucket": payload.get("period_bucket"),
+                    "as_of_date": payload.get("as_of_date"),
+                    "n_peers": payload.get("n_peers"),
+                    "trigger_ticker": payload.get("trigger_ticker"),
+                    "trigger_period": payload.get("trigger_period"),
+                    "built_at": payload.get("built_at") or meta.get("generated_at"),
+                    "skipped_reason": payload.get("skipped_reason"),
+                    "pending": payload.get("pending"),
+                    "prior_built_at": payload.get("prior_built_at"),
+                }
+            )
+            meta["generated_at"] = meta.get("built_at") or meta.get("generated_at")
+    return BookRanksBundle(rows=rows, meta=meta, missing=missing)
+
+
+def resolve_book_ranks_html(
+    *,
+    history_source: str | os.PathLike[str] | None = None,
+) -> Path | None:
+    """Locate the filterable book ranks HTML report."""
+    return resolve_report_html("book_ranks", history_source=history_source)
+
+
 def load_consolidated_panel(
     *,
     history_source: str | os.PathLike[str] | None = None,

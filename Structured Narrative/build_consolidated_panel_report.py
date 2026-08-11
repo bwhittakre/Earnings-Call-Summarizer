@@ -13,7 +13,6 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-import time
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -24,37 +23,6 @@ REPO_ROOT = HERE.parent
 
 if str(HERE) not in sys.path:
     sys.path.insert(0, str(HERE))
-
-
-# #region agent log
-def _agent_debug_log(
-    location: str,
-    message: str,
-    data: dict,
-    *,
-    hypothesis_id: str,
-    run_id: str = "pre-fix",
-) -> None:
-    payload = {
-        "sessionId": "059d80",
-        "timestamp": int(time.time() * 1000),
-        "location": location,
-        "message": message,
-        "data": data,
-        "hypothesisId": hypothesis_id,
-        "runId": run_id,
-    }
-    for root in (Path.cwd(), REPO_ROOT):
-        log_path = root / "debug-059d80.log"
-        try:
-            with log_path.open("a", encoding="utf-8") as handle:
-                handle.write(json.dumps(payload) + "\n")
-            break
-        except OSError:
-            continue
-
-
-# #endregion
 
 from asof_alpha import apply_asof_alpha_labels  # noqa: E402
 from company_config import PILOT_OUTPUT_QUARTERS, PILOT_TICKERS  # noqa: E402
@@ -85,7 +53,6 @@ PANEL_CHUNKS_DIR = "panel_chunks"
 
 EIGHT_QUARTER_SCOPE = tuple(PILOT_OUTPUT_QUARTERS)
 
-
 def load_sector_tickers(sector: str) -> list[str]:
     path = SECTORS_DIR / f"{sector.strip()}.txt"
     if not path.is_file():
@@ -103,7 +70,6 @@ def load_sector_tickers(sector: str) -> list[str]:
         raise ValueError(f"No tickers in sector file {path}")
     return tickers
 
-
 def _default_consolidated_tickers() -> list[str]:
     """Prefer Roz monitor universe when EARNINGS_MONITOR_TICKERS is set."""
     import os
@@ -113,7 +79,6 @@ def _default_consolidated_tickers() -> list[str]:
         return [part.strip().upper() for part in raw.split(",") if part.strip()]
     return list(PILOT_TICKERS)
 
-
 def resolve_tickers(args) -> tuple[list[str], str | None]:
     if args.sector and args.tickers:
         raise ValueError("Use either --sector or --tickers, not both.")
@@ -121,7 +86,6 @@ def resolve_tickers(args) -> tuple[list[str], str | None]:
         return load_sector_tickers(args.sector), args.sector
     tickers = [t.upper() for t in (args.tickers or _default_consolidated_tickers())]
     return tickers, None
-
 
 def latest_common_quarter(tickers: list[str], stacked: pd.DataFrame) -> str | None:
     sets = [
@@ -136,7 +100,6 @@ def latest_common_quarter(tickers: list[str], stacked: pd.DataFrame) -> str | No
         return sorted(all_fps, key=fiscal_period_sort_key)[-1] if all_fps else None
     return sorted(common, key=fiscal_period_sort_key)[-1]
 
-
 def default_period_bucket(stacked: pd.DataFrame) -> str | None:
     """Latest period-end calendar quarter with the most tickers represented."""
     if "period_end_calendar_quarter" not in stacked.columns:
@@ -147,7 +110,6 @@ def default_period_bucket(stacked: pd.DataFrame) -> str | None:
         return None
     return max(counts.index.tolist(), key=lambda b: (calendar_quarter_sort_key(str(b)), int(counts[b])))
 
-
 def period_buckets_from_panel(stacked: pd.DataFrame) -> list[str]:
     if "period_end_calendar_quarter" not in stacked.columns:
         stacked = enrich_panel_period_columns(stacked)
@@ -157,13 +119,11 @@ def period_buckets_from_panel(stacked: pd.DataFrame) -> list[str]:
     ]
     return sorted(buckets, key=calendar_quarter_sort_key, reverse=True)
 
-
 def filter_quarters(panel: pd.DataFrame, quarters: list[str] | None) -> pd.DataFrame:
     if not quarters:
         return panel
     allowed = set(quarters)
     return panel[panel["fiscal_period"].isin(allowed)].copy()
-
 
 def build_summary_json(
     stacked: pd.DataFrame,
@@ -246,7 +206,6 @@ def build_summary_json(
         },
     }
 
-
 def main() -> int:
     ap = argparse.ArgumentParser(description="Build consolidated cross-company feature panel report.")
     ap.add_argument("--tickers", nargs="+", help="Tickers to include (default: pilot tickers).")
@@ -324,9 +283,6 @@ def main() -> int:
     frames: list[pd.DataFrame] = []
     loaded: list[str] = []
     skipped: list[str] = []
-    # #region agent log
-    _load_started = time.perf_counter()
-    # #endregion
     for ticker in tickers:
         try:
             panel = load_panel(ticker)
@@ -373,21 +329,6 @@ def main() -> int:
     stacked = pd.concat(frames, ignore_index=True)
     stacked = standardize_surprise_novelty_exclusivity(stacked)
     stacked = enrich_panel_period_columns(stacked)
-    # #region agent log
-    _agent_debug_log(
-        "build_consolidated_panel_report.py:main:load_panels",
-        "panels loaded for consolidated report",
-        {
-            "requested": len(tickers),
-            "loaded": len(loaded),
-            "skipped": skipped,
-            "stacked_rows": int(len(stacked)),
-            "load_seconds": round(time.perf_counter() - _load_started, 3),
-        },
-        hypothesis_id="B",
-    )
-    _alpha_started = time.perf_counter()
-    # #endregion
     if args.min_calendar_quarter:
         before = len(stacked)
         stacked = filter_min_calendar_quarter(stacked, args.min_calendar_quarter)
@@ -415,15 +356,6 @@ def main() -> int:
     stacked = apply_asof_alpha_labels(stacked, fetch_if_missing=True)
     stacked = annotate_included(stacked)
     stacked = prepare_consolidated_panel(stacked, args.dimension_order)
-    # #region agent log
-    _agent_debug_log(
-        "build_consolidated_panel_report.py:main:alpha_labels",
-        "asof alpha labels applied",
-        {"alpha_seconds": round(time.perf_counter() - _alpha_started, 3)},
-        hypothesis_id="D",
-    )
-    _html_started = time.perf_counter()
-    # #endregion
 
     coverage = build_coverage_summary(
         tickers_requested=tickers,
@@ -509,18 +441,6 @@ def main() -> int:
         ),
         encoding="utf-8",
     )
-    # #region agent log
-    _agent_debug_log(
-        "build_consolidated_panel_report.py:main:html",
-        "consolidated html written",
-        {
-            "html_bytes": html_path.stat().st_size if html_path.is_file() else 0,
-            "lookup_tickers": len(lookups_by_ticker),
-            "html_seconds": round(time.perf_counter() - _html_started, 3),
-        },
-        hypothesis_id="B",
-    )
-    # #endregion
     summary_path.write_text(json.dumps(summary, indent=2), encoding="utf-8")
     coverage_path.write_text(json.dumps(coverage, indent=2), encoding="utf-8")
 
@@ -534,7 +454,6 @@ def main() -> int:
     if skipped:
         print(f"  Skipped: {', '.join(skipped)}")
     return 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

@@ -506,18 +506,23 @@ class EarningsMonitor:
                 # enqueue a second LIVE post_call.
                 self.state.upsert_event(monitored)
                 continue
+            # In-flight LIVE post_call: do not double-enqueue before success gate.
+            if is_live and monitored.state in {
+                EventState.POST_CALL_QUEUED,
+                EventState.POST_CALL_RUNNING,
+            }:
+                self.state.upsert_event(monitored)
+                continue
             if monitored.state == EventState.TRANSCRIPT_PENDING:
                 monitored.transition(EventState.TRANSCRIPT_UNSTABLE)
-            if is_live:
-                # Persist the one-live-score gate with the enqueue upsert so a
-                # crash mid-cycle still blocks further LIVE post_calls.
-                monitored.live_post_call_fingerprint = decision.fingerprint
-                monitored.live_scored_at = now
             queued += self._enqueue_stage(
                 monitored,
                 stage="post_call",
                 target=EventState.POST_CALL_QUEUED,
-                payload={"fingerprint": decision.fingerprint},
+                payload={
+                    "fingerprint": decision.fingerprint,
+                    "transcript_status": document.status.value,
+                },
             )
         return queued
 
@@ -598,6 +603,47 @@ class EarningsMonitor:
             history_refresh = self._refresh_history_dataset()
             if history_refresh is not None:
                 result["history_refresh"] = history_refresh
+            # LIVE one-score gate: set only after a successful LIVE post_call.
+            if (
+                stage == "post_call"
+                and transcript is not None
+                and transcript.status == TranscriptStatus.LIVE
+            ):
+                monitored.live_post_call_fingerprint = (
+                    job["payload"].get("fingerprint")
+                    or monitored.transcript_fingerprint
+                )
+                monitored.live_scored_at = self.clock()
+            # Book ranks: FINAL prints only (LIVE still dirties Rank IC below).
+            if (
+                stage == "post_call"
+                and transcript is not None
+                and transcript.status == TranscriptStatus.FINAL
+            ):
+                from .book_ranks import run_book_ranks_subprocess
+
+                ranks_result = run_book_ranks_subprocess(
+                    self.config,
+                    trigger_ticker=monitored.event.ticker,
+                    trigger_period=monitored.event.fiscal_period,
+                )
+                result["book_ranks"] = ranks_result
+                if not ranks_result.get("ok"):
+                    self.state.set_meta(
+                        "book_ranks_last_error",
+                        json.dumps(
+                            {
+                                "ok": False,
+                                "error": ranks_result.get("error")
+                                or ranks_result.get("stderr"),
+                                "trigger_ticker": monitored.event.ticker,
+                                "trigger_period": monitored.event.fiscal_period,
+                                "at": self.clock().astimezone(timezone.utc).isoformat(),
+                            },
+                            sort_keys=True,
+                        ),
+                        now=self.clock(),
+                    )
             self.state.finish_job(job["id"], success=True)
             target = {
                 "pre_release": EventState.AWAITING_RELEASE,
@@ -685,6 +731,16 @@ class EarningsMonitor:
                     "post_call": EventState.POST_CALL_QUEUED,
                 }[stage]
                 monitored.transition(retry_state)
+            elif (
+                stage == "post_call"
+                and str(job["payload"].get("transcript_status") or "").lower()
+                == "live"
+            ):
+                # Exhausted LIVE failure: clear gate so a later stagnated print
+                # can re-enqueue.
+                monitored.live_post_call_fingerprint = None
+                monitored.live_scored_at = None
+                monitored.transition(EventState.TRANSCRIPT_PENDING)
             self.state.upsert_event(monitored)
             if job["attempts"] >= job["max_attempts"]:
                 self._notify_failure(

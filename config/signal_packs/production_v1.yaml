@@ -1,0 +1,28 @@
+# Frozen production signal pack for book ranks + primary Rank IC hypotheses.
+# Do not expand casually — bump pack_id (production_v2) for intentional changes.
+pack_id: production_v1
+rank_method: cross_section_z
+period_bucket: period_end_calendar_quarter
+min_names: 3
+# Official book ranks use investable_asof (common bucket T+7). Call-day is provisional only.
+rank_mode: investable_asof
+# Research context for the primary label family (eval).
+primary_label_family: asof
+primary_horizon_key: "0_56"
+hypotheses:
+  - signal: quant_z_pit
+    dimension: demand
+    hypothesis: >-
+      Demand quantitative z-score (quant_z_pit) predicts forward specific return
+  - signal: agrees_with_quant
+    dimension: demand
+    hypothesis: >-
+      Demand narrative/quantitative agreement predicts forward specific return
+  - signal: agrees_with_quant
+    dimension: margins
+    hypothesis: >-
+      Margins narrative/quantitative agreement predicts forward specific return
+  - signal: agrees_with_quant
+    dimension: guidance
+    hypothesis: >-
+      Guidance narrative/quantitative agreement predicts forward specific return

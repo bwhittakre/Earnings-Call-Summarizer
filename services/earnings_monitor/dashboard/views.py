@@ -23,10 +23,35 @@ from .research_data import (
     can_inline_html,
     format_universe_stale_message,
     html_report_meta,
+    load_book_ranks_bundle,
     load_consolidated_panel,
     load_rank_ic_bundle,
+    resolve_book_ranks_html,
     resolve_consolidated_html,
     resolve_rank_ic_html,
+)
+
+_BOOK_RANKS_METRIC_KEY = (
+    (
+        "Rank (1=highest)",
+        "Dense rank within eligible peers for this hypothesis. 1 is strongest.",
+    ),
+    (
+        "Cross-section z",
+        "Z-score of the raw signal vs peers in the same period bucket.",
+    ),
+    (
+        "Raw signal",
+        "Call-day feature value used for ranking (quant_z_pit / agrees_with_quant).",
+    ),
+    (
+        "Peer count",
+        "Eligible book names in the cross-section for this hypothesis.",
+    ),
+    (
+        "Eligible",
+        "False when excluded (first-print, missing prior, not investable, missing signal).",
+    ),
 )
 from .sectors import pad_company_rows
 
@@ -613,6 +638,144 @@ def render_signal_research(
     )
 
 
+def render_book_ranks(
+    st: Any,
+    data: DashboardData,
+    *,
+    sector_tickers: Sequence[str] | None = None,
+) -> None:
+    del data, sector_tickers
+    st.header("Book ranks")
+    st.caption(
+        "Cross-sectional ranks for the frozen production signal pack "
+        "(``production_v1``), published at investable-as-of (bucket T+7). "
+        "Filter by hypothesis/ticker; metric key is on the right."
+    )
+    html_path = resolve_book_ranks_html()
+    if html_path is not None:
+        _render_html_report(
+            st,
+            html_path,
+            missing_hint="",
+        )
+        return
+
+    bundle = load_book_ranks_bundle()
+    if not bundle.available:
+        st.info(bundle.empty_message)
+        if bundle.missing:
+            st.caption("Missing: " + ", ".join(bundle.missing[:3]))
+        return
+    meta = bundle.meta
+    st.caption(
+        f"pack={meta.get('pack_id') or '—'} · "
+        f"period_bucket={meta.get('period_bucket') or '—'} · "
+        f"n_peers={meta.get('n_peers') if meta.get('n_peers') is not None else '—'} · "
+        f"built_at={meta.get('built_at') or meta.get('generated_at') or '—'}"
+    )
+    if meta.get("trigger_ticker"):
+        st.caption(
+            f"Last trigger: {meta.get('trigger_ticker')} "
+            f"{meta.get('trigger_period') or ''}".strip()
+        )
+    if meta.get("skipped_reason"):
+        st.warning(f"Last build skipped: {meta['skipped_reason']}")
+    rows = list(bundle.rows)
+    if not rows:
+        st.info("Summary present but no rank rows (peer set below min_names).")
+        return
+
+    hyp_labels = ["All hypotheses"] + sorted(
+        {
+            f"{r.get('signal')} × {r.get('dimension')}"
+            for r in rows
+            if r.get("signal") and r.get("dimension")
+        }
+    )
+    left, right = st.columns([3, 1])
+    with left:
+        c1, c2, c3 = st.columns([2, 2, 1])
+        choice = c1.selectbox("Hypothesis", hyp_labels, key="book_ranks_hyp")
+        ticker_q = c2.text_input("Ticker contains", value="", key="book_ranks_q")
+        eligible_only = c3.checkbox("Eligible only", value=True, key="book_ranks_elig")
+
+        filtered = list(rows)
+        if choice != "All hypotheses":
+            signal, _, dimension = choice.partition(" × ")
+            filtered = [
+                r
+                for r in filtered
+                if str(r.get("signal")) == signal and str(r.get("dimension")) == dimension
+            ]
+        query = ticker_q.strip().upper()
+        if query:
+            filtered = [
+                r
+                for r in filtered
+                if query in str(r.get("ticker") or "").upper()
+            ]
+        if eligible_only:
+            filtered = [
+                r
+                for r in filtered
+                if r.get("eligible") in (True, "True", "true", 1)
+            ]
+        trigger = str(meta.get("trigger_ticker") or "").upper()
+
+        def _sort_key(row: dict[str, Any]) -> tuple:
+            rank = row.get("rank")
+            try:
+                rank_i = (
+                    int(float(rank))
+                    if rank is not None and str(rank) != "nan"
+                    else 10**9
+                )
+            except (TypeError, ValueError):
+                rank_i = 10**9
+            return (
+                str(row.get("dimension") or ""),
+                str(row.get("signal") or ""),
+                rank_i,
+                str(row.get("ticker") or ""),
+            )
+
+        filtered = sorted(filtered, key=_sort_key)
+        display = []
+        for row in filtered:
+            ticker = str(row.get("ticker") or "").upper()
+            display.append(
+                {
+                    "Ticker": f"→ {ticker}" if trigger and ticker == trigger else ticker,
+                    "Fiscal period": row.get("fiscal_period"),
+                    "Hypothesis": f"{row.get('signal')} × {row.get('dimension')}",
+                    "Rank (1=highest)": row.get("rank"),
+                    "Cross-section z": row.get("cs_z"),
+                    "Raw signal": row.get("raw"),
+                    "Peer count": row.get("n_peers"),
+                    "Eligible": row.get("eligible"),
+                }
+            )
+        st.caption(f"Showing {len(display)} of {len(rows)} rows")
+        if display:
+            try:
+                import pandas as pd  # type: ignore
+
+                st.dataframe(
+                    pd.DataFrame(display),
+                    use_container_width=True,
+                    hide_index=True,
+                    height=min(560, 48 + 28 * max(len(display), 4)),
+                )
+            except Exception:  # noqa: BLE001
+                _table(st, display)
+        else:
+            st.info("No rows match the current filters.")
+    with right:
+        st.subheader("Metric key")
+        for title, body in _BOOK_RANKS_METRIC_KEY:
+            st.markdown(f"**{title}**  \n{body}")
+
+
 def render_consolidated_panel(
     st: Any,
     data: DashboardData,
@@ -691,6 +854,32 @@ def render_operations(
     left, right = st.columns(2)
     left.metric("Active alerts", len(alerts))
     right.metric("Recorded runs", len(data.job_runs))
+
+    host = data.host_feed_status()
+    st.subheader("Host feed")
+    if host.get("available"):
+        age = host.get("age_seconds")
+        age_txt = f"{age}s ago" if age is not None else "—"
+        st.caption(
+            f"Last host job: {host.get('job') or '—'} · "
+            f"ok={host.get('ok')} · finished {age_txt} · "
+            f"due_sweep mtime={host.get('due_sweep_mtime') or '—'}"
+        )
+        failures = list(host.get("failures") or [])
+        if failures:
+            st.warning(f"{len(failures)} open host failure(s)")
+            _table(st, failures[:20])
+        else:
+            st.caption("No open host failures in last_run.json.")
+    else:
+        st.caption(
+            "Host health not found "
+            f"({host.get('path') or 'host_quartr/health/last_run.json'}). "
+            "Run host_automation calendar|live on the host."
+        )
+        if host.get("due_sweep_mtime"):
+            st.caption(f"due_sweep mtime={host['due_sweep_mtime']}")
+
     st.subheader("Alerts")
     _table(st, with_company_labels(alerts))
     st.subheader("Event run timeline")
@@ -739,6 +928,7 @@ VIEWS = {
     "Cross-company": render_cross_company,
     "Narrative vs quant": render_narrative_vs_quant,
     "Signal research": render_signal_research,
+    "Book ranks": render_book_ranks,
     "Consolidated panel": render_consolidated_panel,
     "Operations": render_operations,
     "Audit": render_audit,

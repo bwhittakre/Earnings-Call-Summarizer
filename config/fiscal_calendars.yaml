@@ -33,3 +33,6 @@ STRW:
 OPAL:
   type: calendar_fiscal
 
+AMD:
+  type: calendar_fiscal
+

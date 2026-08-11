@@ -20,6 +20,7 @@ monitor (PROVIDER=watched) → discover → lifecycle
 near call: MCP transcript dumps → host_automation live (concurrent)
   → inbox/*.transcript.json
 worker → one LIVE post_call, then FINAL re-score → research-regen
+  → FINAL also refreshes book ranks (see book-ranks.md)
 ```
 
 ## Prerequisites
@@ -120,7 +121,12 @@ watchlist is the intentional “what to auto-arm/sweep” set.
 | Manifest published but never discovered | Ticker missing from book/env; check discover eligibility |
 | Discover empty every cycle | `PROVIDER=manual`, or empty `inbox/events` |
 | `not_on_watchlist` / pruned | Quarter or company removed from watchlist |
-| Stale dump / `missing_dump` | Host MCP dump not refreshing |
+| `host_missing_dump` / `stale_dump` | Host MCP dump missing or too old near call |
+| `host_feed_stale` | Host automation not writing `host_quartr/health/last_run.json` |
+| False `stuck_event` on pre-call wait | Should not fire before `call_at`+grace (state-aware) |
+| LIVE never retries after fail | Exhausted LIVE failure should clear gate → TRANSCRIPT_PENDING |
+| `research_book_stale` | Dirty age exceeds debounce+idle, or last regen failed |
+| `book_ranks_thin_peers` / `asof_overdue` | Peer set below min_names, or investable-asof pending past grace |
 | Worker backlog | Concurrent host sweeps OK; single worker scores sequentially |
 | Quant / IDs fail | Snowflake network policy / missing ISIN in overlay |
 
@@ -133,7 +139,7 @@ python -m services.earnings_monitor.calendar_publish `
   --events-dir "earnings-scraper-main\earnings-scraper-main\inbox\events" `
   --worklist-out host_quartr\worklists\due_sweep.json
 
-python -m services.earnings_monitor.host_automation live --max-workers 2 --final
+python -m services.earnings_monitor.host_automation live --max-workers 2 --loop
 ```
 
 ## Out of scope

@@ -13,6 +13,15 @@ from statistics import fmean
 from datetime import datetime, timezone
 from typing import Any, Iterable, Mapping, Sequence
 
+from ..ops_health import (
+    book_ranks_summary_alerts,
+    event_is_stuck,
+    host_health_alerts,
+    load_book_ranks_summary,
+    load_host_health,
+    research_freshness_alerts,
+    resolve_host_health_path,
+)
 from ..storage import read_company_quarter_dataset, record_to_dict
 
 
@@ -178,16 +187,9 @@ class DashboardData:
                     "last_error": row.get("last_error"),
                     "source_url": row.get("source_url"),
                     "updated_at": row.get("updated_at"),
-                    "stuck": (
-                        str(row.get("state") or "")
-                        not in {
-                            "complete",
-                            "failed",
-                            "onboarding",
-                            "onboarding_blocked",
-                        }
-                        and self._age_seconds(row.get("updated_at"), current) >= stuck_after
-                    ),
+                    "stuck": event_is_stuck(
+                        row, now=current, stuck_after_seconds=stuck_after
+                    )[0],
                     "age_seconds": self._age_seconds(row.get("updated_at"), current),
                     "failed_runs": failures[str(row.get("provider_event_id"))],
                 }
@@ -316,7 +318,10 @@ class DashboardData:
             event_id = str(event.get("provider_event_id"))
             state = str(event.get("state") or "unknown")
             age = self._age_seconds(event.get("updated_at"), current)
-            if state not in {"complete", "failed"} and age >= stuck_after:
+            stuck, stuck_detail = event_is_stuck(
+                event, now=current, stuck_after_seconds=stuck_after
+            )
+            if stuck:
                 alerts.append(
                     {
                         "kind": "stuck_event",
@@ -326,7 +331,8 @@ class DashboardData:
                         "state": state,
                         "age_seconds": age,
                         "occurrence": event.get("updated_at"),
-                        "detail": f"event unchanged for {age} seconds",
+                        "detail": stuck_detail
+                        or f"event unchanged for {age} seconds",
                     }
                 )
             if failed[event_id] >= failure_threshold:
@@ -373,7 +379,132 @@ class DashboardData:
                         "detail": publication.get("last_error"),
                     }
                 )
-        return alerts
+
+        health = load_host_health(resolve_host_health_path())
+        alerts.extend(host_health_alerts(health, now=current))
+
+        try:
+            from .research_data import (
+                artifact_universe_status,
+                format_universe_stale_message,
+                load_consolidated_panel,
+                load_rank_ic_bundle,
+                load_research_book_dirty,
+            )
+
+            dirty = load_research_book_dirty()
+            last_regen = None
+            try:
+                from ..state import OperationalState
+
+                db = default_operational_db_path()
+                if db.is_file():
+                    state = OperationalState(db)
+                    state.initialize()
+                    raw = state.get_meta("research_book_last_regen")
+                    if raw:
+                        last_regen = json.loads(raw)
+            except Exception:  # noqa: BLE001
+                last_regen = None
+            rank_ic = load_rank_ic_bundle()
+            consolidated = load_consolidated_panel()
+            universe_status = artifact_universe_status(
+                self.tickers,
+                rank_ic.meta if rank_ic.available else None,
+                consolidated.meta if consolidated.available else None,
+            )
+            universe_msg = format_universe_stale_message(universe_status)
+            alerts.extend(
+                research_freshness_alerts(
+                    dirty=dirty,
+                    last_regen=last_regen if isinstance(last_regen, dict) else None,
+                    now=current,
+                    debounce_seconds=int(
+                        os.environ.get("EARNINGS_MONITOR_RESEARCH_REGEN_DEBOUNCE", "60")
+                    ),
+                    idle_seconds=int(
+                        os.environ.get("EARNINGS_MONITOR_RESEARCH_REGEN_IDLE", "30")
+                    ),
+                    universe_stale_message=universe_msg,
+                )
+            )
+        except Exception:  # noqa: BLE001
+            pass
+
+        ranks_summary = load_book_ranks_summary() or {}
+        try:
+            from ..state import OperationalState
+
+            db = default_operational_db_path()
+            if db.is_file():
+                state = OperationalState(db)
+                state.initialize()
+                raw_err = state.get_meta("book_ranks_last_error")
+                if raw_err:
+                    err_payload = json.loads(raw_err)
+                    if isinstance(err_payload, dict) and err_payload.get("ok") is False:
+                        ranks_summary = {
+                            **ranks_summary,
+                            "ok": False,
+                            "last_error": err_payload.get("error"),
+                            "built_at": err_payload.get("at")
+                            or ranks_summary.get("built_at"),
+                        }
+        except Exception:  # noqa: BLE001
+            pass
+        alerts.extend(
+            book_ranks_summary_alerts(ranks_summary or None, now=current)
+        )
+
+        # Deduplicate identical kind+occurrence rows.
+        seen: set[tuple[Any, ...]] = set()
+        unique: list[dict[str, Any]] = []
+        for alert in alerts:
+            key = (
+                alert.get("kind"),
+                alert.get("provider_event_id"),
+                alert.get("occurrence"),
+                alert.get("detail"),
+            )
+            if key in seen:
+                continue
+            seen.add(key)
+            unique.append(alert)
+        return unique
+
+    def host_feed_status(self, *, now: datetime | None = None) -> dict[str, Any]:
+        """Summary strip for Operations: last host run + open failures."""
+        current = now or datetime.now(timezone.utc)
+        health_path = resolve_host_health_path()
+        health = load_host_health(health_path)
+        due_sweep = Path("host_quartr/worklists/due_sweep.json")
+        env_root = os.environ.get("EARNINGS_MONITOR_REPO_ROOT")
+        if env_root:
+            due_sweep = Path(env_root) / "host_quartr" / "worklists" / "due_sweep.json"
+        due_mtime = None
+        if due_sweep.is_file():
+            due_mtime = datetime.fromtimestamp(
+                due_sweep.stat().st_mtime, tz=timezone.utc
+            ).isoformat()
+        if not health:
+            return {
+                "available": False,
+                "path": str(health_path) if health_path else None,
+                "due_sweep_mtime": due_mtime,
+                "failures": [],
+            }
+        finished = health.get("finished_at") or health.get("started_at")
+        return {
+            "available": True,
+            "path": str(health_path) if health_path else None,
+            "job": health.get("job"),
+            "ok": health.get("ok"),
+            "finished_at": finished,
+            "age_seconds": self._age_seconds(finished, current),
+            "counts": health.get("counts") or {},
+            "failures": health.get("failures") or [],
+            "due_sweep_mtime": due_mtime,
+        }
 
     def company_history(self, ticker: str) -> list[dict[str, Any]]:
         history: list[dict[str, Any]] = []
