@@ -1,5 +1,24 @@
 # Earnings monitor setup
 
+## Always-on AWS (plumbing lab → company cutover)
+
+Local Docker on a laptop is the default development path below. For always-on
+hosting:
+
+1. **Beginner step-by-step (start here)** —
+   [roz-aws-start-here.md](roz-aws-start-here.md)
+2. **Personal plumbing lab reference** (no company data) —
+   [roz-aws-plumbing-lab.md](roz-aws-plumbing-lab.md) and
+   `services/earnings_monitor/.env.plumbing-lab.example`
+3. **Company AWS cutover** (real secrets + live book, after firm access) —
+   [roz-aws-company-cutover.md](roz-aws-company-cutover.md)
+4. Deploy gates checklist —
+   [earnings-monitor-access-validation.md](earnings-monitor-access-validation.md)
+
+Do not put Cassius transcripts, Snowflake/Anthropic/Quartr credentials, or firm
+SMTP on a personal AWS account. ECS/Fargate is a later evolution after company
+EC2 + Compose is reliable.
+
 ## Local Windows-first Roz runtime
 
 Prerequisites: Docker Desktop with Compose v2 and at least 4 GB available to
