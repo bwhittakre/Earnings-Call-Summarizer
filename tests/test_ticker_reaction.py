@@ -50,8 +50,10 @@ from ticker_reaction.reactions import (  # noqa: E402
     build_reaction_rows,
     cumulative_return,
     forward_return_anchors,
+    resolve_highlight_placement,
 )
 from ticker_reaction.report import (  # noqa: E402
+    CALL_CHART_POST_PAD,
     POST_CALL_PAD,
     PRE_REPORT_PAD,
     build_html_report,
@@ -136,6 +138,28 @@ class TestTickerReaction(unittest.TestCase):
         self.assertEqual(start, report - PRE_REPORT_PAD)
         self.assertEqual(end, call_end + POST_CALL_PAD)
 
+    def test_call_window_pads_five_minutes_past_end(self) -> None:
+        bars = pd.DataFrame(
+            {
+                "ts_utc": pd.to_datetime(
+                    [
+                        "2026-07-30T21:00:00Z",
+                        "2026-07-30T21:50:00Z",
+                        "2026-07-30T21:55:00Z",
+                        "2026-07-30T22:10:00Z",
+                    ],
+                    utc=True,
+                ),
+                "close": [1, 2, 3, 4],
+            }
+        )
+        call = pd.Timestamp("2026-07-30T21:00:00Z")
+        call_end = pd.Timestamp("2026-07-30T21:50:00Z")
+        start, end = compute_call_window(bars, call_at=call, call_end=call_end)
+        self.assertEqual(start, call)
+        self.assertEqual(end, call_end + CALL_CHART_POST_PAD)
+        self.assertEqual(CALL_CHART_POST_PAD, timedelta(minutes=5))
+
     def test_forward_return_3m(self) -> None:
         bars = pd.DataFrame(
             {
@@ -148,22 +172,54 @@ class TestTickerReaction(unittest.TestCase):
             }
         )
         t = datetime(2026, 7, 30, 21, 0, tzinfo=timezone.utc)
-        ret_3m, _ = _forward_return(bars, t, 3)
+        ret_3m, _, dpx_3m = _forward_return(bars, t, 3)
         # Start close at 21:00 (=100), end close at 21:03 (=103)
         self.assertAlmostEqual(ret_3m, 0.03)
+        self.assertAlmostEqual(dpx_3m, 3.0)
 
     def test_c1_selects_largest_moves_not_length(self) -> None:
         rows = [
-            ReactionRow(0, "", 0, 1, "A", None, "x" * 500, False, True, None, None, 0.001, 0.001, 0.001, 10),
-            ReactionRow(1, "", 1, 2, "B", None, "short", False, True, None, None, -0.05, -0.04, -0.02, 100),
-            ReactionRow(2, "", 2, 3, "C", None, "y" * 400, False, True, None, None, 0.002, 0.001, 0.0, 11),
-            ReactionRow(3, "", 3, 4, "D", None, "z", False, True, None, None, 0.04, 0.035, 0.03, 90),
+            ReactionRow(
+                0, "", 0, 1, "A", None, "x" * 500, False, True, None, None,
+                0.001, 0.001, 0.001, 10, dpx_1m=0.10, dpx_3m=0.10, dpx_5m=0.10,
+            ),
+            ReactionRow(
+                1, "", 1, 2, "B", None, "short", False, True, None, None,
+                -0.05, -0.04, -0.02, 100, dpx_1m=-5.0, dpx_3m=-4.0, dpx_5m=-2.0,
+            ),
+            ReactionRow(
+                2, "", 2, 3, "C", None, "y" * 400, False, True, None, None,
+                0.002, 0.001, 0.0, 11, dpx_1m=0.20, dpx_3m=0.10, dpx_5m=0.0,
+            ),
+            ReactionRow(
+                3, "", 3, 4, "D", None, "z", False, True, None, None,
+                0.04, 0.035, 0.03, 90, dpx_1m=4.0, dpx_3m=3.5, dpx_5m=3.0,
+            ),
         ]
         selected, diag = select_c1_indices(rows, top_k=2, percentile_floor=50, min_clear=1)
         self.assertIn(1, selected)
         self.assertIn(3, selected)
         self.assertNotIn(0, selected)
-        self.assertEqual(diag["rule"], "C1_topK_call_relative_floor_1m")
+        self.assertEqual(diag["rule"], "C1_topK_abs_dpx_floor_1m_temporal_gap")
+        self.assertEqual(diag["min_gap_sec"], 30.0)
+        self.assertEqual(diag["score_unit"], "price_points")
+
+    def test_c1_prefers_larger_dollar_move_over_larger_pct(self) -> None:
+        """Equal-ish setup where % would pick the trough rebound; |Δprice| picks $ size."""
+        rows = [
+            # $10 on $100 = +10% (would win on %)
+            ReactionRow(
+                0, "", 0, 1, "A", None, "low base", False, True, None, 100.0,
+                0.10, 0.10, 0.10, 10, dpx_1m=10.0, dpx_3m=10.0, dpx_5m=10.0,
+            ),
+            # $12 on $200 = +6% (wins on |Δprice|)
+            ReactionRow(
+                1, "", 1, 2, "B", None, "high base", False, True, None, 200.0,
+                0.06, 0.06, 0.06, 10, dpx_1m=12.0, dpx_3m=12.0, dpx_5m=12.0,
+            ),
+        ]
+        selected, _ = select_c1_indices(rows, top_k=1, percentile_floor=0, min_clear=1)
+        self.assertEqual(selected, {1})
 
     def test_speech_turns_group_same_speaker(self) -> None:
         paras = [
@@ -185,10 +241,22 @@ class TestTickerReaction(unittest.TestCase):
 
     def test_horizon_c1_sets_can_differ(self) -> None:
         rows = [
-            ReactionRow(0, "", 0, 1, "A", None, "a", False, True, None, None, 0.10, 0.01, 0.01, 10),
-            ReactionRow(1, "", 1, 2, "B", None, "b", False, True, None, None, 0.01, 0.10, 0.01, 10),
-            ReactionRow(2, "", 2, 3, "C", None, "c", False, True, None, None, 0.01, 0.01, 0.10, 10),
-            ReactionRow(3, "", 3, 4, "D", None, "d", False, True, None, None, 0.02, 0.02, 0.02, 10),
+            ReactionRow(
+                0, "", 0, 1, "A", None, "a", False, True, None, None,
+                0.10, 0.01, 0.01, 10, dpx_1m=10.0, dpx_3m=1.0, dpx_5m=1.0,
+            ),
+            ReactionRow(
+                1, "", 1, 2, "B", None, "b", False, True, None, None,
+                0.01, 0.10, 0.01, 10, dpx_1m=1.0, dpx_3m=10.0, dpx_5m=1.0,
+            ),
+            ReactionRow(
+                2, "", 2, 3, "C", None, "c", False, True, None, None,
+                0.01, 0.01, 0.10, 10, dpx_1m=1.0, dpx_3m=1.0, dpx_5m=10.0,
+            ),
+            ReactionRow(
+                3, "", 3, 4, "D", None, "d", False, True, None, None,
+                0.02, 0.02, 0.02, 10, dpx_1m=2.0, dpx_3m=2.0, dpx_5m=2.0,
+            ),
         ]
         by_h = select_all_horizon_highlights(
             rows, top_k=1, percentile_floor=0, min_clear=1
@@ -212,6 +280,41 @@ class TestTickerReaction(unittest.TestCase):
         tr = TimedTranscript(1, 1, paras, 0.0, 70.0, {})
         qa = detect_qa_start_sec(tr)
         self.assertEqual(qa, 40.0)
+
+    def test_section_qa_ignores_call_start_agenda(self) -> None:
+        """Operator intro mentioning future Q&A must not pin the marker at t=0."""
+        paras = [
+            Paragraph(
+                0,
+                0.06,
+                26.0,
+                "Operator",
+                None,
+                "Welcome. At this time all participants are in a listen-only mode. "
+                "After the presentation, we will conduct a question-and-answer session.",
+            ),
+            Paragraph(1, 26.0, 80.0, "IR", "Investor Relations", "Hello and welcome."),
+            Paragraph(2, 80.0, 200.0, "CEO", "CEO", "Prepared remarks about growth."),
+            Paragraph(
+                3,
+                1718.0,
+                1750.0,
+                "Operator",
+                None,
+                "At this time, we will now open the call up for questions.",
+            ),
+            Paragraph(
+                4,
+                1760.0,
+                1780.0,
+                "Analyst",
+                None,
+                "Thanks for taking my question on CapEx.",
+            ),
+        ]
+        tr = TimedTranscript(1, 1, paras, 0.0, 1780.0, {})
+        qa = detect_qa_start_sec(tr)
+        self.assertEqual(qa, 1718.0)
 
     def test_join_health_and_sync_badge(self) -> None:
         call_at = datetime(2026, 7, 30, 21, 0, tzinfo=timezone.utc)
@@ -315,10 +418,26 @@ class TestTickerReaction(unittest.TestCase):
         )
         # Force a clear C1 winner on 1m; different winner geometry for 5m
         reactions[1] = ReactionRow(
-            **{**reactions[1].__dict__, "ret_1m": -0.08, "ret_3m": -0.01, "ret_5m": -0.01}
+            **{
+                **reactions[1].__dict__,
+                "ret_1m": -0.08,
+                "ret_3m": -0.01,
+                "ret_5m": -0.01,
+                "dpx_1m": -8.0,
+                "dpx_3m": -1.0,
+                "dpx_5m": -1.0,
+            }
         )
         reactions[0] = ReactionRow(
-            **{**reactions[0].__dict__, "ret_1m": 0.0, "ret_3m": 0.0, "ret_5m": -0.09}
+            **{
+                **reactions[0].__dict__,
+                "ret_1m": 0.0,
+                "ret_3m": 0.0,
+                "ret_5m": -0.09,
+                "dpx_1m": 0.0,
+                "dpx_3m": 0.0,
+                "dpx_5m": -9.0,
+            }
         )
         by_h = select_all_horizon_highlights(
             reactions, top_k=2, min_clear=1, percentile_floor=50
@@ -362,6 +481,12 @@ class TestTickerReaction(unittest.TestCase):
         self.assertIn("sync", html.lower())
         self.assertIn("C1", html)
         self.assertIn("z Ret 1m", html)
+        self.assertIn('id="col-dpx"', html)
+        self.assertIn("dpx-menu-btn", html)
+        self.assertIn("dpx-menu-list", html)
+        self.assertIn("Δ 1m", html)
+        self.assertIn('class="col-dpx', html)
+        self.assertRegex(html, r"\$[+-]\d+\.\d{2}")
         self.assertIn("Ret 3m", html)
         self.assertIn("filter-ret3", html)
         self.assertIn("filter-section", html)
@@ -383,50 +508,60 @@ class TestTickerReaction(unittest.TestCase):
         self.assertIn('id="filter-time-from"', html)
         self.assertIn('placeholder="17:00"', html)
         self.assertTrue(any(r.ret_3m is not None for r in reactions))
-        self.assertIn("start of measured", html)
+        self.assertIn("stem on defining 1m bar", html)
 
     def test_badge_uses_return_window_start_not_nearest_close(self) -> None:
-        """Badge Y should sit on c0 (prior close), not the trough nearest-bar close."""
+        """Stem / % from call use defining bar (last at/before speech)."""
         call_at = datetime(2026, 7, 30, 21, 0, tzinfo=timezone.utc)
-        # 21:18 close 258, 21:19 trough 235.5, 21:20 bounce 257
         bars = pd.DataFrame(
             {
                 "ts_utc": pd.to_datetime(
                     [
-                        "2026-07-30T21:17:00Z",
-                        "2026-07-30T21:18:00Z",
+                        "2026-07-30T21:00:00Z",
                         "2026-07-30T21:19:00Z",
                         "2026-07-30T21:20:00Z",
                         "2026-07-30T21:21:00Z",
                     ],
                     utc=True,
                 ),
-                "close": [258.8, 258.0, 235.5, 257.2, 257.0],
-                "volume": [10, 20, 90_000, 60_000, 10],
+                "close": [254.3, 235.5, 257.2, 257.0],
+                "volume": [10, 90_000, 60_000, 10],
             }
         )
-        # Utterance at 21:18:52 — same geometry as AMZN #9
-        t = datetime(2026, 7, 30, 21, 18, 52, tzinfo=timezone.utc)
-        c0, c1, ts0, ts1 = forward_return_anchors(bars, t, 1)
-        self.assertAlmostEqual(c0, 258.0)
-        self.assertAlmostEqual(c1, 235.5)
-        self.assertEqual(pd.Timestamp(ts0), pd.Timestamp("2026-07-30T21:18:00Z"))
-        self.assertEqual(pd.Timestamp(ts1), pd.Timestamp("2026-07-30T21:19:00Z"))
-
+        t = datetime(2026, 7, 30, 21, 19, 43, tzinfo=timezone.utc)
         paragraphs = [
-            Paragraph(0, 18 * 60 + 52, 18 * 60 + 60, "CEO", "CEO", "NBA on Prime plunges the tape"),
+            Paragraph(0, 19 * 60 + 43, 19 * 60 + 50, "CEO", "CEO", "Alexa+ and Leo plunge"),
         ]
         transcript = TimedTranscript(1, 1, paragraphs, 0.0, 1200.0, {})
         anchors = EventAnchors("AMZN", "FY2026-Q2", 1, call_at, None, {})
         aligned = align_utterances(transcript, anchors, bars)
-        aligned[0] = replace(aligned[0], highlight=True, bar_close=235.5)
+        reactions = build_reaction_rows(
+            aligned, bars, anchors=anchors, transcript=transcript
+        )
+        # Defining bar 21:19 close 235.5 — not mid-minute interpolation.
+        expected_ret = 235.5 / 254.3 - 1.0
+        self.assertAlmostEqual(reactions[0].ret_from_call_start or 0.0, expected_ret, places=5)
+        self.assertAlmostEqual(reactions[0].ret_1m or 0.0, 257.2 / 235.5 - 1.0, places=5)
+        place = resolve_highlight_placement(
+            bars,
+            call_at=call_at,
+            utterance_utc=t,
+            ret_from_call_start=reactions[0].ret_from_call_start,
+            fallback_close=257.2,
+        )
+        self.assertEqual(place.match_kind, "defining_bar")
+        self.assertEqual(place.utterance_utc, pd.Timestamp(t))
+        self.assertEqual(place.bar_ts, pd.Timestamp("2026-07-30T21:19:00Z"))
+        self.assertAlmostEqual(place.bar_close, 235.5, places=5)
+        self.assertEqual(place.matched_pct, -7.4)
 
+        aligned[0] = replace(aligned[0], highlight=True)
         html = build_html_report(
             ticker="AMZN",
             quarter="FY2026-Q2",
             bars=bars,
             aligned=aligned,
-            reactions=build_reaction_rows(aligned, bars, anchors=anchors, transcript=transcript),
+            reactions=reactions,
             summary={},
             diagnostics={
                 "call_at": call_at.isoformat(),
@@ -437,10 +572,11 @@ class TestTickerReaction(unittest.TestCase):
                 "highlights": {"highlights_relaxed": False, "rule": "C1"},
             },
         )
-        # Nearest-bar close was 235.5; badge must not use that as the only price anchor.
-        # The measured-move segment end title proves end-of-window rendering.
-        self.assertIn("ret_1m end", html)
-        self.assertIn("start of measured", html)
+        self.assertIn("hi-anchor", html)
+        self.assertIn("17:19:43", html)
+        self.assertIn("tape @ 17:19", html)
+        self.assertIn("from call start", html)
+        self.assertIn("+1m later", html)
 
     def test_pipeline_writes_typed_output(self) -> None:
         with TemporaryDirectory() as tmp:
@@ -524,6 +660,9 @@ class TestTickerReaction(unittest.TestCase):
             report_html = Path(result["paths"]["report"]).read_text(encoding="utf-8")
             self.assertIn("Price (USD)", report_html)
             self.assertIn("z Ret 1m", report_html)
+            self.assertIn('id="col-dpx"', report_html)
+            self.assertIn("dpx-menu-btn", report_html)
+            self.assertIn("Δ 1m", report_html)
             self.assertIn("Ret 3m", report_html)
             self.assertIn("view-btn", report_html)
             self.assertIn("sync", report_html.lower())
@@ -533,6 +672,225 @@ class TestTickerReaction(unittest.TestCase):
             self.assertIn("highlight_1m", csv_text)
             self.assertIn("speech_turn_id", csv_text)
             self.assertIn("monologue_text", csv_text)
+
+
+class TestHighlightSpacing(unittest.TestCase):
+    """Half-horizon temporal spacing + Ret 1m same-bar uniqueness."""
+
+    @staticmethod
+    def _row(
+        idx: int,
+        utt: str,
+        *,
+        ret_1m: float = 0.01,
+        ret_3m: float = 0.01,
+        ret_5m: float = 0.01,
+        dpx_1m: float | None = None,
+        dpx_3m: float | None = None,
+        dpx_5m: float | None = None,
+        bar_ts: str | None = None,
+        ret_from_call: float | None = None,
+        bar_close: float | None = None,
+    ) -> ReactionRow:
+        # Default dpx = ret so synthetic ranking tests keep their relative order.
+        return ReactionRow(
+            index=idx,
+            utterance_utc=utt,
+            start_sec=0.0,
+            end_sec=1.0,
+            speaker="X",
+            speaker_role=None,
+            snippet="s",
+            highlight=False,
+            bar_matched=True,
+            bar_ts_utc=bar_ts,
+            bar_close=bar_close,
+            ret_1m=ret_1m,
+            ret_3m=ret_3m,
+            ret_5m=ret_5m,
+            volume_1m=100.0,
+            dpx_1m=ret_1m if dpx_1m is None else dpx_1m,
+            dpx_3m=ret_3m if dpx_3m is None else dpx_3m,
+            dpx_5m=ret_5m if dpx_5m is None else dpx_5m,
+            ret_from_call_start=ret_from_call,
+        )
+
+    def test_5m_cluster_keeps_one(self) -> None:
+        # Four hits 20s apart — all within 150s of the strongest.
+        rows = [
+            self._row(0, "2026-07-30T21:10:00Z", ret_5m=0.08),
+            self._row(1, "2026-07-30T21:10:20Z", ret_5m=0.09),  # strongest
+            self._row(2, "2026-07-30T21:10:40Z", ret_5m=0.07),
+            self._row(3, "2026-07-30T21:11:00Z", ret_5m=0.06),
+            self._row(4, "2026-07-30T21:20:00Z", ret_5m=0.05),  # far
+        ]
+        sel, diag = select_c1_indices_for_horizon(
+            rows, "5m", top_k=12, percentile_floor=0, min_clear=1
+        )
+        self.assertEqual(diag["min_gap_sec"], 150.0)
+        self.assertIn(1, sel)
+        self.assertIn(4, sel)
+        self.assertEqual(sel & {0, 2, 3}, set())
+        self.assertGreaterEqual(
+            diag["n_suppressed_spacing"] + diag["n_suppressed_same_spot"], 3
+        )
+
+    def test_1m_denser_than_5m_on_same_cluster(self) -> None:
+        rows = [
+            self._row(0, "2026-07-30T21:10:00Z", ret_1m=0.08, ret_5m=0.08),
+            self._row(1, "2026-07-30T21:10:20Z", ret_1m=0.09, ret_5m=0.09),
+            self._row(2, "2026-07-30T21:10:40Z", ret_1m=0.07, ret_5m=0.07),
+            self._row(3, "2026-07-30T21:11:00Z", ret_1m=0.06, ret_5m=0.06),
+        ]
+        sel_1m, _ = select_c1_indices_for_horizon(
+            rows, "1m", top_k=12, percentile_floor=0, min_clear=1
+        )
+        sel_5m, _ = select_c1_indices_for_horizon(
+            rows, "5m", top_k=12, percentile_floor=0, min_clear=1
+        )
+        self.assertGreater(len(sel_1m), len(sel_5m))
+        self.assertEqual(len(sel_5m), 1)
+
+    def test_5m_keeps_pair_beyond_gap(self) -> None:
+        rows = [
+            self._row(0, "2026-07-30T21:10:00Z", ret_5m=0.10),
+            self._row(1, "2026-07-30T21:12:40Z", ret_5m=0.09),  # 160s later
+        ]
+        sel, _ = select_c1_indices_for_horizon(
+            rows, "5m", top_k=12, percentile_floor=0, min_clear=1
+        )
+        self.assertEqual(sel, {0, 1})
+
+    def test_weaker_neighbor_within_gap_suppressed(self) -> None:
+        rows = [
+            self._row(0, "2026-07-30T21:10:00Z", ret_3m=0.10),
+            self._row(1, "2026-07-30T21:11:00Z", ret_3m=0.05),  # 60s < 90s
+        ]
+        sel, diag = select_c1_indices_for_horizon(
+            rows, "3m", top_k=12, percentile_floor=0, min_clear=1
+        )
+        self.assertEqual(sel, {0})
+        self.assertEqual(diag["min_gap_sec"], 90.0)
+        self.assertEqual(diag["n_suppressed_spacing"], 1)
+
+    def test_1m_same_spot_rejects_shared_bar(self) -> None:
+        # >30s apart so time-gap alone would keep both; same defining bar → one.
+        call_at = pd.Timestamp("2026-07-30T21:00:00Z")
+        bars = pd.DataFrame(
+            {
+                "ts_utc": pd.to_datetime(
+                    [
+                        "2026-07-30T21:00:00Z",
+                        "2026-07-30T21:10:00Z",
+                        "2026-07-30T21:11:00Z",
+                    ],
+                    utc=True,
+                ),
+                "close": [100.0, 101.0, 102.0],
+                "volume": [10.0, 20.0, 30.0],
+            }
+        )
+        # Both join to 21:10 defining bar; stronger |ret_1m| wins.
+        rows = [
+            self._row(
+                0,
+                "2026-07-30T21:10:10Z",
+                ret_1m=0.04,
+                ret_from_call=0.01,
+                bar_ts="2026-07-30T21:10:00Z",
+                bar_close=101.0,
+            ),
+            self._row(
+                1,
+                "2026-07-30T21:10:50Z",
+                ret_1m=0.08,
+                ret_from_call=0.01,
+                bar_ts="2026-07-30T21:10:00Z",
+                bar_close=101.0,
+            ),
+        ]
+        sel, diag = select_c1_indices_for_horizon(
+            rows,
+            "1m",
+            top_k=12,
+            percentile_floor=0,
+            min_clear=1,
+            bars=bars,
+            call_at=call_at,
+        )
+        self.assertEqual(sel, {1})
+        self.assertGreaterEqual(diag["n_suppressed_same_spot"], 1)
+
+    def test_3m_same_defining_bar_keeps_strongest(self) -> None:
+        # Far enough for the 90s gap, but same defining bar_ts → one winner.
+        rows = [
+            self._row(
+                0,
+                "2026-07-30T21:10:10Z",
+                ret_3m=0.04,
+                bar_ts="2026-07-30T21:10:00Z",
+            ),
+            self._row(
+                1,
+                "2026-07-30T21:12:00Z",
+                ret_3m=0.08,
+                bar_ts="2026-07-30T21:10:00Z",
+            ),
+        ]
+        sel, diag = select_c1_indices_for_horizon(
+            rows, "3m", top_k=12, percentile_floor=0, min_clear=1
+        )
+        self.assertEqual(sel, {1})
+        self.assertGreaterEqual(diag["n_suppressed_same_spot"], 1)
+
+
+class TestHighlightPlacement(unittest.TestCase):
+    """Discrete defining-bar placement (last close at/before speech)."""
+
+    @staticmethod
+    def _minute_bars(call_at: str, closes: list[float]) -> tuple[pd.DataFrame, pd.Timestamp]:
+        t0 = pd.Timestamp(call_at)
+        rows = [
+            {
+                "ts_utc": t0 + pd.Timedelta(minutes=i),
+                "close": closes[i],
+                "volume": 100.0,
+            }
+            for i in range(len(closes))
+        ]
+        return pd.DataFrame(rows), t0
+
+    def test_snaps_to_last_bar_at_or_before(self) -> None:
+        bars, call_at = self._minute_bars(
+            "2026-07-30T21:00:00Z",
+            [100.0, 100.0, 90.0, 110.0],
+        )
+        # Midway 21:02 → 21:03: defining bar is 21:02 close 90 (−10% from call).
+        utt = call_at + pd.Timedelta(minutes=2, seconds=30)
+        place = resolve_highlight_placement(
+            bars,
+            call_at=call_at,
+            utterance_utc=utt,
+            ret_from_call_start=None,
+        )
+        self.assertEqual(place.match_kind, "defining_bar")
+        self.assertEqual(place.utterance_utc, utt)
+        self.assertEqual(place.bar_ts, call_at + pd.Timedelta(minutes=2))
+        self.assertAlmostEqual(place.bar_close, 90.0)
+        self.assertEqual(place.matched_pct, -10.0)
+
+    def test_fallback_when_empty_bars(self) -> None:
+        bars = pd.DataFrame({"ts_utc": [], "close": [], "volume": []})
+        utt = pd.Timestamp("2026-07-30T21:01:15Z")
+        place = resolve_highlight_placement(
+            bars,
+            call_at=None,
+            utterance_utc=utt,
+            ret_from_call_start=None,
+            fallback_close=99.5,
+        )
+        self.assertEqual(place.match_kind, "fallback")
+        self.assertAlmostEqual(place.bar_close, 99.5)
 
 
 if __name__ == "__main__":

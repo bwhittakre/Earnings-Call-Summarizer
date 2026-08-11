@@ -23,7 +23,12 @@ from ticker_reaction.paths import (
     reactions_csv_path,
     reports_html_path,
 )
-from ticker_reaction.reactions import ReactionRow, forward_return_anchors, reactions_to_frame
+from ticker_reaction.reactions import (
+    ReactionRow,
+    forward_return_anchors,
+    reactions_to_frame,
+    resolve_highlight_placement,
+)
 from ticker_reaction.speech_turns import trigger_preview
 
 ET = ZoneInfo("America/New_York")
@@ -31,6 +36,8 @@ ET = ZoneInfo("America/New_York")
 # Chart focus pads around report / call end (context chart).
 PRE_REPORT_PAD = timedelta(minutes=15)
 POST_CALL_PAD = timedelta(minutes=20)
+# Call chart only: show a few minutes of tape after call end (overrunning speech).
+CALL_CHART_POST_PAD = timedelta(minutes=5)
 
 
 def _fmt_pct(x: float | None) -> str:
@@ -133,14 +140,19 @@ def compute_call_window(
     *,
     call_at: pd.Timestamp | None,
     call_end: pd.Timestamp | None,
+    post_call_pad: timedelta = CALL_CHART_POST_PAD,
 ) -> tuple[pd.Timestamp, pd.Timestamp] | None:
-    """Call-duration window (call start → call end), clamped to bars."""
+    """Call chart window: call start → call end + pad, clamped to bars.
+
+    The pad keeps post-call tape (and any speech that slightly overruns) visible;
+    highlight selection is unchanged.
+    """
     if call_at is None:
         return None
     ts = pd.to_datetime(bars["ts_utc"], utc=True)
     bar_start = ts.min()
     bar_end = ts.max()
-    end = call_end or call_at
+    end = (call_end or call_at) + post_call_pad
     view_start = max(call_at, bar_start) if pd.notna(bar_start) else call_at
     view_end = min(end, bar_end) if pd.notna(bar_end) else end
     if view_end <= view_start:
@@ -171,6 +183,8 @@ def _svg_timeline(
     call_at_iso: str | None = None,
     call_end_iso: str | None = None,
     qa_start_iso: str | None = None,
+    call_at: pd.Timestamp | None = None,
+    ret_from_call_by_index: dict[int, float | None] | None = None,
     mode: str = "context",
     width: int = 1040,
     height: int = 440,
@@ -257,27 +271,57 @@ def _svg_timeline(
         if u.index not in any_selected:
             continue
 
+        ret_from_call = (ret_from_call_by_index or {}).get(u.index)
+        fallback_close = u.bar_close
+        if fallback_close is None:
+            fallback_close = _nearest_close(ts, closes, ut)
+        placement = resolve_highlight_placement(
+            bars,
+            call_at=call_at,
+            utterance_utc=ut,
+            ret_from_call_start=ret_from_call,
+            fallback_close=fallback_close,
+        )
+        # Stem meets the blue line on the defining 1m bar vertex.
+        place_ts = placement.bar_ts
+        if place_ts.tzinfo is None:
+            place_ts = place_ts.tz_localize("UTC")
+        else:
+            place_ts = place_ts.tz_convert("UTC")
+        utt_clock = _fmt_et_clock(ut, with_seconds=True)
+        tape_clock = _fmt_et_clock(place_ts, with_seconds=False)
+        pct_label = (
+            f"{placement.matched_pct:+.1f}% from call start"
+            if placement.matched_pct is not None
+            else "% from call start unavailable"
+        )
+
         for h in HORIZONS:
             hi_num = (nums_by_horizon.get(h) or {}).get(u.index)
             if hi_num is None:
                 continue
             minutes = HORIZON_MINUTES[h]
             title = html.escape(
-                f"#{hi_num} · ret_{h} · {u.speaker} · {et_clock} · {snippet}"
+                f"#{hi_num} · ret_{h} · {u.speaker} · uttered {utt_clock} · "
+                f"tape @ {tape_clock} · {pct_label} · {snippet}"
             )
-            # Badge Y = start of measured N-minute window (not nearest-bar trough).
+            end_title = html.escape(
+                f"#{hi_num} · ret_{h} end (+{minutes}m later) · {u.speaker}"
+            )
             c0, c1, _ts0, ts1 = forward_return_anchors(
-                bars, u.utterance_utc, minutes
+                bars, place_ts.to_pydatetime(), minutes
             )
-            price = c0
-            if price is None:
-                price = u.bar_close
-            if price is None:
-                price = _nearest_close(ts, closes, ut)
-            if price is None:
+            price = placement.bar_close
+            if price is None or not math.isfinite(float(price)):
+                price = c0
+            if price is None or not math.isfinite(float(price)):
+                price = fallback_close
+            if price is None or not math.isfinite(float(price)):
                 continue
+            x = x_of(int(place_ts.value))
             y = y_of(float(price))
-            stem_top = max(pad_t + 8, y - 28)
+            # Number bubble floats off the path; intersection is the bar vertex.
+            stem_top = max(pad_t + 8, y - 36)
 
             move_seg = ""
             if c0 is not None and c1 is not None and ts1 is not None:
@@ -293,7 +337,7 @@ def _svg_timeline(
                     f'<line class="hi-seg" x1="{x:.2f}" y1="{y:.2f}" x2="{x_end:.2f}" y2="{y_end:.2f}" '
                     f'stroke="#c45c26" stroke-width="2" opacity="0.75"/>'
                     f'<circle class="hi-end" cx="{x_end:.2f}" cy="{y_end:.2f}" r="3.5" fill="#c45c26" opacity="0.85">'
-                    f"<title>{title} · ret_{h} end</title></circle>"
+                    f"<title>{end_title}</title></circle>"
                 )
 
             # Clickable marker group (multi-select syncs with table via data-utt-index).
@@ -301,6 +345,9 @@ def _svg_timeline(
                 f'<g class="hi-mark" data-utt-index="{u.index}" data-horizon="{h}" '
                 f'style="cursor:pointer">'
                 f"{move_seg}"
+                f'<circle class="hi-anchor" cx="{x:.2f}" cy="{y:.2f}" r="3.5" '
+                f'fill="#c45c26" stroke="#fff" stroke-width="1">'
+                f"<title>{title}</title></circle>"
                 f'<line class="hi-stem" x1="{x:.2f}" y1="{y:.2f}" x2="{x:.2f}" y2="{stem_top:.2f}" '
                 f'stroke="#c45c26" stroke-width="1.5" opacity="0.9"/>'
                 f'<circle class="hi-hit" cx="{x:.2f}" cy="{stem_top:.2f}" r="14" fill="transparent"/>'
@@ -411,11 +458,11 @@ def _svg_timeline(
 
     if mode == "call":
         legend_text = legend or (
-            "1-minute grid · badge = start of measured N-min move · orange segment = that move"
+            "1-minute grid · stem on defining 1m bar · segment = N-min move"
         )
     else:
         legend_text = legend or (
-            "Light ticks = utterances · badge = start of measured N-min move · segment = that move"
+            "Light ticks = utterances · stem on defining 1m bar · segment = N-min move"
         )
     y_title_y = pad_t + plot_h / 2
     return f"""
@@ -443,6 +490,20 @@ def _ret_cell(value: float | None) -> str:
         return f"<td class='ret-null'>{text}</td>"
     cls = "ret-pos" if value > 0 else "ret-neg" if value < 0 else "ret-zero"
     return f"<td class='{cls}'>{text}</td>"
+
+
+def _fmt_dpx(x: float | None) -> str:
+    if x is None or (isinstance(x, float) and x != x):
+        return "—"
+    return f"${float(x):+.2f}"
+
+
+def _dpx_cell(value: float | None) -> str:
+    text = _fmt_dpx(value)
+    if value is None or (isinstance(value, float) and value != value):
+        return f"<td class='col-dpx ret-null'>{text}</td>"
+    cls = "ret-pos" if value > 0 else "ret-neg" if value < 0 else "ret-zero"
+    return f"<td class='col-dpx {cls}'>{text}</td>"
 
 
 def _num_cell(value: float | None, *, digits: int = 2) -> str:
@@ -520,6 +581,13 @@ def _filter_script() -> str:
     syncFocus();
   }
 
+  function closeDpxMenu() {
+    const list = document.getElementById('dpx-menu-list');
+    const btn = document.getElementById('dpx-menu-btn');
+    if (list) list.hidden = true;
+    if (btn) btn.setAttribute('aria-expanded', 'false');
+  }
+
   function setHorizon(h) {
     activeHorizon = h;
     document.querySelectorAll('.view-btn').forEach(function (btn) {
@@ -528,6 +596,12 @@ def _filter_script() -> str:
     document.querySelectorAll('.horizon-layer').forEach(function (g) {
       g.style.display = g.getAttribute('data-horizon') === h ? 'inline' : 'none';
     });
+    const dpxBtn = document.getElementById('dpx-menu-btn');
+    if (dpxBtn) dpxBtn.textContent = 'Δ ' + h + ' ▾';
+    document.querySelectorAll('#dpx-menu-list [data-horizon]').forEach(function (opt) {
+      opt.classList.toggle('active', opt.getAttribute('data-horizon') === h);
+    });
+    closeDpxMenu();
     apply();
     syncFocus();
   }
@@ -568,6 +642,28 @@ def _filter_script() -> str:
       setHorizon(btn.getAttribute('data-horizon') || '1m');
     });
   });
+
+  (function wireDpxMenu() {
+    const wrap = document.getElementById('col-dpx');
+    const btn = document.getElementById('dpx-menu-btn');
+    const list = document.getElementById('dpx-menu-list');
+    if (!wrap || !btn || !list) return;
+    btn.addEventListener('click', function (ev) {
+      ev.stopPropagation();
+      const open = list.hidden;
+      list.hidden = !open;
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+    list.querySelectorAll('[data-horizon]').forEach(function (opt) {
+      opt.addEventListener('click', function (ev) {
+        ev.stopPropagation();
+        setHorizon(opt.getAttribute('data-horizon') || '1m');
+      });
+    });
+    document.addEventListener('click', function (ev) {
+      if (!wrap.contains(ev.target)) closeDpxMenu();
+    });
+  })();
 
   document.querySelectorAll('.hi-mark').forEach(function (g) {
     g.addEventListener('click', function (ev) {
@@ -647,6 +743,9 @@ def build_html_report(
     nums_by_horizon = numbers_by_horizon(aligned, by_horizon)
     ordered = sorted(aligned, key=lambda u: (u.utterance_utc, u.index))
     by_index = {r.index: r for r in reactions}
+    ret_from_call_by_index = {
+        r.index: r.ret_from_call_start for r in reactions
+    }
     n_hi_default = len(nums_by_horizon.get("1m") or {})
 
     context_start, context_end = compute_focus_window(
@@ -661,9 +760,11 @@ def build_html_report(
         report_at_iso=report_at,
         call_at_iso=call_at,
         call_end_iso=call_end,
+        call_at=call_ts,
+        ret_from_call_by_index=ret_from_call_by_index,
         mode="context",
         chart_id="context",
-        legend="Light ticks = utterances · badge = start of measured N-min move · segment = that move",
+        legend="Light ticks = utterances · stem on defining 1m bar · segment = N-min move",
     )
 
     qa_start = diagnostics.get("qa_start_utc") or summary.get("qa_start_utc")
@@ -678,9 +779,11 @@ def build_html_report(
             call_at_iso=call_at,
             call_end_iso=call_end,
             qa_start_iso=qa_start,
+            call_at=call_ts,
+            ret_from_call_by_index=ret_from_call_by_index,
             mode="call",
             chart_id="call",
-            legend="1-minute grid · Q&A split · badge = start of measured N-min move · segment = that move",
+            legend="1-minute grid · Q&A split · stem on defining 1m bar · segment = N-min move",
         )
     else:
         svg_call = "<p class='muted'><em>Call-duration chart unavailable (missing call anchors or bars).</em></p>"
@@ -716,6 +819,12 @@ def build_html_report(
             ret_1m = r.ret_1m if r else None
             ret_3m = r.ret_3m if r else None
             ret_5m = r.ret_5m if r else None
+            if h == "1m":
+                dpx_view = r.dpx_1m if r else None
+            elif h == "3m":
+                dpx_view = r.dpx_3m if r else None
+            else:
+                dpx_view = r.dpx_5m if r else None
             section = (r.section if r else "remarks") or "remarks"
             d1 = _ret_direction(ret_1m)
             d3 = _ret_direction(ret_3m)
@@ -740,6 +849,7 @@ def build_html_report(
                 f"{_ret_cell(ret_1m)}"
                 f"{_ret_cell(ret_3m)}"
                 f"{_ret_cell(ret_5m)}"
+                f"{_dpx_cell(dpx_view)}"
                 f"{_num_cell(r.z_ret_1m if r else None)}"
                 f"{_vol_cell(r.volume_1m if r else None)}"
                 f"{_ret_cell(r.ret_from_call_start if r else None)}"
@@ -777,7 +887,7 @@ def build_html_report(
     for h in HORIZONS:
         hd = by_horizon.get(h) or {}
         fv = hd.get("floor_value")
-        fx = "—" if fv is None else f"{100.0 * float(fv):.2f}%"
+        fx = "—" if fv is None else f"${float(fv):.2f}"
         rx = "yes" if hd.get("highlights_relaxed") else "no"
         floor_bits.append(f"{h} floor≈{fx} (relaxed={rx})")
     floors_txt = "; ".join(floor_bits)
@@ -786,12 +896,18 @@ def build_html_report(
 
     rules_blurb = (
         "Highlights answer: what made the market react (coincidentally)? "
-        "Three independent C1 views select Top-12 paragraphs by |ret_1m|, |ret_3m|, "
-        "or |ret_5m| on this call, keeping only those at/above that view’s "
+        "Three independent C1 views select Top-12 paragraphs by absolute "
+        "N-minute price change (|Δprice_1m|, |Δprice_3m|, or |Δprice_5m|), "
+        "not percent — so a drawdown does not inflate later moves — keeping "
+        "only those at/above that view’s "
         f"75th-percentile score ({floors_txt}). "
         "Scoring is paragraph-level (a long monologue can yield multiple hits); "
         "expand a row for the full same-speaker monologue with the trigger paragraph marked. "
-        "Badges sit at the start of the measured N-minute move; the orange segment is that move. "
+        "Each highlight’s stem meets the price line on the defining 1m bar "
+        "(last close at/before speech = % from call start and Ret Nm start); "
+        "table Time is when they spoke; tooltips also show tape @ HH:MM. "
+        "The number bubble floats off the path. "
+        "The orange segment is the measured N-minute move. "
         f"Trust gate: {trust_label} "
         "(trusted only when sync is not suspect and lag-sweep Jaccard ±30s ≥ 0.5)."
     )
@@ -806,7 +922,7 @@ def build_html_report(
         f"{int(POST_CALL_PAD.total_seconds() // 60)}m after call end (ET)"
     )
 
-    empty_body = '<tr><td colspan="12">No highlights</td></tr>'
+    empty_body = '<tr><td colspan="13">No highlights</td></tr>'
     body = "".join(table_rows) if table_rows else empty_body
 
     return f"""<!DOCTYPE html>
@@ -864,6 +980,35 @@ def build_html_report(
     .ret-pos {{ color: #047857; font-variant-numeric: tabular-nums; }}
     .ret-neg {{ color: #b91c1c; font-variant-numeric: tabular-nums; }}
     .ret-zero, .ret-null {{ color: #64748b; font-variant-numeric: tabular-nums; }}
+    th.col-dpx, td.col-dpx {{
+      font-weight: 700;
+      border-left: 2px solid #94a3b8;
+      border-right: 2px solid #94a3b8;
+      background: #fff7ed;
+      white-space: nowrap;
+      text-align: center;
+    }}
+    th.col-dpx {{ position: relative; vertical-align: middle; padding: 4px 6px; }}
+    .dpx-menu {{ position: relative; display: inline-block; }}
+    .dpx-menu-btn {{
+      font: inherit; font-weight: 700; color: #9a3412; background: transparent;
+      border: 1px solid transparent; border-radius: 6px; padding: 4px 8px; cursor: pointer;
+    }}
+    .dpx-menu-btn:hover, .dpx-menu-btn[aria-expanded="true"] {{
+      background: #ffedd5; border-color: #fdba74;
+    }}
+    .dpx-menu-list {{
+      position: absolute; z-index: 20; top: calc(100% + 4px); left: 50%; transform: translateX(-50%);
+      min-width: 7rem; background: #fff; border: 1px solid #cbd5e1; border-radius: 8px;
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.12); padding: 4px; display: flex; flex-direction: column; gap: 2px;
+    }}
+    .dpx-menu-list[hidden] {{ display: none; }}
+    .dpx-menu-list button {{
+      font: inherit; font-weight: 600; text-align: left; border: 0; background: transparent;
+      padding: 7px 10px; border-radius: 6px; cursor: pointer; color: #334155;
+    }}
+    .dpx-menu-list button:hover {{ background: #f1f5f9; }}
+    .dpx-menu-list button.active {{ background: #c45c26; color: #fff; }}
     .muted {{ color: #666; font-size: 0.9rem; }}
   </style>
 </head>
@@ -961,7 +1106,18 @@ def build_html_report(
     <thead>
       <tr>
         <th>#</th><th>Time (ET)</th><th>Section</th><th>Speaker</th>
-        <th>Ret 1m</th><th>Ret 3m</th><th>Ret 5m</th><th>z Ret 1m</th><th>Vol 1m</th>
+        <th>Ret 1m</th><th>Ret 3m</th><th>Ret 5m</th>
+        <th class="col-dpx" id="col-dpx" title="Selection score for this view — click to switch horizon">
+          <div class="dpx-menu">
+            <button type="button" class="dpx-menu-btn" id="dpx-menu-btn" aria-haspopup="listbox" aria-expanded="false">Δ 1m ▾</button>
+            <div class="dpx-menu-list" id="dpx-menu-list" hidden role="listbox">
+              <button type="button" role="option" data-horizon="1m" class="active">Δ 1m</button>
+              <button type="button" role="option" data-horizon="3m">Δ 3m</button>
+              <button type="button" role="option" data-horizon="5m">Δ 5m</button>
+            </div>
+          </div>
+        </th>
+        <th>z Ret 1m</th><th>Vol 1m</th>
         <th>From call start</th><th>To call end</th><th>Snippet</th>
       </tr>
     </thead>

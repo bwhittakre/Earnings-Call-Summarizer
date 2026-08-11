@@ -32,6 +32,9 @@ class ReactionRow:
     ret_3m: float | None
     ret_5m: float | None
     volume_1m: float | None
+    dpx_1m: float | None = None  # close(t+N) - close(t); selection score uses |dpx|
+    dpx_3m: float | None = None
+    dpx_5m: float | None = None
     z_ret_1m: float | None = None
     ret_from_call_start: float | None = None
     ret_to_call_end: float | None = None
@@ -75,6 +78,126 @@ def cumulative_return(
     return (c1 / c0) - 1.0
 
 
+@dataclass(frozen=True)
+class HighlightPlacement:
+    """Discrete 1m tape anchor: stem sits on a real bar vertex."""
+
+    bar_ts: pd.Timestamp  # defining bar (last at/before utterance)
+    bar_close: float
+    matched_pct: float | None
+    match_kind: str  # defining_bar | fallback
+    utterance_utc: pd.Timestamp
+
+
+def _as_utc_ts(value: datetime | pd.Timestamp) -> pd.Timestamp:
+    ts = pd.Timestamp(value)
+    if ts.tzinfo is None:
+        return ts.tz_localize("UTC")
+    return ts.tz_convert("UTC")
+
+
+def pct_points_one_decimal(ret: float | None) -> float | None:
+    """Convert a simple return to percentage points rounded to one decimal."""
+    if ret is None or not np.isfinite(float(ret)):
+        return None
+    return round(100.0 * float(ret), 1)
+
+
+def call_start_close(
+    bars: pd.DataFrame,
+    call_at: datetime | pd.Timestamp | None,
+) -> float | None:
+    """Close of the first bar at/after call start (denominator for from-call %)."""
+    if call_at is None or bars.empty:
+        return None
+    ts = pd.to_datetime(bars["ts_utc"], utc=True)
+    call_ts = _as_utc_ts(call_at)
+    pos = int(ts.searchsorted(call_ts, side="left"))
+    if pos >= len(bars):
+        return None
+    close = float(bars["close"].iloc[pos])
+    return close if np.isfinite(close) and close != 0 else None
+
+
+def last_bar_at_or_before(
+    bars: pd.DataFrame,
+    t: datetime | pd.Timestamp,
+) -> tuple[pd.Timestamp, float] | None:
+    """Last bar at/before ``t`` — same defining bar as Ret Nm start."""
+    if bars.empty:
+        return None
+    ts = pd.to_datetime(bars["ts_utc"], utc=True)
+    target = _as_utc_ts(t)
+    pos = int(ts.searchsorted(target, side="right") - 1)
+    if pos < 0:
+        return None
+    close = float(bars["close"].iloc[pos])
+    if not np.isfinite(close):
+        return None
+    return pd.Timestamp(ts.iloc[pos]), close
+
+
+def return_from_call_at(
+    bars: pd.DataFrame,
+    call_at: datetime | pd.Timestamp | None,
+    t: datetime | pd.Timestamp,
+) -> float | None:
+    """% from call-start close to the defining bar at/before ``t``."""
+    c0 = call_start_close(bars, call_at)
+    found = last_bar_at_or_before(bars, t)
+    if c0 is None or found is None:
+        return None
+    _bar_ts, price = found
+    return (price / c0) - 1.0
+
+
+def resolve_highlight_placement(
+    bars: pd.DataFrame,
+    *,
+    call_at: datetime | pd.Timestamp | None,
+    utterance_utc: datetime | pd.Timestamp,
+    ret_from_call_start: float | None,
+    fallback_close: float | None = None,
+) -> HighlightPlacement:
+    """Anchor on the defining 1m bar (last at/before speech).
+
+    Same bar that starts Ret Nm and defines % from call start — no
+    mid-minute interpolation.
+    """
+    utt = _as_utc_ts(utterance_utc)
+    found = last_bar_at_or_before(bars, utt)
+    if found is not None:
+        bar_ts, price = found
+        ret = return_from_call_at(bars, call_at, utt)
+        if ret is None and ret_from_call_start is not None:
+            ret = ret_from_call_start
+        return HighlightPlacement(
+            bar_ts=bar_ts,
+            bar_close=price,
+            matched_pct=pct_points_one_decimal(ret),
+            match_kind="defining_bar",
+            utterance_utc=utt,
+        )
+
+    target_pct = pct_points_one_decimal(ret_from_call_start)
+    price = fallback_close
+    if price is None or not np.isfinite(float(price)):
+        return HighlightPlacement(
+            bar_ts=utt,
+            bar_close=float("nan"),
+            matched_pct=target_pct,
+            match_kind="fallback",
+            utterance_utc=utt,
+        )
+    return HighlightPlacement(
+        bar_ts=utt,
+        bar_close=float(price),
+        matched_pct=target_pct,
+        match_kind="fallback",
+        utterance_utc=utt,
+    )
+
+
 def forward_return_anchors(
     bars: pd.DataFrame,
     t: datetime,
@@ -114,14 +237,16 @@ def _forward_return(
     bars: pd.DataFrame,
     t: datetime,
     minutes: int,
-) -> tuple[float | None, float | None]:
+) -> tuple[float | None, float | None, float | None]:
+    """Return ``(ret, volume, dpx)`` where ``dpx = c1 - c0`` (price points)."""
     c0, c1, ts0, ts1 = forward_return_anchors(bars, t, minutes)
     if c0 is None or c1 is None or ts0 is None or ts1 is None:
-        return None, None
+        return None, None, None
     ret = (c1 / c0) - 1.0
+    dpx = c1 - c0
 
     if bars.empty:
-        return ret, None
+        return ret, None, dpx
     if t.tzinfo is None:
         t = t.replace(tzinfo=timezone.utc)
     ts = pd.to_datetime(bars["ts_utc"], utc=True)
@@ -141,7 +266,7 @@ def _forward_return(
             chunk = bars.loc[vol_mask, "volume"]
             if len(chunk):
                 vol = float(pd.to_numeric(chunk, errors="coerce").fillna(0).sum())
-    return ret, vol
+    return ret, vol, dpx
 
 
 def _snippet(text: str, limit: int = 160) -> str:
@@ -172,13 +297,14 @@ def build_reaction_rows(
 
     rows: list[ReactionRow] = []
     for u in aligned:
-        ret_1m, vol_1m = _forward_return(bars, u.utterance_utc, 1)
-        ret_3m, _ = _forward_return(bars, u.utterance_utc, 3)
-        ret_5m, _ = _forward_return(bars, u.utterance_utc, 5)
+        ret_1m, vol_1m, dpx_1m = _forward_return(bars, u.utterance_utc, 1)
+        ret_3m, _, dpx_3m = _forward_return(bars, u.utterance_utc, 3)
+        ret_5m, _, dpx_5m = _forward_return(bars, u.utterance_utc, 5)
         ret_from = None
         ret_to = None
         if anchors is not None:
-            ret_from = cumulative_return(bars, anchors.call_at, u.utterance_utc)
+            # % from call start at the defining bar (same bar as Ret Nm start).
+            ret_from = return_from_call_at(bars, anchors.call_at, u.utterance_utc)
             if call_end is not None:
                 ret_to = cumulative_return(bars, u.utterance_utc, call_end)
         section = section_for_start(u.start_sec, qa_start)
@@ -206,6 +332,9 @@ def build_reaction_rows(
                 ret_3m=ret_3m,
                 ret_5m=ret_5m,
                 volume_1m=vol_1m,
+                dpx_1m=dpx_1m,
+                dpx_3m=dpx_3m,
+                dpx_5m=dpx_5m,
                 z_ret_1m=None,
                 ret_from_call_start=ret_from,
                 ret_to_call_end=ret_to,
@@ -240,13 +369,13 @@ def scores_at_times(
     bars: pd.DataFrame,
     pairs: list[tuple[int, datetime]],
 ) -> list[ReactionRow]:
-    """Minimal reaction rows (ret/volume only) for lag-sweep scoring."""
+    """Minimal reaction rows (ret/dpx/volume) for lag-sweep scoring."""
     bars = _ensure_utc_index(bars)
     out: list[ReactionRow] = []
     for idx, t in pairs:
-        ret_1m, vol_1m = _forward_return(bars, t, 1)
-        ret_3m, _ = _forward_return(bars, t, 3)
-        ret_5m, _ = _forward_return(bars, t, 5)
+        ret_1m, vol_1m, dpx_1m = _forward_return(bars, t, 1)
+        ret_3m, _, dpx_3m = _forward_return(bars, t, 3)
+        ret_5m, _, dpx_5m = _forward_return(bars, t, 5)
         out.append(
             ReactionRow(
                 index=idx,
@@ -264,6 +393,9 @@ def scores_at_times(
                 ret_3m=ret_3m,
                 ret_5m=ret_5m,
                 volume_1m=vol_1m,
+                dpx_1m=dpx_1m,
+                dpx_3m=dpx_3m,
+                dpx_5m=dpx_5m,
             )
         )
     return out

@@ -78,7 +78,9 @@ def run_ticker_reaction(
     # → lag sensitivity sweep (primary 1m C1 under clock shifts)
     def _select_from_pairs(pairs: list[tuple[int, datetime]]) -> set[int]:
         tmp = scores_at_times(bars, pairs)
-        selected, _ = select_c1_indices_for_horizon(tmp, "1m")
+        selected, _ = select_c1_indices_for_horizon(
+            tmp, "1m", bars=bars, call_at=anchors.call_at
+        )
         return selected
 
     lag_sweep = lag_sensitivity_sweep(
@@ -88,7 +90,9 @@ def run_ticker_reaction(
     )
 
     # → C1 select for each horizon + finalize sync badge / exploratory gate
-    by_horizon = select_all_horizon_highlights(reactions)
+    by_horizon = select_all_horizon_highlights(
+        reactions, bars=bars, call_at=anchors.call_at
+    )
     aligned, reactions = apply_horizon_highlights(aligned, reactions, by_horizon)
     highlight_diag = {
         **by_horizon["1m"],
@@ -129,7 +133,7 @@ def run_ticker_reaction(
         "anchors_path": str(anchors_path),
         "caveats": [
             "Coincident reaction only; not causal attribution.",
-            "Highlights = Top-K per horizon (|ret_1m|/|ret_3m|/|ret_5m|) with percentile floor.",
+            "Highlights = Top-K per horizon (|Δprice_1m|/|Δprice_3m|/|Δprice_5m|) with percentile floor.",
             "Quotes show full same-speaker monologue; scored unit is the trigger paragraph.",
             "Excel naive timestamps assumed America/New_York.",
             "After-hours liquidity and pre-call print can dominate minute moves.",

@@ -61,26 +61,17 @@ def align_utterances(
         bar_close = None
         matched = False
         if len(bar_index) > 0:
-            # Nearest bar at or before utterance, else nearest overall within tolerance.
+            # Last bar at/before utterance — same clock as ret_from_call_start.
+            # Do not snap forward to a nearer *after* bar (that can be the recovery
+            # print and disagree with the table's from-call-start %).
             pos = int(bar_index.searchsorted(start_utc, side="right") - 1)
-            candidates: list[int] = []
-            if 0 <= pos < len(bar_index):
-                candidates.append(pos)
-            if pos + 1 < len(bar_index):
-                candidates.append(pos + 1)
-            if not candidates and len(bar_index):
-                candidates.append(0)
-            best_i = None
-            best_delta = None
-            for i in candidates:
-                delta = abs(bar_index[i] - pd.Timestamp(start_utc))
-                if best_delta is None or delta < best_delta:
-                    best_delta = delta
-                    best_i = i
-            if best_i is not None and best_delta is not None and best_delta <= max_delta:
+            if pos < 0:
+                pos = 0
+            delta = abs(bar_index[pos] - pd.Timestamp(start_utc))
+            if delta <= max_delta:
                 matched = True
-                bar_ts = bar_index[best_i].to_pydatetime()
-                cval = closes[best_i]
+                bar_ts = bar_index[pos].to_pydatetime()
+                cval = closes[pos]
                 bar_close = float(cval) if cval == cval else None  # NaN check
 
         aligned.append(
