@@ -4,12 +4,38 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+from typing import Sequence
+from urllib.parse import quote, urlencode
 
 from .research_data import resolve_cross_company_root
+from .sectors import ALL_COMPANIES, CUSTOM_LIST
 
 # Streamlit serves ``<app_dir>/static`` when enableStaticServing is on.
 # Confirmed URL shape (Streamlit 1.60): ``/app/static/<relative-path>``.
 _STATIC_URL_PREFIX = "/app/static/reports"
+
+
+def html_report_filter_args(
+    sector_choice: str,
+    sector_tickers: Sequence[str] | None,
+    available_tickers: Sequence[str],
+) -> tuple[list[str] | None, str | None]:
+    """Map Roz sidebar sector choice → iframe ``tickers`` / ``preset`` query args.
+
+    Returns ``(tickers, preset)`` where either or both may be ``None``:
+    - All Companies → ``(None, None)`` (plain URL; HTML shows full book)
+    - Named sector stem → ``(None, preset)`` so HTML loads that sector checklist
+    - Custom List → ``(tickers, None)`` preserving sidebar order
+    """
+    available = [str(t).upper() for t in available_tickers if str(t).strip()]
+    if not sector_choice or sector_choice == ALL_COMPANIES:
+        return None, None
+    if sector_choice == CUSTOM_LIST:
+        selected = [str(t).upper() for t in (sector_tickers or ()) if str(t).strip()]
+        available_set = set(available)
+        tickers = [t for t in selected if t in available_set]
+        return (tickers or None), None
+    return None, str(sector_choice)
 
 
 def reports_source_dir(
@@ -59,7 +85,44 @@ def ensure_reports_static_link(
     return ready
 
 
-def static_report_url(filename: str) -> str:
-    """Browser URL path for a report file under Streamlit static serving."""
+def static_report_url(
+    filename: str,
+    *,
+    tickers: Sequence[str] | str | None = None,
+    preset: str | None = None,
+) -> str:
+    """Browser URL path for a report file under Streamlit static serving.
+
+    Optional ``tickers`` / ``preset`` become query params so in-report JS can
+    filter (``?tickers=AAPL,MSFT&preset=xlk_tech``).
+    """
     name = Path(filename).name
-    return f"{_STATIC_URL_PREFIX}/{name}"
+    url = f"{_STATIC_URL_PREFIX}/{name}"
+    params: dict[str, str] = {}
+    if tickers is not None:
+        if isinstance(tickers, str):
+            cleaned = [
+                part.strip().upper()
+                for part in tickers.split(",")
+                if part.strip()
+            ]
+        else:
+            cleaned = [
+                str(ticker).strip().upper()
+                for ticker in tickers
+                if str(ticker).strip()
+            ]
+        if cleaned:
+            params["tickers"] = ",".join(cleaned)
+    if preset and str(preset).strip():
+        params["preset"] = str(preset).strip()
+    if not params:
+        return url
+    # Keep tickers commas unescaped for readability / JS split.
+    if "tickers" in params and len(params) == 1:
+        return f"{url}?tickers={quote(params['tickers'], safe=',')}"
+    if "tickers" in params:
+        tickers_q = quote(params["tickers"], safe=",")
+        rest = {k: v for k, v in params.items() if k != "tickers"}
+        return f"{url}?tickers={tickers_q}&{urlencode(rest)}"
+    return f"{url}?{urlencode(params)}"

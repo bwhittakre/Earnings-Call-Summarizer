@@ -340,13 +340,27 @@ def import_company_history(
     force: bool = False,
     dry_run: bool = False,
     company_id: int | None = None,
+    latest_only: bool = False,
 ) -> ImportResult:
-    """Company → events in window → write transcripts_raw files."""
+    """Company → events in window → write transcripts_raw files.
+
+    When *latest_only* is True, stop after the first successfully handled
+    (newest) event — used by micro-onboard.
+    """
     ticker_key = ticker.strip().upper()
     api = client or QuartrApiClient()
     resolved_id = company_id if company_id is not None else api.resolve_company_id(ticker_key)
     result = ImportResult(ticker=ticker_key, company_id=resolved_id)
     events = api.iter_events(company_id=resolved_id, start=start, end=end)
+    # Newest first so latest_only grabs the most recent call.
+    def _event_sort_key(event: dict) -> str:
+        for key in ("reportDate", "date", "eventDate", "callDate", "updatedAt"):
+            value = event.get(key)
+            if value:
+                return str(value)
+        return ""
+
+    events = sorted(events, key=_event_sort_key, reverse=True)
     result.events_seen = len(events)
 
     for event in events:
@@ -394,6 +408,8 @@ def import_company_history(
                     reason="exists",
                 )
             )
+            if latest_only:
+                break
             continue
         if dry_run:
             result.written.append(
@@ -407,6 +423,8 @@ def import_company_history(
                     reason="dry_run",
                 )
             )
+            if latest_only:
+                break
             continue
         if document_id is None:
             result.errors.append(f"{period}: transcript missing document id")
@@ -430,6 +448,8 @@ def import_company_history(
                 document_id=document_id,
             )
         )
+        if latest_only:
+            break
     return result
 
 

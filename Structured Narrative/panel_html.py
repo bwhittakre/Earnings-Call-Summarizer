@@ -10,6 +10,7 @@ from dataclasses import dataclass
 import pandas as pd
 
 from html_evidence import EVIDENCE_CSS, render_evidence_block
+from html_filter_presets import load_sector_presets
 from dimension_order import dimension_group_label, sort_panel_by_dimension
 from output_paths import resolve_read
 from period_dates import calendar_quarter_display, format_us_date, quarter_cell_html
@@ -96,6 +97,14 @@ BASE_CSS = """
   .company-filter-label { font-size: 12px; color: #555; margin: 0 6px 0 12px; }
   .company-filter { font-size: 13px; padding: 6px 10px; margin: 0 6px 6px 0; border: 1px solid #ccc;
           border-radius: 6px; background: #f7f7f7; max-width: 180px; }
+  .company-filter-bar { display: inline-flex; flex-wrap: wrap; align-items: center;
+          gap: 4px 0; margin: 0 0 6px 0; }
+  .company-check-wrap { display: inline-flex; flex-wrap: wrap; gap: 4px 10px;
+          max-width: 720px; vertical-align: middle; margin: 0 8px 6px 0;
+          padding: 6px 8px; border: 1px solid #e5e5e5; border-radius: 6px;
+          background: #fafafa; max-height: 96px; overflow-y: auto; }
+  .company-check-wrap label { font-size: 12px; white-space: nowrap; cursor: pointer; }
+  .cf-mini { font-size: 12px; padding: 4px 8px; margin: 0 4px 6px 0; }
   .mode-section { display: none; }
   .mode-section.active { display: block; }
 """
@@ -529,9 +538,18 @@ def build_consolidated_html(
         f'data-period-bucket="ALL">All buckets</button>'
     )
 
-    company_options = ['<option value="ALL">All companies</option>']
+    sector_presets = load_sector_presets(tickers)
+    preset_options = ['<option value="" data-preset="">All companies</option>']
+    for stem in sector_presets:
+        preset_options.append(
+            f'<option value="{esc(stem)}" data-preset="{esc(stem)}">{esc(stem)}</option>'
+        )
+    checklist_items = []
     for ticker in sorted(tickers):
-        company_options.append(f'<option value="{esc(ticker)}">{esc(ticker)}</option>')
+        checklist_items.append(
+            f'<label><input type="checkbox" class="company-check" value="{esc(ticker)}" checked> '
+            f"{esc(ticker)}</label>"
+        )
 
     compare_rows: list[str] = []
     browse_rows: list[str] = []
@@ -651,10 +669,15 @@ def build_consolidated_html(
     <button class="mbtn active" data-mode="compare">Compare by period-end quarter</button>
     <button class="mbtn" data-mode="browse">Browse by company</button>
     <span id="quarter-controls">{''.join(quarter_buttons)}</span>
-    <label class="company-filter-label" for="company-filter">Company</label>
-    <select id="company-filter" class="company-filter" title="Filter rows by ticker">{''.join(company_options)}</select>
+    <div class="company-filter-bar" id="company-filter">
+      <label class="company-filter-label" for="sector-preset">Sector</label>
+      <select id="sector-preset" class="company-filter" title="Sector preset">{''.join(preset_options)}</select>
+      <button type="button" class="fbtn cf-mini" id="cf-all">All</button>
+      <button type="button" class="fbtn cf-mini" id="cf-none">None</button>
+      <div class="company-check-wrap" id="company-checks">{''.join(checklist_items)}</div>
+    </div>
     <button class="fbtn" data-filter="div">Diverges only</button>
-    <div class="legend">Compare aligns companies by <strong>calendar quarter of fiscal period-end</strong>, not fiscal quarter label. Click + next to a company to expand its feature panel. Gap = surprise magnitude minus quant z.</div>
+    <div class="legend">Compare aligns companies by <strong>calendar quarter of fiscal period-end</strong>, not fiscal quarter label. Click + next to a company to expand its feature panel. Gap = surprise magnitude minus quant z. Sector / company filters hide rows client-side; honor <code>?tickers=</code> / <code>?preset=</code> from Roz.</div>
   </div>
 
   <div id="mode-compare" class="mode-section active">
@@ -679,34 +702,63 @@ def build_consolidated_html(
   </div>
 
 <script>
+const SECTOR_PRESETS = {json.dumps(sector_presets, allow_nan=False)};
+
 (function () {{
   var mode = 'compare';
   var selectedBucket = {json.dumps(default_bucket)};
   var filterDivOnly = false;
-  var selectedCompany = 'ALL';
-  var urlTickerSet = null;
 
-  function initUrlTickers() {{
-    try {{
-      var params = new URLSearchParams(window.location.search);
-      var raw = params.get('tickers');
-      if (!raw) return;
-      var list = raw.split(',').map(function (s) {{ return s.trim().toUpperCase(); }}).filter(Boolean);
-      if (!list.length) return;
-      urlTickerSet = {{}};
-      list.forEach(function (t) {{ urlTickerSet[t] = true; }});
-      var sel = document.getElementById('company-filter');
-      if (sel && list.length === 1) {{
-        sel.value = list[0];
-        selectedCompany = list[0];
-      }}
-    }} catch (e) {{}}
+  function selectedTickers() {{
+    var out = [];
+    document.querySelectorAll('.company-check').forEach(function (cb) {{
+      if (cb.checked) out.push(cb.value);
+    }});
+    return out;
+  }}
+
+  function setChecks(tickers) {{
+    var want = {{}};
+    (tickers || []).forEach(function (t) {{ want[String(t).toUpperCase()] = true; }});
+    document.querySelectorAll('.company-check').forEach(function (cb) {{
+      cb.checked = !!want[cb.value];
+    }});
+  }}
+
+  function setAllChecks(on) {{
+    document.querySelectorAll('.company-check').forEach(function (cb) {{ cb.checked = !!on; }});
   }}
 
   function companyMatches(ticker) {{
     if (!ticker) return false;
-    if (urlTickerSet) return !!urlTickerSet[ticker];
-    return selectedCompany === 'ALL' || selectedCompany === ticker;
+    var sel = selectedTickers();
+    return sel.indexOf(ticker) >= 0;
+  }}
+
+  function applyFilters() {{
+    if (mode === 'compare') applyCompareQuarter();
+    else applyBrowseFilter();
+  }}
+
+  function initUrlFilters() {{
+    try {{
+      var params = new URLSearchParams(window.location.search);
+      var preset = params.get('preset');
+      var raw = params.get('tickers');
+      var sel = document.getElementById('sector-preset');
+      if (preset && SECTOR_PRESETS[preset]) {{
+        if (sel) sel.value = preset;
+        setChecks(SECTOR_PRESETS[preset]);
+        return;
+      }}
+      if (raw) {{
+        var list = raw.split(',').map(function (s) {{ return s.trim().toUpperCase(); }}).filter(Boolean);
+        if (list.length) {{
+          if (sel) sel.value = '';
+          setChecks(list);
+        }}
+      }}
+    }} catch (e) {{}}
   }}
 
   function bindToggles(scope) {{
@@ -734,7 +786,7 @@ def build_consolidated_html(
       var showTicker = companyMatches(ticker);
       tr.style.display = (showQ && showDiv && showTicker) ? '' : 'none';
       var next = tr.nextElementSibling;
-      if (next && next.classList.contains('detail-row') && (!showQ || !showDiv)) {{
+      if (next && next.classList.contains('detail-row') && !(showQ && showDiv && showTicker)) {{
         next.hidden = true;
         var btn = tr.querySelector('.toggle');
         if (btn) {{ btn.textContent = '+'; btn.setAttribute('aria-expanded', 'false'); }}
@@ -772,6 +824,7 @@ def build_consolidated_html(
       document.getElementById('mode-compare').classList.toggle('active', mode === 'compare');
       document.getElementById('mode-browse').classList.toggle('active', mode === 'browse');
       document.getElementById('quarter-controls').style.display = mode === 'compare' ? '' : 'none';
+      applyFilters();
     }});
   }});
 
@@ -786,51 +839,41 @@ def build_consolidated_html(
     b.addEventListener('click', function () {{
       filterDivOnly = !filterDivOnly;
       b.classList.toggle('active', filterDivOnly);
-      if (mode === 'compare') applyCompareQuarter();
-      else applyBrowseFilter();
+      applyFilters();
     }});
   }});
 
-  var companyFilter = document.getElementById('company-filter');
-  if (companyFilter) {{
-    companyFilter.addEventListener('change', function () {{
-      selectedCompany = companyFilter.value || 'ALL';
-      urlTickerSet = null;
-      if (mode === 'compare') applyCompareQuarter();
-      else applyBrowseFilter();
+  var sectorSel = document.getElementById('sector-preset');
+  if (sectorSel) {{
+    sectorSel.addEventListener('change', function () {{
+      var stem = sectorSel.value;
+      if (stem && SECTOR_PRESETS[stem]) setChecks(SECTOR_PRESETS[stem]);
+      else setAllChecks(true);
+      applyFilters();
     }});
   }}
+  var cfAll = document.getElementById('cf-all');
+  if (cfAll) cfAll.addEventListener('click', function () {{
+    if (sectorSel) sectorSel.value = '';
+    setAllChecks(true);
+    applyFilters();
+  }});
+  var cfNone = document.getElementById('cf-none');
+  if (cfNone) cfNone.addEventListener('click', function () {{
+    if (sectorSel) sectorSel.value = '';
+    setAllChecks(false);
+    applyFilters();
+  }});
+  document.querySelectorAll('.company-check').forEach(function (cb) {{
+    cb.addEventListener('change', function () {{
+      if (sectorSel) sectorSel.value = '';
+      applyFilters();
+    }});
+  }});
 
-  initUrlTickers();
+  initUrlFilters();
   bindToggles(document);
-  applyCompareQuarter();
-
-  // region agent log
-  (function () {{
-    var sel = document.getElementById('company-filter');
-    var opts = sel ? Array.prototype.map.call(sel.options, function (o) {{ return o.value; }}) : [];
-    fetch('http://127.0.0.1:7928/ingest/adf425df-9c20-432c-aa24-bfb984287cd1', {{
-      method: 'POST',
-      headers: {{ 'Content-Type': 'application/json', 'X-Debug-Session-Id': '059d80' }},
-      body: JSON.stringify({{
-        sessionId: '059d80',
-        runId: 'pre-fix',
-        hypothesisId: 'H5-H6',
-        location: 'panel_html.js:init',
-        message: 'company-filter options at load',
-        data: {{
-          optionCount: opts.length,
-          hasCSCO: opts.indexOf('CSCO') >= 0,
-          cscoIndex: opts.indexOf('CSCO'),
-          options: opts,
-          selectedBucket: selectedBucket,
-          search: window.location.search
-        }},
-        timestamp: Date.now()
-      }})
-    }}).catch(function () {{}});
-  }})();
-  // endregion
+  applyFilters();
 }})();
 </script>
 </body>

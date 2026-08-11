@@ -10,10 +10,15 @@ import os
 from pathlib import Path
 from typing import Any
 
+from services.earnings_monitor.dashboard.company_labels import format_company_label
 from services.earnings_monitor.dashboard.data import (
     DashboardData,
     default_dataset_path,
     load_dashboard_data,
+)
+from services.earnings_monitor.dashboard.quartr_watchlists import (
+    sync_is_fresh,
+    sync_quartr_watchlists,
 )
 from services.earnings_monitor.dashboard.report_static import ensure_reports_static_link
 from services.earnings_monitor.dashboard.research_data import (
@@ -27,8 +32,10 @@ from services.earnings_monitor.dashboard.research_data import (
     resolve_rank_ic_html,
 )
 from services.earnings_monitor.dashboard.sectors import (
+    CUSTOM_LIST,
     list_sector_options,
-    resolve_sector_tickers,
+    resolve_active_universe,
+    sector_option_label,
 )
 from services.earnings_monitor.dashboard.views import VIEWS
 
@@ -83,12 +90,76 @@ def render_app(
         "Sector",
         sector_options,
         index=sector_options.index(default_sector),
+        format_func=sector_option_label,
         key="roz_sector",
     )
-    sector_tickers = resolve_sector_tickers(sector_choice, data.tickers)
-    st.sidebar.caption(
-        f"Sector filter: {sector_choice} · {len(sector_tickers)} companies"
+    custom_tickers: list[str] = []
+    if sector_choice == CUSTOM_LIST:
+        custom_tickers = list(
+            st.sidebar.multiselect(
+                "Custom list companies",
+                options=list(data.tickers),
+                default=list(st.session_state.get("roz_custom_tickers") or []),
+                format_func=format_company_label,
+                key="roz_custom_tickers",
+            )
+        )
+        if not custom_tickers:
+            st.sidebar.info("Select one or more companies for the custom list.")
+    sector_tickers = resolve_active_universe(
+        sector_choice,
+        data.tickers,
+        custom_tickers=custom_tickers,
     )
+    st.sidebar.caption(
+        f"Filter: {sector_option_label(sector_choice)} · "
+        f"{len(sector_tickers)} companies"
+    )
+    st.sidebar.caption("Comparative tabs + research reports follow this filter.")
+
+    repo_root = Path(__file__).resolve().parents[3]
+    if not sync_is_fresh():
+        try:
+            # File sync only on load — micro-onboard is opt-in via the button.
+            auto = sync_quartr_watchlists(
+                repo_root=repo_root,
+                available_tickers=data.tickers,
+                micro_onboard=False,
+                force=False,
+            )
+            if auto.error:
+                st.sidebar.caption(f"Quartr watchlists: {auto.error}")
+            elif not auto.from_cache:
+                st.sidebar.caption(
+                    f"Quartr watchlists synced ({auto.watchlists} lists)."
+                )
+                sector_options = list_sector_options()
+        except Exception as exc:  # noqa: BLE001
+            st.sidebar.caption(f"Quartr watchlists: {exc}")
+
+    if st.sidebar.button("Refresh Quartr watchlists", key="roz_quartr_refresh"):
+        with st.spinner("Syncing Quartr watchlists (may micro-onboard new names)…"):
+            refreshed = sync_quartr_watchlists(
+                repo_root=repo_root,
+                available_tickers=data.tickers,
+                micro_onboard=True,
+                max_micro_onboards=5,
+                force=True,
+            )
+        if refreshed.error:
+            st.sidebar.error(refreshed.error)
+        else:
+            st.sidebar.success(
+                f"{refreshed.watchlists} lists · "
+                f"{len(refreshed.micro_onboarded)} micro-onboarded · "
+                f"{len(refreshed.pending_transcript)} pending transcript"
+            )
+            if refreshed.micro_onboarded:
+                st.sidebar.caption(
+                    "Deepen history later via full Onboard for: "
+                    + ", ".join(refreshed.micro_onboarded)
+                )
+            st.rerun()
 
     rank_html = resolve_rank_ic_html()
     consolidated_html = resolve_consolidated_html()
@@ -142,7 +213,12 @@ def render_app(
         )
 
     view_name = st.sidebar.radio("View", list(VIEWS))
-    VIEWS[view_name](st, data, sector_tickers=sector_tickers)
+    VIEWS[view_name](
+        st,
+        data,
+        sector_tickers=sector_tickers,
+        sector_choice=sector_choice,
+    )
 
 
 def main() -> None:

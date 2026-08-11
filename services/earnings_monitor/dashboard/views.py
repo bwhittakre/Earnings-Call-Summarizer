@@ -11,9 +11,15 @@ from urllib.parse import urlencode
 
 from .charts import (
     heatmap_chart,
-    narrative_quant_scatter,
+    narrative_quant_plotly,
+    narrative_quant_trajectory_plotly,
     overview_pulse_chart,
     ranked_bar_chart,
+)
+from .nvq_analytics import (
+    calendar_quarter_options,
+    filter_by_calendar_quarters,
+    point_key,
 )
 from .company_labels import format_company_label, with_company_labels
 from .data import DashboardData
@@ -53,7 +59,12 @@ _BOOK_RANKS_METRIC_KEY = (
         "False when excluded (first-print, missing prior, not investable, missing signal).",
     ),
 )
-from .sectors import pad_company_rows
+from .sectors import (
+    ALL_COMPANIES,
+    CUSTOM_LIST,
+    is_full_universe,
+    pad_company_rows,
+)
 
 _HEATMAP_MAX_COMPARE = 4
 _HTML_EMBED_HEIGHT = 1000
@@ -79,6 +90,22 @@ def _universe(
     if sector_tickers is not None:
         return [str(ticker).upper() for ticker in sector_tickers]
     return list(data.tickers)
+
+
+def _research_iframe_query(
+    data: DashboardData,
+    universe: Sequence[str],
+    *,
+    sector_choice: str | None,
+) -> dict[str, str] | None:
+    """Build ``?tickers=`` / ``?preset=`` for research HTML embeds."""
+    query: dict[str, str] = {}
+    if universe and not is_full_universe(universe, data.tickers):
+        query["tickers"] = ",".join(str(t).upper() for t in universe if str(t).strip())
+    choice = (sector_choice or "").strip()
+    if choice and choice not in {ALL_COMPANIES, CUSTOM_LIST}:
+        query["preset"] = choice
+    return query or None
 
 
 def _table(st: Any, rows: list[dict[str, Any]]) -> None:
@@ -225,6 +252,7 @@ def render_overview(
     data: DashboardData,
     *,
     sector_tickers: Sequence[str] | None = None,
+    sector_choice: str | None = None,
 ) -> None:
     st.header("Roz overview")
     universe = _universe(data, sector_tickers)
@@ -320,8 +348,9 @@ def render_event_inbox(
     data: DashboardData,
     *,
     sector_tickers: Sequence[str] | None = None,
+    sector_choice: str | None = None,
 ) -> None:
-    del sector_tickers  # ops view is not sector-scoped
+    del sector_tickers, sector_choice  # ops view is not sector-scoped
     st.header("Event inbox")
     events = data.event_inbox()
     statuses = sorted({str(event.get("status")) for event in events if event.get("status")})
@@ -336,6 +365,7 @@ def render_company_history(
     data: DashboardData,
     *,
     sector_tickers: Sequence[str] | None = None,
+    sector_choice: str | None = None,
 ) -> None:
     st.header("Company history")
     universe = _universe(data, sector_tickers) or list(data.tickers)
@@ -394,6 +424,7 @@ def render_dimension_heatmap(
     data: DashboardData,
     *,
     sector_tickers: Sequence[str] | None = None,
+    sector_choice: str | None = None,
 ) -> None:
     st.header("Dimension panel")
     universe = _universe(data, sector_tickers)
@@ -474,6 +505,7 @@ def render_cross_company(
     data: DashboardData,
     *,
     sector_tickers: Sequence[str] | None = None,
+    sector_choice: str | None = None,
 ) -> None:
     st.header("Cross-company")
     universe = _universe(data, sector_tickers)
@@ -531,17 +563,79 @@ def render_cross_company(
     _table(st, table_rows)
 
 
+def _nvq_selection_keys(event: Any) -> list[str]:
+    """Extract stable point keys from a Streamlit Plotly selection event."""
+    if event is None:
+        return []
+    selection = getattr(event, "selection", None)
+    if selection is None and isinstance(event, dict):
+        selection = event.get("selection")
+    points = getattr(selection, "points", None)
+    if points is None and isinstance(selection, dict):
+        points = selection.get("points")
+    if not points:
+        return []
+    keys: list[str] = []
+    for point in points:
+        if isinstance(point, dict):
+            custom = point.get("customdata")
+            point_id = point.get("id") or point.get("point_id")
+        else:
+            custom = getattr(point, "customdata", None)
+            point_id = getattr(point, "id", None) or getattr(point, "point_id", None)
+        if isinstance(custom, (list, tuple)) and custom:
+            # customdata last slot is point_id in scatter; index 6 in trajectory
+            candidate = custom[-1]
+            if isinstance(candidate, str) and "|" in candidate:
+                keys.append(candidate)
+                continue
+        if point_id:
+            keys.append(str(point_id))
+    # Preserve order, drop dupes
+    seen: set[str] = set()
+    ordered: list[str] = []
+    for key in keys:
+        if key in seen:
+            continue
+        seen.add(key)
+        ordered.append(key)
+    return ordered
+
+
+def _nvq_plotly_chart(st: Any, figure: Any, *, key: str) -> Any:
+    """Render Plotly with selection + scrollZoom; fall back if API unsupported."""
+    kwargs = {
+        "use_container_width": True,
+        "config": {"scrollZoom": True},
+        "key": key,
+    }
+    try:
+        return st.plotly_chart(
+            figure,
+            on_select="rerun",
+            selection_mode=("points", "box", "lasso"),
+            **kwargs,
+        )
+    except TypeError:
+        # Older Streamlit without selection API.
+        return st.plotly_chart(figure, **kwargs)
+
+
 def render_narrative_vs_quant(
     st: Any,
     data: DashboardData,
     *,
     sector_tickers: Sequence[str] | None = None,
+    sector_choice: str | None = None,
 ) -> None:
     st.header("Narrative vs quant")
     universe = _universe(data, sector_tickers)
     if not universe:
         st.info("No companies are available.")
         return
+
+    if "nvq_selection" not in st.session_state:
+        st.session_state["nvq_selection"] = []
 
     default = universe[:1]
     selected = _multi_tickers(
@@ -550,51 +644,180 @@ def render_narrative_vs_quant(
         default=default,
         key="nvq_companies",
     )
-    dimension_options = ["All"] + data.dimensions
-    dimension = st.selectbox("Dimension", dimension_options, key="nvq_dimension")
-    point_filter = st.radio(
-        "Points",
-        ("All points", "Divergences only"),
+    chart_tickers = selected or default
+    peer_universe = list(universe)
+
+    mode = st.radio(
+        "Mode",
+        ("Scatter", "Trajectory"),
         horizontal=True,
-        key="nvq_points",
+        key="nvq_mode",
     )
+    dimension_options = ["All"] + data.dimensions
+    if mode == "Trajectory":
+        dimension_options = list(data.dimensions) or ["demand"]
+    dimension = st.selectbox("Dimension", dimension_options, key="nvq_dimension")
+    if mode == "Trajectory" and dimension == "All":
+        dimension = dimension_options[0]
 
-    points = data.narrative_vs_quant(
-        tickers=selected or default,
-        dimension=None if dimension == "All" else dimension,
+    dim_filter = None if dimension == "All" else dimension
+    base_points = data.narrative_vs_quant(
+        tickers=chart_tickers,
+        dimension=dim_filter,
+        peer_tickers=peer_universe,
     )
-    if point_filter == "Divergences only":
-        points = [point for point in points if point.get("divergence")]
-
-    divergences = sum(bool(point["divergence"]) for point in points)
-    left, right = st.columns(2)
-    left.metric("Comparable observations", len(points))
-    right.metric("Divergences", divergences)
-
-    if len(selected) > 6:
-        st.caption(
-            f"{len(selected)} companies selected — consider narrowing the set for readability."
+    period_options = calendar_quarter_options(base_points)
+    selected_periods = st.multiselect(
+        "Calendar quarters",
+        period_options,
+        default=period_options,
+        key="nvq_calendar_quarters",
+        help="Uses period-end calendar quarter so peers align across fiscal calendars.",
+    )
+    agreement = st.radio(
+        "Agreement",
+        ("All", "Aligned only", "Divergences only"),
+        horizontal=True,
+        key="nvq_agreement",
+    )
+    peer_outliers = st.checkbox(
+        "Peer outliers only (|peer gap Δ| ≥ 0.5)",
+        value=False,
+        key="nvq_peer_outliers",
+    )
+    streak_cols = st.columns(2)
+    streak_type = streak_cols[0].selectbox(
+        "Streak type",
+        ("Any", "Divergent", "Aligned"),
+        key="nvq_streak_type",
+    )
+    min_streak = int(
+        streak_cols[1].number_input(
+            "Min streak length",
+            min_value=1,
+            value=1,
+            step=1,
+            key="nvq_min_streak",
         )
+    )
 
+    points = filter_by_calendar_quarters(base_points, selected_periods)
+    if agreement == "Aligned only":
+        points = [point for point in points if point.get("agreement") == "Aligned"]
+    elif agreement == "Divergences only":
+        points = [point for point in points if point.get("agreement") == "Divergence"]
+    if peer_outliers:
+        points = [
+            point
+            for point in points
+            if isinstance(point.get("peer_gap_delta"), (int, float))
+            and abs(float(point["peer_gap_delta"])) >= 0.5
+        ]
+    if min_streak > 1 or streak_type != "Any":
+        filtered: list[dict[str, Any]] = []
+        for point in points:
+            diverge = int(point.get("diverge_streak") or 0)
+            align = int(point.get("align_streak") or 0)
+            if streak_type == "Divergent":
+                ok = diverge >= min_streak
+            elif streak_type == "Aligned":
+                ok = align >= min_streak
+            else:
+                ok = max(diverge, align) >= min_streak
+            if ok:
+                filtered.append(point)
+        points = filtered
+
+    if mode == "Trajectory" and len(chart_tickers) > 6:
+        st.warning("Trajectory mode is clearest with ≤6 companies — narrowing display.")
+        chart_tickers = list(chart_tickers)[:6]
+        allowed = {ticker.upper() for ticker in chart_tickers}
+        points = [
+            point for point in points if str(point.get("ticker", "")).upper() in allowed
+        ]
+
+    divergences = sum(bool(point.get("divergence")) for point in points)
+    flips = sum(bool(point.get("agreement_flipped")) for point in points)
+    peer_outlier_n = sum(
+        1
+        for point in points
+        if isinstance(point.get("peer_gap_delta"), (int, float))
+        and abs(float(point["peer_gap_delta"])) >= 0.5
+    )
+    m1, m2, m3, m4 = st.columns(4)
+    m1.metric("Points", len(points))
+    m2.metric("Divergences", divergences)
+    m3.metric("Flips", flips)
+    m4.metric("Peer outliers", peer_outlier_n)
+
+    selected_keys = list(st.session_state.get("nvq_selection") or [])
     if points:
-        _altair(
-            st,
-            narrative_quant_scatter(
+        if mode == "Trajectory":
+            figure = narrative_quant_trajectory_plotly(
                 points,
-                title="Narrative vs quant",
-                color_by_company=len(selected or default) > 1,
-            ),
-        )
+                selected_keys=selected_keys,
+            )
+        else:
+            figure = narrative_quant_plotly(
+                points,
+                color_by_company=len(chart_tickers) > 1,
+                selected_keys=selected_keys,
+            )
+        event = _nvq_plotly_chart(st, figure, key="nvq_plotly")
+        event_keys = _nvq_selection_keys(event)
+        if event_keys:
+            st.session_state["nvq_selection"] = event_keys
+            selected_keys = event_keys
+
+        clear_cols = st.columns([1, 3])
+        if clear_cols[0].button("Clear selection", key="nvq_clear_selection"):
+            st.session_state["nvq_selection"] = []
+            selected_keys = []
+        if selected_keys:
+            clear_cols[1].caption(
+                f"Working set: {len(selected_keys)} selected point(s). "
+                "Table/CSV follow the selection."
+            )
+        else:
+            clear_cols[1].caption(
+                "Scroll/pinch zooms the plot (hover first); double-click resets. "
+                "Box/lasso or click to build a working set."
+            )
         st.caption(
-            "Aligned points use a fixed readable size; divergences are larger triangles. "
-            "Axes use fixed domains (narrative [-2, +2], quant z [-3, +3]). "
-            "Dashed line is the narrative ≈ quant diagonal."
+            "Peer stats use the Sector sidebar universe, grouped by calendar quarter × "
+            "dimension. Streaks require consecutive calendar quarters; a missing quarter "
+            "breaks the streak. Flipped points use a darker marker outline."
+        )
+
+        key_set = set(selected_keys)
+        working = (
+            [point for point in points if point_key(point) in key_set]
+            if key_set
+            else points
         )
         sorted_points = sorted(
-            points,
-            key=lambda point: (not bool(point.get("divergence")), str(point.get("ticker"))),
+            working,
+            key=lambda point: (
+                not bool(point.get("divergence")),
+                str(point.get("ticker")),
+                str(point.get("calendar_quarter") or point.get("fiscal_period")),
+            ),
         )
-        _table(st, with_company_labels(sorted_points))
+        table_rows = with_company_labels(sorted_points)
+        _table(st, table_rows)
+        try:
+            import pandas as pd  # type: ignore
+
+            csv_bytes = pd.DataFrame(table_rows).to_csv(index=False).encode("utf-8")
+            st.download_button(
+                "Download CSV",
+                data=csv_bytes,
+                file_name="narrative_vs_quant_working_set.csv",
+                mime="text/csv",
+                key="nvq_download_csv",
+            )
+        except Exception:  # noqa: BLE001
+            pass
     else:
         st.info("No rows have both narrative and quantitative values for this filter.")
 
@@ -618,14 +841,20 @@ def render_signal_research(
     data: DashboardData,
     *,
     sector_tickers: Sequence[str] | None = None,
+    sector_choice: str | None = None,
 ) -> None:
-    del sector_tickers
+    universe = _universe(data, sector_tickers)
     st.header("Signal research")
     st.caption(
         "Embedded Rank IC report from Structured Narrative "
-        "(``narrative_signal_eval.html``)."
+        "(``narrative_signal_eval.html``). The Sector sidebar filter is passed "
+        "into the report via ``?tickers=`` / ``?preset=``."
     )
     _warn_research_universe(st, data)
+    if universe and not is_full_universe(universe, data.tickers):
+        st.caption(
+            f"Active universe: {len(universe)} of {len(data.tickers)} companies."
+        )
     path = resolve_rank_ic_html()
     _render_html_report(
         st,
@@ -635,6 +864,9 @@ def render_signal_research(
             "python evaluate_narrative_signals.py --tickers <universe> "
             "--min-calendar-quarter 2016-Q2"
         ),
+        iframe_query=_research_iframe_query(
+            data, universe, sector_choice=sector_choice
+        ),
     )
 
 
@@ -643,8 +875,9 @@ def render_book_ranks(
     data: DashboardData,
     *,
     sector_tickers: Sequence[str] | None = None,
+    sector_choice: str | None = None,
 ) -> None:
-    del data, sector_tickers
+    del data, sector_tickers, sector_choice
     st.header("Book ranks")
     st.caption(
         "Cross-sectional ranks for the frozen production signal pack "
@@ -781,6 +1014,7 @@ def render_consolidated_panel(
     data: DashboardData,
     *,
     sector_tickers: Sequence[str] | None = None,
+    sector_choice: str | None = None,
 ) -> None:
     universe = _universe(data, sector_tickers)
     st.header("Consolidated panel")
@@ -791,7 +1025,7 @@ def render_consolidated_panel(
         "than the full dataset."
     )
     _warn_research_universe(st, data)
-    if universe and len(universe) < len(data.tickers):
+    if universe and not is_full_universe(universe, data.tickers):
         missing = sorted(set(data.tickers) - set(universe))
         if missing:
             st.warning(
@@ -803,9 +1037,6 @@ def render_consolidated_panel(
             f"Sector filter: {', '.join(universe)}."
         )
     path = resolve_consolidated_html()
-    iframe_query: dict[str, str] | None = None
-    if universe and len(universe) < len(data.tickers):
-        iframe_query = {"tickers": ",".join(universe)}
     _render_html_report(
         st,
         path,
@@ -815,7 +1046,9 @@ def render_consolidated_panel(
             "python build_consolidated_panel_report.py --tickers <universe> "
             "--min-calendar-quarter 2016-Q2"
         ),
-        iframe_query=iframe_query,
+        iframe_query=_research_iframe_query(
+            data, universe, sector_choice=sector_choice
+        ),
     )
 
 
@@ -824,8 +1057,9 @@ def render_audit(
     data: DashboardData,
     *,
     sector_tickers: Sequence[str] | None = None,
+    sector_choice: str | None = None,
 ) -> None:
-    del sector_tickers
+    del sector_tickers, sector_choice
     st.header("Audit")
     incomplete_only = st.checkbox("Show incomplete quarters only", value=False)
     audits = data.audit(incomplete_only=incomplete_only)
@@ -847,8 +1081,9 @@ def render_operations(
     data: DashboardData,
     *,
     sector_tickers: Sequence[str] | None = None,
+    sector_choice: str | None = None,
 ) -> None:
-    del sector_tickers
+    del sector_tickers, sector_choice
     st.header("Operations")
     alerts = data.operational_alerts()
     left, right = st.columns(2)

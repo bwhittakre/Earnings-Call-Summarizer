@@ -4,7 +4,9 @@ from __future__ import annotations
 
 from services.earnings_monitor.dashboard.charts import (
     heatmap_chart,
+    narrative_quant_plotly,
     narrative_quant_scatter,
+    narrative_quant_trajectory_plotly,
     overview_pulse_chart,
     ranked_bar_chart,
 )
@@ -300,6 +302,43 @@ def test_chart_builders_return_altair_specs() -> None:
         ]
     )
     assert hasattr(scatter, "to_dict")
+
+    nvq_rows = [
+        {
+            "ticker": "AAPL",
+            "fiscal_period": "FY2025-Q1",
+            "calendar_quarter": "2024-Q4",
+            "dimension": "margins",
+            "narrative_level": 1.0,
+            "quant_z": 0.2,
+            "gap": 0.8,
+            "divergence": True,
+            "agreement": "Divergence",
+            "agreement_flipped": True,
+            "diverge_streak": 2,
+            "align_streak": 0,
+            "peer_gap_delta": 0.4,
+        },
+        {
+            "ticker": "MSFT",
+            "fiscal_period": "FY2025-Q1",
+            "calendar_quarter": "2024-Q4",
+            "dimension": "margins",
+            "narrative_level": 0.5,
+            "quant_z": 0.1,
+            "gap": 0.4,
+            "divergence": False,
+            "agreement": "Aligned",
+            "agreement_flipped": False,
+            "diverge_streak": 0,
+            "align_streak": 1,
+            "peer_gap_delta": 0.0,
+        },
+    ]
+    plotly_fig = narrative_quant_plotly(nvq_rows, color_by_company=True)
+    assert plotly_fig.data and len(plotly_fig.data) >= 2
+    traj = narrative_quant_trajectory_plotly(nvq_rows)
+    assert traj.data and len(traj.data) >= 2
 
     pulse = overview_pulse_chart(
         [

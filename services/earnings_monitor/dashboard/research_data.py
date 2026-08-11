@@ -11,7 +11,7 @@ import os
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Sequence
 
 _CONSOLIDATED_STEMS = (
     "consolidated_feature_panel",
@@ -378,7 +378,15 @@ def filter_rank_ic_rows(
     horizon: str | None = None,
     dimension: str | None = None,
     signal: str | None = None,
+    tickers: Sequence[str] | None = None,
 ) -> list[dict[str, Any]]:
+    allowed: set[str] | None = None
+    if tickers is not None:
+        allowed = {
+            str(ticker).strip().upper()
+            for ticker in tickers
+            if str(ticker).strip()
+        }
     out: list[dict[str, Any]] = []
     for row in rows:
         if label is not None and str(row.get("label", "")) != label:
@@ -389,6 +397,14 @@ def filter_rank_ic_rows(
             continue
         if signal is not None and str(row.get("signal", "")) != signal:
             continue
+        if allowed is not None:
+            raw = row.get("ticker")
+            if raw is None or raw == "":
+                # Keep aggregate / non-ticker rows (e.g. book-level IC).
+                out.append(row)
+                continue
+            if str(raw).strip().upper() not in allowed:
+                continue
         out.append(row)
     return out
 

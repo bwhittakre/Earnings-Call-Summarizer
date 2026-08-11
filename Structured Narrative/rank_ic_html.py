@@ -11,6 +11,7 @@ from typing import Any
 import pandas as pd
 
 from fiscal_period_util import fiscal_period_sort_key
+from html_filter_presets import load_sector_presets
 from period_dates import calendar_quarter_sort_key
 
 SIGNAL_LABELS = {
@@ -248,6 +249,16 @@ CSS = """
   .ci-marker { position: absolute; top: 1px; bottom: 1px; width: 2px; background: #1c1c1e; }
   .warn-box { font-size: 12px; color: #8a5a00; background: #fff8e6; border: 1px solid #f0dca0;
               border-radius: 6px; padding: 8px 10px; margin: 0 0 10px; max-width: 900px; }
+  .company-filter-label { font-size: 12px; color: #555; margin: 0 6px 0 0; }
+  .company-filter { font-size: 13px; padding: 6px 10px; margin: 0 6px 6px 0; border: 1px solid #ccc;
+          border-radius: 6px; background: #f7f7f7; max-width: 180px; }
+  .company-filter-bar { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 4px 0; }
+  .company-check-wrap { display: inline-flex; flex-wrap: wrap; gap: 4px 10px;
+          max-width: 720px; margin: 0 8px 6px 0; padding: 6px 8px; border: 1px solid #e5e5e5;
+          border-radius: 6px; background: #fafafa; max-height: 96px; overflow-y: auto; }
+  .company-check-wrap label { font-size: 12px; white-space: nowrap; cursor: pointer; }
+  .cf-mini { font-size: 12px; padding: 4px 8px; margin: 0 4px 6px 0; }
+  .filter-caption { font-size: 12px; color: #555; margin: 0 0 8px; }
 """
 
 
@@ -399,6 +410,17 @@ def build_rank_ic_report_html(
         for s in signals
     )
 
+    sector_presets = load_sector_presets(tickers)
+    preset_options = ['<option value="" data-preset="">All companies</option>']
+    for stem in sector_presets:
+        preset_options.append(
+            f'<option value="{esc(stem)}" data-preset="{esc(stem)}">{esc(stem)}</option>'
+        )
+    checklist_html = "".join(
+        f'<label><input type="checkbox" class="company-check" value="{esc(t)}" checked> {esc(t)}</label>'
+        for t in tickers
+    )
+
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -440,6 +462,16 @@ def build_rank_ic_report_html(
       <span class="ctrl-row-label">Signal</span>
       <span id="signal-controls">{signal_buttons}</span>
     </div>
+    <div class="ctrl-row" id="company-filter">
+      <span class="ctrl-row-label">Universe</span>
+      <div class="company-filter-bar">
+        <label class="company-filter-label" for="sector-preset">Sector</label>
+        <select id="sector-preset" class="company-filter" title="Sector preset">{''.join(preset_options)}</select>
+        <button type="button" class="fbtn cf-mini" id="cf-all">All</button>
+        <button type="button" class="fbtn cf-mini" id="cf-none">None</button>
+        <div class="company-check-wrap" id="company-checks">{checklist_html}</div>
+      </div>
+    </div>
     <div class="legend">
       <strong>Unit of observation:</strong> RankIC is computed separately for each
       (period, dimension) cross-section — a company contributes at most one point per
@@ -453,11 +485,14 @@ def build_rank_ic_report_html(
       grouped by the earnings date's calendar quarter (fiscal-period labels aren't
       calendar-aligned across companies). Horizons are calendar-day windows from each
       name's own T+7 entry date. Cells: green / blue = higher; red / orange = lower.
+      Sector / company filters recompute period Rank IC client-side from embedded
+      company×period data (honor <code>?tickers=</code> / <code>?preset=</code> from Roz).
     </div>
   </div>
 
   <div id="mode-heatmap" class="mode-section active">
     <div class="meta" id="heatmap-meta"></div>
+    <div class="filter-caption" id="filter-caption"></div>
     <p class="hint">Rows = signals, columns = periods, for the selected dimension. Cell = RankIC
        for that period's (dimension-scoped) cross-section.</p>
     <div id="heatmap-warn"></div>
@@ -504,6 +539,8 @@ def build_rank_ic_report_html(
 
 <script>
 const DATA = {json.dumps(payload, allow_nan=False)};
+const SECTOR_PRESETS = {json.dumps(sector_presets, allow_nan=False)};
+/* RANK_IC_CLIENT_RECOMPUTE */
 
 (function () {{
   let mode = 'heatmap';
@@ -564,6 +601,160 @@ const DATA = {json.dumps(payload, allow_nan=False)};
     }});
   }}
 
+  function selectedTickers() {{
+    const out = [];
+    document.querySelectorAll('.company-check').forEach(function (cb) {{
+      if (cb.checked) out.push(cb.value);
+    }});
+    return out;
+  }}
+
+  function setChecks(tickers) {{
+    const want = {{}};
+    (tickers || []).forEach(function (t) {{ want[String(t).toUpperCase()] = true; }});
+    document.querySelectorAll('.company-check').forEach(function (cb) {{
+      cb.checked = !!want[cb.value];
+    }});
+  }}
+
+  function setAllChecks(on) {{
+    document.querySelectorAll('.company-check').forEach(function (cb) {{ cb.checked = !!on; }});
+  }}
+
+  function isFullUniverse(sel) {{
+    const all = DATA.tickers || [];
+    if (!all.length) return true;
+    if (!sel || sel.length !== all.length) return false;
+    const set = {{}};
+    sel.forEach(function (t) {{ set[t] = true; }});
+    for (let i = 0; i < all.length; i++) {{
+      if (!set[all[i]]) return false;
+    }}
+    return true;
+  }}
+
+  function updateFilterCaption() {{
+    const el = document.getElementById('filter-caption');
+    if (!el) return;
+    const sel = selectedTickers();
+    if (isFullUniverse(sel)) {{
+      el.textContent = '';
+      return;
+    }}
+    el.textContent = 'Rank IC recomputed for ' + sel.length + ' companies.';
+  }}
+
+  // RANK_IC_CLIENT_RECOMPUTE — average-rank Spearman (parity with spearman_ic.py).
+  function spearmanRankIC(xs, ys) {{
+    const pairs = [];
+    const nIn = Math.min(xs.length, ys.length);
+    for (let i = 0; i < nIn; i++) {{
+      const x = xs[i], y = ys[i];
+      if (x === null || x === undefined || y === null || y === undefined) continue;
+      if (Number.isNaN(x) || Number.isNaN(y)) continue;
+      pairs.push([Number(x), Number(y)]);
+    }}
+    const n = pairs.length;
+    if (n < 3) return null;
+    const xv = pairs.map(function (p) {{ return p[0]; }});
+    const yv = pairs.map(function (p) {{ return p[1]; }});
+    function ranks(vals) {{
+      const order = vals.map(function (_, i) {{ return i; }})
+        .sort(function (a, b) {{ return vals[a] - vals[b]; }});
+      const out = new Array(n);
+      let i = 0;
+      while (i < n) {{
+        let j = i;
+        while (j + 1 < n && vals[order[j + 1]] === vals[order[i]]) j++;
+        const avg = (i + j) / 2.0 + 1.0;
+        for (let k = i; k <= j; k++) out[order[k]] = avg;
+        i = j + 1;
+      }}
+      return out;
+    }}
+    const rx = ranks(xv);
+    const ry = ranks(yv);
+    let meanX = 0, meanY = 0;
+    for (let i = 0; i < n; i++) {{ meanX += rx[i]; meanY += ry[i]; }}
+    meanX /= n; meanY /= n;
+    let num = 0, denX = 0, denY = 0;
+    for (let i = 0; i < n; i++) {{
+      const dx = rx[i] - meanX, dy = ry[i] - meanY;
+      num += dx * dy;
+      denX += dx * dx;
+      denY += dy * dy;
+    }}
+    denX = Math.sqrt(denX); denY = Math.sqrt(denY);
+    if (denX === 0 || denY === 0) return null;
+    return num / (denX * denY);
+  }}
+
+  function recomputePeriodICs(sel) {{
+    const want = {{}};
+    sel.forEach(function (t) {{ want[t] = true; }});
+    const periods = DATA.periods_by_label[labelKey] || [];
+    const out = [];
+    DATA.signals.forEach(function (sig) {{
+      periods.forEach(function (period) {{
+        const xs = [], ys = [];
+        (DATA.company_period || []).forEach(function (r) {{
+          if (r.label_key !== labelKey || r.horizon !== horizonKey) return;
+          if (r.signal !== sig || r.dimension !== dimensionKey) return;
+          if (r.period !== period || !want[r.ticker]) return;
+          if (r.signal_mean === null || r.signal_mean === undefined) return;
+          if (r.label_mean === null || r.label_mean === undefined) return;
+          if (Number.isNaN(r.signal_mean) || Number.isNaN(r.label_mean)) return;
+          xs.push(r.signal_mean);
+          ys.push(r.label_mean);
+        }});
+        const ric = spearmanRankIC(xs, ys);
+        if (ric === null) return;
+        out.push({{
+          label_key: labelKey,
+          horizon: horizonKey,
+          dimension: dimensionKey,
+          signal: sig,
+          period: period,
+          n: xs.length,
+          rank_ic: ric,
+          ic: null
+        }});
+      }});
+    }});
+    return out;
+  }}
+
+  function summarizePeriodICs(periodRows, sig) {{
+    const vals = periodRows.filter(function (r) {{ return r.signal === sig; }})
+      .map(function (r) {{ return r.rank_ic; }})
+      .filter(function (v) {{ return v !== null && v !== undefined && !Number.isNaN(v); }});
+    if (!vals.length) {{
+      return {{ rank_ic_mean: null, rank_ic_ir: null, positive_rank_ic_hit_rate: null, n_periods: 0 }};
+    }}
+    const mean = vals.reduce(function (a, b) {{ return a + b; }}, 0) / vals.length;
+    let variance = 0;
+    vals.forEach(function (v) {{ variance += (v - mean) * (v - mean); }});
+    const std = Math.sqrt(variance / vals.length);
+    const ir = std > 0 ? mean / std : null;
+    const hit = vals.filter(function (v) {{ return v > 0; }}).length / vals.length;
+    return {{
+      rank_ic_mean: mean,
+      rank_ic_ir: ir,
+      positive_rank_ic_hit_rate: hit,
+      n_periods: vals.length
+    }};
+  }}
+
+  function activePeriodICs() {{
+    const sel = selectedTickers();
+    if (isFullUniverse(sel)) {{
+      return DATA.period_ics.filter(function (r) {{
+        return r.label_key === labelKey && r.horizon === horizonKey && r.dimension === dimensionKey;
+      }});
+    }}
+    return recomputePeriodICs(sel);
+  }}
+
   function ciBarHtml(spread, lo, hi, maxAbs) {{
     if (maxAbs === undefined || !maxAbs) maxAbs = 0.05;
     const scale = function (v) {{
@@ -611,14 +802,13 @@ const DATA = {json.dumps(payload, allow_nan=False)};
 
   function renderHeatmap() {{
     document.getElementById('heatmap-warn').innerHTML = '';
+    updateFilterCaption();
     if (noAllMeanWarning('heatmap-wrap')) {{
       document.getElementById('heatmap-meta').textContent = '';
       return;
     }}
     const periods = DATA.periods_by_label[labelKey] || [];
-    const rows = DATA.period_ics.filter(function (r) {{
-      return r.label_key === labelKey && r.horizon === horizonKey && r.dimension === dimensionKey;
-    }});
+    const rows = activePeriodICs();
     const byKey = {{}};
     rows.forEach(function (r) {{ byKey[r.signal + '||' + r.period] = r; }});
     let htmlStr = '<table><thead><tr><th class="sticky-col">Signal</th>';
@@ -647,14 +837,18 @@ const DATA = {json.dumps(payload, allow_nan=False)};
   }}
 
   function renderCompany() {{
+    updateFilterCaption();
     const periods = DATA.periods_by_label[labelKey] || [];
+    const sel = selectedTickers();
+    const want = {{}};
+    sel.forEach(function (t) {{ want[t] = true; }});
     const rows = DATA.company_period.filter(function (r) {{
       return r.label_key === labelKey && r.horizon === horizonKey &&
-        r.signal === signal && r.dimension === dimensionKey;
+        r.signal === signal && r.dimension === dimensionKey && want[r.ticker];
     }});
     const byKey = {{}};
     rows.forEach(function (r) {{ byKey[r.ticker + '||' + r.period] = r; }});
-    const tickers = DATA.tickers.length ? DATA.tickers : Array.from(new Set(rows.map(function (r) {{ return r.ticker; }})));
+    const tickers = sel.length ? sel : (DATA.tickers || []);
     let htmlStr = '<table><thead><tr><th class="sticky-col">Ticker</th>';
     periods.forEach(function (p) {{ htmlStr += '<th>' + p + '</th>'; }});
     htmlStr += '</tr></thead><tbody>';
@@ -673,12 +867,8 @@ const DATA = {json.dumps(payload, allow_nan=False)};
       }});
       htmlStr += '</tr>';
     }});
-    // Period RankIC footer (only meaningful for a real dimension).
     if (dimensionKey !== 'ALL_MEAN') {{
-      const pic = DATA.period_ics.filter(function (r) {{
-        return r.label_key === labelKey && r.horizon === horizonKey &&
-          r.signal === signal && r.dimension === dimensionKey;
-      }});
+      const pic = activePeriodICs().filter(function (r) {{ return r.signal === signal; }});
       const picMap = {{}};
       pic.forEach(function (r) {{ picMap[r.period] = r; }});
       htmlStr += '<tr><td class="sticky-col">Period RankIC</td>';
@@ -697,15 +887,37 @@ const DATA = {json.dumps(payload, allow_nan=False)};
   }}
 
   function renderLeaderboard() {{
-    const rows = DATA.leaderboard.filter(function (r) {{
-      return r.label === labelKey && r.horizon === horizonKey && r.dimension === dimensionKey;
-    }})
-      .slice()
-      .sort(function (a, b) {{
-        const av = (a.rank_ic_mean === null || a.rank_ic_mean === undefined) ? -999 : a.rank_ic_mean;
-        const bv = (b.rank_ic_mean === null || b.rank_ic_mean === undefined) ? -999 : b.rank_ic_mean;
-        return bv - av;
+    updateFilterCaption();
+    const sel = selectedTickers();
+    let rows;
+    if (isFullUniverse(sel)) {{
+      rows = DATA.leaderboard.filter(function (r) {{
+        return r.label === labelKey && r.horizon === horizonKey && r.dimension === dimensionKey;
       }});
+    }} else {{
+      const periodRows = recomputePeriodICs(sel);
+      rows = DATA.signals.map(function (sig) {{
+        const stats = summarizePeriodICs(periodRows, sig);
+        return {{
+          signal: sig,
+          label: labelKey,
+          horizon: horizonKey,
+          dimension: dimensionKey,
+          rank_ic_mean: stats.rank_ic_mean,
+          rank_ic_ir: stats.rank_ic_ir,
+          pooled_rank_ic: null,
+          positive_rank_ic_hit_rate: stats.positive_rank_ic_hit_rate,
+          n_periods: stats.n_periods,
+          n_rows: null,
+          universe: 'subset:' + sel.length
+        }};
+      }});
+    }}
+    rows = rows.slice().sort(function (a, b) {{
+      const av = (a.rank_ic_mean === null || a.rank_ic_mean === undefined) ? -999 : a.rank_ic_mean;
+      const bv = (b.rank_ic_mean === null || b.rank_ic_mean === undefined) ? -999 : b.rank_ic_mean;
+      return bv - av;
+    }});
     let htmlStr = '<table><thead><tr>' +
       '<th class="sticky-col">Signal</th><th>RankIC mean</th><th>IR</th><th>Pooled RankIC</th>' +
       '<th>Hit rate</th><th>Periods</th><th>Rows</th><th>Universe</th></tr></thead><tbody>';
@@ -798,15 +1010,23 @@ const DATA = {json.dumps(payload, allow_nan=False)};
 
   function renderJackknife() {{
     document.getElementById('jackknife-warn').innerHTML = '';
+    updateFilterCaption();
     if (noAllMeanWarning('jackknife-wrap')) {{
       document.getElementById('jackknife-meta').textContent = '';
       return;
     }}
+    const sel = selectedTickers();
+    const want = {{}};
+    sel.forEach(function (t) {{ want[t] = true; }});
     const rows = DATA.jackknife.filter(function (r) {{
       return r.signal === signal && r.label_key === labelKey && r.horizon === horizonKey &&
-        r.dimension === dimensionKey;
+        r.dimension === dimensionKey && want[r.held_out_ticker];
     }});
-    let htmlStr = '<table><thead><tr><th class="sticky-col">Held out</th>' +
+    let htmlStr = '';
+    if (!isFullUniverse(sel)) {{
+      htmlStr += '<div class="warn-box">Jackknife leave-one-out matrix is full-book; showing held-out rows for selected tickers only (values not recomputed for the subset).</div>';
+    }}
+    htmlStr += '<table><thead><tr><th class="sticky-col">Held out</th>' +
       '<th>RankIC mean</th><th>IR</th><th>Pooled RankIC</th><th>Periods</th><th>Rows</th></tr></thead><tbody>';
     if (!rows.length) {{
       htmlStr += '<tr><td colspan="6" class="muted">No jackknife rows for this selection.</td></tr>';
@@ -834,6 +1054,27 @@ const DATA = {json.dumps(payload, allow_nan=False)};
     else if (mode === 'dimension') renderDimension();
     else if (mode === 'agreement') renderAgreement();
     else if (mode === 'jackknife') renderJackknife();
+  }}
+
+  function initUrlFilters() {{
+    try {{
+      const params = new URLSearchParams(window.location.search);
+      const preset = params.get('preset');
+      const raw = params.get('tickers');
+      const sel = document.getElementById('sector-preset');
+      if (preset && SECTOR_PRESETS[preset]) {{
+        if (sel) sel.value = preset;
+        setChecks(SECTOR_PRESETS[preset]);
+        return;
+      }}
+      if (raw) {{
+        const list = raw.split(',').map(function (s) {{ return s.trim().toUpperCase(); }}).filter(Boolean);
+        if (list.length) {{
+          if (sel) sel.value = '';
+          setChecks(list);
+        }}
+      }}
+    }} catch (e) {{}}
   }}
 
   document.querySelectorAll('.mbtn').forEach(function (btn) {{
@@ -871,6 +1112,35 @@ const DATA = {json.dumps(payload, allow_nan=False)};
     }});
   }});
 
+  const sectorSel = document.getElementById('sector-preset');
+  if (sectorSel) {{
+    sectorSel.addEventListener('change', function () {{
+      const stem = sectorSel.value;
+      if (stem && SECTOR_PRESETS[stem]) setChecks(SECTOR_PRESETS[stem]);
+      else setAllChecks(true);
+      render();
+    }});
+  }}
+  const cfAll = document.getElementById('cf-all');
+  if (cfAll) cfAll.addEventListener('click', function () {{
+    if (sectorSel) sectorSel.value = '';
+    setAllChecks(true);
+    render();
+  }});
+  const cfNone = document.getElementById('cf-none');
+  if (cfNone) cfNone.addEventListener('click', function () {{
+    if (sectorSel) sectorSel.value = '';
+    setAllChecks(false);
+    render();
+  }});
+  document.querySelectorAll('.company-check').forEach(function (cb) {{
+    cb.addEventListener('change', function () {{
+      if (sectorSel) sectorSel.value = '';
+      render();
+    }});
+  }});
+
+  initUrlFilters();
   showMode();
 }})();
 </script>

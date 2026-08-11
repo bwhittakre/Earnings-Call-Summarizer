@@ -889,7 +889,14 @@ class DashboardData:
         *,
         tickers: Sequence[str] | None = None,
         dimension: str | None = None,
+        peer_tickers: Sequence[str] | None = None,
+        enrich: bool = True,
     ) -> list[dict[str, Any]]:
+        from .nvq_analytics import (
+            compute_agreement_streaks,
+            compute_peer_gap_deltas,
+        )
+
         allowed = {ticker.upper() for ticker in tickers} if tickers else None
         points: list[dict[str, Any]] = []
         for row in self.rows:
@@ -904,20 +911,42 @@ class DashboardData:
                 quant = _number(row.get("quant_z"))
             if narrative is None or quant is None:
                 continue
+            gap = _number(row.get("narrative_quant_gap"))
+            if gap is None:
+                gap = narrative - quant
+            calendar = row.get("period_end_calendar_quarter")
+            calendar_text = str(calendar) if calendar not in (None, "") else ""
+            fiscal = row.get("fiscal_period")
+            divergence = _truthy(
+                row.get("any_quant_divergence", row.get("is_divergence"))
+            )
             points.append(
                 {
                     "ticker": ticker,
-                    "fiscal_period": row.get("fiscal_period"),
+                    "fiscal_period": fiscal,
+                    "calendar_quarter": calendar_text or str(fiscal or ""),
+                    "calendar_quarter_fallback": not bool(calendar_text),
                     "dimension": row.get("dimension"),
                     "narrative_level": narrative,
                     "quant_z": quant,
-                    "gap": _number(row.get("narrative_quant_gap")),
-                    "divergence": _truthy(
-                        row.get("any_quant_divergence", row.get("is_divergence"))
-                    ),
+                    "gap": gap,
+                    "divergence": divergence,
+                    "agreement": "Divergence" if divergence else "Aligned",
                 }
             )
-        return points
+        if not enrich:
+            return points
+
+        points = compute_agreement_streaks(points)
+        peer_universe = points
+        if peer_tickers is not None:
+            peer_universe = self.narrative_vs_quant(
+                tickers=peer_tickers,
+                dimension=dimension,
+                enrich=False,
+            )
+            # Streaks not required for peer medians; gaps/calendar are enough.
+        return compute_peer_gap_deltas(points, peer_universe)
 
     def audit(self, *, incomplete_only: bool = False) -> list[dict[str, Any]]:
         audits: list[dict[str, Any]] = []
