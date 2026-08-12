@@ -144,6 +144,88 @@ def test_rank_ic_html_contains_recompute_and_presets() -> None:
     assert "Rank IC recomputed for" in html
     assert "company-filter" in html
     assert "spearmanRankIC" in html
+    assert 'data-jk-mode="book"' in html
+    assert 'data-jk-mode="selection"' in html
+    assert "Book influence" in html
+    assert "Selection robustness" in html
+    assert "Δ vs baseline" in html
+    assert "recomputeSelectionJackknife" in html
+    assert "renderBookJackknife" in html
+    assert "renderSelectionJackknife" in html
+    assert "syncJackknifeModeFromUniverse" in html
+
+
+def test_selection_jackknife_summary_delta_parity() -> None:
+    rank_mod = _load_sn_module("rank_ic_html", "rank_ic_html.py")
+    # Perfect positive cross-section for AAPL/MSFT/NVDA; holding out NVDA
+    # (highest signal) flips ranks enough that fold IC stays defined.
+    company_period = []
+    for period, base in (("2025-Q1", 0.0), ("2025-Q2", 1.0)):
+        for ticker, sig, lab in (
+            ("AAPL", 1.0 + base, 0.01 + base * 0.01),
+            ("MSFT", 2.0 + base, 0.02 + base * 0.01),
+            ("NVDA", 3.0 + base, 0.03 + base * 0.01),
+            ("META", 4.0 + base, -0.04 - base * 0.01),  # flips when included
+        ):
+            company_period.append(
+                {
+                    "label_key": "asof",
+                    "horizon": "0_56",
+                    "ticker": ticker,
+                    "period": period,
+                    "signal": "llm_level",
+                    "dimension": "demand",
+                    "signal_mean": sig,
+                    "label_mean": lab,
+                    "n": 1,
+                }
+            )
+    peer = ["AAPL", "MSFT", "NVDA"]
+    out = rank_mod.selection_jackknife_summary(
+        company_period,
+        peer,
+        label_key="asof",
+        horizon="0_56",
+        dimension="demand",
+        signal="llm_level",
+    )
+    assert out["too_small"] is False
+    assert out["baseline"]["n_periods"] == 2
+    assert out["baseline"]["rank_ic_mean"] == pytest.approx(1.0)
+    assert len(out["rows"]) == 3
+    by_held = {row["held_out_ticker"]: row for row in out["rows"]}
+    # Holding out any of three perfectly ranked names leaves n=2 < 3 → no periods.
+    for ticker in peer:
+        assert by_held[ticker]["n_periods"] == 0
+        assert by_held[ticker]["delta"] is None
+
+    four = rank_mod.selection_jackknife_summary(
+        company_period,
+        ["AAPL", "MSFT", "NVDA", "META"],
+        label_key="asof",
+        horizon="0_56",
+        dimension="demand",
+        signal="llm_level",
+    )
+    assert four["baseline"]["n_periods"] == 2
+    assert four["baseline"]["rank_ic_mean"] is not None
+    meta_row = next(r for r in four["rows"] if r["held_out_ticker"] == "META")
+    # Dropping the disagreeing name restores perfect +1 IC.
+    assert meta_row["rank_ic_mean"] == pytest.approx(1.0)
+    assert meta_row["delta"] == pytest.approx(
+        1.0 - float(four["baseline"]["rank_ic_mean"])
+    )
+
+    tiny = rank_mod.selection_jackknife_summary(
+        company_period,
+        ["AAPL", "MSFT"],
+        label_key="asof",
+        horizon="0_56",
+        dimension="demand",
+        signal="llm_level",
+    )
+    assert tiny["too_small"] is True
+    assert tiny["rows"] == []
 
 
 def test_consolidated_html_contains_sector_presets() -> None:
