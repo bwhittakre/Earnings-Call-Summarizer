@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import pytest
+
 from services.earnings_monitor.dashboard.data import DashboardData
 from services.earnings_monitor.dashboard.nvq_analytics import (
     calendar_quarter_options,
@@ -141,6 +143,34 @@ def test_narrative_vs_quant_enriches_streak_and_peer_fields():
     assert q2["agreement_flipped"] is False
     assert q1["align_streak"] == 0
     assert q1["calendar_quarter_fallback"] is False
+    assert q1["level_gap"] == pytest.approx(1.0)  # llm_level 1.0 - quant 0.0
+    assert q1["gap"] == pytest.approx(1.0)  # surprise − clipped quant (no surprise → panel/fallback)
+
+
+def test_nvq_clips_quant_z_and_surprise_gap_inputs():
+    data = DashboardData.from_records(
+        [
+            {
+                "ticker": "AAPL",
+                "fiscal_period": "FY2017-Q2",
+                "period_end_calendar_quarter": "2017-Q1",
+                "dimension": "capital_allocation",
+                "llm_level": 1.8,
+                "surprise_magnitude": 1.8,
+                "quant_z_pit": 5.783,
+                "narrative_quant_gap": -0.2,
+                "any_quant_divergence": False,
+            }
+        ]
+    )
+    points = data.narrative_vs_quant(tickers=["AAPL"], enrich=False)
+    assert len(points) == 1
+    point = points[0]
+    assert point["quant_z_raw"] == pytest.approx(5.783)
+    assert point["quant_z"] == pytest.approx(3.0)
+    assert point["level_gap"] == pytest.approx(1.8 - 3.0)
+    assert point["surprise_magnitude"] == pytest.approx(1.8)
+    assert point["gap"] == pytest.approx(1.8 - 3.0)
 
 
 def test_calendar_quarter_filter_keeps_shared_bucket_despite_fiscal_labels():

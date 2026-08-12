@@ -2,11 +2,16 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
+import pytest
+
 from services.earnings_monitor.dashboard.charts import (
+    _nvq_gap_value,
     heatmap_chart,
+    narrative_quant_gap_timeseries_plotly,
     narrative_quant_plotly,
     narrative_quant_scatter,
-    narrative_quant_trajectory_plotly,
     overview_pulse_chart,
     ranked_bar_chart,
 )
@@ -18,6 +23,7 @@ from services.earnings_monitor.dashboard.sectors import (
     resolve_sector_tickers,
 )
 from services.earnings_monitor.dashboard.views import VIEWS
+from services.earnings_monitor.dashboard import views as views_mod
 
 
 def _sample_rows() -> list[dict]:
@@ -312,12 +318,33 @@ def test_chart_builders_return_altair_specs() -> None:
             "narrative_level": 1.0,
             "quant_z": 0.2,
             "gap": 0.8,
+            "level_gap": 0.8,
+            "surprise_magnitude": 0.8,
+            "quant_z_raw": 0.2,
             "divergence": True,
             "agreement": "Divergence",
             "agreement_flipped": True,
             "diverge_streak": 2,
             "align_streak": 0,
             "peer_gap_delta": 0.4,
+        },
+        {
+            "ticker": "AAPL",
+            "fiscal_period": "FY2025-Q2",
+            "calendar_quarter": "2025-Q1",
+            "dimension": "margins",
+            "narrative_level": 0.4,
+            "quant_z": 0.1,
+            "gap": 0.9,
+            "level_gap": 0.3,
+            "surprise_magnitude": 0.9,
+            "quant_z_raw": 0.1,
+            "divergence": False,
+            "agreement": "Aligned",
+            "agreement_flipped": True,
+            "diverge_streak": 0,
+            "align_streak": 1,
+            "peer_gap_delta": 0.1,
         },
         {
             "ticker": "MSFT",
@@ -327,6 +354,9 @@ def test_chart_builders_return_altair_specs() -> None:
             "narrative_level": 0.5,
             "quant_z": 0.1,
             "gap": 0.4,
+            "level_gap": 0.4,
+            "surprise_magnitude": 0.4,
+            "quant_z_raw": 0.1,
             "divergence": False,
             "agreement": "Aligned",
             "agreement_flipped": False,
@@ -337,8 +367,34 @@ def test_chart_builders_return_altair_specs() -> None:
     ]
     plotly_fig = narrative_quant_plotly(nvq_rows, color_by_company=True)
     assert plotly_fig.data and len(plotly_fig.data) >= 2
-    traj = narrative_quant_trajectory_plotly(nvq_rows)
-    assert traj.data and len(traj.data) >= 2
+    level_fig = narrative_quant_gap_timeseries_plotly(nvq_rows, gap_kind="level")
+    shapes = list(level_fig.layout.shapes or [])
+    assert shapes, "expected zero-line shape from add_hline"
+    assert any(
+        float(getattr(shape, "y0", shape.get("y0") if isinstance(shape, dict) else 0))
+        == 0.0
+        for shape in shapes
+    )
+    ticker_traces = [
+        trace
+        for trace in level_fig.data
+        if getattr(trace, "mode", None) and "lines" in str(trace.mode)
+    ]
+    assert len(ticker_traces) == 2
+    aapl = next(t for t in ticker_traces if "AAPL" in str(t.name))
+    assert list(aapl.x) == ["2024-Q4", "2025-Q1"]
+    assert list(aapl.y) == pytest.approx([0.8, 0.3])
+    surprise_fig = narrative_quant_gap_timeseries_plotly(nvq_rows, gap_kind="surprise")
+    aapl_s = next(t for t in surprise_fig.data if "AAPL" in str(t.name))
+    assert list(aapl_s.y) == pytest.approx([0.8, 0.9])
+    assert "Surprise" in str(aapl_s.hovertemplate)
+    assert "Narrative" not in str(aapl_s.hovertemplate)
+    assert list(aapl_s.customdata[0][6:8]) == pytest.approx([0.8, 0.2])
+    assert _nvq_gap_value(nvq_rows[0], "level") == pytest.approx(0.8)
+    assert _nvq_gap_value(nvq_rows[1], "surprise") == pytest.approx(0.9)
+    source = Path(views_mod.__file__).read_text(encoding="utf-8")
+    assert '("Scatter", "Gap over time")' in source
+    assert '("Scatter", "Trajectory")' not in source
 
     pulse = overview_pulse_chart(
         [

@@ -11,8 +11,8 @@ from urllib.parse import urlencode
 
 from .charts import (
     heatmap_chart,
+    narrative_quant_gap_timeseries_plotly,
     narrative_quant_plotly,
-    narrative_quant_trajectory_plotly,
     overview_pulse_chart,
     ranked_bar_chart,
 )
@@ -584,7 +584,7 @@ def _nvq_selection_keys(event: Any) -> list[str]:
             custom = getattr(point, "customdata", None)
             point_id = getattr(point, "id", None) or getattr(point, "point_id", None)
         if isinstance(custom, (list, tuple)) and custom:
-            # customdata last slot is point_id in scatter; index 6 in trajectory
+            # customdata last slot is point_id in scatter and gap-over-time
             candidate = custom[-1]
             if isinstance(candidate, str) and "|" in candidate:
                 keys.append(candidate)
@@ -649,15 +649,34 @@ def render_narrative_vs_quant(
 
     mode = st.radio(
         "Mode",
-        ("Scatter", "Trajectory"),
+        ("Scatter", "Gap over time"),
         horizontal=True,
         key="nvq_mode",
     )
+    gap_kind = "level"
+    if mode == "Gap over time":
+        gap_label = st.radio(
+            "Gap series",
+            ("Level gap", "Surprise gap"),
+            horizontal=True,
+            key="nvq_gap_kind",
+        )
+        gap_kind = "surprise" if gap_label == "Surprise gap" else "level"
+        if gap_kind == "level":
+            st.caption(
+                "How call tone for this dimension compares to the quant print "
+                "(positive = narrative hotter than quant)."
+            )
+        else:
+            st.caption(
+                "How narrative surprise compares to Quant z (Quant z clipped to ±3). "
+                "Positive = surprise more bullish than quant."
+            )
     dimension_options = ["All"] + data.dimensions
-    if mode == "Trajectory":
+    if mode == "Gap over time":
         dimension_options = list(data.dimensions) or ["demand"]
     dimension = st.selectbox("Dimension", dimension_options, key="nvq_dimension")
-    if mode == "Trajectory" and dimension == "All":
+    if mode == "Gap over time" and dimension == "All":
         dimension = dimension_options[0]
 
     dim_filter = None if dimension == "All" else dimension
@@ -728,8 +747,10 @@ def render_narrative_vs_quant(
                 filtered.append(point)
         points = filtered
 
-    if mode == "Trajectory" and len(chart_tickers) > 6:
-        st.warning("Trajectory mode is clearest with ≤6 companies — narrowing display.")
+    if mode == "Gap over time" and len(chart_tickers) > 6:
+        st.warning(
+            "Gap over time is clearest with ≤6 companies — narrowing display."
+        )
         chart_tickers = list(chart_tickers)[:6]
         allowed = {ticker.upper() for ticker in chart_tickers}
         points = [
@@ -752,9 +773,10 @@ def render_narrative_vs_quant(
 
     selected_keys = list(st.session_state.get("nvq_selection") or [])
     if points:
-        if mode == "Trajectory":
-            figure = narrative_quant_trajectory_plotly(
+        if mode == "Gap over time":
+            figure = narrative_quant_gap_timeseries_plotly(
                 points,
+                gap_kind=gap_kind,
                 selected_keys=selected_keys,
             )
         else:

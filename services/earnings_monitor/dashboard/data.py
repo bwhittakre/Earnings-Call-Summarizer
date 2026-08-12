@@ -59,6 +59,13 @@ def _number(value: Any) -> float | None:
     return number if math.isfinite(number) else None
 
 
+def _clip_z(value: float | None, *, lo: float = -3.0, hi: float = 3.0) -> float | None:
+    """Bound Quant z to a conventional display/analysis range."""
+    if value is None:
+        return None
+    return max(lo, min(hi, float(value)))
+
+
 def _truthy(value: Any) -> bool:
     if isinstance(value, bool):
         return value
@@ -906,14 +913,23 @@ class DashboardData:
             if dimension and str(row.get("dimension", "")) != dimension:
                 continue
             narrative = _number(row.get("llm_level"))
-            quant = _number(row.get("quant_z_pit"))
-            if quant is None:
-                quant = _number(row.get("quant_z"))
-            if narrative is None or quant is None:
+            quant_raw = _number(row.get("quant_z_pit"))
+            if quant_raw is None:
+                quant_raw = _number(row.get("quant_z"))
+            if narrative is None or quant_raw is None:
                 continue
-            gap = _number(row.get("narrative_quant_gap"))
-            if gap is None:
-                gap = narrative - quant
+            quant = _clip_z(quant_raw)
+            assert quant is not None
+            surprise = _number(row.get("surprise_magnitude"))
+            # Surprise gap on NvQ: surprise − Quant z clipped to ±3 (aligned with
+            # displayed Quant z). Fall back to panel gap, then level − clipped z.
+            if surprise is not None:
+                gap = round(float(surprise) - float(quant), 2)
+            else:
+                gap = _number(row.get("narrative_quant_gap"))
+                if gap is None:
+                    gap = round(float(narrative) - float(quant), 2)
+            level_gap = float(narrative) - float(quant)
             calendar = row.get("period_end_calendar_quarter")
             calendar_text = str(calendar) if calendar not in (None, "") else ""
             fiscal = row.get("fiscal_period")
@@ -928,8 +944,11 @@ class DashboardData:
                     "calendar_quarter_fallback": not bool(calendar_text),
                     "dimension": row.get("dimension"),
                     "narrative_level": narrative,
+                    "surprise_magnitude": surprise,
                     "quant_z": quant,
+                    "quant_z_raw": quant_raw,
                     "gap": gap,
+                    "level_gap": level_gap,
                     "divergence": divergence,
                     "agreement": "Divergence" if divergence else "Aligned",
                 }
