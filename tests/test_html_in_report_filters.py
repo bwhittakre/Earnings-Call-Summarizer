@@ -88,7 +88,7 @@ def test_dashboard_views_have_no_rank_ic_substitute() -> None:
     assert "filtered_iframe_bridge" not in source
     tree = ast.parse(source)
     names = [node.name for node in ast.walk(tree) if isinstance(node, ast.FunctionDef)]
-    assert "render_signal_research" in names
+    assert "render_signal_research" not in names
 
 
 def test_rank_ic_html_contains_recompute_and_presets() -> None:

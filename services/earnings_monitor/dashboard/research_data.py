@@ -68,18 +68,35 @@ def _tag_suffix(tag: str | None) -> str:
     return f"_{clean}" if clean else ""
 
 
+def structured_narrative_dir() -> Path:
+    """Repo ``Structured Narrative`` directory (sibling of ``services/``)."""
+    return Path(__file__).resolve().parents[3] / "Structured Narrative"
+
+
+def import_sn(module: str) -> Any:
+    """Import a Structured Narrative module (adds it to ``sys.path`` once)."""
+    import sys
+
+    sn = structured_narrative_dir()
+    if sn.is_dir() and str(sn) not in sys.path:
+        sys.path.insert(0, str(sn))
+    return __import__(module)
+
+
 @dataclass
 class RankIcBundle:
     period_ic: list[dict[str, Any]] = field(default_factory=list)
     leaderboard: list[dict[str, Any]] = field(default_factory=list)
     agreement: list[dict[str, Any]] = field(default_factory=list)
     jackknife: list[dict[str, Any]] = field(default_factory=list)
+    company_period: list[dict[str, Any]] = field(default_factory=list)
+    measure_members: list[dict[str, Any]] = field(default_factory=list)
     meta: dict[str, Any] = field(default_factory=dict)
     missing: list[str] = field(default_factory=list)
 
     @property
     def available(self) -> bool:
-        return bool(self.period_ic or self.leaderboard)
+        return bool(self.period_ic or self.leaderboard or self.company_period)
 
     @property
     def empty_message(self) -> str:
@@ -125,12 +142,16 @@ def load_rank_ic_bundle(
         "leaderboard": csv_dir / f"narrative_signal_eval_leaderboard{suffix}.csv",
         "agreement": csv_dir / f"narrative_signal_eval_agreement{suffix}.csv",
         "jackknife": csv_dir / f"narrative_signal_eval_jackknife{suffix}.csv",
+        "company_period": csv_dir / f"narrative_signal_eval_company_period{suffix}.csv",
+        "measure_members": csv_dir / f"narrative_signal_eval_measure_members{suffix}.csv",
     }
     missing = [str(path) for path in paths.values() if not path.is_file()]
-    period_ic = _read_csv_rows(paths["period_ic"])
+    period_ic = _normalize_period_ic_rows(_read_csv_rows(paths["period_ic"]))
     leaderboard = _read_csv_rows(paths["leaderboard"])
     agreement = _read_csv_rows(paths["agreement"])
     jackknife = _read_csv_rows(paths["jackknife"])
+    company_period = _read_csv_rows(paths["company_period"])
+    measure_members = _read_csv_rows(paths["measure_members"])
 
     meta: dict[str, Any] = {
         "root": str(root),
@@ -162,9 +183,22 @@ def load_rank_ic_bundle(
         leaderboard=leaderboard,
         agreement=agreement,
         jackknife=jackknife,
+        company_period=company_period,
+        measure_members=measure_members,
         meta=meta,
         missing=missing,
     )
+
+
+def _normalize_period_ic_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Align period-IC CSV columns with company_period / HTML payload keys."""
+    out: list[dict[str, Any]] = []
+    for row in rows:
+        item = dict(row)
+        if not item.get("period") and item.get("fiscal_period") not in (None, ""):
+            item["period"] = item.get("fiscal_period")
+        out.append(item)
+    return out
 
 
 @dataclass
@@ -375,9 +409,11 @@ def filter_rank_ic_rows(
     rows: list[dict[str, Any]],
     *,
     label: str | None = None,
+    label_key: str | None = None,
     horizon: str | None = None,
     dimension: str | None = None,
     signal: str | None = None,
+    period: str | None = None,
     tickers: Sequence[str] | None = None,
 ) -> list[dict[str, Any]]:
     allowed: set[str] | None = None
@@ -387,16 +423,23 @@ def filter_rank_ic_rows(
             for ticker in tickers
             if str(ticker).strip()
         }
+    family = label_key if label_key is not None else label
     out: list[dict[str, Any]] = []
     for row in rows:
-        if label is not None and str(row.get("label", "")) != label:
-            continue
+        if family is not None:
+            row_family = str(row.get("label_key") or row.get("label") or "")
+            if row_family != family:
+                continue
         if horizon is not None and str(row.get("horizon", "")) != horizon:
             continue
         if dimension is not None and str(row.get("dimension", "")) != dimension:
             continue
         if signal is not None and str(row.get("signal", "")) != signal:
             continue
+        if period is not None:
+            row_period = str(row.get("period") or row.get("fiscal_period") or "")
+            if row_period != period:
+                continue
         if allowed is not None:
             raw = row.get("ticker")
             if raw is None or raw == "":

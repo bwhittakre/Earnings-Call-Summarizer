@@ -65,7 +65,7 @@ from period_dates import (  # noqa: E402
     filter_max_calendar_quarter,
     filter_min_calendar_quarter,
 )
-from quant_mapping import CALL_DATE_QUANT_DIMS  # noqa: E402
+from quant_mapping import CALL_DATE_QUANT_DIMS, measure_label  # noqa: E402
 from rank_ic_html import (  # noqa: E402
     _period_ic_payload,
     build_rank_ic_report_html,
@@ -141,6 +141,101 @@ def _finite(x: Any) -> float | None:
     if math.isnan(v) or math.isinf(v):
         return None
     return v
+
+
+def measure_member_rows_from_zscored(df: pd.DataFrame, ticker: str) -> list[dict]:
+    """Compact member-measure rows for Rank IC measure drill-down.
+
+    One row per (ticker, fiscal_period, dimension, measure). Guidance (revision
+    family) medians across next_q/fy1 roles so the UI does not explode.
+    """
+    from narrative_zscore import DIMENSIONS, GUIDANCE_ROLES, SURPRISE_ROLE
+
+    if df is None or df.empty:
+        return []
+    if "fiscal_period" not in df.columns or "measure" not in df.columns:
+        return []
+    work = df.copy()
+    if "ticker" not in work.columns:
+        work["ticker"] = ticker
+    rows: list[dict] = []
+    has_role = "period_role" in work.columns
+    for dim, spec in DIMENSIONS.items():
+        fam = str(spec.get("family") or "surprise")
+        if fam == "surprise":
+            sub = work[work["period_role"] == SURPRISE_ROLE] if has_role else work
+            val_col, z_col, zpit_col = (
+                "earnings_surprise_pct",
+                "earnings_surprise_pct_z",
+                "earnings_surprise_pct_z_pit",
+            )
+            members = spec.get("measures")
+            if members != "all" and members:
+                sub = sub[sub["measure"].isin(list(members))]
+        else:
+            sub = work[work["period_role"].isin(GUIDANCE_ROLES)] if has_role else work
+            val_col, z_col, zpit_col = (
+                "fwd_estimate_revision_pct",
+                "fwd_estimate_revision_pct_z",
+                "fwd_estimate_revision_pct_z_pit",
+            )
+        if sub.empty:
+            continue
+        agg: dict[str, tuple[str, str]] = {}
+        if val_col in sub.columns:
+            agg["surprise_pct"] = (val_col, "median")
+        if zpit_col in sub.columns:
+            agg["z_pit"] = (zpit_col, "median")
+        if z_col in sub.columns:
+            agg["z_fullsample"] = (z_col, "median")
+        if not agg:
+            continue
+        grouped = (
+            sub.groupby(["ticker", "fiscal_period", "measure"], dropna=False)
+            .agg(**agg)
+            .reset_index()
+        )
+        for _, rec in grouped.iterrows():
+            raw_measure = rec["measure"]
+            try:
+                code = int(raw_measure)
+            except (TypeError, ValueError):
+                code = raw_measure
+            name = measure_label(int(code)) if isinstance(code, int) else str(raw_measure)
+            rows.append(
+                {
+                    "ticker": str(rec["ticker"]).upper(),
+                    "period": str(rec["fiscal_period"]),
+                    "fiscal_period": str(rec["fiscal_period"]),
+                    "dimension": dim,
+                    "measure": code,
+                    "measure_name": name,
+                    "surprise_pct": _finite(rec["surprise_pct"]) if "surprise_pct" in rec else None,
+                    "z_pit": _finite(rec["z_pit"]) if "z_pit" in rec else None,
+                    "z_fullsample": _finite(rec["z_fullsample"]) if "z_fullsample" in rec else None,
+                    "family": fam,
+                }
+            )
+    return rows
+
+
+def collect_measure_member_rows(tickers: list[str]) -> list[dict]:
+    """Load each ticker's z-scored spine once and emit compact member rows."""
+    from output_paths import resolve_read_parquet_or_csv
+
+    out: list[dict] = []
+    for ticker in tickers:
+        path = resolve_read_parquet_or_csv(ticker, "narrative_zscored", layer="parquet")
+        if path is None:
+            continue
+        try:
+            frame = pd.read_parquet(path) if path.suffix == ".parquet" else pd.read_csv(path)
+        except OSError as exc:
+            print(f"Warning: could not read zscored spine for {ticker}: {exc}", file=sys.stderr)
+            continue
+        out.extend(measure_member_rows_from_zscored(frame, ticker))
+    return out
+
 
 def _pearson_ic(x: pd.Series, y: pd.Series) -> float | None:
     mask = x.notna() & y.notna()
@@ -1375,6 +1470,12 @@ def main() -> int:
     agreement_path = cross_company_artifact(
         "csv", f"narrative_signal_eval_agreement{tag_suffix}", "csv", mkdir=True
     )
+    company_period_path = cross_company_artifact(
+        "csv", f"narrative_signal_eval_company_period{tag_suffix}", "csv", mkdir=True
+    )
+    measure_members_path = cross_company_artifact(
+        "csv", f"narrative_signal_eval_measure_members{tag_suffix}", "csv", mkdir=True
+    )
     primary_hyp_path = cross_company_artifact(
         "csv", f"narrative_signal_eval_primary_hypotheses{tag_suffix}", "csv", mkdir=True
     )
@@ -1413,6 +1514,11 @@ def main() -> int:
         _write_csv(jack_path, pd.DataFrame(jackknife_rows))
     if agreement_rows:
         _write_csv(agreement_path, pd.DataFrame(agreement_rows))
+    if company_period_rows:
+        _write_csv(company_period_path, pd.DataFrame(company_period_rows))
+    measure_rows = collect_measure_member_rows(tickers)
+    if measure_rows:
+        _write_csv(measure_members_path, pd.DataFrame(measure_rows))
     if primary_hypothesis_report:
         _write_csv(primary_hyp_path, pd.DataFrame(primary_hypothesis_report))
         n_reject = sum(1 for r in primary_hypothesis_report if r.get("reject_fdr"))

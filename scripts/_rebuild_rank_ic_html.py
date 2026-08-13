@@ -47,6 +47,26 @@ def main() -> None:
     )
     html_path.write_text(out, encoding="utf-8")
     print("Wrote", html_path, "bytes", html_path.stat().st_size, flush=True)
+
+    csv_dir = SN / "output" / "cross_company" / "csv"
+    csv_dir.mkdir(parents=True, exist_ok=True)
+    company_period = data.get("company_period") or []
+    if company_period:
+        cp_path = csv_dir / "narrative_signal_eval_company_period.csv"
+        pd.DataFrame(company_period).to_csv(cp_path, index=False)
+        print("Wrote", cp_path, "rows", len(company_period), flush=True)
+
+    try:
+        from evaluate_narrative_signals import collect_measure_member_rows
+
+        tickers = [str(t).upper() for t in (report.get("tickers") or [])]
+        measure_rows = collect_measure_member_rows(tickers) if tickers else []
+        if measure_rows:
+            m_path = csv_dir / "narrative_signal_eval_measure_members.csv"
+            pd.DataFrame(measure_rows).to_csv(m_path, index=False)
+            print("Wrote", m_path, "rows", len(measure_rows), flush=True)
+    except Exception as exc:  # noqa: BLE001
+        print("Warning: measure members extract skipped:", exc, flush=True)
     if 'data-jk-mode="book"' not in out or "recomputeSelectionJackknife" not in out:
         raise SystemExit("dual-mode markers missing from rebuilt HTML")
     print("OK dual-mode markers present", flush=True)

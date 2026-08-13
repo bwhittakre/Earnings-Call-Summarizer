@@ -15,7 +15,7 @@ from services.earnings_monitor.dashboard.research_data import (
     resolve_cross_company_root,
     unique_sorted,
 )
-from services.earnings_monitor.dashboard.views import VIEWS
+from services.earnings_monitor.dashboard.views import RANK_IC_VIEWS, VIEWS
 
 try:
     from services.earnings_monitor.dashboard.charts import (  # type: ignore
@@ -26,10 +26,51 @@ except ImportError:  # Rank IC chart helpers may live elsewhere / not yet presen
     rank_ic_heatmap = None  # type: ignore
     rank_ic_leaderboard_chart = None  # type: ignore
 
+DASHBOARD_DIR = (
+    Path(__file__).resolve().parents[1]
+    / "services"
+    / "earnings_monitor"
+    / "dashboard"
+)
 
-def test_views_include_research_tabs() -> None:
-    assert "Signal research" in VIEWS
+
+def test_views_split_roz_and_rank_ic_pages() -> None:
+    assert "Signal research" not in VIEWS
     assert "Consolidated panel" in VIEWS
+    assert "Narrative vs quant" in VIEWS
+    assert "Signal research" not in RANK_IC_VIEWS
+    for name in (
+        "Period heatmap",
+        "Company × quarter",
+        "Leaderboard",
+        "By dimension",
+        "Agreement effect",
+        "Jackknife",
+        "Quarter drivers",
+        "Measure drill-down",
+        "Horizon fingerprint",
+        "Street overlay",
+    ):
+        assert name in RANK_IC_VIEWS
+        assert callable(RANK_IC_VIEWS[name])
+
+
+def test_rank_ic_research_page_module_exists() -> None:
+    page = DASHBOARD_DIR / "pages" / "1_Rank_IC_Research.py"
+    assert page.is_file()
+    source = page.read_text(encoding="utf-8")
+    assert "render_rank_ic_workbench" in source
+    assert "load_dashboard_shell" in source
+    assert "Shared" in source or "shared" in source.lower()
+
+
+def test_shell_exposes_shared_universe_keys() -> None:
+    from services.earnings_monitor.dashboard import shell
+
+    assert shell.SECTOR_KEY == "roz_sector"
+    assert shell.CUSTOM_TICKERS_KEY == "roz_custom_tickers"
+    assert callable(shell.load_dashboard_shell)
+    assert callable(shell.render_universe_sidebar)
 
 
 def test_resolve_cross_company_root(tmp_path: Path) -> None:
@@ -62,11 +103,25 @@ def test_load_rank_ic_bundle_from_fixtures(tmp_path: Path) -> None:
         '{"generated_at":"2026-08-03T12:00:00","tickers":["AAPL","MSFT"]}',
         encoding="utf-8",
     )
+    (cross / "csv" / "narrative_signal_eval_company_period.csv").write_text(
+        "label_key,horizon,ticker,period,signal,dimension,signal_mean,label_mean,n\n"
+        "asof,0_56,AAPL,2024-Q1,llm_level,margins,1.2,0.01,1\n"
+        "asof,0_56,MSFT,2024-Q1,llm_level,margins,0.8,0.02,1\n",
+        encoding="utf-8",
+    )
+    (cross / "csv" / "narrative_signal_eval_measure_members.csv").write_text(
+        "ticker,period,fiscal_period,dimension,measure,measure_name,surprise_pct,z_pit,z_fullsample,family\n"
+        "AAPL,FY2024-Q1,FY2024-Q1,margins,6,EBIT,0.04,1.1,0.9,surprise\n",
+        encoding="utf-8",
+    )
 
     bundle = load_rank_ic_bundle(history_source=tmp_path / "output")
     assert bundle.available
     assert len(bundle.period_ic) == 2
     assert len(bundle.leaderboard) == 1
+    assert len(bundle.company_period) == 2
+    assert len(bundle.measure_members) == 1
+    assert bundle.period_ic[0]["period"] == "FY2024-Q1"
     assert bundle.meta["tickers"] == ["AAPL", "MSFT"]
     assert bundle.meta["generated_at"] == "2026-08-03T12:00:00"
 

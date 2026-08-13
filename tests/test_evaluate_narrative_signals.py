@@ -24,6 +24,7 @@ from evaluate_narrative_signals import (  # noqa: E402
     is_primary_hypothesis,
     leaderboard_rows,
     leave_one_ticker_out,
+    measure_member_rows_from_zscored,
     primary_hypothesis_rows,
     summarize_ics,
     walk_forward_period_ics,
@@ -250,6 +251,41 @@ class RankIcHtmlTests(unittest.TestCase):
         self.assertTrue(all(r["horizon"] == "0_56" for r in rows))
         all_mean_aapl = next(r for r in rows if r["ticker"] == "AAPL" and r["dimension"] == "ALL_MEAN")
         self.assertAlmostEqual(all_mean_aapl["signal_mean"], 1.25)
+
+    def test_measure_member_rows_from_zscored_surprise_and_guidance(self):
+        df = pd.DataFrame(
+            {
+                "ticker": ["AAPL", "AAPL", "AAPL", "AAPL"],
+                "fiscal_period": ["FY2024-Q1"] * 4,
+                "measure": [237, 22, 20, 9],
+                "period_role": ["reported_q", "reported_q", "next_q", "fy1"],
+                "earnings_surprise_pct": [4.03, -0.1, None, None],
+                "earnings_surprise_pct_z_pit": [11.8, -0.25, None, None],
+                "earnings_surprise_pct_z": [10.0, 0.1, None, None],
+                "fwd_estimate_revision_pct": [None, None, 0.02, 0.01],
+                "fwd_estimate_revision_pct_z_pit": [None, None, 0.8, 0.4],
+                "fwd_estimate_revision_pct_z": [None, None, 0.7, 0.3],
+            }
+        )
+        rows = measure_member_rows_from_zscored(df, "AAPL")
+        capex = [
+            r
+            for r in rows
+            if r["dimension"] == "capital_allocation" and int(r["measure"]) == 237
+        ]
+        self.assertEqual(len(capex), 1)
+        self.assertEqual(capex[0]["measure_name"], "Free Cash Flow")
+        self.assertAlmostEqual(capex[0]["z_pit"], 11.8)
+        self.assertAlmostEqual(capex[0]["surprise_pct"], 4.03)
+        guidance = [r for r in rows if r["dimension"] == "guidance"]
+        self.assertGreaterEqual(len(guidance), 1)
+        self.assertTrue(all(r["family"] == "revision" for r in guidance))
+
+    def test_eval_script_writes_company_period_and_measure_csvs(self):
+        source = (SN / "evaluate_narrative_signals.py").read_text(encoding="utf-8")
+        self.assertIn("narrative_signal_eval_company_period", source)
+        self.assertIn("narrative_signal_eval_measure_members", source)
+        self.assertIn("collect_measure_member_rows", source)
 
     def test_build_html_with_multi_horizon_dimension_report(self):
         report = {

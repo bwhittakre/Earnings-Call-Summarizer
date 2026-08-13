@@ -34,8 +34,8 @@ from .research_data import (
     load_rank_ic_bundle,
     resolve_book_ranks_html,
     resolve_consolidated_html,
-    resolve_rank_ic_html,
 )
+from .rank_ic_research import RANK_IC_VIEWS  # noqa: F401
 
 _BOOK_RANKS_METRIC_KEY = (
     (
@@ -858,40 +858,6 @@ def _warn_research_universe(st: Any, data: DashboardData) -> None:
         st.warning(message)
 
 
-def render_signal_research(
-    st: Any,
-    data: DashboardData,
-    *,
-    sector_tickers: Sequence[str] | None = None,
-    sector_choice: str | None = None,
-) -> None:
-    universe = _universe(data, sector_tickers)
-    st.header("Signal research")
-    st.caption(
-        "Embedded Rank IC report from Structured Narrative "
-        "(``narrative_signal_eval.html``). The Sector sidebar filter is passed "
-        "into the report via ``?tickers=`` / ``?preset=``."
-    )
-    _warn_research_universe(st, data)
-    if universe and not is_full_universe(universe, data.tickers):
-        st.caption(
-            f"Active universe: {len(universe)} of {len(data.tickers)} companies."
-        )
-    path = resolve_rank_ic_html()
-    _render_html_report(
-        st,
-        path,
-        missing_hint=(
-            "Rank IC HTML report not found under cross_company/reports/. Run: "
-            "python evaluate_narrative_signals.py --tickers <universe> "
-            "--min-calendar-quarter 2016-Q2"
-        ),
-        iframe_query=_research_iframe_query(
-            data, universe, sector_choice=sector_choice
-        ),
-    )
-
-
 def render_book_ranks(
     st: Any,
     data: DashboardData,
@@ -1177,6 +1143,7 @@ def render_operations(
     )
 
 
+# Roz page view radio (Signal research lives on Rank IC Research).
 VIEWS = {
     "Overview": render_overview,
     "Event inbox": render_event_inbox,
@@ -1184,9 +1151,12 @@ VIEWS = {
     "Dimension panel": render_dimension_heatmap,
     "Cross-company": render_cross_company,
     "Narrative vs quant": render_narrative_vs_quant,
-    "Signal research": render_signal_research,
     "Book ranks": render_book_ranks,
     "Consolidated panel": render_consolidated_panel,
     "Operations": render_operations,
     "Audit": render_audit,
 }
+
+# Rank IC Research workbench views live in rank_ic_research.py (Explore + Explain).
+# Re-exported here so existing tests can import RANK_IC_VIEWS from views.
+
