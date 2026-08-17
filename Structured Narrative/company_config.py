@@ -681,6 +681,59 @@ COMPANIES: dict[str, CompanyProfile] = {
         output_quarters=TEL_OUTPUT_QUARTERS,
         prior_quarters=TEL_PRIOR_QUARTERS,
     ),
+    # First public earnings print (FY2026-Q2). Synced from roz-audit-worktree ops fix.
+    # estpermid LSEG VW_IBES2MAPPING; isin PERMISINDATA; barra ROOT_BARRAID USBSUD1.
+    "SPCX": CompanyProfile(
+        ticker="SPCX",
+        company_name="SpaceX",
+        estpermid=30064887281,
+        isin="US84615Q1031",
+        barra_id="USBSUD1",
+        output_quarters=("FY2026-Q2",),
+        prior_quarters=(),
+    ),
+    # Onboard via Quartr MCP (no REST): FY2019-Q1..FY2026-Q3 transcripts on disk.
+    "CSCO": CompanyProfile(
+        ticker="CSCO",
+        company_name="Cisco Systems",
+        estpermid=30064834857,
+        isin="US17275R1023",
+        barra_id="USACX21",
+        prior_quarters=("FY2019-Q1",),
+        output_quarters=(
+            "FY2019-Q2",
+            "FY2019-Q3",
+            "FY2019-Q4",
+            "FY2020-Q1",
+            "FY2020-Q2",
+            "FY2020-Q3",
+            "FY2020-Q4",
+            "FY2021-Q1",
+            "FY2021-Q2",
+            "FY2021-Q3",
+            "FY2021-Q4",
+            "FY2022-Q1",
+            "FY2022-Q2",
+            "FY2022-Q3",
+            "FY2022-Q4",
+            "FY2023-Q1",
+            "FY2023-Q2",
+            "FY2023-Q3",
+            "FY2023-Q4",
+            "FY2024-Q1",
+            "FY2024-Q2",
+            "FY2024-Q3",
+            "FY2024-Q4",
+            "FY2025-Q1",
+            "FY2025-Q2",
+            "FY2025-Q3",
+            "FY2025-Q4",
+            "FY2026-Q1",
+            "FY2026-Q2",
+            "FY2026-Q3",
+            "FY2026-Q4",
+        ),
+    ),
 }
 
 
@@ -735,9 +788,12 @@ def lookup_ids_from_snowflake(cur, ticker: str) -> dict[str, str | int]:
 
 
 def lookup_ids_from_lseg(cur, profile: CompanyProfile) -> dict[str, str | int]:
-    """Resolve ESTPERMID / BARRA_ID from ISIN via raw LSEG/MSCI shares."""
-    if not profile.isin:
-        return {}
+    """Resolve ESTPERMID / ISIN / BARRA_ID from raw LSEG/MSCI shares.
+
+    When ``profile.isin`` is missing, resolve ISIN via VW_IBES2MAPPING ticker
+    → PERMISINDATA. Prefer ROOT_BARRAID (US issuer root) over listing-local
+    BARRA_ID variants; fall back to any US* BARRA_ID (not only USA*).
+    """
     cur.execute("show databases")
     dbs = [r[1] for r in cur.fetchall()]
     lseg = next((d for d in dbs if d.startswith("LSEG_") and "A822" in d), None)
@@ -745,14 +801,41 @@ def lookup_ids_from_lseg(cur, profile: CompanyProfile) -> dict[str, str | int]:
     if not lseg:
         return {}
 
-    out: dict[str, str | int] = {"isin": profile.isin}
-    cur.execute(
-        f'SELECT INSTRPERMID FROM "{lseg}".DBO.PERMISINDATA WHERE ISIN = %s LIMIT 1',
-        (profile.isin,),
-    )
-    row = cur.fetchone()
-    if row:
-        instr = row[0]
+    out: dict[str, str | int] = {}
+    isin = (profile.isin or "").strip() or None
+    instr = None
+
+    if isin:
+        out["isin"] = isin
+        cur.execute(
+            f'SELECT INSTRPERMID FROM "{lseg}".DBO.PERMISINDATA WHERE ISIN = %s LIMIT 1',
+            (isin,),
+        )
+        row = cur.fetchone()
+        if row:
+            instr = row[0]
+    else:
+        cur.execute(
+            f'''SELECT INSTRPERMID, ESTPERMID FROM "{lseg}".DBO.VW_IBES2MAPPING
+                WHERE UPPER(IBESTICKER) = %s
+                ORDER BY CASE WHEN SOURCE_ = 'INSTRPRIMARYQUOTE' THEN 0 ELSE 1 END
+                LIMIT 1''',
+            (profile.ticker,),
+        )
+        map_row = cur.fetchone()
+        if map_row:
+            instr = map_row[0]
+            out["estpermid"] = int(map_row[1])
+            cur.execute(
+                f'SELECT ISIN FROM "{lseg}".DBO.PERMISINDATA WHERE INSTRPERMID = %s LIMIT 1',
+                (instr,),
+            )
+            isin_row = cur.fetchone()
+            if isin_row and isin_row[0]:
+                isin = str(isin_row[0])
+                out["isin"] = isin
+
+    if instr and isin and "estpermid" not in out:
         cur.execute(
             f'''SELECT ESTPERMID, IBESTICKER FROM "{lseg}".DBO.VW_IBES2MAPPING
                 WHERE INSTRPERMID = %s AND UPPER(IBESTICKER) = %s
@@ -764,17 +847,28 @@ def lookup_ids_from_lseg(cur, profile: CompanyProfile) -> dict[str, str | int]:
         if map_row:
             out["estpermid"] = int(map_row[0])
 
-    if msci:
+    if msci and isin:
         cur.execute(
-            f'''SELECT BARRA_ID, COUNT(*) AS n
+            f'''SELECT ROOT_BARRAID, COUNT(*) AS n
                 FROM "{msci}".ANALYTICS.ASSET_UNIVERSE_TS
-                WHERE ISIN = %s AND BARRA_ID LIKE 'USA%%'
+                WHERE ISIN = %s AND ROOT_BARRAID LIKE 'US%%'
                 GROUP BY 1 ORDER BY n DESC LIMIT 1''',
-            (profile.isin,),
+            (isin,),
         )
-        barra_row = cur.fetchone()
-        if barra_row:
-            out["barra_id"] = str(barra_row[0])
+        root_row = cur.fetchone()
+        if root_row and root_row[0]:
+            out["barra_id"] = str(root_row[0])
+        else:
+            cur.execute(
+                f'''SELECT BARRA_ID, COUNT(*) AS n
+                    FROM "{msci}".ANALYTICS.ASSET_UNIVERSE_TS
+                    WHERE ISIN = %s AND BARRA_ID LIKE 'US%%'
+                    GROUP BY 1 ORDER BY n DESC LIMIT 1''',
+                (isin,),
+            )
+            barra_row = cur.fetchone()
+            if barra_row:
+                out["barra_id"] = str(barra_row[0])
     return out
 
 

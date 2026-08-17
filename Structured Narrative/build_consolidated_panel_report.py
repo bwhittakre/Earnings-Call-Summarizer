@@ -96,14 +96,26 @@ def latest_common_quarter(tickers: list[str], stacked: pd.DataFrame) -> str | No
 
 
 def default_period_bucket(stacked: pd.DataFrame) -> str | None:
-    """Latest period-end calendar quarter with the most tickers represented."""
+    """Default Compare bucket: latest quarter when every ticker is present, else ALL.
+
+    Fiscal calendars differ (e.g. CSCO vs NVDA period-end buckets), so the
+    quarter with the *most* tickers often omits valid names. Defaulting to a
+    partial cohort hides them on first load; ALL avoids that surprise.
+    """
     if "period_end_calendar_quarter" not in stacked.columns:
         stacked = enrich_panel_period_columns(stacked)
     counts = stacked.groupby("period_end_calendar_quarter")["ticker"].nunique()
     counts = counts[counts.index.notna()]
     if counts.empty:
         return None
-    return max(counts.index.tolist(), key=lambda b: (calendar_quarter_sort_key(str(b)), int(counts[b])))
+    total = int(stacked["ticker"].nunique())
+    best = max(
+        counts.index.tolist(),
+        key=lambda b: (calendar_quarter_sort_key(str(b)), int(counts[b])),
+    )
+    if int(counts[best]) >= total:
+        return str(best)
+    return "ALL"
 
 
 def period_buckets_from_panel(stacked: pd.DataFrame) -> list[str]:
