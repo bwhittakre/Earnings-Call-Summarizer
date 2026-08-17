@@ -6,7 +6,9 @@ from pathlib import Path
 import pytest
 
 from services.earnings_monitor.dashboard.lab_store import (
+    LabStoreError,
     append_trial,
+    empty_store,
     get_recipe,
     load_lab_store,
     recipes_for,
@@ -169,6 +171,21 @@ def test_constant_raw_signal_does_not_contribute() -> None:
     assert set(mixed_by_key) == set(level_by_key)
     for key, value in mixed_by_key.items():
         assert value == pytest.approx(level_by_key[key])
+
+
+def test_lab_store_missing_is_empty_corrupt_refuses_clobber(tmp_path: Path) -> None:
+    path = tmp_path / "rank_ic_lab.json"
+    assert load_lab_store(path) == empty_store()
+    path.write_text("{not-json", encoding="utf-8")
+    with pytest.raises(LabStoreError, match="unreadable"):
+        load_lab_store(path)
+    with pytest.raises(LabStoreError, match="unreadable"):
+        save_lab_store(empty_store(), path)
+    assert path.read_text(encoding="utf-8") == "{not-json"
+    path.write_text("[]\n", encoding="utf-8")
+    with pytest.raises(LabStoreError, match="unreadable"):
+        load_lab_store(path)
+    assert path.read_text(encoding="utf-8") == "[]\n"
 
 
 def test_universe_key_distinguishes_sector_vs_all() -> None:

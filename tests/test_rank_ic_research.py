@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import pytest
 
+from pathlib import Path
+
 from services.earnings_monitor.dashboard.rank_ic_research import (
     ALL_MEAN,
     EXPLORE_ORDER,
@@ -10,6 +12,7 @@ from services.earnings_monitor.dashboard.rank_ic_research import (
     HORIZON_KEYS,
     RANK_IC_VIEWS,
     all_mean_blocked_message,
+    dimension_z_by_ticker,
     flag_dominant_members,
     horizon_fingerprint,
     join_street_overlay,
@@ -210,3 +213,52 @@ def test_street_overlay_joins_revision_and_empty_when_missing() -> None:
     assert empty["missing_revision"] is True
     assert empty["revision_rank_ic"] is None
     assert all(r["revision_z"] is None for r in empty["rows"])
+
+
+def test_street_overlay_ui_does_not_pool_all_periods() -> None:
+    source = (
+        Path(__file__).resolve().parents[1]
+        / "services"
+        / "earnings_monitor"
+        / "dashboard"
+        / "rank_ic_research.py"
+    ).read_text(encoding="utf-8")
+    assert "All periods" not in source
+
+
+def test_dimension_z_matches_selected_fiscal_period() -> None:
+    panel = [
+        {
+            "ticker": "AAPL",
+            "fiscal_period": "FY2026-Q1",
+            "dimension": "demand",
+            "quant_z_pit": 1.1,
+        },
+        {
+            "ticker": "AAPL",
+            "fiscal_period": "FY2026-Q2",
+            "dimension": "demand",
+            "quant_z_pit": 9.9,
+        },
+        {
+            "ticker": "MSFT",
+            "fiscal_period": "FY2026-Q2",
+            "dimension": "demand",
+            "quant_z_pit": 3.3,
+        },
+    ]
+    company_period = [
+        _cell("AAPL", "2026-Q1", 0.5, 0.01, signal="quant_z_pit"),
+        _cell("MSFT", "FY2026-Q1", 2.2, 0.02, signal="quant_z_pit"),
+        _cell("NVDA", "FY2026-Q2", 4.4, 0.03, signal="quant_z_pit"),
+    ]
+    got = dimension_z_by_ticker(
+        panel,
+        company_period,
+        fiscal_period="FY2026-Q1",
+        dimension="demand",
+        tickers=["AAPL", "MSFT", "NVDA"],
+    )
+    assert got["AAPL"] == pytest.approx(1.1)
+    assert got["MSFT"] == pytest.approx(2.2)
+    assert "NVDA" not in got

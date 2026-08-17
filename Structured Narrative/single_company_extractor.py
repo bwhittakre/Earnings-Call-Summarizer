@@ -26,7 +26,7 @@ import snowflake.connector as sc
 
 from company_config import get_company, resolve_company_ids
 from excel_export import write_excel
-from fiscal_period_util import company_fiscal_period
+from fiscal_period_util import try_company_fiscal_period
 from output_paths import company_artifact
 from quant_quality import pct_fields_for_consensus
 
@@ -47,6 +47,9 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 
 def connect():
     load_dotenv(os.path.join(HERE, ".env"))
+    nested = os.path.join(HERE, ".env", ".env")
+    if os.path.isfile(nested):
+        load_dotenv(nested)
     return sc.connect(
         account=os.getenv("SNOWFLAKE_ACCOUNT"),
         user=os.getenv("SNOWFLAKE_USER"),
@@ -110,8 +113,9 @@ def pull_returns(cur, msci, company):
     return df.sort_values("date_of_data").reset_index(drop=True)
 
 
-def fiscal_year_label(ticker: str, perend: pd.Timestamp) -> str:
-    return company_fiscal_period(ticker, perend).split("-")[0]
+def fiscal_year_label(ticker: str, perend: pd.Timestamp) -> str | None:
+    labeled = try_company_fiscal_period(ticker, perend)
+    return None if labeled is None else labeled.split("-")[0]
 
 
 def model_date_from(earnings_date: pd.Timestamp) -> pd.Timestamp:
@@ -238,7 +242,10 @@ def build(company):
             "fy2": (4, fwd_fy[1] if len(fwd_fy) > 1 else None),
         }
 
-        event_fiscal_period = company_fiscal_period(ticker, q_perend)
+        event_fiscal_period = try_company_fiscal_period(ticker, q_perend)
+        if event_fiscal_period is None:
+            print(f"  skip unlabeled perend {pd.Timestamp(q_perend).date()}")
+            continue
 
         for mcode in kept:
             label = company.all_measures().get(mcode, str(mcode))
@@ -282,9 +289,11 @@ def build(company):
                 revision_pct = pct_fields["fwd_estimate_revision_pct"]
 
                 if ptype == 3:
-                    tgt_label = company_fiscal_period(ticker, tgt)
+                    tgt_label = try_company_fiscal_period(ticker, tgt)
                 else:
                     tgt_label = fiscal_year_label(ticker, tgt)
+                if tgt_label is None:
+                    continue
 
                 rows.append({
                     "ticker": ticker,

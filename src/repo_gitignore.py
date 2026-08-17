@@ -45,10 +45,12 @@ def filing_root_gitignore_patterns(
 
     filings_relative = resolved_filings_root.relative_to(project_root.resolve())
     if filings_relative.parts == ():
+        # Anchor to the repo root. A bare "NVDA/" is unanchored and git applies
+        # it at any depth, which also ignores tests/fixtures/filings/NVDA/.
         for ticker in tickers:
             pattern = _normalize_gitignore_pattern(Path(ticker.strip().upper()))
             if pattern:
-                patterns.append(pattern)
+                patterns.append(f"/{pattern}")
     elif filings_relative.as_posix().startswith("data/filings"):
         patterns.append(DATA_FILINGS_PATTERN)
     else:

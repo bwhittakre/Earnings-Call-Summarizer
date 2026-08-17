@@ -7,11 +7,14 @@ from pathlib import Path
 import pytest
 
 from services.earnings_monitor.dashboard.research_data import (
+    HORIZON_ORDER,
     artifact_universe_status,
+    clear_research_caches,
     filter_rank_ic_rows,
     format_universe_stale_message,
     load_consolidated_panel,
     load_rank_ic_bundle,
+    peek_rank_ic_meta,
     resolve_cross_company_root,
     unique_sorted,
 )
@@ -130,6 +133,66 @@ def test_load_rank_ic_bundle_from_fixtures(tmp_path: Path) -> None:
     )
     assert len(filtered) == 2
     assert unique_sorted(bundle.leaderboard, "signal") == ["llm_level"]
+    assert unique_sorted(
+        [
+            {"horizon": "0_90"},
+            {"horizon": "0_14"},
+            {"horizon": "35_56"},
+            {"horizon": "custom"},
+        ],
+        "horizon",
+        order=HORIZON_ORDER,
+    ) == ["0_14", "35_56", "0_90", "custom"]
+
+
+def test_peek_rank_ic_meta_skips_company_period_csv(tmp_path: Path) -> None:
+    cross = tmp_path / "output" / "cross_company"
+    (cross / "csv").mkdir(parents=True)
+    (cross / "json").mkdir(parents=True)
+    (cross / "json" / "narrative_signal_eval.json").write_text(
+        '{"generated_at":"2026-08-17T09:00:00","tickers":["AAPL"]}',
+        encoding="utf-8",
+    )
+    (cross / "csv" / "narrative_signal_eval_leaderboard.csv").write_text(
+        "signal,dimension,label,horizon,rank_ic_mean\nllm_level,demand,asof,0_56,0.1\n",
+        encoding="utf-8",
+    )
+    company_period = cross / "csv" / "narrative_signal_eval_company_period.csv"
+    assert not company_period.exists()
+    meta = peek_rank_ic_meta(history_source=tmp_path / "output")
+    assert meta["available"] is True
+    assert meta["tickers"] == ["AAPL"]
+    assert meta["generated_at"] == "2026-08-17T09:00:00"
+    assert not company_period.exists()
+
+
+def test_rank_ic_bundle_cache_reuses_until_files_change(tmp_path: Path) -> None:
+    clear_research_caches()
+    cross = tmp_path / "output" / "cross_company"
+    (cross / "csv").mkdir(parents=True)
+    (cross / "json").mkdir(parents=True)
+    board = cross / "csv" / "narrative_signal_eval_leaderboard.csv"
+    board.write_text(
+        "signal,dimension,label,horizon,rank_ic_mean\nllm_level,demand,asof,0_56,0.1\n",
+        encoding="utf-8",
+    )
+    (cross / "json" / "narrative_signal_eval.json").write_text(
+        '{"generated_at":"2026-08-17T09:00:00","tickers":["AAPL"]}',
+        encoding="utf-8",
+    )
+    first = load_rank_ic_bundle(history_source=tmp_path / "output")
+    second = load_rank_ic_bundle(history_source=tmp_path / "output")
+    assert first is second
+    board.write_text(
+        "signal,dimension,label,horizon,rank_ic_mean\n"
+        "llm_level,demand,asof,0_56,0.1\n"
+        "quant_z_pit,demand,asof,0_56,0.2\n",
+        encoding="utf-8",
+    )
+    third = load_rank_ic_bundle(history_source=tmp_path / "output")
+    assert third is not first
+    assert len(third.leaderboard) == 2
+    clear_research_caches()
 
 
 def test_load_consolidated_panel_probes_stems(tmp_path: Path) -> None:

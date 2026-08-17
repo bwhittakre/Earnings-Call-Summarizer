@@ -538,6 +538,24 @@ def build_consolidated_html(
         f'data-period-bucket="ALL">All buckets</button>'
     )
 
+    # The default bucket is the widest-coverage one, not necessarily a complete
+    # one, so name the companies it leaves out rather than hiding them silently.
+    missing_note = ""
+    if default_bucket != "ALL" and "period_end_calendar_quarter" in stacked.columns:
+        covered = set(
+            stacked.loc[
+                stacked["period_end_calendar_quarter"].astype(str) == default_bucket,
+                "ticker",
+            ].astype(str)
+        )
+        absent = [t for t in tickers if t not in covered]
+        if absent:
+            missing_note = (
+                f'<div class="legend" id="bucket-coverage-note">No {esc(default_bucket)} '
+                f'period-end for <strong>{esc(", ".join(absent))}</strong> &mdash; '
+                f"hidden until you pick another bucket or All buckets.</div>"
+            )
+
     sector_presets = load_sector_presets(tickers)
     preset_options = ['<option value="" data-preset="">All companies</option>']
     for stem in sector_presets:
@@ -678,6 +696,7 @@ def build_consolidated_html(
     </div>
     <button class="fbtn" data-filter="div">Diverges only</button>
     <div class="legend">Compare aligns companies by <strong>calendar quarter of fiscal period-end</strong>, not fiscal quarter label. Click + next to a company to expand its feature panel. Gap = surprise magnitude minus quant z. Sector / company filters hide rows client-side; honor <code>?tickers=</code> / <code>?preset=</code> from Roz.</div>
+    {missing_note}
   </div>
 
   <div id="mode-compare" class="mode-section active">

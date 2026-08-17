@@ -481,7 +481,7 @@ def render_dimension_heatmap(
     )
     st.caption(
         "X-axis uses period-end calendar quarters (aligned across companies, same "
-        "convention as Consolidated / Signal research). Fiscal period is in the "
+        "convention as Consolidated / Rank IC Research). Fiscal period is in the "
         "tooltip. Color scales are fixed (narrative [-2, +2]; quant z / gap [-3, +3])."
     )
     _table(
@@ -1143,7 +1143,7 @@ def render_operations(
     )
 
 
-# Roz page view radio (Signal research lives on Rank IC Research).
+# Roz page view radio (Rank IC workbench lives on Rank IC Research / Lab).
 VIEWS = {
     "Overview": render_overview,
     "Event inbox": render_event_inbox,

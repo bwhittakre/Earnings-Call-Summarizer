@@ -1,6 +1,6 @@
 """Native Rank IC Research workbench: Explore (six) + Explain (four).
 
-Read-only production pack. Lab (weights/recipes/agent) is a separate page.
+Read-only production pack. Lab (weights and saved recipes) is a separate page.
 """
 from __future__ import annotations
 
@@ -10,6 +10,7 @@ from typing import Any, Sequence
 from .company_labels import format_company_label
 from .data import DashboardData
 from .research_data import (
+    HORIZON_ORDER,
     RankIcBundle,
     filter_rank_ic_rows,
     import_sn,
@@ -21,7 +22,7 @@ from .sectors import is_full_universe
 ALL_MEAN = "ALL_MEAN"
 DEFAULT_LABEL = "asof"
 DEFAULT_HORIZON = "0_56"
-HORIZON_KEYS = ("0_14", "14_35", "35_56", "0_56", "0_90")
+HORIZON_KEYS = HORIZON_ORDER
 MIN_CROSS_SECTION = 3
 
 EXPLORE_ORDER = (
@@ -449,6 +450,66 @@ def flag_dominant_members(
     return out
 
 
+def dimension_z_by_ticker(
+    panel_rows: Sequence[dict[str, Any]] | None,
+    company_period: Sequence[dict[str, Any]] | None,
+    *,
+    fiscal_period: str,
+    dimension: str,
+    tickers: Sequence[str],
+    quant_signal: str = "quant_z_pit",
+) -> dict[str, float]:
+    """Dimension z for one selected fiscal period.
+
+    Prefer history-panel z on ``fiscal_period`` + dimension. Fall back to
+    company_period only when ``period`` or ``fiscal_period`` equals that
+    label exactly. Never invent a FY↔calendar-Q mapping — those often
+    disagree, and last-write-wins across periods is worse.
+    """
+    want = {str(ticker).strip().upper() for ticker in tickers if str(ticker).strip()}
+    selected = str(fiscal_period or "").strip()
+    out: dict[str, float] = {}
+    if not selected or not want:
+        return out
+
+    panel_key = (
+        "quant_guidance_revision_z_pit"
+        if quant_signal == "quant_guidance_revision_z_pit"
+        else "quant_z_pit"
+    )
+    for row in panel_rows or []:
+        ticker = str(row.get("ticker") or "").strip().upper()
+        if ticker not in want or ticker in out:
+            continue
+        if str(row.get("dimension") or "") != dimension:
+            continue
+        if str(row.get("fiscal_period") or "").strip() != selected:
+            continue
+        z_val = _finite(row.get(panel_key))
+        if z_val is not None:
+            out[ticker] = z_val
+
+    if len(out) == len(want):
+        return out
+
+    for row in company_period or []:
+        ticker = str(row.get("ticker") or "").strip().upper()
+        if ticker not in want or ticker in out:
+            continue
+        if str(row.get("dimension") or "") != dimension:
+            continue
+        if str(row.get("signal") or "") != quant_signal:
+            continue
+        row_period = str(row.get("period") or "").strip()
+        row_fiscal = str(row.get("fiscal_period") or "").strip()
+        if selected not in {row_period, row_fiscal}:
+            continue
+        z_val = _finite(row.get("signal_mean"))
+        if z_val is not None:
+            out[ticker] = z_val
+    return out
+
+
 def revision_z_lookup(panel_rows: Sequence[dict[str, Any]]) -> dict[tuple[str, str], float]:
     """Map (ticker, fiscal_period or calendar quarter) → T+7 revision z."""
     out: dict[tuple[str, str], float] = {}
@@ -475,9 +536,13 @@ def join_street_overlay(
     dimension: str,
     signal: str,
     tickers: Sequence[str],
-    period: str | None = None,
+    period: str,
 ) -> dict[str, Any]:
-    """Call-time signal vs T+7 street revision vs forward return."""
+    """Call-time signal vs T+7 street revision vs forward return.
+
+    ``period`` is required. Pooling names across quarters into one Spearman
+    is the same unit-of-observation bug we already block for ``ALL_MEAN``.
+    """
     spearman = _spearman()
     lookup = revision_z_lookup(panel_rows or [])
     want = {str(t).upper() for t in tickers}
@@ -618,7 +683,11 @@ def render_rank_ic_filters(
         labels = unique_sorted(bundle.company_period, "label_key")
     if not labels:
         labels = [DEFAULT_LABEL]
-    horizons = unique_sorted(bundle.leaderboard or bundle.company_period or bundle.period_ic, "horizon")
+    horizons = unique_sorted(
+        bundle.leaderboard or bundle.company_period or bundle.period_ic,
+        "horizon",
+        order=HORIZON_KEYS,
+    )
     if not horizons:
         horizons = list(HORIZON_KEYS)
     dims = unique_sorted(bundle.leaderboard or bundle.company_period, "dimension")
@@ -1023,7 +1092,7 @@ def render_jackknife(
             for r in bundle.jackknife
             if str(r.get("signal")) == filters.signal
             and str(r.get("dimension")) == filters.dimension
-            and str(r.get("label_key") or "") == filters.label
+            and str(r.get("label_key") or r.get("label") or "") == filters.label
             and str(r.get("horizon") or "") == filters.horizon
         ]
         if not artifact:
@@ -1207,7 +1276,6 @@ def render_measure_drilldown(
     bundle: RankIcBundle,
     filters: RankIcFilters,
 ) -> None:
-    del data
     st.subheader("Measure drill-down")
     st.caption(
         "Member measures behind the active dimension’s quant stack. "
@@ -1237,6 +1305,9 @@ def render_measure_drilldown(
             "Members below are what the quant stack did that quarter; narrative sits in the header filters."
         )
     periods = unique_sorted(members, "period") or unique_sorted(members, "fiscal_period")
+    if not periods:
+        st.info("Member rows have no fiscal period to slice on.")
+        return
     period = st.selectbox(
         "Period (fiscal)",
         _sort_periods(periods, period_col="fiscal_period"),
@@ -1248,24 +1319,19 @@ def render_measure_drilldown(
         for r in members
         if str(r.get("period") or r.get("fiscal_period")) == str(period)
     ]
-    dim_z_by_ticker: dict[str, float | None] = {}
-    if bundle.company_period:
-        quant_signal = (
-            "quant_guidance_revision_z_pit"
-            if filters.dimension == "guidance"
-            else "quant_z_pit"
-        )
-        for row in filter_rank_ic_rows(
-            bundle.company_period,
-            label_key=filters.label,
-            horizon=filters.horizon,
-            dimension=filters.dimension,
-            signal=quant_signal,
-            tickers=filters.universe,
-        ):
-            # company_period period may be calendar; match fiscal when possible
-            ticker = str(row.get("ticker") or "").upper()
-            dim_z_by_ticker[ticker] = _finite(row.get("signal_mean"))
+    quant_signal = (
+        "quant_guidance_revision_z_pit"
+        if filters.dimension == "guidance"
+        else "quant_z_pit"
+    )
+    dim_z_by_ticker = dimension_z_by_ticker(
+        data.rows,
+        bundle.company_period,
+        fiscal_period=str(period),
+        dimension=filters.dimension,
+        tickers=filters.universe,
+        quant_signal=quant_signal,
+    )
 
     grouped: dict[str, list[dict[str, Any]]] = {}
     for row in slice_rows:
@@ -1376,6 +1442,9 @@ def render_street_overlay(
         dimension=filters.dimension,
         signal=filters.signal,
     )
+    if not periods:
+        st.info("No periods in this cell for a street overlay.")
+        return
     default = latest_period_with_n(
         bundle.company_period,
         filters.universe,
@@ -1384,10 +1453,8 @@ def render_street_overlay(
         dimension=filters.dimension,
         signal=filters.signal,
     )
-    choices = ["All periods", *periods]
-    index = choices.index(default) if default in choices else 0
-    period_choice = st.selectbox("Period", choices, index=index, key="rank_ic_street_period")
-    period = None if period_choice == "All periods" else str(period_choice)
+    index = periods.index(default) if default in periods else len(periods) - 1
+    period_choice = st.selectbox("Period", periods, index=index, key="rank_ic_street_period")
     overlay = join_street_overlay(
         bundle.company_period,
         data.rows,
@@ -1396,7 +1463,7 @@ def render_street_overlay(
         dimension=filters.dimension,
         signal=filters.signal,
         tickers=filters.universe,
-        period=period,
+        period=str(period_choice),
     )
     if overlay["missing_revision"]:
         st.info(
@@ -1481,7 +1548,7 @@ def render_rank_ic_workbench(
     bundle = load_rank_ic_bundle()
     st.caption(
         "Production signal pack, read-only. Slice and explain Rank IC here. "
-        "Rank IC Lab is where recipes, weights, and the restrict-agent live."
+        "Rank IC Lab is the what-if sandbox for weights and saved recipes."
     )
     if not bundle.available:
         st.info(bundle.empty_message)
@@ -1497,6 +1564,7 @@ def render_rank_ic_workbench(
         universe=universe,
         available_tickers=data.tickers,
     )
+    st.caption("Label, horizon, and dimension are shared with Rank IC Lab.")
     st.caption(
         f"{label_display(filters.label)} · {filters.horizon} · "
         f"{dimension_label(filters.dimension)} · {signal_label(filters.signal)} · "

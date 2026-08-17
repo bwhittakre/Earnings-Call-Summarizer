@@ -22,9 +22,9 @@ from services.earnings_monitor.dashboard.research_data import (
     artifact_universe_status,
     format_universe_stale_message,
     html_report_meta,
-    load_consolidated_panel,
-    load_rank_ic_bundle,
     load_research_book_dirty,
+    peek_consolidated_meta,
+    peek_rank_ic_meta,
     resolve_consolidated_html,
     resolve_rank_ic_html,
 )
@@ -194,15 +194,15 @@ def render_research_status_sidebar(st: Any, data: DashboardData) -> None:
     consolidated_html = resolve_consolidated_html()
     rank_meta = html_report_meta(rank_html)
     consol_meta = html_report_meta(consolidated_html)
-    rank_ic = load_rank_ic_bundle()
-    consolidated = load_consolidated_panel()
+    rank_peek = peek_rank_ic_meta()
+    consol_peek = peek_consolidated_meta()
     if rank_html is not None:
         st.sidebar.caption(
             f"Rank IC HTML: {rank_meta.get('generated_at') or 'available'}"
         )
-    elif rank_ic.available:
+    elif rank_peek.get("available"):
         st.sidebar.caption(
-            f"Rank IC CSV: {rank_ic.meta.get('generated_at') or 'available'} · "
+            f"Rank IC CSV: {rank_peek.get('generated_at') or 'available'} · "
             f"HTML missing"
         )
     else:
@@ -212,9 +212,9 @@ def render_research_status_sidebar(st: Any, data: DashboardData) -> None:
             f"Consolidated HTML: {consol_meta.get('stem') or 'available'} · "
             f"{consol_meta.get('generated_at') or '—'}"
         )
-    elif consolidated.available:
+    elif consol_peek.get("available"):
         st.sidebar.caption(
-            f"Consolidated CSV: {consolidated.meta.get('generated_at') or 'available'} · "
+            f"Consolidated CSV: {consol_peek.get('generated_at') or 'available'} · "
             f"HTML missing/too large"
         )
     else:
@@ -222,8 +222,8 @@ def render_research_status_sidebar(st: Any, data: DashboardData) -> None:
 
     universe_status = artifact_universe_status(
         data.tickers,
-        rank_ic.meta if rank_ic.available else None,
-        consolidated.meta if consolidated.available else None,
+        rank_peek if rank_peek.get("available") else None,
+        consol_peek if consol_peek.get("available") else None,
     )
     stale_msg = format_universe_stale_message(universe_status)
     if stale_msg:

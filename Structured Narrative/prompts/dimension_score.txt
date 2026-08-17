@@ -26,6 +26,17 @@ DIMENSIONS (use these exact keys):
   competitive_position Market share, competitive dynamics, differentiation, pricing power.
   macro_regulatory_risk Macro, FX, regulatory and legal risk. Score +2 when such risks are easing and -2 when they are intensifying.
 
+For the three narrative-only dimensions, include "sub_metrics": an array of
+exactly three objects {name, score, rationale} using these names and the same
+-2.0..+2.0 one-decimal scale as the parent dimension:
+  management_confidence: conviction, specificity_of_proof, hedging_caveats
+    (hedging_caveats is + when language is unqualified and - when heavily caveated)
+  competitive_position: share_wins_losses, pricing_power, differentiation
+  macro_regulatory_risk: macro, fx, regulatory_legal
+    (score + when that risk is easing, same as the parent dimension)
+If a sub-metric is not discussed, score 0.0 and set rationale to "not discussed".
+Do not attach sub_metrics to demand, margins, earnings_power, capital_allocation, or guidance.
+
 EVIDENCE RULES (critical):
 - Every excerpt MUST be copied VERBATIM and contiguous from the transcript, character for character. Do not paraphrase, summarize, stitch together, or correct grammar.
 - Provide 1 to 2 evidence items per dimension when the dimension is discussed. Each item has a short "claim" (your headline, may be paraphrased) and an "excerpt" (the verbatim quote).
@@ -47,6 +58,19 @@ Return ONLY a single JSON object, no prose, matching exactly this shape:
         {"claim": "Revenue accelerated on strong cloud demand", "excerpt": "<verbatim quote from transcript>"}
       ],
       "rationale": "One sentence explaining the score."
+    },
+    {
+      "dimension": "management_confidence",
+      "score": 1.2,
+      "evidence": [
+        {"claim": "Management stated results with few hedges", "excerpt": "<verbatim quote from transcript>"}
+      ],
+      "rationale": "One sentence explaining the score.",
+      "sub_metrics": [
+        {"name": "conviction", "score": 1.4, "rationale": "One sentence."},
+        {"name": "specificity_of_proof", "score": 1.0, "rationale": "One sentence."},
+        {"name": "hedging_caveats", "score": 0.8, "rationale": "One sentence."}
+      ]
     }
     // ... one object for every dimension listed above, in that order
   ]

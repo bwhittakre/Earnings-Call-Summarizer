@@ -23,6 +23,11 @@ _CONSOLIDATED_STEMS = (
 # consolidated_feature_panel.html (~90MB, 20 tickers) is never skipped.
 _MAX_INLINE_HTML_BYTES = 15_000_000
 
+# Process-local mtime cache so sidebar + Research + Lab don't re-parse the
+# same CSVs on every Streamlit rerun. Keyed by resolved root + tag.
+_BUNDLE_CACHE: dict[str, tuple[tuple[Any, ...], Any]] = {}
+HORIZON_ORDER = ("0_14", "14_35", "35_56", "0_56", "0_90")
+
 
 def resolve_cross_company_root(
     history_source: str | os.PathLike[str] | None = None,
@@ -127,6 +132,125 @@ class ConsolidatedBundle:
         )
 
 
+def _file_fingerprint(paths: Sequence[Path]) -> tuple[Any, ...]:
+    out: list[Any] = []
+    for path in paths:
+        try:
+            stat = path.stat()
+            out.append((str(path), stat.st_mtime_ns, stat.st_size))
+        except OSError:
+            out.append((str(path), 0, 0))
+    return tuple(out)
+
+
+def _cache_get(key: str, fingerprint: tuple[Any, ...]) -> Any | None:
+    cached = _BUNDLE_CACHE.get(key)
+    if cached and cached[0] == fingerprint:
+        return cached[1]
+    return None
+
+
+def _cache_put(key: str, fingerprint: tuple[Any, ...], value: Any) -> Any:
+    _BUNDLE_CACHE[key] = (fingerprint, value)
+    return value
+
+
+def clear_research_caches() -> None:
+    """Drop process-local Rank IC / consolidated caches (tests / regen)."""
+    _BUNDLE_CACHE.clear()
+
+
+def peek_rank_ic_meta(
+    *,
+    history_source: str | os.PathLike[str] | None = None,
+    tag: str | None = None,
+) -> dict[str, Any]:
+    """JSON + file presence only — no CSV parse. Safe for the sidebar."""
+    root = resolve_cross_company_root(history_source)
+    suffix = _tag_suffix(tag)
+    json_path = root / "json" / f"narrative_signal_eval{suffix}.json"
+    leaderboard = root / "csv" / f"narrative_signal_eval_leaderboard{suffix}.csv"
+    period_ic = root / "csv" / f"narrative_signal_eval_period_ic{suffix}.csv"
+    company_period = root / "csv" / f"narrative_signal_eval_company_period{suffix}.csv"
+    meta: dict[str, Any] = {
+        "root": str(root),
+        "tag": tag,
+        "generated_at": None,
+        "tickers": [],
+        "available": False,
+    }
+    if json_path.is_file():
+        try:
+            payload = json.loads(json_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            payload = {}
+        if isinstance(payload, dict):
+            meta["generated_at"] = payload.get("generated_at") or _mtime_iso(json_path)
+            tickers = payload.get("tickers") or []
+            if isinstance(tickers, list):
+                meta["tickers"] = [str(t).upper() for t in tickers]
+            meta["json_path"] = str(json_path)
+    if not meta["generated_at"]:
+        meta["generated_at"] = _mtime_iso(leaderboard) or _mtime_iso(period_ic)
+    meta["available"] = bool(
+        json_path.is_file()
+        or leaderboard.is_file()
+        or period_ic.is_file()
+        or company_period.is_file()
+    )
+    return meta
+
+
+def peek_consolidated_meta(
+    *,
+    history_source: str | os.PathLike[str] | None = None,
+    stem: str | None = None,
+) -> dict[str, Any]:
+    """Summary JSON + file presence only — no panel CSV parse."""
+    root = resolve_cross_company_root(history_source)
+    csv_dir = root / "csv"
+    chosen = stem
+    panel_path: Path | None = None
+    if chosen:
+        candidate = csv_dir / f"{chosen}.csv"
+        if candidate.is_file():
+            panel_path = candidate
+    else:
+        for name in _CONSOLIDATED_STEMS:
+            candidate = csv_dir / f"{name}.csv"
+            if candidate.is_file():
+                chosen = name
+                panel_path = candidate
+                break
+    spine_path = csv_dir / "cross_section_spine.csv"
+    meta: dict[str, Any] = {
+        "root": str(root),
+        "stem": chosen,
+        "generated_at": _mtime_iso(spine_path)
+        or (_mtime_iso(panel_path) if panel_path else None),
+        "tickers": [],
+        "available": bool(spine_path.is_file() or panel_path is not None),
+    }
+    summary_path = root / "json" / f"{chosen}_summary.json" if chosen else None
+    if summary_path and summary_path.is_file():
+        try:
+            payload = json.loads(summary_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            payload = {}
+        if isinstance(payload, dict):
+            meta["generated_at"] = payload.get("generated_at") or meta["generated_at"]
+            if payload.get("tickers"):
+                meta["tickers"] = [str(t).upper() for t in payload["tickers"]]
+    if not meta["tickers"] and spine_path.is_file():
+        # Cheap ticker set from spine only (narrow) when summary JSON is missing.
+        for row in _read_csv_rows(spine_path):
+            ticker = str(row.get("ticker") or "").strip().upper()
+            if ticker:
+                meta["tickers"].append(ticker)
+        meta["tickers"] = sorted(set(meta["tickers"]))
+    return meta
+
+
 def load_rank_ic_bundle(
     *,
     history_source: str | os.PathLike[str] | None = None,
@@ -145,6 +269,11 @@ def load_rank_ic_bundle(
         "company_period": csv_dir / f"narrative_signal_eval_company_period{suffix}.csv",
         "measure_members": csv_dir / f"narrative_signal_eval_measure_members{suffix}.csv",
     }
+    cache_key = f"rank_ic:{root}:{suffix}"
+    fingerprint = _file_fingerprint([*paths.values(), json_path])
+    cached = _cache_get(cache_key, fingerprint)
+    if isinstance(cached, RankIcBundle):
+        return cached
     missing = [str(path) for path in paths.values() if not path.is_file()]
     period_ic = _normalize_period_ic_rows(_read_csv_rows(paths["period_ic"]))
     leaderboard = _read_csv_rows(paths["leaderboard"])
@@ -178,7 +307,7 @@ def load_rank_ic_bundle(
         )
         missing.append(str(json_path))
 
-    return RankIcBundle(
+    bundle = RankIcBundle(
         period_ic=period_ic,
         leaderboard=leaderboard,
         agreement=agreement,
@@ -188,6 +317,7 @@ def load_rank_ic_bundle(
         meta=meta,
         missing=missing,
     )
+    return _cache_put(cache_key, fingerprint, bundle)
 
 
 def _normalize_period_ic_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -338,6 +468,14 @@ def load_consolidated_panel(
     root = resolve_cross_company_root(history_source)
     csv_dir = root / "csv"
     spine_path = csv_dir / "cross_section_spine.csv"
+    cache_paths = [spine_path, *[csv_dir / f"{name}.csv" for name in _CONSOLIDATED_STEMS]]
+    if stem:
+        cache_paths.append(csv_dir / f"{stem}.csv")
+    cache_key = f"consol:{root}:{stem or ''}"
+    fingerprint = _file_fingerprint(cache_paths)
+    cached = _cache_get(cache_key, fingerprint)
+    if isinstance(cached, ConsolidatedBundle):
+        return cached
 
     chosen_stem = stem
     panel_path: Path | None = None
@@ -396,13 +534,14 @@ def load_consolidated_panel(
                 meta["tickers"] = [str(t).upper() for t in payload["tickers"]]
             meta["summary_path"] = str(summary_path)
 
-    return ConsolidatedBundle(
+    bundle = ConsolidatedBundle(
         spine=spine,
         panel=panel,
         stem=chosen_stem,
         meta=meta,
         missing=missing,
     )
+    return _cache_put(cache_key, fingerprint, bundle)
 
 
 def filter_rank_ic_rows(
@@ -452,9 +591,18 @@ def filter_rank_ic_rows(
     return out
 
 
-def unique_sorted(rows: list[dict[str, Any]], key: str) -> list[str]:
-    values = sorted({str(row.get(key)) for row in rows if row.get(key) not in (None, "")})
-    return values
+def unique_sorted(
+    rows: list[dict[str, Any]],
+    key: str,
+    *,
+    order: Sequence[str] | None = None,
+) -> list[str]:
+    values = {str(row.get(key)) for row in rows if row.get(key) not in (None, "")}
+    if order:
+        known = [item for item in order if item in values]
+        rest = sorted(values.difference(known))
+        return known + rest
+    return sorted(values)
 
 
 def resolve_report_html(

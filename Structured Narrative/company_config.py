@@ -443,22 +443,67 @@ TEL_OUTPUT_QUARTERS = (
 )
 
 
-# Core LSEG measures — shared across tickers.
+# Human-readable names for every LSEG code we know (core + overlays +
+# catalog). ``measure_label()`` reads this, not only CORE_MEASURES.
+MEASURE_LABELS = {
+    20: "Sales",
+    6: "EBIT",
+    8: "EBITDA",
+    27: "Gross Margin",
+    9: "EPS",
+    15: "Net Income",
+    17: "Pretax Profit",
+    19: "ROE",
+    4: "Dividend Per Share",
+    237: "Free Cash Flow",
+    22: "Capex",
+    229: "CFO",
+    14: "Net Debt",
+    185: "R&D Exp",
+    219: "SG&A",
+    213: "Stock-Based Comp",
+    418: "Advertising Revenue",
+    431: "GMV",
+    373: "Deferred Revenue",
+    445: "LT Deferred Revenue",
+    368: "Service Revenue",
+    333: "Subscribers",
+    332: "Net Subscriber Adds",
+    240: "Inventory",
+    109: "Interest Expense",
+    141: "FFO",
+    142: "NOI",
+    153: "Shareholders Equity",
+    157: "Total Assets",
+    173: "NIM",
+}
+
+# Book-wide pull list. Promoted only after the coverage probe
+# (scripts/_probe_ibes_measure_coverage.py / catalog prior when Snowflake is
+# blocked). Thin / AMZN-only codes stay in candidate_measures.
 CORE_MEASURES = {
     20: "Sales",
     6: "EBIT",
     8: "EBITDA",
     27: "Gross Margin",
     9: "EPS",
+    15: "Net Income",
+    17: "Pretax Profit",
+    19: "ROE",
     237: "Free Cash Flow",
     22: "Capex",
+    229: "CFO",
+    14: "Net Debt",
+    4: "Dividend Per Share",
+    185: "R&D Exp",
+    219: "SG&A",
+    373: "Deferred Revenue",
+    213: "Stock-Based Comp",
 }
 
 AMZN_CANDIDATE_MEASURES = {
-    213: "Stock-Based Comp",
     418: "Advertising Revenue",
     431: "GMV",
-    373: "Deferred Revenue",
     445: "LT Deferred Revenue",
     368: "Service Revenue",
     333: "Subscribers",

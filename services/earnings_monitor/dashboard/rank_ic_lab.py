@@ -9,6 +9,7 @@ from typing import Any, Mapping, Sequence
 
 from .data import DashboardData
 from .lab_store import (
+    LabStoreError,
     append_trial,
     default_lab_store_path,
     get_recipe,
@@ -486,7 +487,11 @@ def render_lab_filters(
         labels = unique_sorted(bundle.company_period, "label_key")
     if not labels:
         labels = [DEFAULT_LABEL]
-    horizons = unique_sorted(bundle.leaderboard or bundle.company_period or bundle.period_ic, "horizon")
+    horizons = unique_sorted(
+        bundle.leaderboard or bundle.company_period or bundle.period_ic,
+        "horizon",
+        order=HORIZON_KEYS,
+    )
     if not horizons:
         horizons = list(HORIZON_KEYS)
     dims = unique_sorted(bundle.leaderboard or bundle.company_period, "dimension")
@@ -647,7 +652,11 @@ def render_lab_sidebar(
     result: Mapping[str, Any] | None,
 ) -> None:
     store_path = default_lab_store_path()
-    store = load_lab_store(store_path)
+    try:
+        store = load_lab_store(store_path)
+    except LabStoreError as exc:
+        st.sidebar.error(str(exc))
+        return
     saved = recipes_for(store, uni_key)
     panel = st.sidebar.radio(
         "Lab",
@@ -699,7 +708,11 @@ def render_lab_sidebar(
                     weights=weights,
                     include_revision=include_revision,
                 )
-                save_lab_store(store, store_path)
+                try:
+                    save_lab_store(store, store_path)
+                except LabStoreError as exc:
+                    st.sidebar.error(str(exc))
+                    return
                 st.sidebar.success(f"Saved `{saved_row['name']}`.")
 
         tag = st.sidebar.selectbox(
@@ -727,7 +740,11 @@ def render_lab_sidebar(
                     baseline_stats=dict(result.get("baseline") or {}),
                     tag=None if tag == "unset" else tag,
                 )
-                save_lab_store(store, store_path)
+                try:
+                    save_lab_store(store, store_path)
+                except LabStoreError as exc:
+                    st.sidebar.error(str(exc))
+                    return
                 st.sidebar.success("Trial logged.")
     else:
         rows = trials_for(store, uni_key, limit=25)
@@ -823,6 +840,7 @@ def render_rank_ic_lab(
         universe=universe,
         available_tickers=data.tickers,
     )
+    st.caption("Label, horizon, and dimension are shared with Rank IC Research.")
     st.caption(
         f"{label_display(filters['label'])} · {filters['horizon']} · "
         f"{dimension_label(filters['dimension'])} · "

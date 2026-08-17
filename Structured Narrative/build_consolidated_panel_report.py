@@ -101,14 +101,22 @@ def latest_common_quarter(tickers: list[str], stacked: pd.DataFrame) -> str | No
     return sorted(common, key=fiscal_period_sort_key)[-1]
 
 def default_period_bucket(stacked: pd.DataFrame) -> str | None:
-    """Latest period-end calendar quarter with the most tickers represented."""
+    """Latest period-end calendar quarter with the widest cohort coverage.
+
+    Ranking coverage ahead of recency keeps the default off the in-progress
+    quarter, which only the earliest reporters have reached; picking that one
+    would hide most of the cohort on load.
+    """
     if "period_end_calendar_quarter" not in stacked.columns:
         stacked = enrich_panel_period_columns(stacked)
     counts = stacked.groupby("period_end_calendar_quarter")["ticker"].nunique()
     counts = counts[counts.index.notna()]
     if counts.empty:
         return None
-    return max(counts.index.tolist(), key=lambda b: (calendar_quarter_sort_key(str(b)), int(counts[b])))
+    return max(
+        counts.index.tolist(),
+        key=lambda b: (int(counts[b]), calendar_quarter_sort_key(str(b))),
+    )
 
 def period_buckets_from_panel(stacked: pd.DataFrame) -> list[str]:
     if "period_end_calendar_quarter" not in stacked.columns:

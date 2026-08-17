@@ -39,9 +39,10 @@ decision z-score for an event is the median of its member measure z-scores
 quarter -- deliberately the same shape the LLM narrative dimension scores will
 later occupy, so Focus 1 slots in beside it.
 
-Sign convention: kept RAW (e.g. a capex "beat" = higher capex stays positive;
-higher stock-based comp stays positive). Dimension-level sign interpretation is
-a labeling step deferred to the LLM dimension slice.
+Sign convention: measure-level z is kept RAW (a capex "beat" = higher capex
+stays positive; higher stock-based comp stays positive). Dimension aggregate
+may apply an explicit per-code ``sign`` map (e.g. SG&A/R&D in margins, Net Debt
+in capital_allocation) *before* the median — never a silent invert.
 
 Outputs (output/):
   * AMZN_narrative_zscored.parquet / .csv   (enriched long table)
@@ -61,6 +62,7 @@ import pandas as pd
 
 from output_paths import company_artifact, resolve_read_parquet_or_csv
 from quant_quality import (
+    SPARSE_DIMENSION_MIN_MEMBERS,
     consensus_usable,
     dimension_quality_flags,
     flags_from_storage,
@@ -80,18 +82,58 @@ GUIDANCE_ROLES = ("next_q", "fy1")
 
 # Fixed business dimensions. Membership is by LSEG measure code; only measures
 # actually present (i.e. that cleared the extractor's coverage gate) are used.
-#   demand              20 Sales, 431 GMV, 418 Advertising Rev, 373 Deferred Rev
-#   margins             6 EBIT, 8 EBITDA, 27 Gross Margin
-#   earnings_power      9 EPS
-#   capital_allocation  237 Free Cash Flow, 22 Capex, 213 Stock-Based Comp
-#   guidance            forward revision family across all measures
+# One surprise-family code belongs to at most one surprise dimension.
+#   demand              20 Sales, 373 Deferred Rev + AMZN overlays 431 GMV, 418 Ads
+#   margins             6 EBIT, 8 EBITDA, 27 Gross Margin, 219 SG&A, 185 R&D
+#                       (OpEx codes sign-flipped: higher spend surprise -> more negative)
+#   earnings_power      9 EPS, 15 Net Income, 17 Pretax Profit, 19 ROE
+#   capital_allocation  237 FCF, 22 Capex, 229 CFO, 14 Net Debt (sign -1), 213 SBC, 4 DPS
+#   guidance            curated Street revisions: 20 Sales, 9 EPS, 6 EBIT, 237 FCF, 27 GM
 DIMENSIONS = {
-    "demand":             {"measures": [20, 431, 418, 373], "family": "surprise"},
-    "margins":            {"measures": [6, 8, 27],           "family": "surprise"},
-    "earnings_power":     {"measures": [9],                  "family": "surprise"},
-    "capital_allocation": {"measures": [237, 22, 213],       "family": "surprise"},
-    "guidance":           {"measures": "all",                "family": "revision"},
+    "demand": {
+        "measures": [20, 431, 418, 373],
+        "family": "surprise",
+    },
+    "margins": {
+        "measures": [6, 8, 27, 219, 185],
+        "family": "surprise",
+        "sign": {219: -1, 185: -1},
+    },
+    "earnings_power": {
+        "measures": [9, 15, 17, 19],
+        "family": "surprise",
+    },
+    "capital_allocation": {
+        "measures": [237, 22, 229, 14, 213, 4],
+        "family": "surprise",
+        "sign": {14: -1},
+    },
+    "guidance": {
+        "measures": [20, 9, 6, 237, 27],
+        "family": "revision",
+    },
 }
+
+
+def apply_dimension_signs(sub: pd.DataFrame, spec: dict, col: str) -> pd.DataFrame:
+    """Multiply ``col`` by the dimension's explicit per-measure sign map.
+
+    Unlisted codes keep +1. Measure-level z columns elsewhere stay raw.
+    """
+    signs = spec.get("sign") or {}
+    if not signs or sub.empty or col not in sub.columns:
+        return sub
+    out = sub.copy()
+
+    def _sign(measure) -> float:
+        try:
+            return float(signs.get(int(measure), 1))
+        except (TypeError, ValueError):
+            return 1.0
+
+    mapped = out["measure"].map(_sign)
+    out[col] = pd.to_numeric(out[col], errors="coerce") * mapped.astype(float)
+    return out
 
 
 # ── Z-score primitives ────────────────────────────────────────────────────────
@@ -288,6 +330,7 @@ def build_dimension_scores(df: pd.DataFrame) -> pd.DataFrame:
         sub, col = _member_frame(spec, zsuffix, ungated=ungated)
         if col not in sub.columns or sub.empty:
             return pd.Series(dtype=float)
+        sub = apply_dimension_signs(sub, spec, col)
         grouped = sub.dropna(subset=[col]).groupby("fiscal_period")[col]
         if how == "median":
             return grouped.median()
@@ -325,6 +368,7 @@ def build_dimension_scores(df: pd.DataFrame) -> pd.DataFrame:
             flags = dimension_quality_flags(
                 member_zs_clean=member_zs,
                 member_near_zero=near_zero,
+                min_members=SPARSE_DIMENSION_MIN_MEMBERS,
             )
             flag_rows[str(fp)] = flags_to_storage(flags)
         return pd.Series(flag_rows)

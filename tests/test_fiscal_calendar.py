@@ -10,8 +10,10 @@ from src.market.fiscal_calendar import (
 
 class FiscalCalendarTestCase(unittest.TestCase):
     def test_amazon_calendar_fiscal_quarter_end(self):
+        # calendar_fiscal: the FY label is the calendar year the quarter ends
+        # in, unlike nvidia/offset types where the label leads by a year.
         resolved = resolve_quarter_end_date("AMZN", "FY2025-Q2")
-        self.assertEqual(resolved, date(2024, 6, 30))
+        self.assertEqual(resolved, date(2025, 6, 30))
 
     def test_nvidia_fiscal_quarter_end(self):
         resolved = resolve_quarter_end_date("NVDA", "FY2025-Q2")

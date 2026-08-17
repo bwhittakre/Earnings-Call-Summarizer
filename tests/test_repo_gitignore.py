@@ -12,9 +12,11 @@ from src.paths import PROJECT_ROOT
 
 
 class RepoGitignoreTestCase(unittest.TestCase):
-    def test_repo_root_filings_add_ticker_patterns(self):
+    def test_repo_root_filings_add_anchored_ticker_patterns(self):
+        # Anchored so they cannot also ignore nested ticker folders such as
+        # tests/fixtures/filings/NVDA/.
         patterns = filing_root_gitignore_patterns(PROJECT_ROOT, ["goog", "MSFT"])
-        self.assertEqual(patterns, ["GOOG/", "MSFT/"])
+        self.assertEqual(patterns, ["/GOOG/", "/MSFT/"])
 
     def test_data_filings_root_uses_parent_pattern(self):
         patterns = filing_root_gitignore_patterns(
@@ -43,7 +45,7 @@ class RepoGitignoreTestCase(unittest.TestCase):
             self.assertTrue(changed)
             text = gitignore.read_text(encoding="utf-8")
             self.assertIn(AUTO_START, text)
-            self.assertIn("AAPL/", text)
+            self.assertIn("/AAPL/", text)
             self.assertIn(AUTO_END, text)
 
             changed_again = sync_filings_gitignore(
@@ -59,7 +61,7 @@ class RepoGitignoreTestCase(unittest.TestCase):
             repo = Path(tmp)
             gitignore = repo / ".gitignore"
             gitignore.write_text(
-                "\n".join([AUTO_START, "AMZN/", AUTO_END, ""]) + "\n",
+                "\n".join([AUTO_START, "/AMZN/", AUTO_END, ""]) + "\n",
                 encoding="utf-8",
             )
 
@@ -74,7 +76,7 @@ class RepoGitignoreTestCase(unittest.TestCase):
                 for line in gitignore.read_text(encoding="utf-8").splitlines()
                 if line.strip() and line.strip() not in {AUTO_START, AUTO_END}
             ]
-            self.assertEqual(lines, ["AMZN/", "MSFT/"])
+            self.assertEqual(lines, ["/AMZN/", "/MSFT/"])
 
 
 if __name__ == "__main__":

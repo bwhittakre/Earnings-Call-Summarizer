@@ -80,6 +80,26 @@ class DimensionOrderTests(unittest.TestCase):
             self.assertEqual(len(order), len(ALL_DIMENSIONS), msg=name)
             self.assertEqual(set(order), set(ALL_DIMENSIONS), msg=name)
 
+    def test_narrative_sub_metrics_schema_is_optional(self):
+        from dimension_scorer import (
+            DimensionScore,
+            NARRATIVE_ONLY_DIMENSIONS,
+            NARRATIVE_SUB_METRICS,
+        )
+
+        score = DimensionScore(dimension="management_confidence", score=1.2, rationale="ok")
+        self.assertIsNone(score.sub_metrics)
+        filled = DimensionScore(
+            dimension="management_confidence",
+            score=1.2,
+            rationale="ok",
+            sub_metrics=[{"name": "conviction", "score": 1.5, "rationale": "direct"}],
+        )
+        self.assertEqual(filled.sub_metrics[0].name, "conviction")
+        self.assertEqual(set(NARRATIVE_SUB_METRICS), set(NARRATIVE_ONLY_DIMENSIONS))
+        for names in NARRATIVE_SUB_METRICS.values():
+            self.assertEqual(len(names), 3)
+
 
     def test_insert_dimension_group_header_rows(self):
         from dimension_order import insert_dimension_group_header_rows, prepare_consolidated_panel

@@ -20,6 +20,10 @@ STORE_VERSION = 1
 VALID_TAGS = ("good", "bad")
 
 
+class LabStoreError(Exception):
+    """Store file exists but cannot be read; refuse to overwrite it."""
+
+
 def default_lab_store_path() -> Path:
     configured = os.environ.get("EARNINGS_MONITOR_LAB_STORE")
     if configured:
@@ -42,16 +46,28 @@ def empty_store() -> dict[str, Any]:
     return {"version": STORE_VERSION, "recipes": [], "trials": []}
 
 
+def _unreadable_message(store_path: Path) -> str:
+    return (
+        f"Lab store exists but is unreadable ({store_path}). "
+        "Fix or move the file before saving — refusing to overwrite it."
+    )
+
+
+def _read_store_payload(store_path: Path) -> dict[str, Any]:
+    try:
+        payload = json.loads(store_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise LabStoreError(_unreadable_message(store_path)) from exc
+    if not isinstance(payload, dict):
+        raise LabStoreError(_unreadable_message(store_path))
+    return payload
+
+
 def load_lab_store(path: str | os.PathLike[str] | None = None) -> dict[str, Any]:
     store_path = Path(path or default_lab_store_path())
     if not store_path.is_file():
         return empty_store()
-    try:
-        payload = json.loads(store_path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
-        return empty_store()
-    if not isinstance(payload, dict):
-        return empty_store()
+    payload = _read_store_payload(store_path)
     recipes = payload.get("recipes")
     trials = payload.get("trials")
     return {
@@ -66,6 +82,8 @@ def save_lab_store(
     path: str | os.PathLike[str] | None = None,
 ) -> Path:
     store_path = Path(path or default_lab_store_path())
+    if store_path.is_file():
+        _read_store_payload(store_path)
     store_path.parent.mkdir(parents=True, exist_ok=True)
     body = {
         "version": int(payload.get("version") or STORE_VERSION),
@@ -74,7 +92,7 @@ def save_lab_store(
     }
     tmp = store_path.with_suffix(store_path.suffix + ".tmp")
     tmp.write_text(json.dumps(body, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    tmp.replace(store_path)
+    os.replace(tmp, store_path)
     return store_path
 
 

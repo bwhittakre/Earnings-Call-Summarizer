@@ -179,6 +179,9 @@ def measure_member_rows_from_zscored(df: pd.DataFrame, ticker: str) -> list[dict
                 "fwd_estimate_revision_pct_z",
                 "fwd_estimate_revision_pct_z_pit",
             )
+            members = spec.get("measures")
+            if members != "all" and members:
+                sub = sub[sub["measure"].isin(list(members))]
         if sub.empty:
             continue
         agg: dict[str, tuple[str, str]] = {}
@@ -202,6 +205,16 @@ def measure_member_rows_from_zscored(df: pd.DataFrame, ticker: str) -> list[dict
             except (TypeError, ValueError):
                 code = raw_measure
             name = measure_label(int(code)) if isinstance(code, int) else str(raw_measure)
+            signs = spec.get("sign") or {}
+            try:
+                sign = float(signs.get(int(code), 1)) if isinstance(code, int) else 1.0
+            except (TypeError, ValueError):
+                sign = 1.0
+
+            def _signed(value: object) -> float | None:
+                parsed = _finite(value)
+                return None if parsed is None else parsed * sign
+
             rows.append(
                 {
                     "ticker": str(rec["ticker"]).upper(),
@@ -210,9 +223,9 @@ def measure_member_rows_from_zscored(df: pd.DataFrame, ticker: str) -> list[dict
                     "dimension": dim,
                     "measure": code,
                     "measure_name": name,
-                    "surprise_pct": _finite(rec["surprise_pct"]) if "surprise_pct" in rec else None,
-                    "z_pit": _finite(rec["z_pit"]) if "z_pit" in rec else None,
-                    "z_fullsample": _finite(rec["z_fullsample"]) if "z_fullsample" in rec else None,
+                    "surprise_pct": _signed(rec["surprise_pct"]) if "surprise_pct" in rec else None,
+                    "z_pit": _signed(rec["z_pit"]) if "z_pit" in rec else None,
+                    "z_fullsample": _signed(rec["z_fullsample"]) if "z_fullsample" in rec else None,
                     "family": fam,
                 }
             )

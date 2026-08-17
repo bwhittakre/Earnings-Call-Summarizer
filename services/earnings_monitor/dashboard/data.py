@@ -394,9 +394,9 @@ class DashboardData:
             from .research_data import (
                 artifact_universe_status,
                 format_universe_stale_message,
-                load_consolidated_panel,
-                load_rank_ic_bundle,
                 load_research_book_dirty,
+                peek_consolidated_meta,
+                peek_rank_ic_meta,
             )
 
             dirty = load_research_book_dirty()
@@ -413,12 +413,12 @@ class DashboardData:
                         last_regen = json.loads(raw)
             except Exception:  # noqa: BLE001
                 last_regen = None
-            rank_ic = load_rank_ic_bundle()
-            consolidated = load_consolidated_panel()
+            rank_peek = peek_rank_ic_meta()
+            consolidated_peek = peek_consolidated_meta()
             universe_status = artifact_universe_status(
                 self.tickers,
-                rank_ic.meta if rank_ic.available else None,
-                consolidated.meta if consolidated.available else None,
+                rank_peek if rank_peek.get("available") else None,
+                consolidated_peek if consolidated_peek.get("available") else None,
             )
             universe_msg = format_universe_stale_message(universe_status)
             alerts.extend(

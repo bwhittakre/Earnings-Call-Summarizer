@@ -89,11 +89,32 @@ NARRATIVE_ONLY_DIMENSIONS = [
 ALL_DIMENSIONS = QUANT_COMPARABLE_DIMENSIONS + NARRATIVE_ONLY_DIMENSIONS
 
 
+class DimensionSubMetric(BaseModel):
+    """Optional structured depth under a narrative-only dimension score.
+
+    Forward-compatible: omitted on existing book scores. Filled on a later
+    transcript re-score. Same -2..+2 scale as the parent dimension.
+    """
+
+    name: str
+    score: float = Field(ge=-2, le=2)
+    rationale: str = ""
+
+
 class DimensionScore(BaseModel):
     dimension: str
     score: float = Field(ge=-2, le=2)   # one-decimal scale; tenths encode tone intensity
     evidence: list[EvidenceClaim] = Field(default_factory=list)
     rationale: str = ""
+    sub_metrics: list[DimensionSubMetric] | None = None
+
+
+# Three LLM sub-metrics per narrative-only dimension.
+NARRATIVE_SUB_METRICS: dict[str, tuple[str, ...]] = {
+    "management_confidence": ("conviction", "specificity_of_proof", "hedging_caveats"),
+    "competitive_position": ("share_wins_losses", "pricing_power", "differentiation"),
+    "macro_regulatory_risk": ("macro", "fx", "regulatory_legal"),
+}
 
 
 class TranscriptDimensionSummary(BaseModel):
@@ -124,6 +145,7 @@ class ScoredDimension:
     rationale: str
     is_quant_comparable: bool
     evidence: list[ScoredExcerpt]
+    sub_metrics: list[DimensionSubMetric] | None = None
 
     @property
     def n_evidence(self) -> int:
@@ -342,7 +364,7 @@ class DimensionScorer:
     ) -> list[ScoredDimension]:
         comparable = set(QUANT_COMPARABLE_DIMENSIONS)
         pairs: list[tuple[str, str]] = []
-        dim_spans: list[tuple[str, float, str, bool, int, int]] = []
+        dim_spans: list[tuple[str, float, str, bool, list[DimensionSubMetric] | None, int, int]] = []
         for dim in summary.dimensions:
             start = len(pairs)
             for ev in dim.evidence:
@@ -353,6 +375,7 @@ class DimensionScorer:
                     round(float(dim.score), 1),
                     dim.rationale,
                     dim.dimension in comparable,
+                    dim.sub_metrics,
                     start,
                     len(pairs),
                 )
@@ -367,6 +390,7 @@ class DimensionScorer:
                 rationale=rationale,
                 is_quant_comparable=is_comp,
                 evidence=scored[start:end],
+                sub_metrics=sub_metrics,
             )
-            for name, score, rationale, is_comp, start, end in dim_spans
+            for name, score, rationale, is_comp, sub_metrics, start, end in dim_spans
         ]
