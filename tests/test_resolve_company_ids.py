@@ -31,14 +31,20 @@ class _FakeCursor:
         return []
 
     def fetchone(self):
-        sql = self._last_sql.upper()
+        # Collapse the triple-quoted SQL so WHERE clauses can be matched; several
+        # queries hit the same table and only differ by predicate.
+        sql = " ".join(self._last_sql.upper().split())
         if "IRIS_UNIV" in sql:
             return self._iris.get("row")
         if "PERMISINDATA" in sql:
+            if "WHERE INSTRPERMID" in sql:
+                return self._lseg.get("isin_by_instr")
             return self._lseg.get("instr")
-        if "VW_IBES2MAPPING" in sql and "INSTRPERMID" in sql:
-            return self._lseg.get("map_by_instr")
         if "VW_IBES2MAPPING" in sql:
+            if "WHERE INSTRPERMID" in sql:
+                return self._lseg.get("map_by_instr")
+            if sql.startswith("SELECT INSTRPERMID"):
+                return self._lseg.get("instr_by_ticker")
             return self._lseg.get("map_by_ticker")
         if "ASSET_UNIVERSE_TS" in sql:
             return self._lseg.get("barra")
@@ -100,3 +106,34 @@ def test_resolve_isin_path_can_enrich_barra_from_iris_only():
     resolved = resolve_company_ids(cur, profile)
     assert resolved.estpermid == 55  # LSEG wins, not IRIS 999999
     assert resolved.barra_id == "USACX21"  # IRIS enrich only
+
+
+def test_resolve_without_isin_recovers_isin_then_maps_by_instrument():
+    """No configured ISIN: recover it from the ticker, then map via INSTRPERMID.
+
+    ``map_by_ticker`` is the recycled 1990s STRW entity. Reaching it means the
+    INSTRPERMID hop was skipped and the wrong issuer's estimates were attached.
+    """
+    cur = _FakeCursor(
+        iris={},
+        lseg={
+            "instr_by_ticker": (999,),
+            "isin_by_instr": ("US8631821019",),
+            "map_by_instr": (30064884718, "04Y9"),
+            "map_by_ticker": (111111, "STRW"),
+            "barra": ("USBOFP1", 12),
+        },
+    )
+    profile = CompanyProfile(ticker="STRW", company_name="Strawberry Fields")
+    resolved = resolve_company_ids(cur, profile)
+    assert resolved.estpermid == 30064884718
+    assert resolved.isin == "US8631821019"
+    assert resolved.barra_id == "USBOFP1"
+
+
+def test_resolve_without_isin_falls_back_to_ticker_when_instrument_unknown():
+    """The bare IBESTICKER lookup is still the last resort, not a dead branch."""
+    cur = _FakeCursor(iris={}, lseg={"map_by_ticker": (42, "CSCO")})
+    profile = CompanyProfile(ticker="CSCO", company_name="Cisco")
+    resolved = resolve_company_ids(cur, profile)
+    assert resolved.estpermid == 42

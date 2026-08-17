@@ -952,8 +952,10 @@ def lookup_ids_from_lseg(cur, profile: CompanyProfile) -> dict[str, str | int]:
         if row:
             instr = row[0]
     else:
-        # ISIN unknown: recover it from the ticker mapping first, so the
-        # INSTRPERMID path below still applies instead of trusting IBESTICKER.
+        # ISIN unknown: recover it from the ticker mapping so the INSTRPERMID
+        # path below still applies. This hop must still trust IBESTICKER to find
+        # the instrument, so a recycled ticker can mislead it — pass ISIN at
+        # onboard whenever it is known.
         cur.execute(
             f'''SELECT INSTRPERMID FROM "{lseg}".DBO.VW_IBES2MAPPING
                 WHERE UPPER(IBESTICKER) = %s
