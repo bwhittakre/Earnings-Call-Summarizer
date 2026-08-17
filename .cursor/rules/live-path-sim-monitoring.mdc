@@ -1,0 +1,34 @@
+---
+description: >-
+  Live-path / earnings-monitor sim monitoring: poll Mailpit and job state every
+  15–30s; never blind multi-minute AwaitShell sleeps in parallel with probes.
+  Use when running TXN/AAPL-style sims, watching Email 1/2, post_call, or Mailpit.
+globs: docs/earnings-monitor*.md,infra/aws/earnings_monitor*.py,**/earnings*monitor*/**
+alwaysApply: false
+---
+
+# Live-path sim monitoring (no blind AwaitShell)
+
+## Hard lesson (TXN FY2026-Q2)
+
+Email 2 hit Mailpit at `14:07:02Z`, but the agent only noticed ~10 minutes later.
+Cause: blind `AwaitShell` sleeps (`block_until_ms` 300000 then 420000) ran **in
+parallel** with Mailpit/SQLite probes. The turn waits for the longest tool, so
+early probe success was ignored until the sleep finished.
+
+Roz has **no** intentional ~10m delay after `post_call` — final email fires on
+successful `post_call`. Real post_call scoring was ~3 minutes.
+
+## Rules
+
+1. **Poll** Mailpit + event/job state every **15–30s** with an explicit deadline.
+2. Prefer `AwaitShell` on a **running probe shell** with a completion pattern
+   (e.g. recovery successful / `state=complete` / Email 2 subject), **or** short
+   sleeps between probes.
+3. **NEVER** use `AwaitShell` without `shell_id` at multi-minute durations in
+   parallel with a probe.
+4. When the probe already shows Email 1/2 or `state=complete`, **proceed
+   immediately** — do not start another long blind sleep.
+5. Do **not** conflate product knobs:
+   `EARNINGS_MONITOR_TRANSCRIPT_START_DELAY_SECONDS` (45m prod / 120s sim) is a
+   **pre-transcript sweep** delay, not an Email 2 delay.

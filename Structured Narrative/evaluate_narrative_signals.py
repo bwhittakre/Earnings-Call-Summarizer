@@ -65,15 +65,18 @@ from period_dates import (  # noqa: E402
     filter_max_calendar_quarter,
     filter_min_calendar_quarter,
 )
-from quant_mapping import CALL_DATE_QUANT_DIMS  # noqa: E402
+from quant_mapping import CALL_DATE_QUANT_DIMS, measure_label  # noqa: E402
 from rank_ic_html import (  # noqa: E402
     _period_ic_payload,
     build_rank_ic_report_html,
     company_period_signal_rows,
 )
+from signal_pack import load_signal_pack  # noqa: E402
 from spine_export import panel_to_spine, standardize_surprise_novelty_exclusivity  # noqa: E402
 
 HORIZON_KEYS = [k for k, _a, _b, _n in HORIZON_WINDOWS]
+_SIGNAL_PACK = load_signal_pack()
+SIGNAL_PACK_ID = _SIGNAL_PACK.pack_id
 
 # Legacy single-window columns — the only alpha_spec_* pair baked into the
 # per-ticker feature_panel.csv on disk. Every other horizon is computed on the
@@ -121,36 +124,12 @@ DELAYED_SIGNALS = {"quant_guidance_revision_z_pit"}
 # Pre-specified primary hypotheses (superior's feedback, item 4), evaluated and
 # reported SEPARATELY from the full exploratory signal × dimension × horizon
 # grid, with its own multiple-testing (FDR) correction — see
-# primary_hypothesis_report() / benjamini_hochberg(). The exploratory grid
-# stays uncorrected (standard practice for a screening pass); only THIS
-# pre-specified family gets the FDR treatment, per the plan.
-PRIMARY_HYPOTHESES: tuple[dict[str, str], ...] = (
-    {
-        "signal": "quant_z_pit",
-        "dimension": "demand",
-        "hypothesis": "Demand quantitative z-score (quant_z_pit) predicts forward specific return",
-    },
-    {
-        "signal": "agrees_with_quant",
-        "dimension": "demand",
-        "hypothesis": "Demand narrative/quantitative agreement predicts forward specific return",
-    },
-    {
-        "signal": "agrees_with_quant",
-        "dimension": "margins",
-        "hypothesis": "Margins narrative/quantitative agreement predicts forward specific return",
-    },
-    {
-        "signal": "agrees_with_quant",
-        "dimension": "guidance",
-        "hypothesis": "Guidance narrative/quantitative agreement predicts forward specific return",
-    },
-)
-
+# primary_hypothesis_report() / benjamini_hochberg(). Source of truth is
+# config/signal_packs/production_v1.yaml (see signal_pack.py).
+PRIMARY_HYPOTHESES: tuple[dict[str, str], ...] = _SIGNAL_PACK.hypotheses
 
 def is_primary_hypothesis(signal: str, dimension: str | None) -> bool:
     return any(h["signal"] == signal and h["dimension"] == dimension for h in PRIMARY_HYPOTHESES)
-
 
 def _finite(x: Any) -> float | None:
     if x is None:
@@ -162,6 +141,113 @@ def _finite(x: Any) -> float | None:
     if math.isnan(v) or math.isinf(v):
         return None
     return v
+
+
+def measure_member_rows_from_zscored(df: pd.DataFrame, ticker: str) -> list[dict]:
+    """Compact member-measure rows for Rank IC measure drill-down.
+
+    One row per (ticker, fiscal_period, dimension, measure). Guidance (revision
+    family) medians across next_q/fy1 roles so the UI does not explode.
+    """
+    from narrative_zscore import DIMENSIONS, GUIDANCE_ROLES, SURPRISE_ROLE
+
+    if df is None or df.empty:
+        return []
+    if "fiscal_period" not in df.columns or "measure" not in df.columns:
+        return []
+    work = df.copy()
+    if "ticker" not in work.columns:
+        work["ticker"] = ticker
+    rows: list[dict] = []
+    has_role = "period_role" in work.columns
+    for dim, spec in DIMENSIONS.items():
+        fam = str(spec.get("family") or "surprise")
+        if fam == "surprise":
+            sub = work[work["period_role"] == SURPRISE_ROLE] if has_role else work
+            val_col, z_col, zpit_col = (
+                "earnings_surprise_pct",
+                "earnings_surprise_pct_z",
+                "earnings_surprise_pct_z_pit",
+            )
+            members = spec.get("measures")
+            if members != "all" and members:
+                sub = sub[sub["measure"].isin(list(members))]
+        else:
+            sub = work[work["period_role"].isin(GUIDANCE_ROLES)] if has_role else work
+            val_col, z_col, zpit_col = (
+                "fwd_estimate_revision_pct",
+                "fwd_estimate_revision_pct_z",
+                "fwd_estimate_revision_pct_z_pit",
+            )
+            members = spec.get("measures")
+            if members != "all" and members:
+                sub = sub[sub["measure"].isin(list(members))]
+        if sub.empty:
+            continue
+        agg: dict[str, tuple[str, str]] = {}
+        if val_col in sub.columns:
+            agg["surprise_pct"] = (val_col, "median")
+        if zpit_col in sub.columns:
+            agg["z_pit"] = (zpit_col, "median")
+        if z_col in sub.columns:
+            agg["z_fullsample"] = (z_col, "median")
+        if not agg:
+            continue
+        grouped = (
+            sub.groupby(["ticker", "fiscal_period", "measure"], dropna=False)
+            .agg(**agg)
+            .reset_index()
+        )
+        for _, rec in grouped.iterrows():
+            raw_measure = rec["measure"]
+            try:
+                code = int(raw_measure)
+            except (TypeError, ValueError):
+                code = raw_measure
+            name = measure_label(int(code)) if isinstance(code, int) else str(raw_measure)
+            signs = spec.get("sign") or {}
+            try:
+                sign = float(signs.get(int(code), 1)) if isinstance(code, int) else 1.0
+            except (TypeError, ValueError):
+                sign = 1.0
+
+            def _signed(value: object) -> float | None:
+                parsed = _finite(value)
+                return None if parsed is None else parsed * sign
+
+            rows.append(
+                {
+                    "ticker": str(rec["ticker"]).upper(),
+                    "period": str(rec["fiscal_period"]),
+                    "fiscal_period": str(rec["fiscal_period"]),
+                    "dimension": dim,
+                    "measure": code,
+                    "measure_name": name,
+                    "surprise_pct": _signed(rec["surprise_pct"]) if "surprise_pct" in rec else None,
+                    "z_pit": _signed(rec["z_pit"]) if "z_pit" in rec else None,
+                    "z_fullsample": _signed(rec["z_fullsample"]) if "z_fullsample" in rec else None,
+                    "family": fam,
+                }
+            )
+    return rows
+
+
+def collect_measure_member_rows(tickers: list[str]) -> list[dict]:
+    """Load each ticker's z-scored spine once and emit compact member rows."""
+    from output_paths import resolve_read_parquet_or_csv
+
+    out: list[dict] = []
+    for ticker in tickers:
+        path = resolve_read_parquet_or_csv(ticker, "narrative_zscored", layer="parquet")
+        if path is None:
+            continue
+        try:
+            frame = pd.read_parquet(path) if path.suffix == ".parquet" else pd.read_csv(path)
+        except OSError as exc:
+            print(f"Warning: could not read zscored spine for {ticker}: {exc}", file=sys.stderr)
+            continue
+        out.extend(measure_member_rows_from_zscored(frame, ticker))
+    return out
 
 
 def _pearson_ic(x: pd.Series, y: pd.Series) -> float | None:
@@ -177,7 +263,6 @@ def _pearson_ic(x: pd.Series, y: pd.Series) -> float | None:
         return None
     return _finite(xm.corr(ym, method="pearson"))
 
-
 def _spearman_ic(x: pd.Series, y: pd.Series) -> float | None:
     mask = x.notna() & y.notna()
     if mask.sum() < 3:
@@ -189,7 +274,6 @@ def _spearman_ic(x: pd.Series, y: pd.Series) -> float | None:
         # period/dimension slice) -- same zero-variance guard as above.
         return None
     return _finite(xr.corr(yr, method="pearson"))
-
 
 def walk_forward_period_ics(
     df: pd.DataFrame,
@@ -255,7 +339,6 @@ def walk_forward_period_ics(
             )
     return pd.DataFrame(rows)
 
-
 def summarize_ics(period_ics: pd.DataFrame) -> dict:
     if period_ics.empty:
         return {"n_periods": 0, "positive_rank_ic_periods": 0, "positive_rank_ic_hit_rate": None}
@@ -286,7 +369,6 @@ def summarize_ics(period_ics: pd.DataFrame) -> dict:
         out["positive_rank_ic_hit_rate"] = None
     return out
 
-
 def quintile_spread(df: pd.DataFrame, signal: str, label: str, n_q: int = 5) -> dict:
     sub = df[[signal, label]].dropna()
     if len(sub) < n_q * 2:
@@ -305,7 +387,6 @@ def quintile_spread(df: pd.DataFrame, signal: str, label: str, n_q: int = 5) -> 
         "quintile_means": [round(float(v), 6) for v in means.tolist()],
     }
 
-
 def divergence_hit_rate(df: pd.DataFrame, label: str) -> dict:
     """Legacy pooled agree/disagree mean-return check (see agreement_effect_stats for the CI)."""
     sub = df[df["agrees_with_quant"].notna() & df[label].notna()].copy()
@@ -320,7 +401,6 @@ def divergence_hit_rate(df: pd.DataFrame, label: str) -> dict:
         "mean_label_divergence": round(float(div[label].mean()), 6) if len(div) else None,
         "mean_label_agree": round(float(agree[label].mean()), 6) if len(agree) else None,
     }
-
 
 def _cluster_key_series(df: pd.DataFrame, cluster_col: str) -> pd.Series:
     """Map a logical cluster key to the resampling-unit series for that key.
@@ -347,7 +427,6 @@ def _cluster_key_series(df: pd.DataFrame, cluster_col: str) -> pd.Series:
     if cluster_col == "company_period":
         return df["ticker"].astype(str).str.upper() + "::" + df[period_col].astype(str)
     raise ValueError(f"Unknown cluster_col {cluster_col!r} (expected ticker/calendar_period/company_period)")
-
 
 def cluster_bootstrap_mean_diff(
     df: pd.DataFrame,
@@ -435,7 +514,6 @@ def cluster_bootstrap_mean_diff(
     out["p_value"] = round(min(p, 1.0), 6)
     return out
 
-
 def bootstrap_rank_ic_mean(period_ics: pd.DataFrame, *, n_boot: int = 2000, seed: int = 13) -> dict:
     """Cluster-bootstrap CI + two-sided p-value for a walk-forward RankIC mean.
 
@@ -461,7 +539,6 @@ def bootstrap_rank_ic_mean(period_ics: pd.DataFrame, *, n_boot: int = 2000, seed
     out["p_value"] = round(min(p, 1.0), 6)
     return out
 
-
 def benjamini_hochberg(p_values: list[float | None], *, alpha: float = 0.05) -> list[dict]:
     """Benjamini-Hochberg FDR correction, returned in the ORIGINAL input order.
 
@@ -486,7 +563,6 @@ def benjamini_hochberg(p_values: list[float | None], *, alpha: float = 0.05) -> 
         q = q_by_index[i_orig]
         result[i_orig] = {"p_value": p, "q_value": round(float(q), 6), "reject": bool(q <= alpha)}
     return result
-
 
 def primary_hypothesis_rows(
     period_df: pd.DataFrame,
@@ -549,7 +625,6 @@ def primary_hypothesis_rows(
                 }
             )
     return rows
-
 
 def agreement_effect_stats(
     df: pd.DataFrame,
@@ -616,7 +691,6 @@ def agreement_effect_stats(
         "n_boot_used": boot.get("n_boot_used", 0),
         "cluster_col": cluster_col,
     }
-
 
 def load_eval_frame(
     tickers: list[str],
@@ -703,7 +777,6 @@ def load_eval_frame(
         ].copy()
     return stacked
 
-
 def _signal_eval_frame(df: pd.DataFrame, signal: str) -> pd.DataFrame:
     """Restrict delayed revision signals to rows with T+7 availability."""
     if signal not in DELAYED_SIGNALS:
@@ -712,7 +785,6 @@ def _signal_eval_frame(df: pd.DataFrame, signal: str) -> pd.DataFrame:
     if "t7_feature_available_date" in out.columns:
         out = out[out["t7_feature_available_date"].notna()].copy()
     return out
-
 
 def evaluate_signals(
     df: pd.DataFrame,
@@ -800,7 +872,6 @@ def evaluate_signals(
     period_df = pd.concat(period_frames, ignore_index=True) if period_frames else pd.DataFrame()
     return signal_summary, period_df
 
-
 def leave_one_ticker_out(
     df: pd.DataFrame,
     signals: list[str],
@@ -842,7 +913,6 @@ def leave_one_ticker_out(
                     }
                 )
     return rows
-
 
 def leaderboard_rows(label_blocks: dict[str, dict[str, dict[str, dict]]]) -> list[dict]:
     """Flatten label × horizon × signal × dimension summaries into leaderboard rows.
@@ -905,7 +975,6 @@ def leaderboard_rows(label_blocks: dict[str, dict[str, dict[str, dict]]]) -> lis
     )
     return rows
 
-
 def cross_section_counts(df: pd.DataFrame, period_col: str) -> dict[str, int]:
     """Distinct ticker count per period value — the actual cross-section size
     behind every RankIC number (item 7: "the number of companies in each
@@ -918,7 +987,6 @@ def cross_section_counts(df: pd.DataFrame, period_col: str) -> dict[str, int]:
         return {}
     counts = df.groupby(period_col)["ticker"].nunique()
     return {str(k): int(v) for k, v in counts.items()}
-
 
 def apply_dev_holdout_split(
     df: pd.DataFrame,
@@ -973,7 +1041,6 @@ def apply_dev_holdout_split(
     # strictly between an explicit dev_cutoff and holdout_start.
     return df[dev_mask | holdout_mask].copy()
 
-
 def label_overlap_stats(df: pd.DataFrame) -> dict:
     """How often the legacy 0-90d event vs asof alphas differ after cross-ticker rebuild."""
     if EVENT_LABEL not in df.columns or ASOF_LABEL not in df.columns:
@@ -989,7 +1056,6 @@ def label_overlap_stats(df: pd.DataFrame) -> dict:
         "max_abs_diff": round(float(diff.max()), 6) if len(diff) else None,
         "mean_abs_diff": round(float(diff.mean()), 6) if len(diff) else None,
     }
-
 
 def _json_safe(obj: Any) -> Any:
     if isinstance(obj, dict):
@@ -1011,10 +1077,18 @@ def _json_safe(obj: Any) -> Any:
         return bool(obj)
     return obj
 
+def _default_eval_tickers() -> list[str]:
+    """Prefer Roz monitor universe when EARNINGS_MONITOR_TICKERS is set."""
+    import os
+
+    raw = os.environ.get("EARNINGS_MONITOR_TICKERS", "").strip()
+    if raw:
+        return [part.strip().upper() for part in raw.split(",") if part.strip()]
+    return list(PILOT_TICKERS)
 
 def main() -> int:
     ap = argparse.ArgumentParser(description="Walk-forward IC/RankIC for narrative signals.")
-    ap.add_argument("--tickers", nargs="+", default=list(PILOT_TICKERS))
+    ap.add_argument("--tickers", nargs="+", default=_default_eval_tickers())
     ap.add_argument(
         "--label",
         default=None,
@@ -1381,6 +1455,7 @@ def main() -> int:
         "composite_min_periods": args.composite_min_periods,
         "composite_weights": composite_weights_by_label,
         "cross_section_counts": cross_section_counts_by_label,
+        "pack_id": SIGNAL_PACK_ID,
         "primary_hypotheses": [dict(h) for h in PRIMARY_HYPOTHESES],
         "primary_hypothesis_report": primary_hypothesis_report,
         "fdr_alpha": args.fdr_alpha,
@@ -1407,6 +1482,12 @@ def main() -> int:
     )
     agreement_path = cross_company_artifact(
         "csv", f"narrative_signal_eval_agreement{tag_suffix}", "csv", mkdir=True
+    )
+    company_period_path = cross_company_artifact(
+        "csv", f"narrative_signal_eval_company_period{tag_suffix}", "csv", mkdir=True
+    )
+    measure_members_path = cross_company_artifact(
+        "csv", f"narrative_signal_eval_measure_members{tag_suffix}", "csv", mkdir=True
     )
     primary_hyp_path = cross_company_artifact(
         "csv", f"narrative_signal_eval_primary_hypotheses{tag_suffix}", "csv", mkdir=True
@@ -1446,6 +1527,11 @@ def main() -> int:
         _write_csv(jack_path, pd.DataFrame(jackknife_rows))
     if agreement_rows:
         _write_csv(agreement_path, pd.DataFrame(agreement_rows))
+    if company_period_rows:
+        _write_csv(company_period_path, pd.DataFrame(company_period_rows))
+    measure_rows = collect_measure_member_rows(tickers)
+    if measure_rows:
+        _write_csv(measure_members_path, pd.DataFrame(measure_rows))
     if primary_hypothesis_report:
         _write_csv(primary_hyp_path, pd.DataFrame(primary_hypothesis_report))
         n_reject = sum(1 for r in primary_hypothesis_report if r.get("reject_fdr"))
@@ -1468,7 +1554,6 @@ def main() -> int:
                     f"(n_dims={dm.get('n_dimensions')})"
                 )
     return 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

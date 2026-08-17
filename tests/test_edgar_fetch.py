@@ -42,13 +42,13 @@ class FakeEdgarClient:
 
 
 class EdgarPeriodTestCase(unittest.TestCase):
-    def test_amzn_fy2019_q3_period_end(self):
+    def test_amzn_fy2018_q3_period_end(self):
         self.assertEqual(
-            expected_period_end_date("AMZN", "FY2019-Q3"),
+            expected_period_end_date("AMZN", "FY2018-Q3"),
             date(2018, 9, 30),
         )
         self.assertEqual(
-            manifest_as_of_date_text("AMZN", "FY2019-Q3"),
+            manifest_as_of_date_text("AMZN", "FY2018-Q3"),
             "(09,30,2018)",
         )
 
@@ -60,7 +60,7 @@ class EdgarPeriodTestCase(unittest.TestCase):
 
 
 class EdgarSelectorTestCase(unittest.TestCase):
-    def test_build_amzn_fy2019_q3_plan(self):
+    def test_build_amzn_fy2018_q3_plan(self):
         submissions = json.loads(
             (FIXTURES / "amzn_fy2019_q3_submissions.json").read_text(encoding="utf-8")
         )
@@ -71,14 +71,14 @@ class EdgarSelectorTestCase(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             plan = build_quarter_fetch_plan(
                 ticker="AMZN",
-                quarter="FY2019-Q3",
+                quarter="FY2018-Q3",
                 filings_root=Path(tmp),
                 config=client.config,
                 client=client,
                 submissions=submissions,
                 cik=1018724,
             )
-            self.assertEqual(plan.quarter, "FY2019-Q3")
+            self.assertEqual(plan.quarter, "FY2018-Q3")
             self.assertEqual(plan.as_of_date_text, "(09,30,2018)")
             filenames = {doc.filename for doc in plan.documents}
             self.assertEqual(filenames, {"10-Q.txt", "8-K.txt"})
@@ -99,7 +99,7 @@ class EdgarWriterTestCase(unittest.TestCase):
             filings_root = Path(tmp)
             plan = build_quarter_fetch_plan(
                 ticker="AMZN",
-                quarter="FY2019-Q3",
+                quarter="FY2018-Q3",
                 filings_root=filings_root,
                 config=client.config,
                 client=client,
@@ -119,7 +119,7 @@ class EdgarWriterTestCase(unittest.TestCase):
             folder = write_quarter_package(plan, fetched)
             manifest = json.loads((folder / "manifest.json").read_text(encoding="utf-8"))
             self.assertEqual(manifest["ticker"], "AMZN")
-            self.assertEqual(manifest["quarter"], "FY2019-Q3")
+            self.assertEqual(manifest["quarter"], "FY2018-Q3")
             self.assertEqual(len(manifest["documents"]), 2)
             self.assertTrue((folder / "10-Q.txt").is_file())
             self.assertTrue((folder / "8-K.txt").is_file())

@@ -6,5 +6,86 @@ MSFT:
   type: offset_fiscal
   fye_month: 6
   fye_day: 30
+AAPL:
+  type: offset_fiscal
+  fye_month: 9
+  fye_day: 30
 TSLA:
   type: calendar_fiscal
+
+TXN:
+  type: calendar_fiscal
+
+CTSH:
+  type: calendar_fiscal
+
+SPCX:
+  type: calendar_fiscal
+
+CSCO:
+  type: offset_fiscal
+  fye_month: 7
+  fye_day: 31
+
+STRW:
+  type: calendar_fiscal
+
+OPAL:
+  type: calendar_fiscal
+
+AMD:
+  type: calendar_fiscal
+
+ACN:
+  type: offset_fiscal
+  fye_month: 8
+  fye_day: 31
+ADBE:
+  type: offset_fiscal
+  fye_month: 11
+  fye_day: 27
+ADI:
+  type: offset_fiscal
+  fye_month: 11
+  fye_day: 1
+ADSK:
+  type: offset_fiscal
+  fye_month: 1
+  fye_day: 31
+AMAT:
+  type: offset_fiscal
+  fye_month: 10
+  fye_day: 26
+APH:
+  type: calendar_fiscal
+AVGO:
+  type: offset_fiscal
+  fye_month: 11
+  fye_day: 1
+CRM:
+  type: offset_fiscal
+  fye_month: 1
+  fye_day: 31
+IBM:
+  type: calendar_fiscal
+INTU:
+  type: offset_fiscal
+  fye_month: 7
+  fye_day: 31
+LRCX:
+  type: offset_fiscal
+  fye_month: 6
+  fye_day: 28
+MU:
+  type: offset_fiscal
+  fye_month: 9
+  fye_day: 3
+ORCL:
+  type: offset_fiscal
+  fye_month: 5
+  fye_day: 31
+TEL:
+  type: offset_fiscal
+  fye_month: 9
+  fye_day: 25
+

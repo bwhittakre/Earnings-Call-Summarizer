@@ -210,7 +210,22 @@ def run_batch(
 
     start = time.monotonic()
     while True:
-        batch = client.get_batch(batch_id)
+        batch = None
+        last_err = None
+        for attempt in range(1, 7):
+            try:
+                batch = client.get_batch(batch_id)
+                last_err = None
+                break
+            except Exception as exc:
+                last_err = exc
+                print(
+                    f"    get_batch retry {attempt}/6 after {type(exc).__name__}",
+                    flush=True,
+                )
+                sleep_fn(5 * attempt)
+        if batch is None:
+            raise last_err
         status = batch.processing_status
         counts = getattr(batch, "request_counts", None)
         elapsed = time.monotonic() - start

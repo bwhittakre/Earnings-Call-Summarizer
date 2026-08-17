@@ -3,10 +3,10 @@
 """Human-readable quantitative measure mapping per narrative dimension."""
 from __future__ import annotations
 
-from company_config import CORE_MEASURES
+from company_config import AMZN_CANDIDATE_MEASURES, CORE_MEASURES, MEASURE_LABELS
 from narrative_zscore import DIMENSIONS
 
-_MEASURE_NAMES = dict(CORE_MEASURES)
+_MEASURE_NAMES = {**MEASURE_LABELS, **CORE_MEASURES, **AMZN_CANDIDATE_MEASURES}
 
 
 def measure_label(code: int) -> str:

@@ -177,12 +177,13 @@ class PeriodEndBucketTests(unittest.TestCase):
         trimmed = filter_min_calendar_quarter(stacked, "2021-Q3")
         self.assertEqual(set(trimmed["fiscal_period"]), {"FY2021-Q3"})
 
-    def test_quarter_cell_html_period_ending_subline(self):
+    def test_quarter_cell_html_is_label_only(self):
+        # Period-end / earnings-call dates moved out of the Quarter cell into
+        # their own columns; the cell carries just the fiscal-period label.
         row = _sample_panel("AMZN", "FY2025-Q1").iloc[0]
         html = quarter_cell_html(row)
-        self.assertIn("Period ending", html)
-        self.assertIn("03/31/2025", html)
-        self.assertIn("Earnings call", html)
+        self.assertIn("FY2025-Q1", html)
+        self.assertNotIn("Period ending", html)
 
     def test_guidance_feature_availability_feature_level(self):
         row = {
@@ -257,6 +258,46 @@ class PeriodEndBucketTests(unittest.TestCase):
         self.assertIn('data-period-bucket="2024-Q3"', html)
         self.assertIn("calendar quarter of fiscal period-end", html)
         self.assertIn("Period ending", html)
+        self.assertIn('id="company-filter"', html)
+        self.assertIn('class="company-check" value="AMZN"', html)
+
+    def test_default_period_bucket_prefers_coverage_over_recency(self):
+        from build_consolidated_panel_report import default_period_bucket
+
+        # 2026-Q1 covers both names; 2026-Q2 is the in-progress quarter only
+        # NVDA has reached, so defaulting to it would hide CSCO.
+        stacked = pd.concat(
+            [
+                _sample_panel("CSCO", "FY2026-Q2", period_end="2026-01-24"),
+                _sample_panel("CSCO", "FY2026-Q3", period_end="2026-04-26"),
+                _sample_panel("NVDA", "FY2026-Q1", period_end="2026-04-30"),
+                _sample_panel("NVDA", "FY2026-Q2", period_end="2026-07-31"),
+            ],
+            ignore_index=True,
+        )
+        stacked = enrich_panel_period_columns(stacked)
+        self.assertEqual(default_period_bucket(stacked), "2026-Q1")
+
+    def test_partial_bucket_names_the_companies_it_hides(self):
+        stacked = pd.concat(
+            [
+                _sample_panel("AMZN", "FY2025-Q1", period_end="2025-03-31"),
+                _sample_panel("MSFT", "FY2025-Q1", period_end="2024-09-30"),
+            ],
+            ignore_index=True,
+        )
+        empty = EvidenceLookups(level={}, delta={}, surprise={})
+        html = build_consolidated_html(
+            stacked,
+            {"AMZN": empty, "MSFT": empty},
+            tickers=["AMZN", "MSFT"],
+            period_buckets=["2025-Q1", "2024-Q3"],
+            default_bucket="2025-Q1",
+            sector_label=None,
+            generated_at="2026-01-01T00:00:00Z",
+        )
+        self.assertIn('id="bucket-coverage-note"', html)
+        self.assertIn("<strong>MSFT</strong>", html)
 
 
 class ConsolidatedPanelReportTests(unittest.TestCase):
@@ -292,6 +333,7 @@ class ConsolidatedPanelReportTests(unittest.TestCase):
         self.assertIn('data-mode="compare"', html)
         self.assertIn("Call features", html)
         self.assertIn("Investable as-of", html)
+        self.assertIn('id="company-filter"', html)
 
     def test_build_script_runs_if_panels_exist(self):
         """Smoke-test the CLI entry point with a narrow --tickers MSFT run.

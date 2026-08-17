@@ -353,6 +353,11 @@ def finalize_and_write(
                     "is_quant_comparable": d.is_quant_comparable,
                     "quant_z": scope.quant_z.get(fp, {}).get(d.dimension),
                     "rationale": d.rationale,
+                    "sub_metrics": (
+                        [sm.model_dump() for sm in d.sub_metrics]
+                        if d.sub_metrics
+                        else None
+                    ),
                     "evidence": [
                         {
                             "claim": e.claim,

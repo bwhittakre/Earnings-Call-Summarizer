@@ -53,7 +53,6 @@ PANEL_CHUNKS_DIR = "panel_chunks"
 
 EIGHT_QUARTER_SCOPE = tuple(PILOT_OUTPUT_QUARTERS)
 
-
 def load_sector_tickers(sector: str) -> list[str]:
     path = SECTORS_DIR / f"{sector.strip()}.txt"
     if not path.is_file():
@@ -71,15 +70,22 @@ def load_sector_tickers(sector: str) -> list[str]:
         raise ValueError(f"No tickers in sector file {path}")
     return tickers
 
+def _default_consolidated_tickers() -> list[str]:
+    """Prefer Roz monitor universe when EARNINGS_MONITOR_TICKERS is set."""
+    import os
+
+    raw = os.environ.get("EARNINGS_MONITOR_TICKERS", "").strip()
+    if raw:
+        return [part.strip().upper() for part in raw.split(",") if part.strip()]
+    return list(PILOT_TICKERS)
 
 def resolve_tickers(args) -> tuple[list[str], str | None]:
     if args.sector and args.tickers:
         raise ValueError("Use either --sector or --tickers, not both.")
     if args.sector:
         return load_sector_tickers(args.sector), args.sector
-    tickers = [t.upper() for t in (args.tickers or list(PILOT_TICKERS))]
+    tickers = [t.upper() for t in (args.tickers or _default_consolidated_tickers())]
     return tickers, None
-
 
 def latest_common_quarter(tickers: list[str], stacked: pd.DataFrame) -> str | None:
     sets = [
@@ -94,13 +100,12 @@ def latest_common_quarter(tickers: list[str], stacked: pd.DataFrame) -> str | No
         return sorted(all_fps, key=fiscal_period_sort_key)[-1] if all_fps else None
     return sorted(common, key=fiscal_period_sort_key)[-1]
 
-
 def default_period_bucket(stacked: pd.DataFrame) -> str | None:
-    """Default Compare bucket: latest quarter when every ticker is present, else ALL.
+    """Latest period-end calendar quarter with the widest cohort coverage.
 
-    Fiscal calendars differ (e.g. CSCO vs NVDA period-end buckets), so the
-    quarter with the *most* tickers often omits valid names. Defaulting to a
-    partial cohort hides them on first load; ALL avoids that surprise.
+    Ranking coverage ahead of recency keeps the default off the in-progress
+    quarter, which only the earliest reporters have reached; picking that one
+    would hide most of the cohort on load.
     """
     if "period_end_calendar_quarter" not in stacked.columns:
         stacked = enrich_panel_period_columns(stacked)
@@ -108,15 +113,10 @@ def default_period_bucket(stacked: pd.DataFrame) -> str | None:
     counts = counts[counts.index.notna()]
     if counts.empty:
         return None
-    total = int(stacked["ticker"].nunique())
-    best = max(
+    return max(
         counts.index.tolist(),
-        key=lambda b: (calendar_quarter_sort_key(str(b)), int(counts[b])),
+        key=lambda b: (int(counts[b]), calendar_quarter_sort_key(str(b))),
     )
-    if int(counts[best]) >= total:
-        return str(best)
-    return "ALL"
-
 
 def period_buckets_from_panel(stacked: pd.DataFrame) -> list[str]:
     if "period_end_calendar_quarter" not in stacked.columns:
@@ -127,13 +127,11 @@ def period_buckets_from_panel(stacked: pd.DataFrame) -> list[str]:
     ]
     return sorted(buckets, key=calendar_quarter_sort_key, reverse=True)
 
-
 def filter_quarters(panel: pd.DataFrame, quarters: list[str] | None) -> pd.DataFrame:
     if not quarters:
         return panel
     allowed = set(quarters)
     return panel[panel["fiscal_period"].isin(allowed)].copy()
-
 
 def build_summary_json(
     stacked: pd.DataFrame,
@@ -215,7 +213,6 @@ def build_summary_json(
             ),
         },
     }
-
 
 def main() -> int:
     ap = argparse.ArgumentParser(description="Build consolidated cross-company feature panel report.")
@@ -465,7 +462,6 @@ def main() -> int:
     if skipped:
         print(f"  Skipped: {', '.join(skipped)}")
     return 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

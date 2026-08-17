@@ -1,6 +1,22 @@
 .env
 .env.txt
 *.env.txt
+# Local monitor overrides (Compose EARNINGS_MONITOR_ENV_FILE)
+services/earnings_monitor/.env.local
+services/earnings_monitor/.env.sim.local
+# Generated Quartr → sector sync sidecar
+config/sectors/.quartr_watchlists_meta.json
+config/sectors/quartr_*.txt
+# Host MCP dumps / due worklists (calendar + live automation runtime)
+/host_quartr/
+# One-off agent/onboard scratch at repo root (helpers, logs, MCP dumps)
+/_*/
+/_*.py
+/_*.ps1
+/_*.log
+/_*.json
+/debug-*.log
+/Structured Narrative/debug-*.log
 # Structured Narrative secrets & data outputs
 Structured Narrative/.env.txt
 Structured Narrative/Unified/
@@ -14,13 +30,13 @@ __pycache__/
 .venv/
 venv/
 # AUTO: fetched filing roots
-AAPL/
-AMZN/
-GOOGL/
-META/
-MSFT/
-NVDA/
-TSLA/
+/AAPL/
+/AMZN/
+/GOOGL/
+/META/
+/MSFT/
+/NVDA/
+/TSLA/
 # END AUTO
 data/filings/*
 !data/filings/
@@ -29,6 +45,9 @@ data/transcripts/*
 !data/
 !data/transcripts/
 !data/transcripts/.gitkeep
+# Local monitor datasets and SQLite state are reproducible/runtime-only.
+/data/earnings_monitor/
+/services/earnings_monitor/state/
 output/*
 !output/
 !output/.gitkeep

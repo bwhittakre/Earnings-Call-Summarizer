@@ -1,0 +1,10 @@
+.git
+.venv
+**/.venv
+**/.env
+**/.env.local
+**/__pycache__
+**/.pytest_cache
+data
+services/earnings_monitor/state
+debug-*.log

@@ -35,7 +35,7 @@ DEFAULT_OUT = HERE / "transcripts_raw"
 _HEADER_RE = re.compile(r"^#\s*([^:]+):\s*(.*)$")
 _PERIOD_SPACED_RE = re.compile(r"^FY\s*(\d{4})\s*Q([1-4])\s*$", re.IGNORECASE)
 _PERIOD_HYPHEN_RE = re.compile(r"^FY(\d{4})-Q([1-4])$", re.IGNORECASE)
-_FILENAME_RE = re.compile(r"^([a-z0-9]+)-fy(\d{4})-q([1-4])", re.IGNORECASE)
+_FILENAME_RE = re.compile(r"^([a-z0-9]+)[-_]fy(\d{4})[-_]q([1-4])", re.IGNORECASE)
 
 
 @dataclass

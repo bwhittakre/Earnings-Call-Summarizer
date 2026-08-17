@@ -18,6 +18,11 @@ FLAG_NEAR_ZERO_CONSENSUS = "near_zero_consensus"
 FLAG_MEMBER_SUPPRESSED = "member_suppressed"
 FLAG_SPARSE_DIMENSION = "sparse_dimension"
 
+# Floor of live PIT-z members before sparse_dimension fires. Raised 2 -> 3
+# after dimension membership was strengthened to realize >=3 on the book
+# (demand may still flag sparse until a 3rd book-core demand code exists).
+SPARSE_DIMENSION_MIN_MEMBERS = 3
+
 ALL_FLAGS = (
     FLAG_NEAR_ZERO_CONSENSUS,
     FLAG_MEMBER_SUPPRESSED,
@@ -119,7 +124,7 @@ def dimension_quality_flags(
     *,
     member_zs_clean: Sequence[float | None] | Mapping[Any, float | None],
     member_near_zero: Sequence[bool] | Mapping[Any, bool] | None = None,
-    min_members: int = 2,
+    min_members: int = SPARSE_DIMENSION_MIN_MEMBERS,
 ) -> list[str]:
     """Build dimension-level flags from clean member zs and per-member gate marks."""
     if isinstance(member_zs_clean, Mapping):

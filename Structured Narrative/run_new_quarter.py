@@ -30,6 +30,7 @@ if str(HERE) not in sys.path:
 
 from company_config import PILOT_TICKERS  # noqa: E402
 from fiscal_period_util import normalize_fiscal_period  # noqa: E402
+from workflow_profiles import WorkflowProfile, execute_plan, plan_workflow  # noqa: E402
 
 
 def run(cmd: list[str], *, label: str) -> None:
@@ -42,9 +43,19 @@ def main() -> int:
     ap = argparse.ArgumentParser(description="New-quarter workflow wrapper.")
     ap.add_argument("--ticker", required=True)
     ap.add_argument("--quarter", required=True, metavar="FYyyyy-Qn")
+    ap.add_argument(
+        "--profile",
+        choices=tuple(profile.value for profile in WorkflowProfile),
+        help="Run one service workflow phase instead of the legacy end-to-end workflow.",
+    )
     ap.add_argument("--skip-bridge", action="store_true", help="Skip inbox -> transcripts_raw bridge.")
     ap.add_argument("--skip-quant", action="store_true", help="Skip Snowflake quant append/z-score.")
     ap.add_argument("--skip-spine", action="store_true", help="Skip cross-company modeling spine export.")
+    ap.add_argument(
+        "--research-labels",
+        action="store_true",
+        help="Profile mode only: fetch forward labels and run signal evaluation.",
+    )
     ap.add_argument("--force", action="store_true", help="Re-score even if registry marks quarter complete.")
     ap.add_argument(
         "--spine-tickers",
@@ -55,6 +66,21 @@ def main() -> int:
     args = ap.parse_args()
     ticker = args.ticker.upper()
     quarter = normalize_fiscal_period(args.quarter)
+
+    if args.profile:
+        plan = plan_workflow(
+            args.profile,
+            ticker=ticker,
+            quarter=quarter,
+            force=args.force,
+            bridge_transcript=not args.skip_bridge,
+            export_spine=not args.skip_spine,
+            research_labels=args.research_labels,
+            spine_tickers=args.spine_tickers,
+        )
+        execute_plan(plan)
+        print(f"\nDone: {ticker} {quarter} {args.profile} workflow complete.")
+        return 0
 
     if not args.skip_bridge:
         run(

@@ -3,7 +3,16 @@
 """Per-ticker registry for the Structured Narrative multi-company pilot."""
 from __future__ import annotations
 
+import json
+import logging
 from dataclasses import dataclass, field, replace
+from pathlib import Path
+
+LOG = logging.getLogger(__name__)
+
+# Onboard writes per-ticker JSON here; get_company lazy-loads so subprocess
+# quant/LLM scoring does not depend on an in-process register_overlay call.
+OVERLAY_DIR = Path(__file__).resolve().parent / "config" / "company_overlays"
 
 
 FY2025_OUTPUT_QUARTERS = (
@@ -435,22 +444,67 @@ TEL_OUTPUT_QUARTERS = (
 )
 
 
-# Core LSEG measures — shared across tickers.
+# Human-readable names for every LSEG code we know (core + overlays +
+# catalog). ``measure_label()`` reads this, not only CORE_MEASURES.
+MEASURE_LABELS = {
+    20: "Sales",
+    6: "EBIT",
+    8: "EBITDA",
+    27: "Gross Margin",
+    9: "EPS",
+    15: "Net Income",
+    17: "Pretax Profit",
+    19: "ROE",
+    4: "Dividend Per Share",
+    237: "Free Cash Flow",
+    22: "Capex",
+    229: "CFO",
+    14: "Net Debt",
+    185: "R&D Exp",
+    219: "SG&A",
+    213: "Stock-Based Comp",
+    418: "Advertising Revenue",
+    431: "GMV",
+    373: "Deferred Revenue",
+    445: "LT Deferred Revenue",
+    368: "Service Revenue",
+    333: "Subscribers",
+    332: "Net Subscriber Adds",
+    240: "Inventory",
+    109: "Interest Expense",
+    141: "FFO",
+    142: "NOI",
+    153: "Shareholders Equity",
+    157: "Total Assets",
+    173: "NIM",
+}
+
+# Book-wide pull list. Promoted only after the coverage probe
+# (scripts/_probe_ibes_measure_coverage.py / catalog prior when Snowflake is
+# blocked). Thin / AMZN-only codes stay in candidate_measures.
 CORE_MEASURES = {
     20: "Sales",
     6: "EBIT",
     8: "EBITDA",
     27: "Gross Margin",
     9: "EPS",
+    15: "Net Income",
+    17: "Pretax Profit",
+    19: "ROE",
     237: "Free Cash Flow",
     22: "Capex",
+    229: "CFO",
+    14: "Net Debt",
+    4: "Dividend Per Share",
+    185: "R&D Exp",
+    219: "SG&A",
+    373: "Deferred Revenue",
+    213: "Stock-Based Comp",
 }
 
 AMZN_CANDIDATE_MEASURES = {
-    213: "Stock-Based Comp",
     418: "Advertising Revenue",
     431: "GMV",
-    373: "Deferred Revenue",
     445: "LT Deferred Revenue",
     368: "Service Revenue",
     333: "Subscribers",
@@ -681,8 +735,9 @@ COMPANIES: dict[str, CompanyProfile] = {
         output_quarters=TEL_OUTPUT_QUARTERS,
         prior_quarters=TEL_PRIOR_QUARTERS,
     ),
-    # First public earnings print (FY2026-Q2). Synced from roz-audit-worktree ops fix.
-    # estpermid LSEG VW_IBES2MAPPING; isin PERMISINDATA; barra ROOT_BARRAID USBSUD1.
+    # First public earnings print (FY2026-Q2). No prior transcript / delta baseline.
+    # estpermid from LSEG VW_IBES2MAPPING IBESTICKER=SPCX (2026-08-04 probe);
+    # isin from PERMISINDATA; barra from ROOT_BARRAID.
     "SPCX": CompanyProfile(
         ticker="SPCX",
         company_name="SpaceX",
@@ -693,6 +748,7 @@ COMPANIES: dict[str, CompanyProfile] = {
         prior_quarters=(),
     ),
     # Onboard via Quartr MCP (no REST): FY2019-Q1..FY2026-Q3 transcripts on disk.
+    # estpermid/isin/barra from LSEG VW_IBES2MAPPING IBESTICKER=CSCO (2026-08-06).
     "CSCO": CompanyProfile(
         ticker="CSCO",
         company_name="Cisco Systems",
@@ -734,15 +790,90 @@ COMPANIES: dict[str, CompanyProfile] = {
             "FY2026-Q4",
         ),
     ),
+    # Onboard via Quartr MCP → transcripts_raw (no REST). 3y lookback window.
+    # estpermid: ISIN US8631821019 → INSTRPERMID → IBES 04Y9 / 30064884718
+    # (2026-08-07). Do NOT use IBESTICKER=STRW — that is a recycled 1990s id.
+    # barra: MSCI ASSET_UNIVERSE_TS → USBOFP1.
+    "STRW": CompanyProfile(
+        ticker="STRW",
+        company_name="Strawberry Fields REIT",
+        estpermid=30064884718,
+        isin="US8631821019",
+        barra_id="USBOFP1",
+        prior_quarters=("FY2024-Q3",),
+        output_quarters=(
+            "FY2024-Q4",
+            "FY2025-Q1",
+            "FY2025-Q2",
+            "FY2025-Q3",
+            "FY2025-Q4",
+            "FY2026-Q1",
+            "FY2026-Q2",
+        ),
+    ),
 }
 
 
-def get_company(ticker: str | None = None, *, scope: str | None = None) -> CompanyProfile:
+def load_company_overlay(
+    ticker: str,
+    *,
+    overlay_dir: Path | None = None,
+) -> CompanyProfile | None:
+    """Load a CompanyProfile from config/company_overlays/{TICKER}.json.
+
+    Returns None when the file is missing or unreadable. Does not mutate
+    COMPANIES — callers (get_company / onboard) decide whether to cache.
+    """
+    key = ticker.strip().upper()
+    path = (overlay_dir or OVERLAY_DIR) / f"{key}.json"
+    if not path.is_file():
+        return None
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError, TypeError) as exc:
+        LOG.warning("Ignoring unreadable company overlay %s: %s", path, exc)
+        return None
+    if not isinstance(data, dict):
+        LOG.warning("Ignoring malformed company overlay %s: not an object", path)
+        return None
+    try:
+        estpermid = data.get("estpermid")
+        return CompanyProfile(
+            ticker=str(data.get("ticker") or key).strip().upper(),
+            company_name=str(data.get("company_name") or data.get("ticker") or key),
+            estpermid=int(estpermid) if estpermid is not None else None,
+            isin=(str(data["isin"]) if data.get("isin") else None),
+            barra_id=(str(data["barra_id"]) if data.get("barra_id") else None),
+            prior_quarters=tuple(data.get("prior_quarters") or ()),
+            output_quarters=tuple(data.get("output_quarters") or ()),
+        )
+    except (TypeError, ValueError) as exc:
+        LOG.warning("Ignoring invalid company overlay %s: %s", path, exc)
+        return None
+
+
+def get_company(
+    ticker: str | None = None,
+    *,
+    scope: str | None = None,
+    overlay_dir: Path | None = None,
+) -> CompanyProfile:
+    """Resolve a company profile, preferring on-disk overlays when present.
+
+    Overlay JSON (written by onboard) wins over hardcoded COMPANIES entries so
+    subprocess scoring picks up quarter/ID updates without editing this module.
+    Successful overlay loads are cached into COMPANIES for the process lifetime.
+    """
     key = (ticker or DEFAULT_TICKER).strip().upper()
-    if key not in COMPANIES:
+    overlay = load_company_overlay(key, overlay_dir=overlay_dir)
+    if overlay is not None:
+        COMPANIES[key] = overlay
+        profile = overlay
+    elif key in COMPANIES:
+        profile = COMPANIES[key]
+    else:
         known = ", ".join(sorted(COMPANIES))
         raise KeyError(f"Unknown ticker {key!r}. Known: {known}")
-    profile = COMPANIES[key]
     if scope == "five_year":
         if key != "AMZN":
             raise ValueError(f"scope 'five_year' is only defined for AMZN (got {key}).")
@@ -790,9 +921,14 @@ def lookup_ids_from_snowflake(cur, ticker: str) -> dict[str, str | int]:
 def lookup_ids_from_lseg(cur, profile: CompanyProfile) -> dict[str, str | int]:
     """Resolve ESTPERMID / ISIN / BARRA_ID from raw LSEG/MSCI shares.
 
-    When ``profile.isin`` is missing, resolve ISIN via VW_IBES2MAPPING ticker
-    → PERMISINDATA. Prefer ROOT_BARRAID (US issuer root) over listing-local
-    BARRA_ID variants; fall back to any US* BARRA_ID (not only USA*).
+    Resolution goes ISIN → INSTRPERMID → the instrument's primary IBES mapping,
+    which deliberately does not require IBESTICKER to equal the exchange ticker
+    (STRW maps to 04Y9). When ``profile.isin`` is missing, discover it via
+    VW_IBES2MAPPING ticker → PERMISINDATA so that same path still applies; a
+    bare ticker lookup is the last resort because IBESTICKER can be recycled
+    (STRW historically pointed at a 1990s entity). Prefer ROOT_BARRAID (US
+    issuer root) over listing-local BARRA_ID variants; fall back to any US*
+    BARRA_ID (not only USA*).
     """
     cur.execute("show databases")
     dbs = [r[1] for r in cur.fetchall()]
@@ -801,6 +937,7 @@ def lookup_ids_from_lseg(cur, profile: CompanyProfile) -> dict[str, str | int]:
     if not lseg:
         return {}
 
+    ticker = profile.ticker.strip().upper()
     out: dict[str, str | int] = {}
     isin = (profile.isin or "").strip() or None
     instr = None
@@ -815,17 +952,18 @@ def lookup_ids_from_lseg(cur, profile: CompanyProfile) -> dict[str, str | int]:
         if row:
             instr = row[0]
     else:
+        # ISIN unknown: recover it from the ticker mapping first, so the
+        # INSTRPERMID path below still applies instead of trusting IBESTICKER.
         cur.execute(
-            f'''SELECT INSTRPERMID, ESTPERMID FROM "{lseg}".DBO.VW_IBES2MAPPING
+            f'''SELECT INSTRPERMID FROM "{lseg}".DBO.VW_IBES2MAPPING
                 WHERE UPPER(IBESTICKER) = %s
                 ORDER BY CASE WHEN SOURCE_ = 'INSTRPRIMARYQUOTE' THEN 0 ELSE 1 END
                 LIMIT 1''',
-            (profile.ticker,),
+            (ticker,),
         )
         map_row = cur.fetchone()
         if map_row:
             instr = map_row[0]
-            out["estpermid"] = int(map_row[1])
             cur.execute(
                 f'SELECT ISIN FROM "{lseg}".DBO.PERMISINDATA WHERE INSTRPERMID = %s LIMIT 1',
                 (instr,),
@@ -835,23 +973,49 @@ def lookup_ids_from_lseg(cur, profile: CompanyProfile) -> dict[str, str | int]:
                 isin = str(isin_row[0])
                 out["isin"] = isin
 
-    if instr and isin and "estpermid" not in out:
+    if instr:
+        # Prefer the instrument's primary IBES mapping. Do NOT require
+        # IBESTICKER == exchange ticker — STRW's IBES ticker is 04Y9.
         cur.execute(
             f'''SELECT ESTPERMID, IBESTICKER FROM "{lseg}".DBO.VW_IBES2MAPPING
-                WHERE INSTRPERMID = %s AND UPPER(IBESTICKER) = %s
-                ORDER BY CASE WHEN SOURCE_ = 'INSTRPRIMARYQUOTE' THEN 0 ELSE 1 END
+                WHERE INSTRPERMID = %s
+                ORDER BY CASE
+                    WHEN SOURCE_ = 'INSTRPRIMARYQUOTE' THEN 0
+                    WHEN UPPER(IBESTICKER) = %s THEN 1
+                    ELSE 2
+                END
                 LIMIT 1''',
-            (instr, profile.ticker),
+            (instr, ticker),
         )
         map_row = cur.fetchone()
         if map_row:
             out["estpermid"] = int(map_row[0])
+            out["ibesticker"] = str(map_row[1] or "")
+
+    # Bare ticker lookup is the last resort: IBESTICKER can be recycled (STRW
+    # historically pointed at a 1990s entity), so the ISIN path always wins.
+    if "estpermid" not in out:
+        cur.execute(
+            f'''SELECT ESTPERMID, IBESTICKER FROM "{lseg}".DBO.VW_IBES2MAPPING
+                WHERE UPPER(IBESTICKER) = %s
+                ORDER BY CASE WHEN SOURCE_ = 'INSTRPRIMARYQUOTE' THEN 0 ELSE 1 END
+                LIMIT 1''',
+            (ticker,),
+        )
+        map_row = cur.fetchone()
+        if map_row:
+            out["estpermid"] = int(map_row[0])
+            out["ibesticker"] = str(map_row[1] or "")
 
     if msci and isin:
+        # Prefer US-market Barra IDs (US… / USA…). Do not require the "USA"
+        # prefix — e.g. STRW is USBOFP1, while CSCO is USACX21.
         cur.execute(
             f'''SELECT ROOT_BARRAID, COUNT(*) AS n
                 FROM "{msci}".ANALYTICS.ASSET_UNIVERSE_TS
-                WHERE ISIN = %s AND ROOT_BARRAID LIKE 'US%%'
+                WHERE ISIN = %s
+                  AND ROOT_BARRAID LIKE 'US%%'
+                  AND BARRA_ID NOT LIKE 'ISR%%'
                 GROUP BY 1 ORDER BY n DESC LIMIT 1''',
             (isin,),
         )
@@ -873,10 +1037,34 @@ def lookup_ids_from_lseg(cur, profile: CompanyProfile) -> dict[str, str | int]:
 
 
 def resolve_company_ids(cur, profile: CompanyProfile) -> CompanyProfile:
-    """Fill or validate IDs from Snowflake mapping tables when possible."""
-    looked = lookup_ids_from_snowflake(cur, profile.ticker)
-    if not looked:
-        looked = lookup_ids_from_lseg(cur, profile)
+    """Fill or validate IDs from Snowflake mapping tables when possible.
+
+    When ``profile.isin`` is set, LSEG ISIN→INSTRPERMID→primary IBES mapping is
+    authoritative for ESTPERMID. IRIS may only fill missing BARRA_ID / ISIN —
+    it never overrides an ISIN-resolved ESTPERMID (recycled exchange tickers
+    like STRW make IRIS-first unsafe).
+
+    Without ISIN: try IRIS by exchange ticker, then LSEG IBESTICKER fallback
+    (risky; prefer passing ISIN at onboard).
+    """
+    looked: dict[str, str | int] = {}
+    if profile.isin:
+        looked = dict(lookup_ids_from_lseg(cur, profile) or {})
+        if looked.get("estpermid"):
+            iris = lookup_ids_from_snowflake(cur, profile.ticker)
+            if iris:
+                if not looked.get("barra_id") and iris.get("barra_id"):
+                    looked["barra_id"] = iris["barra_id"]
+                if not looked.get("isin") and iris.get("isin"):
+                    looked["isin"] = iris["isin"]
+        else:
+            # ISIN known but LSEG miss — IRIS as secondary only.
+            looked = dict(lookup_ids_from_snowflake(cur, profile.ticker) or looked)
+    else:
+        looked = dict(lookup_ids_from_snowflake(cur, profile.ticker) or {})
+        if not looked.get("estpermid"):
+            looked = dict(lookup_ids_from_lseg(cur, profile) or looked)
+
     if not looked:
         return profile
     return CompanyProfile(
