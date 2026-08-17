@@ -1077,6 +1077,24 @@ def _json_safe(obj: Any) -> Any:
         return bool(obj)
     return obj
 
+def drop_stale_csv(path: Path) -> bool:
+    """Remove an artifact this run did not produce; return True if one went.
+
+    Keeping the previous run's file is worse than having none. Consumers read
+    each CSV on its own but date the whole bundle from the JSON, so a skipped
+    artifact (``--no-jackknife`` on fast regen) reads as current data from an
+    older book instead of tripping the missing-artifact path.
+    """
+    if not path.exists():
+        return False
+    try:
+        path.unlink()
+    except OSError as exc:
+        print(f"Warning: could not remove stale {path}: {exc}", file=sys.stderr)
+        return False
+    print(f"Removed stale {path}")
+    return True
+
 def _default_eval_tickers() -> list[str]:
     """Prefer Roz monitor universe when EARNINGS_MONITOR_TICKERS is set."""
     import os
@@ -1522,16 +1540,26 @@ def main() -> int:
     _write_text(json_path, json.dumps(_json_safe(report), indent=2))
     if not period_concat.empty:
         _write_csv(csv_path, period_concat)
+    else:
+        drop_stale_csv(csv_path)
     _write_csv(board_path, pd.DataFrame(board))
     if jackknife_rows:
         _write_csv(jack_path, pd.DataFrame(jackknife_rows))
+    else:
+        drop_stale_csv(jack_path)
     if agreement_rows:
         _write_csv(agreement_path, pd.DataFrame(agreement_rows))
+    else:
+        drop_stale_csv(agreement_path)
     if company_period_rows:
         _write_csv(company_period_path, pd.DataFrame(company_period_rows))
+    else:
+        drop_stale_csv(company_period_path)
     measure_rows = collect_measure_member_rows(tickers)
     if measure_rows:
         _write_csv(measure_members_path, pd.DataFrame(measure_rows))
+    else:
+        drop_stale_csv(measure_members_path)
     if primary_hypothesis_report:
         _write_csv(primary_hyp_path, pd.DataFrame(primary_hypothesis_report))
         n_reject = sum(1 for r in primary_hypothesis_report if r.get("reject_fdr"))

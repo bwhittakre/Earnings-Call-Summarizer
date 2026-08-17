@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -20,6 +21,7 @@ from evaluate_narrative_signals import (  # noqa: E402
     bootstrap_rank_ic_mean,
     cluster_bootstrap_mean_diff,
     cross_section_counts,
+    drop_stale_csv,
     evaluate_signals,
     is_primary_hypothesis,
     leaderboard_rows,
@@ -728,6 +730,31 @@ class DevHoldoutSplitTests(unittest.TestCase):
                 dev_only=True,
                 holdout_only=True,
             )
+
+
+class DropStaleCsvTests(unittest.TestCase):
+    """A skipped artifact must not leave the previous run's file behind.
+
+    Fast regen passes --no-jackknife, so jackknife_rows comes back empty. The
+    dashboard reads each CSV independently but dates the bundle from the JSON,
+    so a surviving file renders as current data from an older book.
+    """
+
+    def setUp(self):
+        self._dir = tempfile.TemporaryDirectory()
+        self.addCleanup(self._dir.cleanup)
+        self.root = Path(self._dir.name)
+
+    def test_removes_artifact_left_by_an_earlier_run(self):
+        path = self.root / "narrative_signal_eval_jackknife.csv"
+        path.write_text("held_out_ticker,rank_ic_mean\nAAPL,0.1\n", encoding="utf-8")
+        self.assertTrue(drop_stale_csv(path))
+        self.assertFalse(path.exists())
+
+    def test_absent_artifact_is_a_no_op(self):
+        path = self.root / "narrative_signal_eval_jackknife.csv"
+        self.assertFalse(drop_stale_csv(path))
+        self.assertFalse(path.exists())
 
 
 if __name__ == "__main__":
