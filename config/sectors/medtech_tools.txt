@@ -1,0 +1,9 @@
+# Devices + life-science tools in the Healthcare Large-Cap research sector.
+# Procedure volume / utilization / tools cycle. k=7.
+TMO
+ABT
+DHR
+ISRG
+SYK
+MDT
+BSX

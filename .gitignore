@@ -82,11 +82,14 @@ output_confidence/edgar_cache/
 
 # >>> angelo >>>
 # Runtime state and derived caches (source of truth is .memory/ and
-# .zettelkasten/). Gitignored here so Angelo MCP servers do not auto-commit;
-# commit these directories manually when ready.
+# .zettelkasten/, which should be committed)
 .angelo/
-.memory/
-.zettelkasten/
+.memory/session-active.json
+.memory/active-sessions/
+
+# Retired Angelo demo — keep its stores out of this repo's tree
+/earnings-scraper-main/**/.memory/
+/earnings-scraper-main/**/.zettelkasten/
 
 # Legacy locations (pre-.angelo layouts)
 .cassius/

@@ -1,0 +1,367 @@
+"""v6: software_pure late novelty, late semis confidence, services diagnostic.
+
+Pre-registered in .memory/entries/expe-tech-lab-v6.md.
+"""
+from __future__ import annotations
+
+import json
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+
+from src.ingest.company_lists import load_sector_companies  # noqa: E402
+from services.earnings_monitor.dashboard.rank_ic_research import (  # noqa: E402
+    _rank_ic_html,
+    _spearman,
+)
+from services.earnings_monitor.dashboard.research_data import (  # noqa: E402
+    load_rank_ic_bundle,
+)
+
+LABEL = "asof"
+HORIZON = "0_56"
+ODD = ("OPAL", "SPCX", "STRW")
+SERVICES = ("ACN", "CTSH", "IBM")
+LATE = (
+    "2021-Q2",
+    "2021-Q3",
+    "2021-Q4",
+    "2022-Q1",
+    "2022-Q2",
+    "2022-Q3",
+    "2022-Q4",
+    "2023-Q1",
+    "2023-Q2",
+    "2023-Q3",
+    "2023-Q4",
+    "2024-Q1",
+    "2024-Q2",
+    "2024-Q3",
+    "2024-Q4",
+    "2025-Q1",
+    "2025-Q2",
+    "2025-Q3",
+    "2025-Q4",
+    "2026-Q1",
+)
+EARLY = (
+    "2016-Q2",
+    "2016-Q3",
+    "2016-Q4",
+    "2017-Q1",
+    "2017-Q2",
+    "2017-Q3",
+    "2017-Q4",
+    "2018-Q1",
+    "2018-Q2",
+    "2018-Q3",
+    "2018-Q4",
+    "2019-Q1",
+    "2019-Q2",
+    "2019-Q3",
+    "2019-Q4",
+    "2020-Q1",
+    "2020-Q2",
+    "2020-Q3",
+    "2020-Q4",
+    "2021-Q1",
+)
+FULL = EARLY + LATE
+
+
+def _round(value: object) -> float | None:
+    if value is None:
+        return None
+    return round(float(value), 6)
+
+
+def _finite(value: object) -> float | None:
+    if value is None or value == "":
+        return None
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+    if number != number:
+        return None
+    return number
+
+
+IndexKey = tuple[str, str, str]
+
+
+def _index_rows(rows, *, label: str, horizon: str) -> dict[IndexKey, dict[str, tuple[float, float]]]:
+    out: dict[IndexKey, dict[str, tuple[float, float]]] = {}
+    for row in rows:
+        if str(row.get("label_key") or row.get("label") or "") != label:
+            continue
+        if str(row.get("horizon") or "") != horizon:
+            continue
+        sx = _finite(row.get("signal_mean"))
+        sy = _finite(row.get("label_mean"))
+        if sx is None or sy is None:
+            continue
+        dimension = str(row.get("dimension") or "")
+        signal = str(row.get("signal") or "")
+        period = str(row.get("period") or "")
+        ticker = str(row.get("ticker") or "").upper()
+        if not dimension or not signal or not period or not ticker:
+            continue
+        out.setdefault((dimension, signal, period), {})[ticker] = (sx, sy)
+    return out
+
+
+def _period_ic(spearman, index, tickers, *, dimension, signal, period):
+    want = {str(t).upper() for t in tickers}
+    pairs = index.get((dimension, signal, period)) or {}
+    xs: list[float] = []
+    ys: list[float] = []
+    for ticker in want:
+        point = pairs.get(ticker)
+        if point is None:
+            continue
+        xs.append(point[0])
+        ys.append(point[1])
+    return spearman(xs, ys)
+
+
+def _score(html, spearman, index, tickers, *, dimension, signal, periods):
+    ics = [
+        _period_ic(spearman, index, tickers, dimension=dimension, signal=signal, period=p)
+        for p in periods
+    ]
+    stats = html.summarize_period_rank_ics(ics)
+    return {
+        "rank_ic_mean": _round(stats.get("rank_ic_mean")),
+        "rank_ic_ir": _round(stats.get("rank_ic_ir")),
+        "hit_rate": _round(stats.get("positive_rank_ic_hit_rate")),
+        "n_periods": stats.get("n_periods"),
+        "period_ics": [_round(v) for v in ics],
+    }
+
+
+def _resolve(universe: str, book: list[str]) -> list[str]:
+    have = {t.upper() for t in book}
+    if universe == "core22":
+        return [t for t in book if t not in ODD]
+    return [t for t in load_sector_companies(universe) if t.upper() in have]
+
+
+def _pair(html, spearman, index, tickers, *, dimension, candidate, baseline, periods):
+    cand = _score(
+        html, spearman, index, tickers, dimension=dimension, signal=candidate, periods=periods
+    )
+    base = _score(
+        html, spearman, index, tickers, dimension=dimension, signal=baseline, periods=periods
+    )
+    c, b = cand["rank_ic_mean"], base["rank_ic_mean"]
+    return {
+        "n_tickers": len(tickers),
+        "n_periods": len(periods),
+        "candidate": {k: cand[k] for k in ("rank_ic_mean", "rank_ic_ir", "hit_rate", "n_periods")},
+        "baseline": {k: base[k] for k in ("rank_ic_mean", "rank_ic_ir", "hit_rate", "n_periods")},
+        "candidate_period_ics": cand["period_ics"],
+        "baseline_period_ics": base["period_ics"],
+        "positive": c is not None and float(c) > 0,
+        "beats": c is not None and b is not None and float(c) > float(b),
+        "delta": None if c is None or b is None else _round(float(c) - float(b)),
+    }
+
+
+def _jk_beats(html, spearman, index, tickers, *, dimension, candidate, baseline, periods):
+    folds = []
+    for held in tickers:
+        sub = [t for t in tickers if t != held]
+        pair = _pair(
+            html,
+            spearman,
+            index,
+            sub,
+            dimension=dimension,
+            candidate=candidate,
+            baseline=baseline,
+            periods=periods,
+        )
+        folds.append(
+            {
+                "held_out": held,
+                "candidate": pair["candidate"]["rank_ic_mean"],
+                "baseline": pair["baseline"]["rank_ic_mean"],
+                "positive": pair["positive"],
+                "beats": pair["beats"],
+                "delta": pair["delta"],
+            }
+        )
+    pos = [f["candidate"] for f in folds if f["candidate"] is not None]
+    return {
+        "n": len(tickers),
+        "all_positive": bool(pos) and all(f["positive"] for f in folds),
+        "all_beat": bool(folds) and all(f["beats"] for f in folds),
+        "min_loo": _round(min(pos)) if pos else None,
+        "max_loo": _round(max(pos)) if pos else None,
+        "worst_held_out": min(
+            folds, key=lambda f: f["candidate"] if f["candidate"] is not None else 99
+        )["held_out"]
+        if folds
+        else None,
+        "folds": folds,
+    }
+
+
+def main() -> None:
+    history = ROOT / "Structured Narrative" / "output"
+    meta = json.loads(
+        (history / "cross_company" / "json" / "narrative_signal_eval.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    book = [str(t).upper() for t in (meta.get("tickers") or [])]
+    rows = load_rank_ic_bundle(history_source=str(history)).company_period
+    html = _rank_ic_html()
+    spearman = _spearman()
+    index = _index_rows(rows, label=LABEL, horizon=HORIZON)
+    software = _resolve("software_cloud", book)
+    software_pure = _resolve("software_pure", book)
+    semis = _resolve("semis_cycle", book)
+    core22 = _resolve("core22", book)
+    late = list(LATE)
+
+    l1_pair = _pair(
+        html,
+        spearman,
+        index,
+        software_pure,
+        dimension="competitive_position",
+        candidate="narrative_novelty",
+        baseline="llm_level",
+        periods=late,
+    )
+    l1_jk = _jk_beats(
+        html,
+        spearman,
+        index,
+        software_pure,
+        dimension="competitive_position",
+        candidate="narrative_novelty",
+        baseline="llm_level",
+        periods=late,
+    )
+    l2_pair = _pair(
+        html,
+        spearman,
+        index,
+        semis,
+        dimension="management_confidence",
+        candidate="llm_level",
+        baseline="change_magnitude",
+        periods=late,
+    )
+    l2_jk = _jk_beats(
+        html,
+        spearman,
+        index,
+        semis,
+        dimension="management_confidence",
+        candidate="llm_level",
+        baseline="change_magnitude",
+        periods=late,
+    )
+
+    services_diag = []
+    for drop in (None, "ACN", "CTSH", "IBM"):
+        names = [t for t in core22 if t != drop] if drop else list(core22)
+        pair = _pair(
+            html,
+            spearman,
+            index,
+            names,
+            dimension="competitive_position",
+            candidate="change_magnitude",
+            baseline="llm_level",
+            periods=late,
+        )
+        services_diag.append(
+            {
+                "dropped": drop or "none",
+                "n_tickers": len(names),
+                "change": pair["candidate"]["rank_ic_mean"],
+                "level": pair["baseline"]["rank_ic_mean"],
+                "beats": pair["beats"],
+                "delta": pair["delta"],
+            }
+        )
+
+    sw_full = _pair(
+        html,
+        spearman,
+        index,
+        software,
+        dimension="competitive_position",
+        candidate="narrative_novelty",
+        baseline="llm_level",
+        periods=list(FULL),
+    )
+    series = [
+        {
+            "period": period,
+            "half": "early" if period in EARLY else "late",
+            "novelty": nov,
+            "level": lvl,
+        }
+        for period, nov, lvl in zip(
+            FULL, sw_full["candidate_period_ics"], sw_full["baseline_period_ics"]
+        )
+    ]
+
+    checks = {
+        "L1_late_positive": bool(l1_pair["positive"]),
+        "L1_late_beats": bool(l1_pair["beats"]),
+        "L1_jk_all_positive": bool(l1_jk["all_positive"]),
+        "L1_jk_all_beat": bool(l1_jk["all_beat"]),
+        "L2_late_positive": bool(l2_pair["positive"]),
+        "L2_late_beats": bool(l2_pair["beats"]),
+        "L2_jk_all_positive": bool(l2_jk["all_positive"]),
+        "L2_jk_all_beat": bool(l2_jk["all_beat"]),
+    }
+    line1 = all(checks[k] for k in checks if k.startswith("L1_"))
+    line2 = all(checks[k] for k in checks if k.startswith("L2_"))
+    payload = {
+        "case_study_id": "tech_lab_v6",
+        "generated_at": meta.get("generated_at"),
+        "label": LABEL,
+        "horizon": HORIZON,
+        "checks": checks,
+        "line1": line1,
+        "line2": line2,
+        "case_study_pass": line1 and line2,
+        "software_pure_late": {"pair": l1_pair, "jackknife": l1_jk},
+        "semis_confidence_late": {"pair": l2_pair, "jackknife": l2_jk},
+        "services_diagnostic": services_diag,
+        "software_novelty_series": series,
+    }
+    out = history / "cross_company" / "json" / "tech_lab_v6_20260818.json"
+    out.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    print(
+        json.dumps(
+            {
+                "case_study_id": "tech_lab_v6",
+                "generated_at": meta.get("generated_at"),
+                "checks": checks,
+                "line1": line1,
+                "line2": line2,
+                "case_study_pass": line1 and line2,
+                "software_pure_late": l1_pair["candidate"] | {"vs": l1_pair["baseline"]["rank_ic_mean"], "delta": l1_pair["delta"]},
+                "software_pure_jk": [l1_jk["min_loo"], l1_jk["max_loo"], l1_jk["worst_held_out"]],
+                "semis_conf_late": l2_pair["candidate"] | {"vs": l2_pair["baseline"]["rank_ic_mean"], "delta": l2_pair["delta"]},
+                "semis_conf_jk": [l2_jk["min_loo"], l2_jk["max_loo"], l2_jk["worst_held_out"]],
+                "services_diagnostic": services_diag,
+            },
+            indent=2,
+        )
+    )
+
+
+if __name__ == "__main__":
+    main()

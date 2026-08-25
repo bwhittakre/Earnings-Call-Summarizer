@@ -12,30 +12,22 @@ AAPL:
   fye_day: 30
 TSLA:
   type: calendar_fiscal
-
 TXN:
   type: calendar_fiscal
-
 CTSH:
   type: calendar_fiscal
-
 SPCX:
   type: calendar_fiscal
-
 CSCO:
   type: offset_fiscal
   fye_month: 7
   fye_day: 31
-
 STRW:
   type: calendar_fiscal
-
 OPAL:
   type: calendar_fiscal
-
 AMD:
   type: calendar_fiscal
-
 ACN:
   type: offset_fiscal
   fye_month: 8
@@ -88,4 +80,35 @@ TEL:
   type: offset_fiscal
   fye_month: 9
   fye_day: 25
-
+LLY:
+  type: calendar_fiscal
+MRK:
+  type: calendar_fiscal
+JNJ:
+  type: offset_fiscal
+  fye_month: 1
+  fye_day: 3
+ABBV:
+  type: calendar_fiscal
+TMO:
+  type: calendar_fiscal
+ABT:
+  type: calendar_fiscal
+PFE:
+  type: calendar_fiscal
+AMGN:
+  type: calendar_fiscal
+ISRG:
+  type: calendar_fiscal
+MDT:
+  type: offset_fiscal
+  fye_month: 4
+  fye_day: 24
+BMY:
+  type: calendar_fiscal
+REGN:
+  type: calendar_fiscal
+CI:
+  type: calendar_fiscal
+BSX:
+  type: calendar_fiscal

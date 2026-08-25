@@ -1,0 +1,23 @@
+# Healthcare Large-Cap
+# 20 US healthcare large-caps for the Roz universe expansion (Quartr MCP → onboard).
+# Not mixed into xlk_tech. Rank IC Lab sector stem: healthcare_large_cap.
+LLY
+UNH
+JNJ
+ABBV
+MRK
+TMO
+ABT
+DHR
+PFE
+AMGN
+ISRG
+SYK
+GILD
+VRTX
+MDT
+BMY
+REGN
+CI
+ELV
+BSX

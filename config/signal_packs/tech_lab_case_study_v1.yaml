@@ -1,0 +1,133 @@
+# Tech-industry Rank IC Lab case study.
+# Not production — do not copy these into production_v1 without a holdout pass.
+# Each hypothesis is one Lab recipe: one dimension, sparse a-priori weights, no IC fitting.
+case_study_id: tech_lab_v1
+label: asof
+horizon: "0_56"
+min_names: 3
+notes: >-
+  Lab blends only inside one dimension. Cross-dimension stories are separate
+  recipes, not one weight vector. Kitchen-sink equal-weight blends from the
+  18 Aug exploration are intentionally excluded.
+
+hypotheses:
+  - id: H1_semi_cycle_surprise
+    title: Semi cycle turns on demand surprise
+    story: >-
+      Hardware cycles are priced on the inflection, not the run-rate. Incremental
+      demand surprise and sequential change should beat the already-quantified
+      Street print in a semiconductor + equipment sleeve.
+    universe: semis_cycle
+    dimension: demand
+    weights:
+      surprise_magnitude: 2
+      change_magnitude: 1
+    include_revision: false
+    baseline_signal: quant_z_pit
+    is_control: false
+
+  - id: H2_software_guidance_market
+    title: Software is a guidance market
+    story: >-
+      Duration-heavy software is a next-year-outlook tape. Guidance tone plus
+      surprise (and the T+7 revision when present) should beat call-day demand
+      quant in the software sleeve.
+    universe: software_cloud
+    dimension: guidance
+    weights:
+      llm_level: 1
+      surprise_magnitude: 1
+      quant_guidance_revision_z_pit: 1
+    include_revision: true
+    baseline_signal: llm_level
+    is_control: false
+
+  - id: H3_ai_capex_novelty
+    title: AI capex is the incremental tell
+    story: >-
+      The 2023–26 tech tape is an investment-cycle tape. New capital-allocation
+      language (novelty) plus the level of spend commentary should beat run-rate
+      allocation tone alone.
+    universe: all
+    dimension: capital_allocation
+    weights:
+      narrative_novelty: 2
+      llm_level: 1
+    include_revision: false
+    baseline_signal: llm_level
+    is_control: false
+
+  - id: H4_share_shift
+    title: Share-shift, not the standing moat
+    story: >-
+      In a concentrated tech book the priced information is who took or lost
+      share this quarter. Competitive novelty and change should beat the
+      standing moat narrative (level).
+    universe: all
+    dimension: competitive_position
+    weights:
+      narrative_novelty: 2
+      change_magnitude: 1
+    include_revision: false
+    baseline_signal: llm_level
+    is_control: false
+
+  - id: H5_confirmed_software_margins
+    title: Confirmed software margin quality
+    story: >-
+      Software multiples pay for margins only when the transcript and the print
+      agree. Agreement plus level should beat unconfirmed quant in the software
+      sleeve.
+    universe: software_cloud
+    dimension: margins
+    weights:
+      agrees_with_quant: 2
+      llm_level: 1
+    include_revision: false
+    baseline_signal: quant_z_pit
+    is_control: false
+
+  - id: H6_semi_export_control
+    title: Export-control residual in semis
+    story: >-
+      For semis, China / export-control / regulatory commentary is a priced
+      residual the Street absorbs slowly. Level plus novelty on that dimension
+      should beat the standing risk tone alone.
+    universe: semis_cycle
+    dimension: macro_regulatory_risk
+    weights:
+      llm_level: 1
+      narrative_novelty: 1
+    include_revision: false
+    baseline_signal: llm_level
+    is_control: false
+
+  - id: H7_conviction_regime
+    title: Conviction change marks a regime shift
+    story: >-
+      Cheap talk is the level of confidence. A change in conviction is the
+      regime marker. Delta plus level on management confidence should beat
+      level alone.
+    universe: all
+    dimension: management_confidence
+    weights:
+      change_magnitude: 2
+      llm_level: 1
+    include_revision: false
+    baseline_signal: llm_level
+    is_control: false
+
+  - id: H8_demand_confirmation_control
+    title: Demand confirmation (control)
+    story: >-
+      Control recipe, not a clever tech story. If story recipes cannot beat
+      "quant plus agreement" on demand for the full book, the case-study edge
+      is not confirmation-of-the-print.
+    universe: all
+    dimension: demand
+    weights:
+      quant_z_pit: 1
+      agrees_with_quant: 1
+    include_revision: false
+    baseline_signal: quant_z_pit
+    is_control: true

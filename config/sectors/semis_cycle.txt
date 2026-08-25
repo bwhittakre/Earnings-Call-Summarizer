@@ -1,0 +1,12 @@
+# Semiconductor designers + memory + equipment in the Roz book.
+# Wide enough for Rank IC (min 3 names/period); INTC/QCOM omitted — not in the 17 Aug book.
+NVDA
+AMD
+AVGO
+MU
+ADI
+AMAT
+LRCX
+TXN
+TEL
+APH

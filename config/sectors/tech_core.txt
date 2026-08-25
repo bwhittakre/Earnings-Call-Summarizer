@@ -1,0 +1,22 @@
+# 17 Aug book minus odd names and IT services.
+# A priori: OPAL/SPCX/STRW are not the tech thesis; ACN/CTSH/IBM are services.
+# Not chosen from jackknife ranks.
+AAPL
+ADBE
+ADI
+ADSK
+AMAT
+AMD
+AMZN
+APH
+AVGO
+CRM
+CSCO
+INTU
+LRCX
+MSFT
+MU
+NVDA
+ORCL
+TEL
+TXN

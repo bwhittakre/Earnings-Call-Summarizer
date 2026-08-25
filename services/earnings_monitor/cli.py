@@ -196,6 +196,16 @@ def main(argv: list[str] | None = None) -> int:
         help="Run Onboard even if mode router would classify as standard",
     )
     onboard_parser.add_argument(
+        "--skip-book-sync",
+        action="store_true",
+        help="Do not append this ticker into the live Roz SQLite/env book",
+    )
+    onboard_parser.add_argument(
+        "--research-sector",
+        default="xlk_tech",
+        help="Sector file stem for book integration (default xlk_tech)",
+    )
+    onboard_parser.add_argument(
         "--arm",
         action="store_true",
         help="After Onboard, arm the event (requires ticker on allowlist)",
@@ -322,6 +332,8 @@ def main(argv: list[str] | None = None) -> int:
             barra_id=args.barra_id,
             refresh_ids=bool(args.refresh_ids),
             configured_tickers=config.tickers,
+            skip_book_sync=bool(args.skip_book_sync),
+            research_sector=str(args.research_sector or "xlk_tech"),
         )
         payload = result.to_dict()
         if args.arm:

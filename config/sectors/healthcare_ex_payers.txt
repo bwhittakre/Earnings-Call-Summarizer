@@ -1,0 +1,19 @@
+# Healthcare Large-Cap minus the three payers.
+# For “not a payer object” cuts after v1. 17 names.
+LLY
+JNJ
+ABBV
+MRK
+TMO
+ABT
+DHR
+PFE
+AMGN
+ISRG
+SYK
+GILD
+VRTX
+MDT
+BMY
+REGN
+BSX

@@ -1,0 +1,5 @@
+# US managed-care payers in the Healthcare Large-Cap research sector.
+# k=3 — diagnostic only. Do not treat a sleeve mean as name-robust.
+UNH
+CI
+ELV

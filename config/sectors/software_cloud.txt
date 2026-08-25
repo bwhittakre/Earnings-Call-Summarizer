@@ -1,0 +1,9 @@
+# Application + infrastructure software in the Roz book.
+# IT services (ACN, CTSH) and hardware platforms kept out on purpose.
+MSFT
+ORCL
+CRM
+ADBE
+ADSK
+INTU
+IBM

@@ -492,7 +492,7 @@ def _bootstrap_fiscal(
 ) -> tuple[str, int | None, int | None]:
     """Return (calendar_type, fye_month, fye_day) via EDGAR bootstrap when possible."""
     try:
-        from src.ingest.edgar.client import EdgarClient
+        from src.ingest.edgar.client import EdgarClient, make_json_fetcher
         from src.ingest.edgar.config import load_edgar_config
         from src.ingest.edgar.cik_lookup import resolve_companies_list
         from src.ingest.edgar.fiscal_profile import load_or_bootstrap_fiscal_profile
@@ -500,23 +500,26 @@ def _bootstrap_fiscal(
         LOG.warning("EDGAR fiscal bootstrap unavailable: %s", exc)
         return "calendar_fiscal", None, None
 
-    cfg = load_edgar_config()
-    client = EdgarClient(cfg)
-    companies = resolve_companies_list([ticker], client=client)
-    if not companies:
+    try:
+        cfg = load_edgar_config()
+        client = EdgarClient(cfg)
+        companies = resolve_companies_list(ticker, fetcher=make_json_fetcher(client))
+        if not companies:
+            return "calendar_fiscal", None, None
+        ticker_key, cik, title = companies[0]
+        if not cik:
+            return "calendar_fiscal", None, None
+        submissions = client.fetch_submissions(int(cik))
+        profile = load_or_bootstrap_fiscal_profile(
+            ticker_key,
+            company_name or title or ticker,
+            submissions,
+            client=client,
+        )
+        return profile.calendar_type, profile.fye_month, profile.fye_day
+    except Exception as exc:  # noqa: BLE001 — fiscal is best-effort
+        LOG.warning("EDGAR fiscal bootstrap failed for %s: %s", ticker, exc)
         return "calendar_fiscal", None, None
-    company = companies[0]
-    cik = str(company.get("cik") or company.get("CIK") or "")
-    if not cik:
-        return "calendar_fiscal", None, None
-    submissions = client.fetch_submissions(cik)
-    profile = load_or_bootstrap_fiscal_profile(
-        ticker,
-        company_name or company.get("title") or ticker,
-        submissions,
-        client=client,
-    )
-    return profile.calendar_type, profile.fye_month, profile.fye_day
 
 
 def _monitor_paths(repo_root: Path) -> tuple[Path, Path]:
@@ -838,6 +841,8 @@ def run_onboard(
     configured_tickers: Sequence[str] = (),
     run_command: Callable[..., dict[str, Any]] | None = None,
     import_history_fn: Callable[..., Any] | None = None,
+    skip_book_sync: bool = False,
+    research_sector: str = "xlk_tech",
 ) -> OnboardResult:
     """Execute the Onboard flow. Never silently falls through to baseline on failure."""
     ticker_key = ticker.strip().upper()
@@ -972,53 +977,66 @@ def run_onboard(
 
     # First-Print fallthrough and full Onboard both integrate the ticker into
     # the shared Roz book (sector file + optional env) so research-regen sees it.
-    try:
-        from .config import MonitorConfig
-        from .ticker_book import ensure_ticker_in_book
-
-        seed = tuple(
-            dict.fromkeys(
-                str(t).strip().upper()
-                for t in (configured_tickers or ())
-                if str(t).strip()
-            )
-        )
-        book_config = MonitorConfig(
-            repo_root=Path(repo_root),
-            database_path=Path(repo_root)
-            / "services"
-            / "earnings_monitor"
-            / "state"
-            / "monitor.sqlite3",
-            inbox_path=Path(repo_root)
-            / "earnings-scraper-main"
-            / "earnings-scraper-main"
-            / "inbox",
-            tickers=seed or ("AAPL",),
-            research_sector="xlk_tech",
-        )
-        integration = ensure_ticker_in_book(
-            ticker=ticker_key,
-            config=book_config,
-            seed_tickers=seed,
-        )
+    # New-sector case studies pass skip_book_sync=True so they do not append
+    # into the live xlk_tech / SQLite book.
+    if skip_book_sync:
         result.steps.append(
             {
                 "step": "ticker_book",
-                "added": integration.added,
-                "tickers": list(integration.tickers),
-                "sector_updated": integration.sector_updated,
-                "env_updated": integration.env_updated,
+                "skipped": True,
+                "research_sector": research_sector,
+                "note": "skip_book_sync: sector file is managed by the caller",
             }
         )
-        result.allowlist_guidance = allowlist_guidance(
-            ticker_key, integration.tickers
-        )
-    except Exception as exc:  # noqa: BLE001 — book sync must not abort onboard
-        result.steps.append(
-            {"step": "ticker_book", "error": str(exc), "ticker": ticker_key}
-        )
-        LOG.warning("Roz ticker book integration failed for %s: %s", ticker_key, exc)
+    else:
+        try:
+            from .config import MonitorConfig
+            from .ticker_book import ensure_ticker_in_book
+
+            seed = tuple(
+                dict.fromkeys(
+                    str(t).strip().upper()
+                    for t in (configured_tickers or ())
+                    if str(t).strip()
+                )
+            )
+            book_config = MonitorConfig(
+                repo_root=Path(repo_root),
+                database_path=Path(repo_root)
+                / "services"
+                / "earnings_monitor"
+                / "state"
+                / "monitor.sqlite3",
+                inbox_path=Path(repo_root)
+                / "earnings-scraper-main"
+                / "earnings-scraper-main"
+                / "inbox",
+                tickers=seed or ("AAPL",),
+                research_sector=research_sector,
+            )
+            integration = ensure_ticker_in_book(
+                ticker=ticker_key,
+                config=book_config,
+                seed_tickers=seed,
+            )
+            result.steps.append(
+                {
+                    "step": "ticker_book",
+                    "added": integration.added,
+                    "tickers": list(integration.tickers),
+                    "sector_updated": integration.sector_updated,
+                    "env_updated": integration.env_updated,
+                    "research_sector": research_sector,
+                }
+            )
+            result.allowlist_guidance = allowlist_guidance(
+                ticker_key, integration.tickers
+            )
+        except Exception as exc:  # noqa: BLE001 — book sync must not abort onboard
+            result.steps.append(
+                {"step": "ticker_book", "error": str(exc), "ticker": ticker_key}
+            )
+            LOG.warning("Roz ticker book integration failed for %s: %s", ticker_key, exc)
 
     if decision.mode == "first_print":
         result.status = "first_print_fallback"
@@ -1261,33 +1279,47 @@ def run_onboard(
             )
             step["step"] = "build_feature_panel"
             result.steps.append(step)
-            sync_steps = sync_book_after_onboard(
-                repo_root=repo_root,
-                ticker=ticker_key,
-                fiscal_period=period,
-                configured_tickers=configured_tickers,
-                dry_run=dry_run,
-                import_history_fn=import_history_fn,
-            )
-            result.steps.extend(sync_steps)
-            hist_step = next(
-                (s for s in sync_steps if s.get("step") == "history_import"),
-                None,
-            )
-            if hist_step and not hist_step.get("error"):
-                result.history_import_note = (
-                    f"History dataset refreshed at {hist_step.get('destination')} "
-                    f"({hist_step.get('records')} records). Research book marked dirty; "
-                    "run research-regen (or wait for the regen loop) for Rank IC / "
-                    "consolidated HTML."
+            if skip_book_sync:
+                result.steps.append(
+                    {
+                        "step": "book_sync",
+                        "skipped": True,
+                        "research_sector": research_sector,
+                    }
                 )
+                result.history_import_note = (
+                    "Book/history sync skipped (skip_book_sync). "
+                    "Feature panel is on disk; live Roz book was not rewritten."
+                )
+                sync_steps = []
             else:
-                err = (hist_step or {}).get("error") or "history_import not run"
-                result.history_import_note = (
-                    f"History import incomplete ({err}). Retry:\n"
-                    f"  python -m services.earnings_monitor.history_import "
-                    f"--source-root \"{repo_root}\""
+                sync_steps = sync_book_after_onboard(
+                    repo_root=repo_root,
+                    ticker=ticker_key,
+                    fiscal_period=period,
+                    configured_tickers=configured_tickers,
+                    dry_run=dry_run,
+                    import_history_fn=import_history_fn,
                 )
+                result.steps.extend(sync_steps)
+                hist_step = next(
+                    (s for s in sync_steps if s.get("step") == "history_import"),
+                    None,
+                )
+                if hist_step and not hist_step.get("error"):
+                    result.history_import_note = (
+                        f"History dataset refreshed at {hist_step.get('destination')} "
+                        f"({hist_step.get('records')} records). Research book marked dirty; "
+                        "run research-regen (or wait for the regen loop) for Rank IC / "
+                        "consolidated HTML."
+                    )
+                else:
+                    err = (hist_step or {}).get("error") or "history_import not run"
+                    result.history_import_note = (
+                        f"History import incomplete ({err}). Retry:\n"
+                        f"  python -m services.earnings_monitor.history_import "
+                        f"--source-root \"{repo_root}\""
+                    )
 
         _deadline_guard("complete")
         result.status = "completed"

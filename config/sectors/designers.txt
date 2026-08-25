@@ -1,0 +1,7 @@
+# Chip designers + memory in the Roz book (no equipment).
+NVDA
+AMD
+AVGO
+MU
+ADI
+TXN

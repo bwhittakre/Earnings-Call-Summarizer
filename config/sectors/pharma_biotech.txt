@@ -1,0 +1,12 @@
+# Pharma + biotech in the Healthcare Large-Cap research sector.
+# Pipeline, LOE, indication share. Not mixed into xlk_tech.
+LLY
+JNJ
+ABBV
+MRK
+PFE
+AMGN
+GILD
+VRTX
+BMY
+REGN

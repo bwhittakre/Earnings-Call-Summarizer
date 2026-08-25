@@ -1,0 +1,151 @@
+# Healthcare-industry Rank IC Lab case study.
+# Not production — do not copy these into production_v1 without a holdout pass.
+# Do not compute ICs until the healthcare_large_cap research book exists.
+# Each hypothesis is one recipe: one dimension, sparse a-priori weights, no IC fitting.
+# Kitchen-sink equal_call_date / narrative_only are excluded.
+case_study_id: healthcare_lab_v1
+label: asof
+horizon: "0_56"
+min_names: 3
+sector: healthcare_large_cap
+notes: >-
+  Same method as tech_lab_v1, different economics. Lab blends only inside one
+  dimension. Do not recycle software/semis sleeves or the 18 Aug kitchen-sink
+  recipes. managed_care recipes are diagnostic (k=3) and do not count toward
+  the rollup bar. Book stamp is not invented here — lock generated_at from the
+  healthcare research-sector pack after onboard.
+
+hypotheses:
+  - id: H1_procedure_cycle
+    title: Procedure/tools cycle turns on demand surprise
+    story: >-
+      Devices and tools are a volume tape. Incremental demand surprise and
+      sequential change should beat the already-quantified Street print in the
+      medtech + tools sleeve.
+    universe: medtech_tools
+    dimension: demand
+    weights:
+      surprise_magnitude: 2
+      change_magnitude: 1
+    include_revision: false
+    baseline_signal: quant_z_pit
+    is_control: false
+
+  - id: H2_pharma_guidance
+    title: Pharma is a guidance / pipeline-outlook tape
+    story: >-
+      Duration-heavy pharma is priced on next-year outlook and pipeline guide,
+      not the printed quarter. Guidance tone plus surprise should beat standing
+      guidance level alone.
+    universe: pharma_biotech
+    dimension: guidance
+    weights:
+      llm_level: 1
+      surprise_magnitude: 1
+    include_revision: true
+    baseline_signal: llm_level
+    is_control: false
+
+  - id: H3_pipeline_share
+    title: Pipeline and indication share, not the standing franchise
+    story: >-
+      The priced object in pharma/biotech is who took or lost indication share,
+      launched, or lost exclusivity this quarter. Competitive novelty and change
+      should beat the standing franchise narrative (level).
+    universe: pharma_biotech
+    dimension: competitive_position
+    weights:
+      narrative_novelty: 2
+      change_magnitude: 1
+    include_revision: false
+    baseline_signal: llm_level
+    is_control: false
+
+  - id: H4_ira_pricing
+    title: IRA / pricing residual in pharma
+    story: >-
+      CMS, IRA, and drug-pricing commentary is a priced residual the Street
+      absorbs slowly. Level plus novelty on macro/regulatory should beat the
+      standing risk tone alone.
+    universe: pharma_biotech
+    dimension: macro_regulatory_risk
+    weights:
+      llm_level: 1
+      narrative_novelty: 1
+    include_revision: false
+    baseline_signal: llm_level
+    is_control: false
+
+  - id: H5_pipeline_spend
+    title: R&D / BD is the incremental allocation tell
+    story: >-
+      Pharma capital allocation is an investment-cycle tape (pipeline spend,
+      BD, not run-rate buybacks). New allocation language plus the level of
+      spend commentary should beat run-rate allocation tone alone.
+    universe: pharma_biotech
+    dimension: capital_allocation
+    weights:
+      narrative_novelty: 2
+      llm_level: 1
+    include_revision: false
+    baseline_signal: llm_level
+    is_control: false
+
+  - id: H6_conviction_regime
+    title: Conviction change marks a regime shift
+    story: >-
+      Cheap talk is the level of confidence. A change in conviction is the
+      regime marker. Same question as tech, asked on the healthcare book —
+      do not import the tech answer.
+    universe: all
+    dimension: management_confidence
+    weights:
+      change_magnitude: 2
+      llm_level: 1
+    include_revision: false
+    baseline_signal: llm_level
+    is_control: false
+
+  - id: H7_demand_confirmation_control
+    title: Demand confirmation (control)
+    story: >-
+      Control recipe, not a healthcare story. If story recipes cannot beat
+      "quant plus agreement" on demand for the full book, the case-study edge
+      is not confirmation-of-the-print.
+    universe: all
+    dimension: demand
+    weights:
+      quant_z_pit: 1
+      agrees_with_quant: 1
+    include_revision: false
+    baseline_signal: quant_z_pit
+    is_control: true
+
+  - id: D1_payer_mlr
+    title: Payer MLR inflection (diagnostic)
+    story: >-
+      Managed care is priced on medical-cost / MLR inflection, not run-rate
+      premium. k=3 — report, do not count toward the rollup bar, do not call
+      a sleeve mean name-robust.
+    universe: managed_care
+    dimension: margins
+    weights:
+      change_magnitude: 2
+      surprise_magnitude: 1
+    include_revision: false
+    baseline_signal: quant_z_pit
+    is_control: true
+
+  - id: D2_payer_membership
+    title: Payer membership / mix (diagnostic)
+    story: >-
+      Membership and mix are the demand object for payers. k=3 — diagnostic
+      only.
+    universe: managed_care
+    dimension: demand
+    weights:
+      change_magnitude: 2
+      surprise_magnitude: 1
+    include_revision: false
+    baseline_signal: quant_z_pit
+    is_control: true

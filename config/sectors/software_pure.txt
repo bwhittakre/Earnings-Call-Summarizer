@@ -1,0 +1,7 @@
+# Software sleeve without IBM (IBM is more services / hybrid).
+MSFT
+ORCL
+CRM
+ADBE
+ADSK
+INTU

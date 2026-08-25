@@ -1,0 +1,6 @@
+# Mega-cap names that are actually in the 17 Aug book.
+# GOOGL / META / TSLA are in mega_cap_tech.txt but not in this book.
+AAPL
+AMZN
+MSFT
+NVDA
