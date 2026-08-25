@@ -45,6 +45,14 @@ data/transcripts/*
 !data/
 !data/transcripts/
 !data/transcripts/.gitkeep
+# Regenerable transcript / filing corpus — Angelo holds briefs, not the bytes
+/data/documents/
+/data/healthcare_large_cap/windows/
+/data/healthcare_large_cap/_tmp/
+/data/healthcare_large_cap/_tmp_mcp_*.json
+/data/healthcare_large_cap/*.log
+/data/healthcare_large_cap/_keep_awake.py
+/Live Ticker Reaction/
 # Local monitor datasets and SQLite state are reproducible/runtime-only.
 /data/earnings_monitor/
 /services/earnings_monitor/state/

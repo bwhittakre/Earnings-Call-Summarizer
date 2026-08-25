@@ -1,0 +1,11 @@
+{
+  "updated": "2026-08-25T13:23:00-04:00",
+  "watcher": "stopped",
+  "keep_awake": "stopped",
+  "research_sector": "healthcare_large_cap",
+  "onboarded": ["ABBV", "ABT", "AMGN", "BMY", "BSX", "CI", "ISRG", "JNJ", "MDT", "MRK", "PFE", "REGN", "TMO"],
+  "pending_identity": ["LLY", "UNH", "DHR", "SYK", "GILD", "VRTX", "ELV"],
+  "block": "estpermid missing after Snowflake/LSEG lookup; ISIN-first; do not invent ISINs",
+  "lly_overlay_warning": "Structured Narrative/config/company_overlays/LLY.json ISIN GB0005163141 is unverified (likely Lloyds). estpermid 30064846182 is from a failed run.",
+  "next": "For each pending ticker: verified ISIN (or estpermid/barra-id), then run_onboard(skip_pull=True, skip_book_sync=True, research_sector=healthcare_large_cap). Then stamp healthcare_large_cap book. Do not invent generated_at."
+}
