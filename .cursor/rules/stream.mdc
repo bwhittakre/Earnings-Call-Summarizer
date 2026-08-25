@@ -19,7 +19,13 @@ The core path has no Cursor dependency. Agents run through a portable `Driver`:
 - `gpt` -- OpenAI-compatible API (set `OPENAI_API_KEY`), or a local/open-weight
   model via `base_url` (e.g. a vLLM server -- also the reference setup for
   logprob-based confidence).
-- `cursor` -- optional plugin for running inside Cursor (not needed otherwise).
+- `cursor` -- optional plugin that runs each task as a local Cursor agent
+  (needs the `cursor-sdk` package, a running Cursor backend, and a key in
+  `CURSOR_API_KEY` or `secrets/cursor_api`). Unlike the API drivers it reaches
+  the zettelkasten tools through the `angelo-zettelkasten` MCP server, so it is
+  **single-flight** (a `concurrency` above 1 is serialized, not parallel -- no
+  bridge pool yet) and read-only roles (checker/planner) are enforced by a
+  persona instruction rather than by withholding write tools.
 
 Install the SDK(s) you use: `pip install "angelo[stream]"` (both), or just
 `anthropic` / `openai`.

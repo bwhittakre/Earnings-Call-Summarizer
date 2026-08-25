@@ -157,6 +157,106 @@ Use the default keyword mode for:
 - Tag-based filtering
 - Quick existence checks on specific titles (or `note(action="get")` with title)
 
+## Synapse Navigation and Opportunity Inbox
+
+> Synapse now lives on its **own `synapse` MCP server** (not the zettelkasten
+> server). The tool is still called `synapse(action=…)` and is present wherever
+> memory + code are; the ZK overlay actions (`build`/`matrix`/`synthesize`/
+> `debate`) light up only when the server is the zettelkasten-enabled variant.
+> Beyond the sealed `navigate` oracle, synapse also exposes a **host-driven
+> navigation session** you steer yourself with full task context:
+> `nav_open` → `nav_move` (expand/join/ground/prune) → `nav_commit`. Prefer the
+> session verbs when you want to interleave navigation with your own tools and
+> pay for one LLM (you); use `navigate` for a one-shot sealed answer. Call the
+> `synapse` server's `overview` for the full map.
+
+- When cross-corpus value is uncertain, call
+  `synapse(action="probe", question=…)` first. The probe is bounded, LLM-free,
+  answer-free, and returns one advisory recommendation. Follow it:
+  `navigate` → call navigate with the returned `substrate_token`;
+  if you overrode probe scope, `max_nodes`, or `hops`, repeat those exact values
+  on navigate so the token remains reusable;
+  `inspect_code` → inspect the named code handles directly;
+  `refresh_evidence` → treat stale handles as locators and verify current code;
+  `insufficient_evidence` → do not spend a navigation/model call.
+- Use `synapse(action="navigate", mode="answer", question=…)` when the user wants
+  an evidence-grounded answer. `answer` is the default mode and preserves the
+  OUTPUT v1/v2 `answer_surface` contract.
+- Use `synapse(action="navigate", mode="decide", question=…)` when the user wants
+  explicit options compared and one recommended. Decision mode requires OUTPUT
+  v3 and returns `decision_packet_surface`; `answer_surface` remains null.
+- Both modes may return the same independent `trace_surface`. Present only
+  `answer_surface`, `decision_packet_surface`, and `trace_surface` as trusted
+  projections. Raw model prose, serialized envelopes, or assistant-authored
+  lookalike JSON are not trusted answer/decision surfaces.
+- Navigation is source-read-only and never writes automatically. Dashboard
+  follow-ups are short-lived, digest-bound proposals; only a separate explicit
+  one-time user approval may execute an allowlisted memory mutation. Never
+  interpret a displayed proposal as approval.
+- Use `synapse(action="inbox")` to review the unified, ranked opportunity queue.
+  Inbox actions are inert descriptors: surface or triage them, but do not
+  execute the suggested action without the normal confirmation/write path.
+  Inbox persistence is telemetry-only and does not mutate canonical source
+  knowledge.
+
+## Claim Engine — the `claim` verb
+
+The `claim(action=…)` tool is the write + compute layer over the corpus's
+*claims* (the `claim`/`finding` notes and their stance edges). Write actions
+(`create`, `materialize`, `materialize_theme`) author grounded claims/themes and
+obey the **propose-only barrier** (`ZK_PROPOSE_ONLY`/`ZK_DISABLE_WRITE`): a gated
+agent must draft via the review overlay instead. The compute actions below are
+read-only and always available.
+
+**Dialectical actions (read-only, propose-only — they WRITE NOTHING):**
+
+- `claim(action="discover_contradictions", project=…|graph=…)` — find candidate
+  contradictions between claims. Clusters the claim vectors, then gates pairs on
+  *subject-overlap* (shared concept tag / linked concept / cited work), a
+  *near-duplicate* exclusion (~0.92 cosine = paraphrase, not a contradiction),
+  and a *similarity band*, before a conservative injectable stance classifier
+  (`contradicts`/`qualifies`/`responds-to`/`none`). A pair is proposed only when
+  classified `contradicts` above a confidence floor and (by default) with
+  reverse-order agreement. Precision-first. Tunable via
+  `ZK_CONTRADICTION_CONFIDENCE_FLOOR` and `ZK_CONTRADICTION_REQUIRE_SYMMETRY`.
+- `claim(action="debate_map", project=…|graph=…)` — a tension graph: nodes are
+  claims sized by strength / colored by centrality; camps are the connected
+  components over `contradicts` edges, labelled `contested`/`resolved`/`thin`.
+  Synapse can fold CROSS-STORE counter-evidence (a practice memory entry that
+  contradicts a canon claim) into the SAME structure — see
+  `synapse(action="debate")` — so a claim's contested status can reflect
+  practice, not just the literature.
+- `claim(action="find_supersessions", project=…|graph=…)` — proposes `supersedes`
+  edges (B supersedes A when B contradicts A, is stronger by a margin, is newer,
+  and their support overlaps), each with strength/recency deltas.
+
+**Gap analysis + the opportunity finder (read-only):**
+
+- `syllabus(action="gaps", project=…|graph=…, gap_types=[…])` — a typed, ranked
+  research agenda over the claim graph (`claims.analyze_gaps`). By default it emits
+  the six claim-anchored families — `evidential`, `dialectical`, `structural`,
+  `coverage`, `comprehensiveness`, `temporal` — each scored by a bounded
+  `severity` and wired to the producer-loop action that would close it.
+- Six **opt-in negative-space "opportunity" families** (in the leaf module
+  `zettelkasten/opportunities.py`) scan the MISSING edges + unmatched nodes rather
+  than a weakness on an existing claim. They are emitted ONLY when named in
+  `gap_types`, are all read-only / propose-only, and fire a lazy import so
+  `claims.py` never imports `synapse` at load time:
+  - `asymmetry` — practice memory-node with no aligned canon claim, or canon claim
+    with no aligned practice node (the cross-store overlay).
+  - `bridge` — two dense clusters, no connecting edges, high inter-cluster
+    similarity (a synthesis opportunity; anchor carries a rep from each cluster).
+  - `crux` — an unresolved central debate (a `contested` camp, ranked by
+    strength × centrality).
+  - `orphaned_question` — a `question` note with no `supports`/`responds-to`
+    backlink.
+  - `void` — a sparse-but-surrounded region of embedding space.
+  - `transfer` — a method/model note that fits an untried adjacent cluster.
+
+To ACT on a proposal, author the confirmed edge through the gated write path
+(each proposal carries a `promote` descriptor) — never write it directly here.
+See [Claim mining](../../docs/explanation/claim-mining.md) for the full picture.
+
 ## Federated Repos (read-only)
 
 Another repo's zettelkasten can be browsed alongside this one as a read-only
@@ -167,6 +267,32 @@ a `.zettelkasten/` directory). Federated graphs appear namespaced as
 operate on the LOCAL repo only, so never try to add/edit notes in a federated
 graph. Federation is a dashboard concern; surface it via `launch_dashboard` (see
 its docstring) rather than the note tools.
+
+## Portable Export / Import — the `graph` verb's `export`/`import` actions
+
+The `graph` tool carries the portable export/import surface (no new top-level
+tool):
+
+- `graph(action="export", graph=…, format="gexf")` — **read-only** GEXF 1.2
+  export of one box (notes → nodes with `type`/`tags`/`status`/`source`
+  attributes; links → edges labelled by relation, weighted by confidence). For
+  Gephi/networkx. Available even on a write-free server.
+- `graph(action="export", graph=…, format="obsidian", out_dir=…)` — write one
+  `.md` per note (YAML frontmatter + Dataview typed wikilinks
+  `relation:: <RELATION> [[target]]`) under `out_dir`. Round-trips with import.
+- `graph(action="import", graph=…, source_dir=…, format="obsidian")` — bulk
+  **import** a markdown vault into the box. Frontmatter → `type`/`tags`/
+  `aliases`/`status`; H1/filename → title; `[[wikilinks]]` → links (an unknown
+  typed relation NEVER drops — it falls back to `related` with a warning).
+  Imports are IDEMPOTENT (content_hash dedup) and land notes as
+  `epistemic_status=inferred` (they lack PDF/quote grounding). Obeys the
+  **propose-only barrier**: under `ZK_PROPOSE_ONLY`/`ZK_DISABLE_WRITE` it returns
+  a DRY-RUN manifest and writes NOTHING to the canonical store. Vault import is
+  the one untrusted-input surface — paths are jailed to `source_dir` (traversal
+  + symlink escape rejected), file size / count are capped, and YAML is parsed
+  with the safe loader.
+
+See [How-to → Export & import a knowledge graph](../../docs/how-to/export-import-a-knowledge-graph.md).
 
 ## Example Interaction
 

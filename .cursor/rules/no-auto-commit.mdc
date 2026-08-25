@@ -10,18 +10,21 @@ automatic git commits in this repo.
 ## Rules
 
 1. **Never run `git commit` or `git push` unless the user explicitly asks.**
-2. **Never run `angelo memory commit` or `angelo zettelkasten commit`.**
+2. **Never invoke `angelo memory commit` or `angelo zettelkasten commit` yourself.**
+   The `afterShellExecution` hook may flush pending `.memory/` files when the
+   user has already started a `git commit` or `git push`. That is plumbing, not
+   a license to commit on your own.
 3. **When calling memory `record()`, do not pass the `files` parameter** unless
    the user explicitly asks to git-pin an entry to specific files. Omitting
    `files` prevents Angelo's file-pinning logic from auto-committing source code.
 4. **Memory and zettelkasten writes are fine** — they create/update files under
-   `.memory/` and `.zettelkasten/` on disk. Those directories are gitignored so
-   Angelo's debounced committers will not commit them.
+   `.memory/` and `.zettelkasten/` on disk. Main-repo `.memory/entries/` is
+   intended to be git-tracked; runtime sidecars stay ignored. Do not add the
+   retired scraper's `.memory/` or `.zettelkasten/`.
 5. **When the user asks to commit**, stage and commit only what they specify.
    Do not bundle Angelo memory/zettelkasten files unless they ask.
 
 ## Note
 
-If `.memory/` or `.zettelkasten/` files are ever manually tracked with
-`git add -f`, Angelo may resume auto-committing those tracked paths. Keep them
-untracked and rely on manual `git add -f` when committing.
+`.cursor/mcp.json` holds a machine-specific `angelo-venv` path. Do not commit
+it unless the user explicitly wants that local path in the repo.

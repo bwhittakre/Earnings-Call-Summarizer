@@ -58,6 +58,8 @@ Fetch the full persona for each agent with the coordinator MCP's `agents(action=
 
 Agent introspection is one tool, `agents`, keyed on `action`: `agents(action="list")` returns the roster, `agents(action="get", agent="…")` returns one persona. Project-local custom agents may also exist — call `agents(action="list")` to see the full roster (each entry includes its workflow role). `agents(action="get")` works for built-in and custom agents alike.
 
+> **There is no `get_persona` or `list_agents` tool.** Those were consolidated into the single `agents` tool. Do NOT attempt to call `get_persona(...)` or `list_agents(...)` — they will fail with "Unknown tool". Always use `agents(action="get", agent="…")` and `agents(action="list")`.
+
 **Host-native subagents.** `agents(action="get")` may return a `native_subagent` field (e.g. `bugbot`, `security-review`, `explore`). When present *and you are running in Cursor* (i.e. the `Task` tool accepts that `subagent_type`), spawn the native subagent instead of the persona — see "Native subagent spawning" under Prompt Assembly. The native tool computes its own diff and returns a findings report, which you translate into the mandatory `RESULT`/`NOTES` block before `submit_result`. If the native subagent type is unavailable, fall back to spawning the persona like any other agent. The graph, roles, write-leases, and failure handling are identical either way — `native_subagent` only changes *how* you spawn.
 
 ### Custom Agents
@@ -139,6 +141,7 @@ The model field flows through all MCP tool responses (`get_ready_tasks`, `claim_
 ### Constraints (hard rules)
 
 - **Engineers coordinate on write paths, not globally.** All subagents share one workspace, so two implementers must never write the SAME path at once — but they are no longer serialized globally. `claim_task` takes a path-scoped write lease derived from the task's `writes`: implementers with DISJOINT `writes` run in parallel (same wave, and across runs), and only those whose paths OVERLAP serialize. **Always fill `writes` explicitly for every implementer (engineer/scribe) task — never leave it blank.** A whole-workspace lease blocks every other implementer, so taking one must be a deliberate choice, not an accident of an empty field. Pick one of: a narrow list of paths/subtrees (PREFER this — keep it as tight as the task needs, and declare disjoint scopes across a wave to run engineers concurrently), an empty list `[]` for dynamic mode (the engineer leases individual files at write time via `manage_paths(action="acquire"/"release")`), or `["."]` for a deliberate whole-workspace lease (the conservative, serialize-everything option — use it only when the task may touch unpredictable paths across the tree). Omitting `writes` still falls back to a whole-workspace lease as a safety backstop, but treat that as a bug in your graph, not the intended path. On an overlap `claim_task` returns `{"blocked": true, "held_by": {...}}`. Zettelkasten scribes need no `writes` declaration — the store enforces per-box locking so concurrent extraction of different sources is always safe.
+- **Memory-backed runs retain path ownership.** When a graph has a final `memory` task, every path acquired by its implementers remains reserved to that `run_id` after the active engineer lease is released. Same-run fix engineers may reacquire it, but an overlapping engineer from another run stays blocked until the memory task submits (success or failure), ensuring `record(files=...)` cannot commit another run's edits. `manage_paths(action="release")` releases only the active task lease; the run reservation remains. Disjoint paths still run in parallel. Graphs without a memory task keep the legacy submit-time release behavior.
 - **Planners are parallel.** Planners are read-only and can run in the same wave as other planners. They must NOT depend on engineers — the graph validator enforces this.
 - **Checkers are parallel.** Reviewer, critic, and tester are read-only (or write only to test files). They can run in the same wave.
 - **Wait for the full wave.** Always wait for ALL parallel tasks in a wave to complete before making failure decisions. One comprehensive fix cycle with complete feedback beats three sequential ones.
@@ -246,7 +249,7 @@ After user approval, call `create_graph` with the task definitions and execute. 
 
 1. Call `get_ready_tasks` (pass your `run_id`) -- this returns the current wave (all unblocked tasks). Each task may include a `model` field.
 2. For each ready task:
-   a. Call `claim_task` with the task ID. If it returns `{"blocked": true}`, another implementer holds a write lease OVERLAPPING this task's paths (`held_by` names the holder and the conflicting path); claim/spawn the other ready tasks first and retry this one after the holder releases (on `submit_result` or `manage_paths(action="release")`). Implementers with disjoint `writes` are not blocked and run in parallel.
+   a. Call `claim_task` with the task ID. If it returns `{"blocked": true}`, another task or memory-backed run owns an OVERLAPPING path (`held_by` names the run/task and conflicting path); claim/spawn the other ready tasks first. Retry after the active holder releases, or—when `held_by.reserved` is true—after that run's final memory task submits. Implementers with disjoint `writes` are not blocked and run in parallel.
    b. Spawn the subagent using the Task tool. Build the prompt using the Prompt Assembly rules below. If the task (from `get_ready_tasks` or `claim_task` response) has a `model` field, pass it as the `model` parameter to the Task tool. If no model is set, omit the parameter (the subagent inherits the parent agent's model).
 3. If multiple tasks are ready, spawn them ALL in parallel (multiple Task calls in one message).
 4. Wait for ALL parallel tasks in the wave to complete.
@@ -415,6 +418,61 @@ A run becomes **interrupted** (resumable) in two ways: (1) its owning process di
 - **Federated peers**: `manage_runs(action="cleanup"|"finalize", ..., repo=<id-or-path>)` cleans up or finalizes a stranded run living in a PEER repo's `.angelo/coordinator-state.json` (resolved via the memory federation config by id, or a filesystem path to a repo root). The peer's state file is gitignored runtime state, not committed knowledge, so this is pure maintenance. Only stale/completed peer runs are touched — a peer run still heartbeating within `max_age_seconds` is refused (a live coordinator owns it). `resume` does NOT accept `repo` — a run is only resumable into the process bound to its own repo. The dashboard exposes the same cleanup (delete/finalize) on federated runs; renaming stays local-only.
 
 When the user mentions a stale or chopped-off coordinator, check the state file (or dashboard) for the run_id, then ask whether they want it resumed or cleared -- recommend resuming only if the remaining tasks are still relevant.
+
+## Overnight & Unattended Runs
+
+When the user asks you to run a large workflow overnight (or otherwise while they're away — "run this overnight", "let it cook", "I'm going to bed, keep going"), the defining constraint is that **no human is available to approve, answer, or intervene mid-run**. A run that blocks on a question at 2am is a wasted night. Adjust as follows.
+
+### Keep the machine awake
+
+A sleeping laptop kills the run. Before you start the wave loop, start a keep-awake process in a background shell and leave it running for the expected duration of the run:
+
+- **macOS:** `caffeinate -dimsu` (prevents display, idle, disk, and system sleep; the `-s` also asserts while on battery). To tie it to the run's lifetime instead of a fixed timeout, use `caffeinate -dimsu -w <pid>` so it exits when that process does, or `caffeinate -dimsu -t <seconds>` to bound it. Run it in the background (`block_until_ms: 0`) so it doesn't block the loop, and kill it when the run finishes.
+- **Linux:** `systemd-inhibit --what=idle:sleep:handle-lid-switch --why="overnight coordinator run" sleep <seconds>` (or run the loop under `systemd-inhibit`). If unavailable, `caffeine`/`xdg-screensaver` or a `gsettings` idle-delay tweak.
+- **Windows:** `powercfg /requestsoverride` is fussy; simplest is a small keep-awake loop or `presentationsettings`. Note the limitation to the user if you can't guarantee it.
+
+Tell the user which mechanism you started so they know the machine will stay awake, and always kill the keep-awake process in Step 3 (or on abort) so it doesn't linger past the run.
+
+### Clear Cursor's approval gate (the allowlist)
+
+Keeping the machine awake is pointless if a subagent stalls on an "Allow" prompt at 3am. **Cursor's command-approval prompts have no timeout — they wait indefinitely** — so any tool call that isn't pre-authorized will silently hang the task (and any wave depending on it) until morning. This is the single most common way an overnight run dies. Sort it out *before* the loop starts:
+
+- **Set the Run Mode up front.** In **Settings → Agents → Approvals & Execution**, the run mode governs prompting. For a hands-off night the user must choose `Run Everything` (the old "YOLO" — no prompts) or `Allowlist` (only pre-approved commands run without a prompt). The default `Auto-review` will still prompt on anything it's unsure about and thus can hang. **This is a user decision — surface it explicitly during plan approval** (James' Law 3: recommend one and explain the trade-off) rather than assuming.
+- **Pre-load the allowlist for the commands the workflow needs.** These live in `permissions.json` (`terminalAllowlist`, `mcpAllowlist`, and `autoRun.allow_instructions`). Walk the graph, predict the shell/MCP calls each engineer and checker will make, and get them allowlisted ahead of time. Precedence is team admin > `permissions.json` > IDE UI.
+- **Keep the dangerous ones blocked.** Use `autoRun.block_instructions` (denylist) plus the sandbox (`sandbox.json`, the real hard-enforcement layer) so `Run Everything` still can't push --force, delete data, or reach the network unsupervised. This dovetails with the "never take irreversible actions autonomously" rule below.
+- **Subagents inherit the parent's Run Mode and allowlist** — there is no separate approval mode for Task-spawned agents (only `readonly` differs). So configuring the coordinator's environment covers the whole wave.
+- **Know what still prompts anyway.** Even under `Run Everything`, the **File-Deletion, External-File (out-of-workspace writes), and Browser** protections can still surface a prompt, and on **Linux the sandbox falls back to per-command approval** if kernel requirements aren't met. Design tasks to avoid these (stay in-workspace, avoid deletions, request `all`/`full_network` permissions deliberately and rarely). If the user needs a *truly* hands-off run with zero prompt risk, the right tool is a **Cloud Agent**, which never prompts — mention this as the fallback when local approvals can't be fully pre-cleared.
+
+**If a task hangs anyway:** a subagent stuck on an approval prompt looks like a task that never completes with no new activity. Treat a task that's made no progress well past its expected runtime as a stall — don't wait the whole night on it. Park it (mark it as a crash/FAILED per Failure Handling, note it for the morning report) and let the independent branches keep going.
+
+### Front-load every decision (no mid-run prompts)
+
+Because the user is asleep, **resolve all approvals before the loop starts**:
+
+- Get explicit sign-off on the *whole* plan in one shot: the full graph, rigor, checker panel, `max_extensions`, per-agent models, and scope boundaries. Do not present the graph, then plan to "check back" for the next phase — there is no one to check with.
+- Once running, **do not call `AskQuestion` or otherwise block on the user**. If a genuine decision arises, apply the most reasonable default, record it as an `annotation`/`decision` in memory (so it's reviewable in the morning), and continue. Reserve hard stops for things you truly cannot proceed on.
+- **Park, don't halt.** If one branch of the graph hits an ambiguous or blocking decision, park just that item (note it for the morning report) and keep executing the independent branches. One stuck task should never idle the whole night.
+
+### Rigor, extensions, and destructive-action limits
+
+- Overnight is the right time to spend rigor: there's a time budget and no one waiting. Lean toward **higher rigor**, a fuller checker panel, and generous `max_extensions` so fix cycles can run to completion without a human unblocking them.
+- **But keep the runaway guardrails.** At the soft cap, prefer `force=true` with a logged `reason` only when continuing is *clearly* correct; otherwise park the item for morning rather than forcing indefinitely. The hard ceiling still stops you — that's intended.
+- **Never take irreversible or out-of-scope actions autonomously.** No `git push --force`, no destructive migrations, no deleting data, no touching secrets, and no scope expansion beyond what was approved — even overnight. Park anything that needs a human's go/no-go.
+
+### Checkpoint constantly so nothing is lost
+
+An unattended run must assume it might be interrupted (sleep, crash, MCP restart, the 2h idle-abandon window):
+
+- **Decompose into many small tasks with frequent commits.** Small units mean a crash resets at most one in-flight task (resumed tasks that were "running" lose their results — see Interrupted Runs), and committed milestones survive. Follow the memory rule: record before each commit.
+- **Record a memory checkpoint after every wave/milestone** — what's done, what's next, and any autonomous decisions taken. This is both your crash-recovery breadcrumb and the raw material for the morning report.
+- **Keep task activity flowing on-graph.** Steady `claim_task`/`submit_result` calls keep the run's heartbeat fresh so it isn't released as stale mid-night. Never drive work off-graph to "keep busy" — an idle graph with work happening beside it is the exact failure mode to avoid (see Interrupted Runs). If a genuinely long ad-hoc step runs, bracket it with `track_subtask` so the activity clock stays warm.
+- If the machine does die, the run is resumable via `manage_runs(action="resume", run_id)` in a fresh session the next morning — make sure the `run_id` is recorded somewhere durable (a memory entry) so it can be found.
+
+### Morning report
+
+The user will read the results cold, without having watched the run. Make Step 3 a **self-contained morning briefing**: what completed, what failed and why, every autonomous decision/default you took (and its rationale), all parked/deferred items needing a human, and recommended follow-ups. Leave this as the final memory checkpoint too, not just in chat, so it survives the session.
+
+Put a **☀️** in the title of the morning report (e.g. "Morning report — overnight run complete ☀️") — a small delightful signal that the overnight run wrapped up.
 
 ## Follow-Up Work
 

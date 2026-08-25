@@ -8,6 +8,11 @@ Thorough onboarding sequence for a fresh agent joining an existing project. Goes
 - The user says "onboard", "catch me up", "what's the state of X"
 - The `sessionStart` hook's quick recall reveals a complex tree that needs synthesis
 
+This skill assumes a research tree already exists. For a mature codebase with git
+history but no `.memory/` tree yet, use the `onboard-existing-codebase` skill
+first — it reconstructs a back-dated timeline from git history so there's
+something to catch up on.
+
 ## Sequence
 
 ### 1. Load the Research Tree

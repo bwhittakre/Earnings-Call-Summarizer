@@ -23,18 +23,36 @@
         "matcher": "generalPurpose|explore|bugbot|security-review"
       }
     ],
+    "preCompact": [
+      {
+        "command": "angelo memory mark-compaction"
+      }
+    ],
+    "preToolUse": [
+      {
+        "command": "angelo memory compute-gate",
+        "matcher": "Shell"
+      }
+    ],
     "postToolUse": [
       {
-        "type": "prompt",
-        "prompt": "A memory MCP tool just completed. If it was a write operation (record, discard, move, create_project, relate, skill with action='save'/'delete', or session with action='handoff'), call the memory MCP's `visualize()` tool to refresh the tree canvas. If it was a read operation (recall, search, codebase, drift, skill with action='get'/'search', or session with action='pickup'/'search') or visualize itself, do nothing.",
-        "timeout": 15,
-        "matcher": "MCP: memory"
+        "command": "angelo memory reground-hint"
+      },
+      {
+        "command": "angelo memory tether-hint",
+        "matcher": "Write"
       },
       {
         "type": "prompt",
         "prompt": "The user just answered a structured question via AskQuestion. If this was a meaningful design/architecture decision (not a trivial clarification like 'yes/no to proceed'), record it to memory: call the memory MCP's `record` tool with type='decision', using the question as the title and the selected option(s) as the body. Include the rationale if the user provided one. If it was a trivial confirmation or navigation choice, skip recording.",
         "timeout": 20,
         "matcher": "AskQuestion"
+      }
+    ],
+    "afterShellExecution": [
+      {
+        "command": "angelo memory commit --quiet",
+        "matcher": "git\\s+(commit|push)"
       }
     ]
   }

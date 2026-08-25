@@ -1,5 +1,5 @@
 ---
-description: How to operate the angelo CLI (init, update, doctor, kill) and fix common setup problems — most importantly "MCP servers won't start" and what `angelo update` actually does. Consult whenever the user mentions installing/updating angelo, running doctor, or MCP servers that won't start.
+description: How to operate the angelo CLI (init, update, doctor, kill) and fix common setup problems — most importantly "MCP servers won't start", "the angelo servers/tools are missing, gone, or not listed under Customize → MCPs", and what `angelo update` actually does. Consult whenever the user mentions installing/updating angelo, running doctor, MCP servers that won't start, or angelo tools that are absent, unavailable, or not showing up — and whenever the angelo memory/coordinator tools you expect are not in your tool list.
 alwaysApply: false
 ---
 
@@ -9,14 +9,40 @@ This rule keeps the agent from improvising on angelo's own setup commands. When
 the user asks about installing, updating, or fixing angelo, follow this — don't
 hand-edit `mcp.json`, reinstall blindly, or guess at commands.
 
+## Update decision tree — read this first
+
+When the user says "update angelo", **classify the install before taking any
+package action**:
+
+1. Run `angelo update --plan`. It is read-only and prints the install mode,
+   intended actions, and exact next commands.
+2. If it reports a **normal / copied install**, run `angelo update`, then restart
+   the editor and MCP servers.
+3. If it reports an **editable development checkout**, update in this order:
+   `git pull --ff-only` → `angelo update` → restart the editor and MCP servers.
+   `angelo update` reconciles managed configuration but intentionally does not
+   fetch source code or reinstall the package.
+4. Re-run `pip install -e ".[zettelkasten,dashboard]"` only when the pull changed
+   dependencies or console-script entry points. Run `angelo kill` first.
+
+**Hard stops for editable installs:**
+
+- Never run `pip install --upgrade angelo` or replace the editable install with a
+  copied package.
+- Never treat "managed configuration is up to date" as proof that the source
+  checkout is current; they are separate states.
+- `--force-upgrade` is refused for editable installs. Do not work around that
+  protection.
+
 ## The commands (what each one is for)
 
 | Command | What it does | When |
 |---|---|---|
-| `angelo init [--cursor\|--claude] [--with-zettelkasten] [--local-paths]` | Scaffolds editor config (`mcp.json`, rules, hooks, skills). | First-time setup in a project. |
-| `angelo update` | Reconciles the managed rules/hooks/skills and `mcp.json` to match the **installed** package version. On a **normal (copied) install** it also self-upgrades the package first (`pip install --upgrade` from git when newer); on an **editable install** it never runs pip and only reconciles config. `--no-upgrade` skips the package step. | To pick up new managed files, or to upgrade + reconcile in one step. |
+| `angelo init [--cursor\|--claude] [--with-zettelkasten] [--local-paths]` | Scaffolds editor config (`mcp.json`, the user-global Cursor plugin at `~/.cursor/plugins/local/angelo/`, rules, hooks, skills). | First-time setup in a project. |
+| `angelo update [--plan]` | Reconciles the managed rules/hooks/skills and `mcp.json` to match the **installed** package version. On a **normal (copied) install** it also self-upgrades the package first (`pip install --upgrade` from git when newer); on an **editable install** it never runs pip and only reconciles config. `--plan` reports what would happen without changing anything; `--no-upgrade` skips the package step. | To pick up new managed files, or to upgrade + reconcile in one step. |
 | `angelo doctor` | Verifies the install: PATH commands, dependencies, config files, onboarding state. Read-only. | Anytime something seems off. |
-| `angelo doctor --fix` | Repairs `mcp.json` in place — rewrites the `angelo-*` `command` entries to absolute console-script paths. | When MCP servers won't start (see below). |
+| `angelo doctor --fix` | Repairs editor launch paths — rewrites `mcp.json` commands to absolute console-script paths and reinstalls/repairs the user-global Cursor plugin. | When MCP servers won't start or do not appear in Customize (see below). |
+| `angelo memory http start\|status\|restart\|stop` | Opts Cursor's memory MCP into a managed loopback URL, inspects/restarts that daemon, or restores the exact prior entry. | When memory must restart independently of Cursor; `stop` is rollback. |
 | `angelo kill [--dry-run]` | Kills every running angelo process (servers + dashboard/runner children). | Before an editable reinstall (the running servers lock the scripts). |
 
 ## "MCP servers won't start" (the most common problem)
@@ -30,24 +56,80 @@ a virtualenv. Fix it deterministically:
 1. Run `angelo doctor` — it reports whether each command resolves and prints the
    absolute paths.
 2. Run **`angelo doctor --fix`** — it rewrites the `command` fields in `mcp.json`
-   to those absolute paths (env blocks and non-angelo servers are left intact).
-3. Restart the MCP servers in the editor (Cursor/Claude settings).
+   to those absolute paths (env blocks and non-angelo servers are left intact) and
+   reinstalls/repairs the user-global Cursor plugin so it points at this
+   environment.
+3. Restart the editor. On Cursor 3.9+, verify the servers under
+   **Customize → MCPs** (populated by the user-global plugin at
+   `~/.cursor/plugins/local/angelo/`); older Cursor releases continue loading
+   `.cursor/mcp.json` directly.
 
 Do **not** hand-edit `mcp.json` or reinstall the package for this — `--fix` is
 the intended repair. Note the rewritten paths are machine-specific, so for a
 shared repo each teammate runs `--fix` (or `angelo init --local-paths`) in their
 own environment rather than committing the absolute paths.
 
-## Upgrading angelo vs. `angelo update` (know which case you're in)
+## "Servers don't appear in Customize → MCPs"
 
-Upgrading has two parts — new **package code** and reconciled **managed config** — and how much `angelo update` does for you depends on the install type:
+On Cursor 3.9+, the angelo servers show up in **Customize → MCPs** because
+`angelo init` installs a **user-global** Cursor plugin at
+`~/.cursor/plugins/local/angelo/` — that plugin, not `.cursor/mcp.json`, is what
+Cursor's plugin loader enumerates. If the servers are missing from Customize:
 
-- **Normal (copied) install:** `angelo update` does both. By default it self-upgrades the package (`pip install --upgrade` from git when a newer version is published), then re-runs itself to reconcile config against the new version. Pass `--no-upgrade` to reconcile config only.
-- **Editable / dev checkout:** `angelo update` reconciles config but **never touches the package** — running pip would silently replace your editable install with a copy (local edits stop taking effect). Get new code yourself with `git pull`; only re-run `pip install -e ".[...]"` when dependencies or entry points changed, and run `angelo kill` first.
+**A loaded plugin is not a registered one.** Cursor logs
+`loadUserLocalPlugin angelo loaded ... failures=0` for a plugin whose servers it
+never registers — no error, no failed server, just an empty Customize list. Do
+not treat that log line, or the presence of the files, as proof the plugin works.
+The only evidence that settles it is a `plugin-angelo-<server>` entry in Cursor's
+own MCP log, which `angelo doctor` now reports for you.
 
-Then **restart** the editor / MCP servers so they load the new code and config.
+1. Run `angelo doctor` and read the registration line —
+   `Cursor registered N plugin server(s): ...`. That reports what Cursor *did*;
+   every other check only reports what angelo *wrote*. If it says Cursor
+   registered none (and the editor has been restarted since installing), the
+   plugin is loading but exposing nothing — go to step 3.
+2. Confirm `~/.cursor/plugins/local/angelo/` exists and is a **real directory,
+   not a symlink** — Cursor's loader rejects symlinked local plugins (even though
+   Cursor's own docs suggest `ln -s`). If it is missing, re-run `angelo init` or
+   `angelo doctor --fix`.
+3. Confirm the **layout**, which Cursor requires exactly:
 
-So: on a normal install, `angelo update` → restart. On an editable checkout, `git pull` → `angelo update` (or `--no-upgrade`) → restart. The one hard invariant is that `angelo update` never pip-upgrades an *editable* install.
+   ```
+   ~/.cursor/plugins/local/angelo/
+     .cursor-plugin/plugin.json    ← "mcpServers": ".cursor/mcp.json"
+     .cursor/mcp.json              ← the server definitions
+   ```
+
+   The manifest must sit under `.cursor-plugin/`, and its `mcpServers` must be a
+   *relative path string* — not the server objects inlined. A manifest at the
+   plugin root, or one with inlined servers, registers nothing. Repair with
+   `angelo update` (or `angelo doctor --fix`), which rewrites the layout and
+   removes a stale root-level `plugin.json`.
+4. Restart the editor so the loader re-scans the plugins directory.
+
+Because the plugin is user-global it loads in every workspace, so each angelo MCP
+server **self-gates**: in a project that isn't an angelo project it stands down and
+does nothing. Pre-3.9 Cursor has no Customize inventory and loads
+`.cursor/mcp.json` directly.
+
+## Restart memory without restarting Cursor (opt-in)
+
+The default install remains stdio-first. When Cursor cannot restart an individual
+stdio server, `angelo memory http start` launches the existing memory server over
+Streamable HTTP on `127.0.0.1`, verifies it, and atomically switches only
+`mcpServers.memory` to that URL. Coordinator, artifacts, zettelkasten, Claude
+templates, and future `angelo update` runs remain on their normal stdio paths.
+
+- `angelo memory http status` reports inactive, running, stale/dead, or config-conflict state.
+- `angelo memory http restart` replaces only the recorded daemon on the same port.
+- `angelo memory http stop` stops it and restores the exact pre-pilot memory entry.
+- `angelo doctor` reports pilot health but never auto-starts it.
+- `angelo kill` may leave intentionally detectable stale state; use `restart` or `stop`.
+
+The pilot is loopback-only: do not expose it remotely. If a user edits
+`mcpServers.memory` after activation, `stop` fails closed and keeps both the edit
+and the original backup in `.angelo/memory-http.json` rather than overwriting
+either.
 
 ## Local edits to managed rules survive updates
 
@@ -67,6 +149,7 @@ So: on a normal install, `angelo update` → restart. On an editable checkout, `
 
 ## After any setup change
 
-Restart the MCP servers in the editor (Settings > MCP in Cursor) so they pick up
-new code, rules, or `mcp.json` changes. The running server holds the old state in
-memory until restarted.
+Restart the editor so it picks up new code, rules, the user-global Cursor plugin,
+or `mcp.json` changes. In Cursor 3.9+, inspect **Customize → MCPs**; older Cursor
+releases continue using `.cursor/mcp.json`. The running server holds the old
+state in memory until restarted.
