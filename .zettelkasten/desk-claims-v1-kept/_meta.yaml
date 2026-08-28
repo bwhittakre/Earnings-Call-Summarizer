@@ -1,0 +1,16 @@
+abstract: Seed plus next-quarter follow-up excerpts for kept claims. Copied from desk_claims_v1.json.
+  Not the remaining 125.
+authors: []
+content_hash: 81e51c088ace3e13a317ef66ebacd02569bcd8cbbb9b12953a9093219c499698
+coverage:
+  agent: skimmed
+  human: none
+date: '2026-08-27'
+doc_type: report
+doi: ''
+name: desk-claims-v1-kept
+source_path: C:\Users\BobbyWhittaker\OneDrive - Cassius Capital\Desktop\Earnings Call
+  Summarizer\Structured Narrative\output\cross_company\json\desk_claims_v1_kept_quotes.md
+title: Claims desk v1 kept follow-up quotes
+venue: ''
+year: 2026

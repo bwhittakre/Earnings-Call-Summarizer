@@ -47,6 +47,7 @@ class MonitorConfig:
     transcript_timeout_seconds: int = 3 * 60 * 60
     refresh_history_after_workflow: bool = False
     research_regen_after_post_call: bool = True
+    desk_trees_after_post_call: bool = True
     research_regen_debounce_seconds: int = 60
     research_regen_idle_seconds: int = 30
     research_min_calendar_quarter: str = "2016-Q2"
@@ -177,6 +178,9 @@ class MonitorConfig:
             ),
             research_regen_after_post_call=_bool(
                 values.get("EARNINGS_MONITOR_RESEARCH_REGEN"), True
+            ),
+            desk_trees_after_post_call=_bool(
+                values.get("EARNINGS_MONITOR_DESK_TREES"), True
             ),
             research_regen_debounce_seconds=_int(
                 values.get("EARNINGS_MONITOR_RESEARCH_REGEN_DEBOUNCE_SECONDS"),

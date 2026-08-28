@@ -50,6 +50,13 @@ x-monitor-common: &monitor-common
       source: ${STRUCTURED_NARRATIVE_OUTPUT_DIR:-./Structured Narrative/output}
       target: /app/Structured Narrative/output
       read_only: true
+    # Live desk hook (walk + cue queue). Image bake can lag the repo.
+    - type: bind
+      source: ./services
+      target: /app/services
+    - type: bind
+      source: ./scripts
+      target: /app/scripts
   restart: unless-stopped
 
 services:
@@ -95,6 +102,12 @@ services:
       - type: bind
         source: ${STRUCTURED_NARRATIVE_OUTPUT_DIR:-./Structured Narrative/output}
         target: /app/Structured Narrative/output
+      - type: bind
+        source: ./services
+        target: /app/services
+      - type: bind
+        source: ./scripts
+        target: /app/scripts
     depends_on:
       monitor:
         condition: service_healthy
@@ -169,6 +182,20 @@ services:
       - type: bind
         source: ${STRUCTURED_NARRATIVE_OUTPUT_DIR:-./Structured Narrative/output}
         target: /app/Structured Narrative/output
+        read_only: true
+      # Live dashboard Python (Claims Desk, Rank IC pages). The image does
+      # not pick up host edits; without this, :8501 stays on the last build.
+      - type: bind
+        source: ./services
+        target: /app/services
+        read_only: true
+      - type: bind
+        source: ./scripts
+        target: /app/scripts
+        read_only: true
+      - type: bind
+        source: ./services/earnings_monitor/dashboard
+        target: /app/services/earnings_monitor/dashboard
         read_only: true
       # Mount reports where Streamlit static serving expects them (no symlink).
       - type: bind

@@ -1,0 +1,6 @@
+cross: []
+description: MSFT earnings cites. Desk Phase 2 pilot source only.
+name: company-msft
+sources:
+- desk-path-id-v1-pilot
+- desk-claims-v1-kept

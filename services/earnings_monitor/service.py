@@ -598,6 +598,23 @@ class EarningsMonitor:
             if no_prior:
                 result["no_prior"] = True
                 result["first_print"] = True
+            if stage == "post_call" and self.config.desk_trees_after_post_call:
+                try:
+                    from .desk_trees import walk_after_novelty_view
+
+                    result["desk_trees"] = walk_after_novelty_view(
+                        repo_root=self.config.repo_root,
+                        ticker=monitored.event.ticker,
+                        fiscal_period=monitored.event.fiscal_period,
+                        now=self.clock(),
+                    )
+                except Exception:
+                    LOG.exception(
+                        "desk v2 walk failed for %s %s",
+                        monitored.event.ticker,
+                        monitored.event.fiscal_period,
+                    )
+                    result["desk_trees"] = {"status": "error"}
             if stage == "release_to_call" and job["payload"].get("freshness"):
                 result["freshness"] = job["payload"]["freshness"]
             history_refresh = self._refresh_history_dataset()

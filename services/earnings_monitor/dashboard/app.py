@@ -3,7 +3,8 @@
 Run with:
     streamlit run services/earnings_monitor/dashboard/app.py
 
-Rank IC Research and Rank IC Lab are sibling pages under ``dashboard/pages/``.
+Rank IC Research, Rank IC Lab, Claims Desk, and Claims Trees are sibling
+pages under ``dashboard/pages/``.
 """
 from __future__ import annotations
 

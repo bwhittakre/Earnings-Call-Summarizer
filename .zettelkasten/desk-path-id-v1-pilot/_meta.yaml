@@ -1,0 +1,16 @@
+abstract: Verified competitive_position excerpts for the 15-row grounded-desk Phase
+  2 pilot. Copied from desk_path_id_v1.json.
+authors: []
+content_hash: 7f47e401e4a8efc56581594c17b9b6823919a550657bd3cd02c6f3cc615b28ca
+coverage:
+  agent: skimmed
+  human: none
+date: '2026-08-26'
+doc_type: report
+doi: ''
+name: desk-path-id-v1-pilot
+source_path: C:\Users\BobbyWhittaker\OneDrive - Cassius Capital\Desktop\Earnings Call
+  Summarizer\Structured Narrative\output\cross_company\json\desk_path_id_v1_pilot_quotes.md
+title: Desk Path ID v1 pilot quotes
+venue: ''
+year: 2026

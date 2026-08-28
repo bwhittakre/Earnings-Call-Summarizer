@@ -1,0 +1,5 @@
+cross: []
+description: ADBE earnings cites. Desk Phase 2 pilot source only.
+name: company-adbe
+sources:
+- desk-path-id-v1-pilot
