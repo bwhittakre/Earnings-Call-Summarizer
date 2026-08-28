@@ -25,7 +25,8 @@ sleeves. Not a kitchen-sink blend.
   `xlk_tech` / live SQLite Roz book).
 - Lock `generated_at` from that pack — do not invent a stamp.
 - `production_v1` stays frozen. No holdout. No promotion.
-- ISIN-first identity. LLY overlay ISIN `GB0005163141` is unverified.
+- ISIN-first identity. LLY overlay ISIN is `US5324571083`
+  (Quartr 5159). Lloyds `GB0005163141` is dropped.
 - Natural single-signal Rank IC on raw `company_period` for mechanism
   questions. One recipe = one dimension.
 

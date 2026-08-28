@@ -30,6 +30,22 @@ def merge_rows_by_period(
     return kept + new
 
 
+def chronological_quarters(
+    quarters: list[dict],
+    *,
+    period_key: str = "fiscal_period",
+) -> list[dict]:
+    """Return view quarters in fiscal order.
+
+    First-write dimension views can land newest-first (batch fetch order).
+    Delta pairing must never follow that list order.
+    """
+    return sorted(
+        quarters,
+        key=lambda q: fiscal_period_sort_key(str(q.get(period_key) or "")),
+    )
+
+
 def merge_quarter_views(
     existing: list[dict],
     new: list[dict],
@@ -55,7 +71,7 @@ def merge_quarter_views(
         if fp not in seen:
             out.append(q)
             seen.add(fp)
-    return sorted(out, key=lambda q: fiscal_period_sort_key(str(q.get(period_key))))
+    return chronological_quarters(out, period_key=period_key)
 
 
 def merge_transitions(

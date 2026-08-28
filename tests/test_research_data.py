@@ -58,6 +58,15 @@ def test_views_split_roz_and_rank_ic_pages() -> None:
         assert callable(RANK_IC_VIEWS[name])
 
 
+def test_claims_desk_page_module_exists() -> None:
+    page = DASHBOARD_DIR / "pages" / "3_Claims_Desk.py"
+    assert page.is_file()
+    source = page.read_text(encoding="utf-8")
+    assert "render_claims_desk" in source
+    assert "load_dashboard_shell" in source
+    assert "Shared" in source or "shared" in source.lower()
+
+
 def test_rank_ic_research_page_module_exists() -> None:
     page = DASHBOARD_DIR / "pages" / "1_Rank_IC_Research.py"
     assert page.is_file()

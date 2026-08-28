@@ -78,6 +78,41 @@ HORIZON_KEYS = [k for k, _a, _b, _n in HORIZON_WINDOWS]
 _SIGNAL_PACK = load_signal_pack()
 SIGNAL_PACK_ID = _SIGNAL_PACK.pack_id
 
+# Untagged narrative_signal_eval.json is the locked 17 Aug tech book.
+# Healthcare (and any other new pack) must use --output-tag so it cannot
+# clobber Path ID / term-structure v3 artifacts.
+LOCKED_TECH_EVAL_GENERATED_AT = "2026-08-17T17:28:40+00:00"
+HEALTHCARE_EVAL_OUTPUT_TAG = "healthcare_large_cap"
+
+
+def refuse_locked_tech_eval_overwrite(
+    dest: Path,
+    *,
+    output_tag: str | None,
+    replace_locked: bool = False,
+) -> None:
+    """Refuse an untagged write that would replace the locked 17 Aug tech book."""
+    if output_tag:
+        return
+    if replace_locked:
+        return
+    if not dest.is_file():
+        return
+    try:
+        payload = json.loads(dest.read_text(encoding="utf-8"))
+    except (OSError, ValueError, TypeError):
+        return
+    if not isinstance(payload, dict):
+        return
+    stamp = str(payload.get("generated_at") or "")
+    if stamp == LOCKED_TECH_EVAL_GENERATED_AT:
+        raise SystemExit(
+            "refuses untagged overwrite of locked tech book "
+            f"generated_at={stamp}. Use --output-tag {HEALTHCARE_EVAL_OUTPUT_TAG} "
+            "(or another tag). Pass --replace-locked-eval only to deliberately "
+            "replace the 17 Aug pack."
+        )
+
 # Legacy single-window columns — the only alpha_spec_* pair baked into the
 # per-ticker feature_panel.csv on disk. Every other horizon is computed on the
 # fly on the stacked cross-ticker frame (see load_eval_frame).
@@ -1247,7 +1282,16 @@ def main() -> int:
             "Suffix (e.g. 'dev', 'holdout') appended to every output artifact stem "
             "(narrative_signal_eval_<tag>.json, ..._leaderboard_<tag>.csv, etc.) so a "
             "--dev-only run and a --holdout-only run can coexist on disk instead of "
-            "clobbering the same files -- see the Phase 4 dev/holdout workflow in README.md."
+            "clobbering the same files -- see the Phase 4 dev/holdout workflow in README.md. "
+            "Required for healthcare_large_cap so the locked 17 Aug tech book is not overwritten."
+        ),
+    )
+    ap.add_argument(
+        "--replace-locked-eval",
+        action="store_true",
+        help=(
+            "Allow an untagged write to replace narrative_signal_eval.json even when "
+            "it still carries the locked 17 Aug generated_at. Do not use for healthcare."
         ),
     )
     args = ap.parse_args()
@@ -1489,6 +1533,11 @@ def main() -> int:
     ensure_cross_company_tree()
     tag_suffix = f"_{args.output_tag}" if args.output_tag else ""
     json_path = cross_company_artifact("json", f"narrative_signal_eval{tag_suffix}", "json", mkdir=True)
+    refuse_locked_tech_eval_overwrite(
+        json_path,
+        output_tag=args.output_tag,
+        replace_locked=bool(args.replace_locked_eval),
+    )
     csv_path = cross_company_artifact(
         "csv", f"narrative_signal_eval_period_ic{tag_suffix}", "csv", mkdir=True
     )

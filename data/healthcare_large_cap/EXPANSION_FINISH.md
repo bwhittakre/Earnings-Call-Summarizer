@@ -1,35 +1,40 @@
 # Healthcare large-cap — expansion finish leftovers
 
-Stopped **25 Aug 2026 ~13:23 ET**. Watcher and keep-awake killed on request.
-Do not restart `scripts/_healthcare_onboard_watch.py` until the identity list below is resolved.
-Do not invent ISINs. Identity is ISIN-first (`note-isin-identity`).
-Do not compute Rank IC until the gate in `plan-healthcare-rank-ic-studies` is met.
+Two-quarter identity+join tests finished **26 Aug 2026**. Watcher stays
+stopped. Do not restart `scripts/_healthcare_onboard_watch.py`.
+Do not invent ISINs. Identity is ISIN-first.
+Do not compute Rank IC until the gate in `plan-healthcare-rank-ic-studies`
+is met (tagged `healthcare_large_cap` pack with a real `generated_at`).
 Do not mix into live `xlk_tech` / SQLite Roz book.
+Do not overwrite the locked 17 Aug tech eval
+(`generated_at=2026-08-17T17:28:40+00:00`).
 
-## Onboarded (feature panels exist)
+Overnight leftover-history prep: `scripts/_hc_leftover_history.py`
+(default dry-run). Do not `--apply-overlays` / `--score` until the user
+says go.
 
-13 names, `Structured Narrative/output/{TICKER}` scored:
+## Onboarded (full feature panels)
 
-`ABBV ABT AMGN BMY BSX CI ISRG JNJ MDT MRK PFE REGN TMO`
+13 names: `ABBV ABT AMGN BMY BSX CI ISRG JNJ MDT MRK PFE REGN TMO`
 
-Seed for all 20 is already on disk (known Quartr gaps left missing).
+## Leftovers — two-quarter panels exist, history not scored
 
-## Still needed — identity, then `run_onboard`
+Seed for all 20 is on disk (known Quartr gaps left missing).
+Each leftover has a 16-row FY2026-Q1/Q2 panel and chronological deltas.
+Overlays are still short (prior FY2025-Q4, output FY2026-Q1/Q2).
 
-All seven failed Snowflake/LSEG `estpermid` lookup. Transcripts are seeded. Pass a **verified ISIN** (recommended) or `--estpermid` / `--barra-id`. Then:
+| Ticker | ISIN | Quartr | estpermid | IBES | Barra | Transcripts |
+|---|---|---|---|---|---|---|
+| LLY | US5324571083 | 5159 | 30064846182 | (Lilly) | USAI951 | 43 (FY2015-Q4–FY2026-Q2) |
+| UNH | US91324P1021 | 4258 | 30064860782 | UNIH | USAO6Z1 | 43 |
+| DHR | US2358511028 | 3685 | 30064836230 | DMG | USADTY1 | 43 |
+| SYK | US8636671013 | 4857 | 30064857950 | STRY | USAN4Z1 | 43 |
+| GILD | US3755581036 | 5113 | 30064840651 | GIL1 | USAREJ1 | 34 (FY2018-Q1–FY2026-Q2) |
+| VRTX | US92532F1003 | 6557 | 30064861819 | VRT1 | USAOKE1 | 34 |
+| ELV | US0367521038 | 3742 | 30064829391 | ATHI | USA4NM1 | 34; FY2015–2017 Q4 missing |
 
-```
-run_onboard(skip_pull=True, skip_book_sync=True, research_sector=healthcare_large_cap)
-```
+Lloyds `GB0005163141` is dropped. Do not call full `run_onboard`.
 
-| Ticker | Seed | Why parked | Overlay note |
-|---|---|---|---|
-| LLY | seeded | `estpermid` missing / refused | `LLY.json` ISIN `GB0005163141` is **unverified** (looks like Lloyds, not Lilly). `estpermid` `30064846182` is from a failed run. Do not treat as Lilly. |
-| UNH | seeded | `estpermid` missing | no overlay |
-| DHR | seeded | `estpermid` missing | no overlay |
-| SYK | seeded | `estpermid` missing | no overlay |
-| GILD | seeded | `estpermid` missing | no overlay |
-| VRTX | seeded | `estpermid` missing | no overlay |
-| ELV | seeded (FY2018-Q1–FY2026-Q2; gaps FY2015–2017 Q4) | `estpermid` missing | no overlay |
-
-Machine list: `expansion_leftovers.json`.
+When scoring history: `python scripts/_hc_leftover_history.py --apply-overlays`
+then `--score` (no `--force`). Stamp only with
+`--output-tag healthcare_large_cap`.

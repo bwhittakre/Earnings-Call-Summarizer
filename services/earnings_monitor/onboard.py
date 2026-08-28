@@ -468,8 +468,9 @@ def _resolve_ids(
 
     if not resolved.estpermid:
         hint = (
-            f" Pass --isin <ISIN> (recommended; IBESTICKER can be recycled, e.g. STRW) "
-            f"or --estpermid / --barra-id overrides."
+            f" Exact IBESTICKER={ticker_key} missed and no IRIS share was visible. "
+            f"Pass --isin <ISIN> (recommended). Do not bind a prefix alias "
+            f"(UNH→UNHC, ELV→ELVT) — those are other instruments."
             if not isin_key
             else " Check LSEG/MSCI share access for this ISIN."
         )

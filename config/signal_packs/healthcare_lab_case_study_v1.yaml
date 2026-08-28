@@ -13,7 +13,9 @@ notes: >-
   dimension. Do not recycle software/semis sleeves or the 18 Aug kitchen-sink
   recipes. managed_care recipes are diagnostic (k=3) and do not count toward
   the rollup bar. Book stamp is not invented here — lock generated_at from the
-  healthcare research-sector pack after onboard.
+  healthcare research-sector pack after onboard. Stamp only via
+  evaluate_narrative_signals --output-tag healthcare_large_cap. Do not
+  overwrite the locked 17 Aug untagged tech book.
 
 hypotheses:
   - id: H1_procedure_cycle

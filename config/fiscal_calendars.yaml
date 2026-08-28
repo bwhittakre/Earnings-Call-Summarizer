@@ -82,6 +82,8 @@ TEL:
   fye_day: 25
 LLY:
   type: calendar_fiscal
+UNH:
+  type: calendar_fiscal
 MRK:
   type: calendar_fiscal
 JNJ:
@@ -111,4 +113,14 @@ REGN:
 CI:
   type: calendar_fiscal
 BSX:
+  type: calendar_fiscal
+DHR:
+  type: calendar_fiscal
+SYK:
+  type: calendar_fiscal
+GILD:
+  type: calendar_fiscal
+VRTX:
+  type: calendar_fiscal
+ELV:
   type: calendar_fiscal

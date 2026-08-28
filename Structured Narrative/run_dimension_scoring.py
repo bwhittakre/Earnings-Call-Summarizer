@@ -73,6 +73,7 @@ from batch_scoring import (  # noqa: E402
 from company_config import CompanyProfile, get_company  # noqa: E402
 from quarter_registry import mark_dimensions, set_prior_only, ensure_registry, has_dimensions  # noqa: E402
 from quarter_merge import (  # noqa: E402
+    chronological_quarters,
     load_csv_rows,
     load_json_obj,
     merge_quarter_views,
@@ -525,7 +526,7 @@ def finalize_and_write(
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "dimension_order": ALL_DIMENSIONS,
         "quant_comparable": QUANT_COMPARABLE_DIMENSIONS,
-        "quarters": view_quarters,
+        "quarters": chronological_quarters(view_quarters),
     }
     scope.view_file.write_text(json.dumps(view, indent=2), encoding="utf-8")
     if not scope.rerun_periods and not scope.extra_output:

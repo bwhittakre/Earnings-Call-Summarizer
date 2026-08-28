@@ -73,6 +73,7 @@ from company_config import CompanyProfile, get_company  # noqa: E402
 from quant_loader import load_quant_dim_z  # noqa: E402
 from quarter_registry import mark_delta, ensure_registry, has_delta  # noqa: E402
 from quarter_merge import (  # noqa: E402
+    chronological_quarters,
     load_csv_rows,
     load_json_obj,
     merge_rows_by_period,
@@ -179,7 +180,7 @@ def resolve_scope(ticker: str, args: argparse.Namespace) -> DeltaScope | None:
     registry = ensure_registry(ticker)
 
     view = load_view(ticker)
-    quarters = view.get("quarters", [])
+    quarters = chronological_quarters(view.get("quarters", []))
     if len(quarters) < 2:
         raise ValueError("Need at least two scored quarters to compute a delta.")
 

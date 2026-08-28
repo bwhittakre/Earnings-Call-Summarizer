@@ -1,0 +1,30 @@
+{
+  "sector": "Healthcare Large-Cap",
+  "sector_stem": "healthcare_large_cap",
+  "quartr_watchlist_id": 27941,
+  "source": "Quartr MCP search_companies",
+  "lookback_start": "2016-01-01",
+  "lookback_end": "2026-08-19",
+  "companies": [
+    {"ticker": "LLY", "company_id": 5159, "name": "Eli Lilly and Company", "country": "US", "gics": "Pharmaceuticals"},
+    {"ticker": "UNH", "company_id": 4258, "name": "UnitedHealth Group", "country": "US", "gics": "Managed Health Care"},
+    {"ticker": "JNJ", "company_id": 5162, "name": "Johnson & Johnson", "country": "US", "gics": "Pharmaceuticals"},
+    {"ticker": "ABBV", "company_id": 6137, "name": "AbbVie", "country": "US", "gics": "Biotechnology"},
+    {"ticker": "MRK", "company_id": 10993, "name": "Merck & Co", "country": "US", "gics": "Pharmaceuticals"},
+    {"ticker": "TMO", "company_id": 4878, "name": "Thermo Fisher Scientific", "country": "US", "gics": "Life Sciences Tools and Services"},
+    {"ticker": "ABT", "company_id": 4951, "name": "Abbott Laboratories", "country": "US", "gics": "Health Care Equipment"},
+    {"ticker": "DHR", "company_id": 3685, "name": "Danaher", "country": "US", "gics": "Life Sciences Tools and Services"},
+    {"ticker": "PFE", "company_id": 4144, "name": "Pfizer", "country": "US", "gics": "Pharmaceuticals"},
+    {"ticker": "AMGN", "company_id": 6430, "name": "Amgen", "country": "US", "gics": "Biotechnology"},
+    {"ticker": "ISRG", "company_id": 6078, "name": "Intuitive Surgical", "country": "US", "gics": "Health Care Equipment"},
+    {"ticker": "SYK", "company_id": 4857, "name": "Stryker", "country": "US", "gics": "Health Care Equipment"},
+    {"ticker": "GILD", "company_id": 5113, "name": "Gilead Sciences", "country": "US", "gics": "Biotechnology"},
+    {"ticker": "VRTX", "company_id": 6557, "name": "Vertex Pharmaceuticals", "country": "US", "gics": "Biotechnology"},
+    {"ticker": "MDT", "company_id": 4054, "name": "Medtronic", "country": "US", "gics": "Health Care Equipment"},
+    {"ticker": "BMY", "company_id": 5929, "name": "Bristol-Myers Squibb Company", "country": "US", "gics": "Pharmaceuticals"},
+    {"ticker": "REGN", "company_id": 5431, "name": "Regeneron Pharmaceuticals", "country": "US", "gics": "Biotechnology"},
+    {"ticker": "CI", "company_id": 4370, "name": "The Cigna Group", "country": "US", "gics": "Health Care Services"},
+    {"ticker": "ELV", "company_id": 3742, "name": "Elevance Health", "country": "US", "gics": "Managed Health Care"},
+    {"ticker": "BSX", "company_id": 5155, "name": "Boston Scientific", "country": "US", "gics": "Health Care Equipment"}
+  ]
+}

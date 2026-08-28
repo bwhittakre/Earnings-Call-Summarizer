@@ -5,6 +5,7 @@ Co-pilot / promotion / prompt rescoring are out of scope for v1.
 """
 from __future__ import annotations
 
+import os
 from typing import Any, Mapping, Sequence
 
 from .data import DashboardData
@@ -36,6 +37,7 @@ from .research_data import (
     RankIcBundle,
     import_sn,
     load_rank_ic_bundle,
+    resolve_cross_company_root,
     unique_sorted,
 )
 from .sectors import is_full_universe
@@ -55,6 +57,282 @@ DEFAULT_MIN_PERIODS = 4
 _WEIGHT_EPS = 1e-12
 _PENDING_RECIPE_KEY = "lab_pending_recipe"
 _PENDING_RESET_KEY = "lab_pending_reset"
+_PATH_ID_STAMP = "2026-08-17T17:28:40+00:00"
+_PATH_ID_FILENAME = "path_id_v1.json"
+_DESK_FILENAME = "desk_path_id_v1.json"
+_CLAIMS_FILENAME = "desk_claims_v1.json"
+
+
+def load_path_id_v1(
+    history_source: str | os.PathLike[str] | None = None,
+) -> dict[str, Any] | None:
+    """Read the adjudicated Path ID artifact. Refuse a mismatched stamp."""
+    import json
+    from pathlib import Path
+
+    root = resolve_cross_company_root(history_source)
+    path = Path(root) / "json" / _PATH_ID_FILENAME
+    if not path.is_file():
+        return None
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError, TypeError):
+        return None
+    if not isinstance(payload, dict):
+        return None
+    if str(payload.get("generated_at") or "") != _PATH_ID_STAMP:
+        return None
+    return payload
+
+
+def load_desk_path_id_v1(
+    history_source: str | os.PathLike[str] | None = None,
+) -> dict[str, Any] | None:
+    """Read the Path ID desk join. Refuse a mismatched stamp."""
+    import json
+    from pathlib import Path
+
+    root = resolve_cross_company_root(history_source)
+    path = Path(root) / "json" / _DESK_FILENAME
+    if not path.is_file():
+        return None
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError, TypeError):
+        return None
+    if not isinstance(payload, dict):
+        return None
+    if str(payload.get("generated_at") or "") != _PATH_ID_STAMP:
+        return None
+    return payload
+
+
+def load_desk_claims_v1(
+    history_source: str | os.PathLike[str] | None = None,
+) -> dict[str, Any] | None:
+    """Read the typed claims desk. Refuse a mismatched stamp."""
+    import json
+    from pathlib import Path
+
+    root = resolve_cross_company_root(history_source)
+    path = Path(root) / "json" / _CLAIMS_FILENAME
+    if not path.is_file():
+        return None
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError, TypeError):
+        return None
+    if not isinstance(payload, dict):
+        return None
+    if str(payload.get("generated_at") or "") != _PATH_ID_STAMP:
+        return None
+    return payload
+
+
+def desk_row_key(row: Mapping[str, Any]) -> str:
+    return f"{row.get('ticker') or ''} {row.get('period') or ''}".strip()
+
+
+def desk_excerpt_view(
+    rows: Sequence[Mapping[str, Any]],
+    selected_key: str,
+) -> dict[str, Any] | None:
+    """One name-quarter excerpt. A 140-row grid is unreadable."""
+    want = str(selected_key or "").strip()
+    if not want:
+        return None
+    for row in rows:
+        if desk_row_key(row) == want:
+            return dict(row)
+    return None
+
+
+def path_id_panel_model(payload: Mapping[str, Any]) -> dict[str, Any]:
+    """Pure copy + table for the read-only Lab Path ID panel."""
+    passing = [
+        name
+        for name, ok in (
+            ("L1", payload.get("line1")),
+            ("L2", payload.get("line2")),
+            ("L3", payload.get("line3")),
+        )
+        if ok
+    ]
+    passed = bool(payload.get("case_study_pass"))
+    if passed:
+        caption = "Path ID v1 case study PASS on the locked 17 Aug book."
+    else:
+        caption = (
+            "Path ID v1 case study FAIL. Do not promote a single line."
+        )
+    if passing:
+        caption += " Passing line(s): " + ", ".join(passing) + "."
+    return {
+        "caption": caption,
+        "case_study_pass": passed,
+        "generated_at": payload.get("generated_at"),
+        "split": payload.get("split"),
+        "passing_lines": passing,
+        "hit_rate": payload.get("hit_rate"),
+        "path_hits": payload.get("path_hits"),
+        "path_scored": payload.get("path_scored"),
+        "name_paths": list(payload.get("name_paths") or []),
+    }
+
+
+def render_path_id_panel(
+    st: Any,
+    payload: Mapping[str, Any],
+    desk: Mapping[str, Any] | None = None,
+) -> None:
+    model = path_id_panel_model(payload)
+    with st.expander("Path ID v1 — locked 17 Aug book", expanded=False):
+        st.caption(model["caption"])
+        st.caption(
+            f"Stamp {model['generated_at']} · {model['split']} · "
+            f"L2 hit rate {model['hit_rate']} "
+            f"({model['path_hits']}/{model['path_scored']})"
+        )
+        rows = model["name_paths"]
+        if rows:
+            st.dataframe(rows, hide_index=True, use_container_width=True)
+        if desk is None:
+            return
+        desk_rows = list(desk.get("rows") or [])
+        coverage = desk.get("coverage") or {}
+        st.caption(
+            "Desk join "
+            f"{coverage.get('joined', 0)} cited / "
+            f"{coverage.get('missing_fiscal', 0)} missing fiscal / "
+            f"{coverage.get('missing_excerpt', 0)} missing excerpt. "
+            "One excerpt at a time."
+        )
+        options = [desk_row_key(row) for row in desk_rows if desk_row_key(row)]
+        if not options:
+            return
+        choice = st.selectbox(
+            "Name-quarter excerpt",
+            options,
+            key="desk_path_id_v1_pick",
+        )
+        picked = desk_excerpt_view(desk_rows, str(choice or ""))
+        if picked is None:
+            return
+        source = picked.get("source") or ""
+        if source:
+            st.caption(source)
+        fiscal = picked.get("fiscal_period")
+        if fiscal:
+            st.caption(
+                f"{picked.get('ticker')} calendar {picked.get('period')} → {fiscal}"
+            )
+        status = str(picked.get("excerpt_status") or "missing")
+        if status == "missing" or not str(picked.get("excerpt") or "").strip():
+            st.info("No verified excerpt on disk. Do not invent a quote.")
+            return
+        claim = picked.get("claim")
+        if claim:
+            st.markdown(f"**{claim}**")
+        st.write(picked.get("excerpt"))
+        rationale = picked.get("rationale")
+        if rationale:
+            st.caption(rationale)
+
+
+def render_claims_desk_panel(st: Any, payload: Mapping[str, Any] | None) -> None:
+    """Cite-first working set. State is a follow-up cite, not a Path ID hit."""
+    if payload is None:
+        return
+    rows = list(payload.get("rows") or [])
+    if not rows:
+        return
+    counts = payload.get("counts") or {}
+    delivery_counts = payload.get("delivery_counts") or {}
+    beats = list(payload.get("beats") or [])
+    with st.expander("Claims desk v1 — beats and same-object backfill", expanded=False):
+        st.caption(
+            "Full quote expanders, company-history backdrop, and deliver rate "
+            "live on the Claims Desk page. This table stays compact."
+        )
+        st.caption(str(payload.get("caption") or ""))
+        st.caption(
+            f"Stamp {payload.get('generated_at')} · {payload.get('split')} · "
+            f"pilot {payload.get('n_pilot', 0)} · backfill {payload.get('n_backfill', 0)} · "
+            f"open {counts.get('open', 0)} · kept {counts.get('kept', 0)} · "
+            f"slipped {counts.get('slipped', 0)} · "
+            f"subject-changed {counts.get('subject-changed', 0)} · "
+            f"delivered {delivery_counts.get('delivered', 0)} · "
+            f"missed {delivery_counts.get('missed', 0)} · "
+            f"unresolved {delivery_counts.get('unresolved', 0)} · "
+            f"not-a-promise {delivery_counts.get('not-a-promise', 0)}"
+        )
+        beat_options = ["All beats"] + [
+            f"{beat.get('beat_id')} · {beat.get('n_rows')} rows"
+            for beat in beats
+        ]
+        beat_choice = st.selectbox(
+            "Beat",
+            beat_options,
+            key="desk_claims_v1_beat",
+        )
+        want_beat = None
+        if beat_choice != "All beats":
+            want_beat = str(beat_choice).split(" · ", 1)[0]
+        visible = [
+            row
+            for row in rows
+            if want_beat is None or str(row.get("beat_id") or "") == want_beat
+        ]
+        table = [
+            {
+                "beat": row.get("beat_id"),
+                "origin": row.get("origin"),
+                "name": f"{row.get('ticker')} {row.get('period')}",
+                "type": row.get("claim_type"),
+                "state": row.get("state"),
+                "delivery": row.get("delivery"),
+                "cite": row.get("excerpt"),
+                "follow_up": row.get("follow_up_excerpt"),
+            }
+            for row in visible
+        ]
+        st.dataframe(table, hide_index=True, use_container_width=True)
+        options = [
+            f"{row.get('ticker')} {row.get('period')}"
+            for row in visible
+            if row.get("ticker")
+        ]
+        choice = st.selectbox(
+            "Open claim",
+            options,
+            key="desk_claims_v1_pick",
+        )
+        picked = None
+        for row in rows:
+            if f"{row.get('ticker')} {row.get('period')}" == choice:
+                picked = row
+                break
+        if picked is None:
+            return
+        st.caption(
+            f"{picked.get('beat_id')} · {picked.get('origin')} · "
+            f"{picked.get('claim_type')} · {picked.get('state')} · "
+            f"delivery {picked.get('delivery')} · "
+            f"objects {', '.join(str(item) for item in (picked.get('objects') or []))}"
+        )
+        if picked.get("delivery_basis"):
+            st.caption(str(picked.get("delivery_basis")))
+        if picked.get("citation"):
+            st.caption(str(picked.get("citation")))
+        st.write(picked.get("excerpt"))
+        follow = picked.get("follow_up_excerpt")
+        if follow:
+            st.caption(str(picked.get("follow_up_citation") or ""))
+            st.write(follow)
+        elif picked.get("state") == "open":
+            st.info("Still open. No next-quarter cite on this object.")
+        else:
+            st.info("No follow-up cite on this object.")
 
 
 def _finite(value: Any) -> float | None:
@@ -793,6 +1071,10 @@ def render_rank_ic_lab(
         "is where you dissect a cell; Lab is where you try a recipe on stored "
         "`company_period` rows — not a live rescoring of transcripts."
     )
+    path_id = load_path_id_v1()
+    if path_id is not None:
+        render_path_id_panel(st, path_id, desk=load_desk_path_id_v1())
+        render_claims_desk_panel(st, load_desk_claims_v1())
     if not bundle.available:
         st.info(bundle.empty_message)
         if bundle.missing:

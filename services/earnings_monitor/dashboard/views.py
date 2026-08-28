@@ -360,6 +360,42 @@ def render_event_inbox(
     _table(st, with_company_labels(events))
 
 
+def render_claims_desk_view(
+    st: Any,
+    data: DashboardData,
+    *,
+    sector_tickers: Sequence[str] | None = None,
+    sector_choice: str | None = None,
+) -> None:
+    from .claims_desk import render_claims_desk
+
+    st.header("Claims Desk")
+    render_claims_desk(
+        st,
+        data,
+        sector_tickers=sector_tickers,
+        sector_choice=sector_choice,
+    )
+
+
+def render_claims_trees_view(
+    st: Any,
+    data: DashboardData,
+    *,
+    sector_tickers: Sequence[str] | None = None,
+    sector_choice: str | None = None,
+) -> None:
+    from .claims_trees import render_claims_trees
+
+    st.header("Claims Trees")
+    render_claims_trees(
+        st,
+        data,
+        sector_tickers=sector_tickers,
+        sector_choice=sector_choice,
+    )
+
+
 def render_company_history(
     st: Any,
     data: DashboardData,
@@ -1148,6 +1184,8 @@ VIEWS = {
     "Overview": render_overview,
     "Event inbox": render_event_inbox,
     "Company history": render_company_history,
+    "Claims Desk": render_claims_desk_view,
+    "Claims Trees": render_claims_trees_view,
     "Dimension panel": render_dimension_heatmap,
     "Cross-company": render_cross_company,
     "Narrative vs quant": render_narrative_vs_quant,

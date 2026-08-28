@@ -1,11 +1,12 @@
 {
-  "updated": "2026-08-25T13:23:00-04:00",
+  "updated": "2026-08-26T17:35:00+00:00",
   "watcher": "stopped",
   "keep_awake": "stopped",
   "research_sector": "healthcare_large_cap",
   "onboarded": ["ABBV", "ABT", "AMGN", "BMY", "BSX", "CI", "ISRG", "JNJ", "MDT", "MRK", "PFE", "REGN", "TMO"],
-  "pending_identity": ["LLY", "UNH", "DHR", "SYK", "GILD", "VRTX", "ELV"],
-  "block": "estpermid missing after Snowflake/LSEG lookup; ISIN-first; do not invent ISINs",
-  "lly_overlay_warning": "Structured Narrative/config/company_overlays/LLY.json ISIN GB0005163141 is unverified (likely Lloyds). estpermid 30064846182 is from a failed run.",
-  "next": "For each pending ticker: verified ISIN (or estpermid/barra-id), then run_onboard(skip_pull=True, skip_book_sync=True, research_sector=healthcare_large_cap). Then stamp healthcare_large_cap book. Do not invent generated_at."
+  "two_quarter_complete": ["LLY", "UNH", "DHR", "SYK", "GILD", "VRTX", "ELV"],
+  "pending_history": ["LLY", "UNH", "DHR", "SYK", "GILD", "VRTX", "ELV"],
+  "block": "history not scored; overlays still two-quarter. Overnight prep is scripts/_hc_leftover_history.py (dry-run default).",
+  "lly_overlay_warning": "Lloyds GB0005163141 dropped. Overlay ISIN is US5324571083 (Quartr 5159).",
+  "next": "When the user says go: python scripts/_hc_leftover_history.py --apply-overlays then --score (no --force). Stamp only with --output-tag healthcare_large_cap. Do not invent generated_at. Do not mix into xlk_tech."
 }
