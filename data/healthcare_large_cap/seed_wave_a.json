@@ -1,0 +1,126 @@
+{
+  "wave": "A",
+  "status": "complete",
+  "updated_at": "2026-08-19T09:22:00-04:00",
+  "note": "All Wave A tickers done. Every available period has last-window nextFromTimestamp null. Known Quartr gaps not fetched.",
+  "tickers": [
+    {
+      "ticker": "LLY",
+      "companyId": 5159,
+      "status": "done",
+      "periods_written": [
+        "FY2015-Q4", "FY2016-Q1", "FY2016-Q2", "FY2016-Q3", "FY2016-Q4",
+        "FY2017-Q1", "FY2017-Q2", "FY2017-Q3", "FY2017-Q4",
+        "FY2018-Q1", "FY2018-Q2", "FY2018-Q3", "FY2018-Q4",
+        "FY2019-Q1", "FY2019-Q2", "FY2019-Q3", "FY2019-Q4",
+        "FY2020-Q1", "FY2020-Q2", "FY2020-Q3", "FY2020-Q4",
+        "FY2021-Q1", "FY2021-Q2", "FY2021-Q3", "FY2021-Q4",
+        "FY2022-Q1", "FY2022-Q2", "FY2022-Q3", "FY2022-Q4",
+        "FY2023-Q1", "FY2023-Q2", "FY2023-Q3", "FY2023-Q4",
+        "FY2024-Q1", "FY2024-Q2", "FY2024-Q3", "FY2024-Q4",
+        "FY2025-Q1", "FY2025-Q2", "FY2025-Q3", "FY2025-Q4",
+        "FY2026-Q1", "FY2026-Q2"
+      ],
+      "periods_skipped": [],
+      "errors": [],
+      "pending_continuations": [],
+      "note": "All 43 first windows staged. All 43 continuation tails persisted (next=null). LLY pending=0. Do not mark wave complete."
+    },
+    {
+      "ticker": "UNH",
+      "companyId": 4258,
+      "status": "done",
+      "periods_written": [
+        "FY2015-Q4", "FY2016-Q1", "FY2016-Q2", "FY2016-Q3", "FY2016-Q4",
+        "FY2017-Q1", "FY2017-Q2", "FY2017-Q3", "FY2017-Q4",
+        "FY2018-Q1", "FY2018-Q2", "FY2018-Q3", "FY2018-Q4",
+        "FY2019-Q1", "FY2019-Q2", "FY2019-Q3", "FY2019-Q4",
+        "FY2020-Q1", "FY2020-Q2", "FY2020-Q3", "FY2020-Q4",
+        "FY2021-Q1", "FY2021-Q2", "FY2021-Q3", "FY2021-Q4",
+        "FY2022-Q1", "FY2022-Q2", "FY2022-Q3", "FY2022-Q4",
+        "FY2023-Q1", "FY2023-Q2", "FY2023-Q3", "FY2023-Q4",
+        "FY2024-Q1", "FY2024-Q2", "FY2024-Q3", "FY2024-Q4",
+        "FY2025-Q1", "FY2025-Q2", "FY2025-Q3", "FY2025-Q4",
+        "FY2026-Q1", "FY2026-Q2"
+      ],
+      "periods_skipped": [],
+      "errors": [],
+      "pending_continuations": [],
+      "note": "All 43 first windows staged. All 43 continuation tails persisted (next=null). UNH pending=0. Do not mark wave complete."
+    },
+    {
+      "ticker": "JNJ",
+      "companyId": 5162,
+      "status": "done",
+      "periods_written": [
+        "FY2015-Q4", "FY2016-Q1", "FY2016-Q2", "FY2016-Q3", "FY2016-Q4",
+        "FY2017-Q1", "FY2017-Q2", "FY2017-Q3", "FY2017-Q4",
+        "FY2018-Q1", "FY2018-Q2", "FY2018-Q3", "FY2018-Q4",
+        "FY2019-Q1", "FY2019-Q2", "FY2019-Q3", "FY2019-Q4",
+        "FY2020-Q1", "FY2020-Q2", "FY2020-Q3", "FY2020-Q4",
+        "FY2021-Q1", "FY2021-Q2", "FY2021-Q3", "FY2021-Q4",
+        "FY2022-Q1", "FY2022-Q2", "FY2022-Q3", "FY2022-Q4",
+        "FY2023-Q1", "FY2023-Q2", "FY2023-Q3", "FY2023-Q4",
+        "FY2024-Q1", "FY2024-Q2", "FY2024-Q3", "FY2024-Q4",
+        "FY2025-Q1", "FY2025-Q2", "FY2025-Q3", "FY2025-Q4",
+        "FY2026-Q1", "FY2026-Q2"
+      ],
+      "periods_skipped": [],
+      "errors": [],
+      "pending_continuations": [],
+      "note": "All 43 first windows staged. All 43 continuation tails persisted (next=null). JNJ pending=0. Do not mark wave complete."
+    },
+    {
+      "ticker": "ABBV",
+      "companyId": 6137,
+      "status": "done",
+      "periods_written": [
+        "FY2015-Q4", "FY2016-Q1", "FY2016-Q2", "FY2016-Q3", "FY2016-Q4",
+        "FY2017-Q1", "FY2017-Q2", "FY2017-Q3", "FY2017-Q4",
+        "FY2018-Q1", "FY2018-Q2", "FY2018-Q3", "FY2018-Q4",
+        "FY2019-Q1", "FY2019-Q2", "FY2019-Q3", "FY2019-Q4",
+        "FY2020-Q1", "FY2020-Q2", "FY2020-Q3", "FY2020-Q4",
+        "FY2021-Q1", "FY2021-Q2", "FY2021-Q3", "FY2021-Q4",
+        "FY2022-Q1", "FY2022-Q2", "FY2022-Q3", "FY2022-Q4",
+        "FY2023-Q1", "FY2023-Q2", "FY2023-Q3", "FY2023-Q4",
+        "FY2024-Q1", "FY2024-Q2", "FY2024-Q3", "FY2024-Q4",
+        "FY2025-Q1", "FY2025-Q2", "FY2025-Q3", "FY2025-Q4",
+        "FY2026-Q1", "FY2026-Q2"
+      ],
+      "periods_skipped": [],
+      "errors": [],
+      "pending_continuations": [],
+      "note": "All 43 first windows staged. All 43 continuation tails persisted (next=null). ABBV pending=0. Do not mark wave complete."
+    },
+    {
+      "ticker": "MRK",
+      "companyId": 10993,
+      "status": "done",
+      "periods_written": [
+        "FY2018-Q1", "FY2018-Q2", "FY2018-Q3", "FY2018-Q4",
+        "FY2019-Q1", "FY2019-Q2", "FY2019-Q3", "FY2019-Q4",
+        "FY2020-Q1", "FY2020-Q2", "FY2020-Q3", "FY2020-Q4",
+        "FY2021-Q1", "FY2021-Q2", "FY2021-Q3", "FY2021-Q4",
+        "FY2022-Q1", "FY2022-Q2", "FY2022-Q3", "FY2022-Q4",
+        "FY2023-Q1", "FY2023-Q2", "FY2023-Q3", "FY2023-Q4",
+        "FY2024-Q1", "FY2024-Q2", "FY2024-Q3", "FY2024-Q4",
+        "FY2025-Q1", "FY2025-Q2", "FY2025-Q3", "FY2025-Q4",
+        "FY2026-Q1", "FY2026-Q2"
+      ],
+      "periods_skipped": [],
+      "errors": [
+        {"eventId": 285386, "period": "FY2015-Q4", "reason": "transcript.available=false"},
+        {"eventId": 282709, "period": "FY2016-Q4", "reason": "transcript.available=false"},
+        {"eventId": 279822, "period": "FY2017-Q4", "reason": "transcript.available=false"},
+        {"period": "FY2016-Q1", "reason": "no earnings_call event in list_events"},
+        {"period": "FY2016-Q2", "reason": "no earnings_call event in list_events"},
+        {"period": "FY2016-Q3", "reason": "no earnings_call event in list_events"},
+        {"period": "FY2017-Q1", "reason": "no earnings_call event in list_events"},
+        {"period": "FY2017-Q2", "reason": "no earnings_call event in list_events"},
+        {"period": "FY2017-Q3", "reason": "no earnings_call event in list_events"}
+      ],
+      "pending_continuations": [],
+      "note": "All 34 available tails complete (next=null). Last 3 persisted: FY2021-Q2, FY2024-Q1, FY2024-Q2. Known gaps not fetched. Do not mark wave complete."
+    }
+  ]
+}

@@ -59,12 +59,49 @@ REJECT_MARKERS = (
     "pending acquisition of arm",
     "pegasus will deliver over 320",
     "recognition from the intel",
+    "we will of course",
+    "plus or minus",
+    "pending acquisition",
+    "we expect to see currency",
+    "we'll just have to see",
+    "we will not be providing our usual financial guidance",
+    "we will not be providing",
+    "we will not comment further",
+    "we will manage through",
+    "we will exclude these benefits",
+    "if that changes we will tell you",
+    "we're not going to dilute ourselves",
+    "we look forward to",
+    "we're pleased to announce that we've",
+    "we have received a second request",
+    "given the lack of visibility",
+    "given the continued uncertainty",
+    "given the significant uncertainty",
+    "it is also likely we will",
+    "what we will end up with",
 )
+REJECT_BY_TICKER: dict[str, tuple[str, ...]] = {
+    "NVDA": (
+        "supply-constrained environment",
+        "supply-constrained outlook",
+        "pending acquisition of mellanox",
+        "pending acquisition of arm",
+        "pegasus will deliver over 320",
+        "recognition from the intel",
+    ),
+}
 GUIDANCE_CUES = (
     r"\bwe expect (?:revenue|gaap|non-gaap|our gaap|sales|this sequential)\b",
     r"\bwe expect to grow revenue\b",
     r"\bwe expect to return to sequential growth\b",
     r"\bwe expect to continue to grow\b",
+    r"\bwe now expect to achieve\b",
+    r"\bwe expect to achieve\b",
+    r"\bwe expect to see higher\b",
+    r"\bwe expect to grow our\b",
+    r"\bour guidance\b",
+    r"\bwe will now provide\b",
+    r"\bwe estimate the year[- ]over[- ]year\b",
     r"\brevenue (?:is expected|to be) \$",
     r"\boutlook\b.{0,40}\$",
     r"\bplus or minus 2%\b",
@@ -74,8 +111,9 @@ RHETORIC_CUES = (
     r"\bis going to be\b",
     r"\bare going to be\b",
     r"\bgoing to continue\b",
-    r"\bwe'll (?:take|see|update|go through|make|have)\b",
-    r"\bwe will (?:of course|continue to engage|continue to advocate|comply)\b",
+    r"\bwe'll (?:take|see|update|go through|make|have|continue)\b",
+    r"\bwe will (?:of course|continue to|continue|comply)\b",
+    r"\bwe will continue to\b",
 )
 
 _PROMISE_RE = re.compile("|".join(PROMISE_CUES), re.I)
@@ -84,12 +122,12 @@ _GUIDANCE_RE = re.compile("|".join(GUIDANCE_CUES), re.I)
 _RHETORIC_RE = re.compile("|".join(RHETORIC_CUES), re.I)
 
 
-def novelty_path() -> Path:
+def novelty_path(ticker: str = "NVDA") -> Path:
     return (
         ROOT
         / "Structured Narrative"
         / "output"
-        / "NVDA"
+        / str(ticker).upper()
         / "json"
         / "novelty_view.json"
     )
@@ -124,9 +162,10 @@ def excerpt_covered(excerpt: str, catalog: Sequence[str]) -> bool:
     return False
 
 
-def classify(excerpt: str) -> str:
+def classify(excerpt: str, ticker: str | None = None) -> str:
     lowered = excerpt.lower()
-    if any(marker in lowered for marker in REJECT_MARKERS):
+    extra = REJECT_BY_TICKER.get(str(ticker or "").upper(), ())
+    if any(marker in lowered for marker in (*REJECT_MARKERS, *extra)):
         return "reject"
     if _GUIDANCE_RE.search(excerpt):
         return "guidance"
@@ -159,9 +198,12 @@ def novelty_periods(novelty: Mapping[str, object]) -> list[str]:
 def collect_candidates(
     novelty: Mapping[str, object],
     periods: Sequence[str] | None = None,
+    *,
+    ticker: str | None = None,
 ) -> list[dict[str, object]]:
     selected = list(periods) if periods is not None else list(WINDOW)
     allowed = {str(period) for period in selected}
+    want = str(ticker or novelty.get("ticker") or "").upper() or None
     found: list[dict[str, object]] = []
     for quarter in novelty.get("quarters") or []:
         if not isinstance(quarter, Mapping):
@@ -181,7 +223,8 @@ def collect_candidates(
                     "dimension": row.get("dimension"),
                     "status": row.get("status"),
                     "excerpt": excerpt,
-                    "class": classify(excerpt),
+                    "class": classify(excerpt, ticker=want),
+                    "ticker": want,
                 }
             )
     found.sort(key=lambda item: (fiscal_key(str(item["fiscal_period"])), str(item["class"])))
@@ -192,10 +235,12 @@ def recall_report(
     novelty: Mapping[str, object],
     trees: Sequence[Mapping[str, object]],
     periods: Sequence[str] | None = None,
+    *,
+    ticker: str | None = None,
 ) -> dict[str, object]:
     catalog = tree_excerpts(trees)
     selected = list(periods) if periods is not None else list(WINDOW)
-    candidates = collect_candidates(novelty, selected)
+    candidates = collect_candidates(novelty, selected, ticker=ticker)
     seedable = [item for item in candidates if item["class"] in {"promise", "goal"}]
     covered = [item for item in seedable if excerpt_covered(str(item["excerpt"]), catalog)]
     missed = [item for item in seedable if item not in covered]

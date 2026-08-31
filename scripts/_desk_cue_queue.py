@@ -16,6 +16,8 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from scripts._desk_trees_v2 import FULL_SPLIT, NVDA_STAMP, SPLIT, WINDOW  # noqa: E402
+from scripts._desk_trees_v2_hc import HC_SPLIT, HC_STAMP  # noqa: E402
+from scripts._desk_trees_v2_ops import OPS_SPLIT, OPS_STAMP  # noqa: E402
 from scripts._desk_trees_v2_recall import (  # noqa: E402
     novelty_path,
     novelty_periods,
@@ -27,24 +29,27 @@ QUEUE_NAME = "desk_cue_queue_v2.json"
 FORBIDDEN = ("transcripts_raw", "create_extraction_graph")
 
 
-def queue_path(repo_root: Path | str | None = None) -> Path:
+def queue_path(
+    repo_root: Path | str | None = None,
+    *,
+    ticker: str | None = None,
+) -> Path:
     root = Path(repo_root) if repo_root is not None else ROOT
-    return (
-        root
-        / "Structured Narrative"
-        / "output"
-        / "cross_company"
-        / "json"
-        / QUEUE_NAME
-    )
+    folder = root / "Structured Narrative" / "output" / "cross_company" / "json"
+    want = str(ticker or "").upper()
+    if want and want != "NVDA":
+        return folder / f"desk_cue_queue_v2_{want}.json"
+    return folder / QUEUE_NAME
 
 
 def refuse_stamp(stamp: object) -> None:
     text = str(stamp or "")
     if text == V1_STAMP:
         raise SystemExit("cue queue refuses the 17 Aug stamp")
-    if text != NVDA_STAMP:
-        raise SystemExit(f"cue queue refuses stamp {text!r}; need {NVDA_STAMP!r}")
+    if text not in {NVDA_STAMP, OPS_STAMP, HC_STAMP}:
+        raise SystemExit(
+            f"cue queue refuses stamp {text!r}; need gold, ops, or healthcare"
+        )
 
 
 def refuse_forbidden(payload: Mapping[str, object] | None) -> None:
@@ -59,6 +64,7 @@ def _slim_rows(rows: Sequence[Mapping[str, object]]) -> list[dict[str, object]]:
     for item in rows:
         slimmed.append(
             {
+                "ticker": item.get("ticker"),
                 "fiscal_period": item.get("fiscal_period"),
                 "class": item.get("class"),
                 "dimension": item.get("dimension"),
@@ -86,19 +92,26 @@ def build_cue_queue(
     trees: Sequence[Mapping[str, object]],
     latest_quarter: str,
     now: datetime | None = None,
+    ticker: str | None = None,
 ) -> dict[str, object]:
     refuse_stamp(book.get("generated_at"))
     refuse_forbidden(novelty)
-    gold = recall_report(novelty, trees, WINDOW)
-    full = recall_report(novelty, trees, novelty_periods(novelty))
+    want = str(ticker or "").upper() or None
+    stamp = str(book.get("generated_at") or "")
+    is_gold = stamp == NVDA_STAMP
+    gold = recall_report(novelty, trees, WINDOW, ticker=want) if is_gold else None
+    full = recall_report(novelty, trees, novelty_periods(novelty), ticker=want)
     latest = str(latest_quarter or "").strip()
     latest_report = (
-        recall_report(novelty, trees, (latest,)) if latest else recall_report(novelty, trees, ())
+        recall_report(novelty, trees, (latest,), ticker=want)
+        if latest
+        else recall_report(novelty, trees, (), ticker=want)
     )
     stamped = now or datetime.now(timezone.utc)
     return {
-        "generated_at": NVDA_STAMP,
-        "split": FULL_SPLIT,
+        "generated_at": stamp,
+        "split": FULL_SPLIT if is_gold else (HC_SPLIT if stamp == HC_STAMP else OPS_SPLIT),
+        "ticker": want,
         "latest_quarter": latest or None,
         "written_at": stamped.isoformat(),
         "n_seedable": full.get("n_seedable"),
@@ -109,7 +122,7 @@ def build_cue_queue(
         "guidance": _slim_rows(list(full.get("guidance") or [])),
         "rhetoric": _slim_rows(list(full.get("rhetoric") or [])),
         "reject": _slim_rows(list(full.get("reject") or [])),
-        "gold": _locked_gold(gold),
+        "gold": _locked_gold(gold) if gold is not None else None,
         "latest": {
             "fiscal_period": latest or None,
             "n_seedable": latest_report.get("n_seedable"),
@@ -128,6 +141,7 @@ def write_cue_queue(
     trees: Sequence[Mapping[str, object]],
     latest_quarter: str,
     now: datetime | None = None,
+    ticker: str | None = None,
 ) -> dict[str, object]:
     payload = build_cue_queue(
         book=book,
@@ -135,8 +149,9 @@ def write_cue_queue(
         trees=trees,
         latest_quarter=latest_quarter,
         now=now,
+        ticker=ticker,
     )
-    path = queue_path(repo_root)
+    path = queue_path(repo_root, ticker=ticker)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
     return payload

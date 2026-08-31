@@ -1,0 +1,75 @@
+{
+  "wave": "D",
+  "status": "complete",
+  "updated": "2026-08-20T13:30:00-04:00",
+  "paused_at": "2026-08-19T09:45:00-04:00",
+  "resumed_at": "2026-08-20T10:40:00-04:00",
+  "resume_note": "Seed finished 20 Aug. All Wave D tickers done. Known Quartr gaps left missing. Case studies wait for Snowflake onboard + healthcare book stamp.",
+  "tickers": {
+    "BMY": {
+      "companyId": 5929,
+      "name": "Bristol-Myers Squibb Company",
+      "status": "done",
+      "events_listed": 32,
+      "transcript_available": 29,
+      "written": ["FY2019-Q2","FY2019-Q3","FY2019-Q4","FY2020-Q1","FY2020-Q2","FY2020-Q3","FY2020-Q4","FY2021-Q1","FY2021-Q2","FY2021-Q3","FY2021-Q4","FY2022-Q1","FY2022-Q2","FY2022-Q3","FY2022-Q4","FY2023-Q1","FY2023-Q2","FY2023-Q3","FY2023-Q4","FY2024-Q1","FY2024-Q2","FY2024-Q3","FY2024-Q4","FY2025-Q1","FY2025-Q2","FY2025-Q3","FY2025-Q4","FY2026-Q1","FY2026-Q2"],
+      "periods_written": 29,
+      "missing_transcripts": ["FY2016-Q4", "FY2017-Q4", "FY2018-Q4"],
+      "note": "Quartr listed no Q1-Q3 for 2016-2018; Q4 2016-2018 have transcript.available=false. Coverage starts FY2019-Q2.",
+      "skipped_existing": []
+    },
+    "REGN": {
+      "companyId": 5431,
+      "name": "Regeneron Pharmaceuticals",
+      "status": "done",
+      "events_listed": 37,
+      "transcript_available": 34,
+      "written": ["FY2018-Q1","FY2018-Q2","FY2018-Q3","FY2018-Q4","FY2019-Q1","FY2019-Q2","FY2019-Q3","FY2019-Q4","FY2020-Q1","FY2020-Q2","FY2020-Q3","FY2020-Q4","FY2021-Q1","FY2021-Q2","FY2021-Q3","FY2021-Q4","FY2022-Q1","FY2022-Q2","FY2022-Q3","FY2022-Q4","FY2023-Q1","FY2023-Q2","FY2023-Q3","FY2023-Q4","FY2024-Q1","FY2024-Q2","FY2024-Q3","FY2024-Q4","FY2025-Q1","FY2025-Q2","FY2025-Q3","FY2025-Q4","FY2026-Q1","FY2026-Q2"],
+      "periods_written": 34,
+      "pending_page2": [],
+      "next": null,
+      "missing_transcripts": ["FY2015-Q4", "FY2016-Q4", "FY2017-Q4"],
+      "note": "Seed complete 20 Aug. FY2018-Q1–FY2026-Q2 assembled. Known Quartr Q4 gaps 2015–2017 left missing.",
+      "skipped_existing": []
+    },
+    "CI": {
+      "companyId": 4370,
+      "name": "The Cigna Group",
+      "status": "done",
+      "events_listed": 34,
+      "transcript_available": 33,
+      "written": ["FY2018-Q1","FY2018-Q2","FY2018-Q4","FY2019-Q1","FY2019-Q2","FY2019-Q3","FY2019-Q4","FY2020-Q1","FY2020-Q2","FY2020-Q3","FY2020-Q4","FY2021-Q1","FY2021-Q2","FY2021-Q3","FY2021-Q4","FY2022-Q1","FY2022-Q2","FY2022-Q3","FY2022-Q4","FY2023-Q1","FY2023-Q2","FY2023-Q3","FY2023-Q4","FY2024-Q1","FY2024-Q2","FY2024-Q3","FY2024-Q4","FY2025-Q1","FY2025-Q2","FY2025-Q3","FY2025-Q4","FY2026-Q1","FY2026-Q2"],
+      "periods_written": 33,
+      "next": null,
+      "missing_transcripts": ["FY2018-Q3"],
+      "note": "Seed complete 20 Aug. 33 periods assembled. FY2018-Q3 left missing (transcript.available=false).",
+      "skipped_existing": []
+    },
+    "ELV": {
+      "companyId": 3742,
+      "name": "Elevance Health",
+      "status": "done",
+      "events_listed": 37,
+      "transcript_available": 34,
+      "written": ["FY2018-Q1","FY2018-Q2","FY2018-Q3","FY2018-Q4","FY2019-Q1","FY2019-Q2","FY2019-Q3","FY2019-Q4","FY2020-Q1","FY2020-Q2","FY2020-Q3","FY2020-Q4","FY2021-Q1","FY2021-Q2","FY2021-Q3","FY2021-Q4","FY2022-Q1","FY2022-Q2","FY2022-Q3","FY2022-Q4","FY2023-Q1","FY2023-Q2","FY2023-Q3","FY2023-Q4","FY2024-Q1","FY2024-Q2","FY2024-Q3","FY2024-Q4","FY2025-Q1","FY2025-Q2","FY2025-Q3","FY2025-Q4","FY2026-Q1","FY2026-Q2"],
+      "periods_written": 34,
+      "next": null,
+      "missing_transcripts": ["FY2015-Q4", "FY2016-Q4", "FY2017-Q4"],
+      "note": "Seed complete 20 Aug. FY2018-Q1–FY2026-Q2 assembled. Known Quartr Q4 gaps 2015–2017 left missing.",
+      "skipped_existing": []
+    },
+    "BSX": {
+      "companyId": 5155,
+      "name": "Boston Scientific",
+      "status": "done",
+      "events_listed": 34,
+      "transcript_available": 34,
+      "written": ["FY2018-Q1","FY2018-Q2","FY2018-Q3","FY2018-Q4","FY2019-Q1","FY2019-Q2","FY2019-Q3","FY2019-Q4","FY2020-Q1","FY2020-Q2","FY2020-Q3","FY2020-Q4","FY2021-Q1","FY2021-Q2","FY2021-Q3","FY2021-Q4","FY2022-Q1","FY2022-Q2","FY2022-Q3","FY2022-Q4","FY2023-Q1","FY2023-Q2","FY2023-Q3","FY2023-Q4","FY2024-Q1","FY2024-Q2","FY2024-Q3","FY2024-Q4","FY2025-Q1","FY2025-Q2","FY2025-Q3","FY2025-Q4","FY2026-Q1","FY2026-Q2"],
+      "periods_written": 34,
+      "next": null,
+      "missing_transcripts": [],
+      "note": "Seed complete 20 Aug. FY2018-Q1–FY2026-Q2 assembled. All listed events had transcripts.",
+      "skipped_existing": []
+    }
+  }
+}

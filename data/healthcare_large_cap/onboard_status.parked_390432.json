@@ -1,0 +1,690 @@
+{
+  "updated_at": "2026-08-19T04:39:49+00:00",
+  "results": [
+    {
+      "ticker": "ISRG",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [88a1faae-e2b8-4336-b318-54c03b3e1b9c]"
+    },
+    {
+      "ticker": "ISRG",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [2bcc962a-6e1e-43d7-8ecc-907783c711ac]"
+    },
+    {
+      "ticker": "TMO",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [77d9aca7-85b4-4a51-9847-54851fbee849]"
+    },
+    {
+      "ticker": "TMO",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [26b74189-f4c5-489b-b4ee-67002334438e]"
+    },
+    {
+      "ticker": "TMO",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [8d935ccc-8ef9-42cb-991e-3f15ed62d57a]"
+    },
+    {
+      "ticker": "TMO",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [ed2f7341-595b-42b0-8202-b37d8d8cbe7e]"
+    },
+    {
+      "ticker": "TMO",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [cd6886a8-b076-4a6d-b00f-ff753c7c7b16]"
+    },
+    {
+      "ticker": "TMO",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [af26bcf5-9bc1-4222-957b-0de6a38b97b0]"
+    },
+    {
+      "ticker": "TMO",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [a2224c77-36c3-4c39-943c-14740570e2e6]"
+    },
+    {
+      "ticker": "TMO",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [96c04505-1350-4040-9431-7581942028fe]"
+    },
+    {
+      "ticker": "TMO",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [9d2b84d7-3bfc-47ec-96fa-b652256edd5d]"
+    },
+    {
+      "ticker": "TMO",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [ea15afb7-b8a9-4453-bd0f-d3dfbcade6c7]"
+    },
+    {
+      "ticker": "TMO",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [04893ca1-85cd-48ec-b674-4cf06eb23290]"
+    },
+    {
+      "ticker": "ABT",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [20b8b240-462c-44f9-b7c5-6ed4a178582e]"
+    },
+    {
+      "ticker": "TMO",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [dbd6150b-7e48-4d52-be7f-93d39a1d5de7]"
+    },
+    {
+      "ticker": "TMO",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [277b92f4-e876-40fc-a5e5-0f7c42642848]"
+    },
+    {
+      "ticker": "TMO",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [86ac10e1-e237-4be6-ad74-005b9492221c]"
+    },
+    {
+      "ticker": "TMO",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [34bed6cc-d2f2-4be7-8ab4-11ee4d19beca]"
+    },
+    {
+      "ticker": "TMO",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [2e07a4e2-3f75-4ef3-a943-bfd422fa81ba]"
+    },
+    {
+      "ticker": "TMO",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [4fcfe0c6-a9d9-44d9-afab-320dd2bebf1e]"
+    },
+    {
+      "ticker": "TMO",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [b00a5bd1-5472-49d4-a9fb-61b95aa6d80d]"
+    },
+    {
+      "ticker": "TMO",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [0452bfd8-8e1c-46fc-9b32-1365bdc64c6b]"
+    },
+    {
+      "ticker": "DHR",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [dc1f5615-860a-4ea3-a793-e219b900da03]"
+    },
+    {
+      "ticker": "TMO",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [3f3670b8-a379-4bc1-a6d1-3c253508ac30]"
+    },
+    {
+      "ticker": "TMO",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [b8058129-b96a-4533-8cf9-c78fcee71e9a]"
+    },
+    {
+      "ticker": "TMO",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [2c332671-12a6-40a9-8145-24faae495a73]"
+    },
+    {
+      "ticker": "TMO",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [2699a85a-caa9-413e-8225-1d6243a26b01]"
+    },
+    {
+      "ticker": "TMO",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [fb0cd7ca-3981-479f-a321-000d60956273]"
+    },
+    {
+      "ticker": "TMO",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [b02ffe61-15dc-46cd-b9a7-6b1a7c370025]"
+    },
+    {
+      "ticker": "TMO",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [2ce32934-26b5-4d13-8108-f537bae30fc0]"
+    },
+    {
+      "ticker": "TMO",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [e140ed17-11ac-49a0-9c77-e3334b3ca029]"
+    },
+    {
+      "ticker": "TMO",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [9ebf1eeb-31f2-4f86-8f1e-92380f3af20d]"
+    },
+    {
+      "ticker": "TMO",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [27805dd4-23b3-422e-acf4-a71559afb8a8]"
+    },
+    {
+      "ticker": "TMO",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [dd1b0e02-4490-4a2c-bae2-62b502d07aac]"
+    },
+    {
+      "ticker": "TMO",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [6d28730d-66a0-4b4d-bcc4-a933583ef6b3]"
+    },
+    {
+      "ticker": "TMO",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [3e761f7d-211a-4628-850c-281c72f2bd2b]"
+    },
+    {
+      "ticker": "TMO",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [2c708c01-4fd6-4398-bc2f-3ee090828b5a]"
+    },
+    {
+      "ticker": "TMO",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [05bd18c1-2c46-402e-97ed-e30100367deb]"
+    },
+    {
+      "ticker": "SYK",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [d1feafd9-ec36-4385-b1f5-38f86763f925]"
+    },
+    {
+      "ticker": "TMO",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [81771cd9-fbb3-4d1b-8452-c3b7df74dcff]"
+    },
+    {
+      "ticker": "JNJ",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [1173d6ba-5076-4edf-a2b8-1ba25b6687ef]"
+    },
+    {
+      "ticker": "JNJ",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [06607eba-18c4-4e3b-9ef5-153adcb10f31]"
+    },
+    {
+      "ticker": "PFE",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [4e72f3aa-9de9-4e88-8c2f-76e83a0b01ea]"
+    },
+    {
+      "ticker": "JNJ",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [1a71fc2c-9759-4214-9272-c9175e6a1c68]"
+    },
+    {
+      "ticker": "JNJ",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [5c89482f-10f2-49d0-be12-edb830024b40]"
+    },
+    {
+      "ticker": "JNJ",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [d7652f25-27d9-4daa-826b-f22b1dd7248d]"
+    },
+    {
+      "ticker": "JNJ",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [81917aef-bf5d-4926-8a25-bf18c4096abe]"
+    },
+    {
+      "ticker": "JNJ",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [a5781aca-7661-45d1-9008-16172b1d0eb1]"
+    },
+    {
+      "ticker": "JNJ",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [579e4dfe-e5fd-4c71-8638-895d073aae1e]"
+    },
+    {
+      "ticker": "JNJ",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [90f6e92d-1b12-4f62-a2c0-dd37cd0e472c]"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [d36f6061-c22c-4533-a880-0b351448e392]"
+    },
+    {
+      "ticker": "VRTX",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [3f087c4b-8773-4d54-807e-fae5ba48323c]"
+    },
+    {
+      "ticker": "JNJ",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [3852265b-40eb-4ec8-bd67-8d50c06e838c]"
+    },
+    {
+      "ticker": "JNJ",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [ce791d11-8efa-4e36-9c9e-16577d18d5ab]"
+    },
+    {
+      "ticker": "ABBV",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [3baaf3b4-7965-47dd-b6f0-309a38c1f719]"
+    },
+    {
+      "ticker": "JNJ",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [9b585d51-e2d3-4f12-9802-b4e384b63f9c]"
+    },
+    {
+      "ticker": "JNJ",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [cb26f552-91df-4292-a6f4-0fcecac41437]"
+    },
+    {
+      "ticker": "JNJ",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [7b939e46-1d13-4868-ba99-8ee5ae09878a]"
+    },
+    {
+      "ticker": "JNJ",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [1dc1136e-59fe-4b9a-9b0a-23e2568e932f]"
+    },
+    {
+      "ticker": "JNJ",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [dd864ca6-fa6b-4fab-a9dc-400630999870]"
+    },
+    {
+      "ticker": "JNJ",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [d2a01b87-4561-4c8b-9eaa-ea3dd1e6db5c]"
+    },
+    {
+      "ticker": "JNJ",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [8b824a32-bc40-429c-83c7-273c5db76f69]"
+    },
+    {
+      "ticker": "JNJ",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [6fc7b3b4-6cfb-41b7-a3cd-24e900b36199]"
+    },
+    {
+      "ticker": "JNJ",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [3fc5e096-9e0f-4e47-9348-5c01039e14aa]"
+    },
+    {
+      "ticker": "JNJ",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [12e5ac2b-0372-4ac3-9f0d-27ccb691d963]"
+    },
+    {
+      "ticker": "JNJ",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [4d3b50d2-dfb0-40a4-91ee-d29a93ded834]"
+    },
+    {
+      "ticker": "JNJ",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [9c6a6ac1-37ad-47a8-8f40-07973dddb496]"
+    },
+    {
+      "ticker": "JNJ",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [170f2bf7-d70d-4d5a-a0b9-a2f1c02c3362]"
+    },
+    {
+      "ticker": "JNJ",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [cc1601be-ce4f-4f36-b9d0-4f3af396197a]"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [0d8bf4e8-64bf-43d2-b3f9-5daac4e04ba1]"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [a46b53db-a90c-449b-936d-e6a0ca580a94]"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [15bd39cd-536b-4533-8435-ea13cdcad050]"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [e1ecd031-7f6f-41b7-bcaa-2d3febeaa016]"
+    },
+    {
+      "ticker": "UNH",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [74e3ceef-d9a6-4f3b-ab3c-dc181568cf7a]"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [4dd2dd58-5627-46ad-949c-c1be5b0fdea0]"
+    },
+    {
+      "ticker": "MRK",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [5bc37dc6-c124-40fc-9d61-bf02f45e0fe8]"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [8aba3a31-4512-4ead-8558-b51b69038e4b]"
+    },
+    {
+      "ticker": "AMGN",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [b935c1b3-296b-49f0-8c5e-433008f78dee]"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [b44224d3-1934-4469-bb20-71fc161f8869]"
+    },
+    {
+      "ticker": "GILD",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [6cd03155-b9fb-4037-a595-68eb8f867f98]"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [600230b9-0dcc-4b53-aa78-79c566053a71]"
+    },
+    {
+      "ticker": "MDT",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [02d90e87-608f-40b5-94fa-9e3ce3398a81]"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [1d68422b-9421-4b81-b8e8-7a7cec0f659a]"
+    },
+    {
+      "ticker": "BMY",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [d8bb0671-a1d9-419d-ad0a-4ab6831cd64c]"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [ad857b19-6105-46c5-a199-b2f58f5fab47]"
+    },
+    {
+      "ticker": "REGN",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [41997a41-c38f-4d7e-b2d2-63b2b4a0fe30]"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [bc7e730a-75a3-4b76-a05a-68985aa7f119]"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [b97fa81b-d1f3-4fec-a33f-915d3cc3aece]"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [6ff50b5f-83cd-4213-9aa3-a4c841ba23f8]"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [a1e37f8b-26c5-4746-8b32-64085a25d93a]"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [4df14364-38ed-4fab-9a66-6528d3a21bba]"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    }
+  ]
+}

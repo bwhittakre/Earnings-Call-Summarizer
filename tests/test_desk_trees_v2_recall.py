@@ -61,6 +61,20 @@ def test_rejects_are_not_desk_objects() -> None:
         "So as we move forward as well, going into Q2, we will also have "
         "the absence of what we had in Q1 moving to Q2."
     ) == "reject"
+    assert classify(
+        "Any updates will be made through relevant filings. We will not "
+        "comment further on this subject in this meeting today."
+    ) == "reject"
+    assert classify(
+        "Something that we will manage through whether it's good or bad."
+    ) == "reject"
+    assert classify(
+        "We're not going to dilute ourselves like other REITs do."
+    ) == "reject"
+    assert classify(
+        "Given the significant uncertainty, we will not be providing a "
+        "specific sales and EPS outlook for the coming quarter."
+    ) == "reject"
 
 
 def test_printed_growth_outlook_is_guidance() -> None:
@@ -73,6 +87,22 @@ def test_printed_growth_outlook_is_guidance() -> None:
         "We expect to continue to grow as we move into the second half "
         "of the year as well for gaming."
     ) == "guidance"
+    assert classify(
+        "We now expect to achieve low- to mid-single-digit organic growth "
+        "for the full year 2016."
+    ) == "guidance"
+    assert classify(
+        "We expect to grow our revenue in the second half."
+    ) == "guidance"
+    assert classify(
+        "Our guidance does not reflect any tariff impact."
+    ) == "guidance"
+    assert classify(
+        "We will continue to invest in the platform over time."
+    ) == "rhetoric"
+    assert classify(
+        "We look forward to making our next announcement."
+    ) == "reject"
 
 
 def test_computex_announce_is_a_promise_cue() -> None:

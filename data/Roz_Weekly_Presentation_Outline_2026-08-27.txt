@@ -1,0 +1,19 @@
+Roz weekly outline — 27 August 2026
+Coverage: 26 August talk through this morning. Book for every Rank IC sentence: asof, generated_at=2026-08-17T17:28:40+00:00. Claims desk split: asof-path-id-17aug-book-v1, same stamp. Not a promotion. No holdout. Healthcare is a print, not a Rank IC.
+Through-line (~12 minutes)
+Last week: the software-novelty U is two curves, and 0_56 is not the typical quarter. This week you add one operational sentence: we can now track a typed promise with a follow-up cite. Kept is not delivered. The bar is Autodesk Flex. Book deliver rate is 1 / 1 on the locked book.
+1. The sentence that wows (term structure — still live)
+The full-sample software-novelty U-shape is an average of two different curves (expe-term-structure-v1). Early 2016-Q2..2021-Q1: +0.183 / −0.030 / +0.112. Late 2021-Q2..2026-Q1: +0.070 / +0.083 / +0.029. 0_56 is a compound return, not the average of those buckets.
+Typical-quarter test failed (expe-term-structure-v3): 4/20 late periods have 0_56 above the best bucket (2022-Q3, 2022-Q4, 2025-Q1, 2026-Q1). Bucket-return pairwise Spearman 0.052381. Novelty vs z-sum of the three bucket returns +0.158035, above late 0_56 +0.135418. The mean premium is noise cancellation.
+2. The new object — Claims Desk
+One row is one object: type, clock, state, cite, follow-up cite. 28 rows on the locked 17 Aug book (15 pilot + 13 same-beat backfill). States: kept 9, open 4, subject-changed 15, slipped 0. Delivery: delivered 1, missed 0, unresolved 3, not-a-promise 24.
+Kept = the same object came back next quarter. Delivery = a dated promise actually came true. Deliver rate = delivered / (delivered + missed). Unresolved clocks and printed facts are an em dash, not 0%. Book rate 1 / 1 — Autodesk Flex launch only. Live in Roz at Claims Desk (localhost:8501/Claims_Desk).
+3. The bar — Flex
+ADSK FY2022-Q2 (calendar 2021-Q2): “we will launch Flex end of September.” Next quarter FY2022-Q3 is a buried composite, not the first verbatim. It treats Flex as live usage mix — net new, occasional, and advanced-product buyers. Verdict: kept and delivered. Path ID on that row is a miss. Path ID is not the verdict.
+Three promises still unresolved: Flex transaction-model clock (fiscal 25/26; silence before the clock is not a miss), CRM Informatica close, ADSK digital-twin TAM (no next quarter in the locked book). Do not file the remaining 125 Path ID rows.
+4. Do not say
+“Novelty is U-shaped” without the era. “0_56 is the average of the three buckets.” “Kept means they delivered.” “Deliver rate is 0% for Salesforce.” Healthcare Rank IC. All twenty healthcare names finished. Promotion, holdout, AI-era. Path ID as the promise tracker.
+5. Healthcare — honest status
+Leftover history scored 26 Aug. Tagged pack narrative_signal_eval_healthcare_large_cap.json, generated_at=2026-08-26T22:48:11+00:00, 20 names, 253/253 dimensions. Locked tech book unchanged. production_v1 frozen. No healthcare Rank IC. Remaining panel holes: CI FY2018-Q4, TMO FY2017-Q2. LLY is US5324571083 only. Lloyds GB0005163141 is dropped. UNH IBES ticker is UNIH.
+6. Order
+Same book / not a promotion → term-structure wow and typical-quarter fail → Claims Desk object (kept ≠ delivered) → Flex quotes → three open clocks → healthcare print, not Rank IC → questions.

@@ -1,0 +1,19 @@
+Roz weekly script — 27 August 2026
+Read this. Do not invent a healthcare Rank IC.
+Open
+Same book as last week. asof, generated at 17 August 2026, 17:28:40 UTC. I am not promoting anything. I have one new object on that book, and I want to show you the bar first.
+Wow — still the curves
+The software-novelty U you have seen on the full sample is an average of two different curves. Early: a print with a hole in the middle, plus 18, minus 3, plus 11. Late: a mid-window hump, plus 7, plus 8, plus 3. Same signal. Opposite relationship to the combined 0_56 window.
+Then the fail, on purpose
+Late 0_56 plus 13 and a half looks better than every bucket. That is not the typical quarter. It is four of twenty: 2022 Q3, 2022 Q4, 2025 Q1, 2026 Q1. The three bucket returns are almost uncorrelated. Averaging those noisy slice returns recovers more Rank IC than compounding them. I am not going to present plus 13 as a horizon that uniformly wins.
+The new object
+Rank IC ranks a quarter. It does not tell you whether a dated promise came true. That is now a separate desk. One row is one object: a type, a clock, a state, a cite, and a follow-up cite. Twenty-eight rows. Fifteen from the pilot, thirteen same-beat backfill. Not the remaining 125.
+Kept means the same object came back. Delivered means the dated promise actually happened. Those are different. Printed facts are not promises. A silent clock that is not yet due is open, not missed. Book deliver rate is delivered over delivered plus missed. Unresolved does not go in the denominator. On this book that rate is one over one.
+The bar
+Autodesk, fiscal 2022 Q2. They said they will launch Flex at the end of September. Next quarter does not repeat the launch date. It talks about Flex as live business — net new, occasional, advanced-product buyers. That is kept, and it is delivered. The follow-up is a buried composite, not the first line of the novelty view. Path ID marked that row a miss. Path ID is not the verdict.
+What is still open
+Three promises are unresolved. The later Flex transaction-model clock is fiscal 25 / 26 — silence before the clock is not a miss. Salesforce has signed to buy Informatica; next quarter does not say closed or dead. Autodesk’s digital-twin TAM has no next quarter in the locked book, so it cannot be scored. I will not file a hundred and twenty-five more Path ID rows to look busy.
+Healthcare
+Leftover history on the healthcare names is scored and stamped 26 August, 22:48:11 UTC. Twenty names. Two quarters still missing from those panels: Cigna 2018 Q4, Thermo Fisher 2017 Q2. That is not a Rank IC. Lilly is the US ISIN only. UnitedHealth’s IBES ticker is UNIH. The live tech book was not rewritten.
+Close
+If you want to see it, Claims Desk is in Roz, next to Rank IC. Flex is open by default. Questions.

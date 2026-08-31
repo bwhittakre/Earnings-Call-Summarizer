@@ -4,15 +4,22 @@ from __future__ import annotations
 import json
 
 from services.earnings_monitor.dashboard.claims_trees import (
+    _BOOK_HC,
+    _BOOK_NVDA,
+    _BOOK_OPS,
     _NVDA_STAMP,
     _V1_STAMP,
     attach_metrics_to_backdrop,
     clock_board,
     filter_trees_to_universe,
+    format_n_rate,
     format_rate,
     last_cited_fiscal,
     latest_scored_fiscal,
     load_desk_cue_queue_v2,
+    scored_rate_caption,
+    show_trailing_credibility,
+    suggested_book,
     load_desk_panel_metrics_v2,
     load_desk_trees_v2,
     tree_node_rows,
@@ -22,6 +29,8 @@ from services.earnings_monitor.dashboard.claims_trees import (
 def test_format_rate_em_dash_when_unresolved() -> None:
     assert format_rate(None) == "—"
     assert format_rate(0.8) == "80%"
+    assert format_n_rate(None, 0, 0) == "—"
+    assert format_n_rate(0.6, 5, 3) == "60% (3/5)"
 
 
 def test_filter_trees_respects_universe() -> None:
@@ -162,6 +171,24 @@ def test_latest_scored_fiscal_prefers_queue() -> None:
         )
         == "FY2027-Q2"
     )
+
+
+def test_suggested_book_follows_sector() -> None:
+    books = [_BOOK_NVDA, _BOOK_OPS, _BOOK_HC]
+    assert suggested_book("healthcare_large_cap", books) == _BOOK_HC
+    assert suggested_book("xlk_tech", books) == _BOOK_OPS
+    assert suggested_book("All Companies", books) == _BOOK_NVDA
+    assert suggested_book("Custom List", books, ["LLY", "JNJ"]) == _BOOK_HC
+    assert suggested_book("Custom List", books, ["NVDA"]) == _BOOK_NVDA
+    assert suggested_book("Custom List", books, ["MSFT", "CRM"]) == _BOOK_OPS
+
+
+def test_honest_rate_caption_and_gold_only_trust() -> None:
+    assert "not a 0%" in scored_rate_caption(0, "promises")
+    assert scored_rate_caption(1, "promises").startswith("Scored")
+    assert show_trailing_credibility(_BOOK_NVDA) is True
+    assert show_trailing_credibility(_BOOK_OPS) is False
+    assert show_trailing_credibility(_BOOK_HC) is False
 
 
 def test_queue_loader_refuses_v1_stamp(tmp_path) -> None:

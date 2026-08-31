@@ -1,0 +1,72 @@
+{
+  "BMY": {
+    "done_first_window": ["FY2019-Q2","FY2019-Q3","FY2019-Q4","FY2020-Q1","FY2020-Q2","FY2020-Q3","FY2020-Q4","FY2021-Q1"],
+    "remaining": [
+      {"period":"FY2021-Q2","eventId":6896},
+      {"period":"FY2021-Q3","eventId":10253},
+      {"period":"FY2021-Q4","eventId":13629},
+      {"period":"FY2022-Q1","eventId":20219},
+      {"period":"FY2022-Q2","eventId":27060},
+      {"period":"FY2022-Q3","eventId":27577},
+      {"period":"FY2022-Q4","eventId":35996},
+      {"period":"FY2023-Q1","eventId":36036},
+      {"period":"FY2023-Q2","eventId":51348},
+      {"period":"FY2023-Q3","eventId":65683},
+      {"period":"FY2023-Q4","eventId":87475},
+      {"period":"FY2024-Q1","eventId":127152},
+      {"period":"FY2024-Q2","eventId":163320},
+      {"period":"FY2024-Q3","eventId":191181},
+      {"period":"FY2024-Q4","eventId":221138},
+      {"period":"FY2025-Q1","eventId":250125},
+      {"period":"FY2025-Q2","eventId":312061},
+      {"period":"FY2025-Q3","eventId":369125},
+      {"period":"FY2025-Q4","eventId":373579},
+      {"period":"FY2026-Q1","eventId":408485},
+      {"period":"FY2026-Q2","eventId":550356}
+    ]
+  },
+  "REGN": {"remaining":[
+    {"period":"FY2018-Q1","eventId":157484},{"period":"FY2018-Q2","eventId":157481},{"period":"FY2018-Q3","eventId":157478},{"period":"FY2018-Q4","eventId":157473},
+    {"period":"FY2019-Q1","eventId":157470},{"period":"FY2019-Q2","eventId":157466},{"period":"FY2019-Q3","eventId":157460},{"period":"FY2019-Q4","eventId":157457},
+    {"period":"FY2020-Q1","eventId":157454},{"period":"FY2020-Q2","eventId":157446},{"period":"FY2020-Q3","eventId":157444},{"period":"FY2020-Q4","eventId":157437},
+    {"period":"FY2021-Q1","eventId":2885},{"period":"FY2021-Q2","eventId":7611},{"period":"FY2021-Q3","eventId":9856},{"period":"FY2021-Q4","eventId":13628},
+    {"period":"FY2022-Q1","eventId":20797},{"period":"FY2022-Q2","eventId":27677},{"period":"FY2022-Q3","eventId":27983},{"period":"FY2022-Q4","eventId":42969},
+    {"period":"FY2023-Q1","eventId":52184},{"period":"FY2023-Q2","eventId":67059},{"period":"FY2023-Q3","eventId":86783},{"period":"FY2023-Q4","eventId":128415},
+    {"period":"FY2024-Q1","eventId":164552},{"period":"FY2024-Q2","eventId":191155},{"period":"FY2024-Q3","eventId":217799},{"period":"FY2024-Q4","eventId":242139},
+    {"period":"FY2025-Q1","eventId":312403},{"period":"FY2025-Q2","eventId":340264},{"period":"FY2025-Q3","eventId":369650},{"period":"FY2025-Q4","eventId":403998},
+    {"period":"FY2026-Q1","eventId":549165},{"period":"FY2026-Q2","eventId":656928}
+  ]},
+  "CI": {"remaining":[
+    {"period":"FY2018-Q1","eventId":177716},{"period":"FY2018-Q2","eventId":177715},{"period":"FY2018-Q4","eventId":177713},
+    {"period":"FY2019-Q1","eventId":39442},{"period":"FY2019-Q2","eventId":39440},{"period":"FY2019-Q3","eventId":39439},{"period":"FY2019-Q4","eventId":39437},
+    {"period":"FY2020-Q1","eventId":39435},{"period":"FY2020-Q2","eventId":39433},{"period":"FY2020-Q3","eventId":39431},{"period":"FY2020-Q4","eventId":39430},
+    {"period":"FY2021-Q1","eventId":1058},{"period":"FY2021-Q2","eventId":7060},{"period":"FY2021-Q3","eventId":9852},{"period":"FY2021-Q4","eventId":13871},
+    {"period":"FY2022-Q1","eventId":21070},{"period":"FY2022-Q2","eventId":27673},{"period":"FY2022-Q3","eventId":27981},{"period":"FY2022-Q4","eventId":40418},
+    {"period":"FY2023-Q1","eventId":45859},{"period":"FY2023-Q2","eventId":52389},{"period":"FY2023-Q3","eventId":67406},{"period":"FY2023-Q4","eventId":113458},
+    {"period":"FY2024-Q1","eventId":128714},{"period":"FY2024-Q2","eventId":164921},{"period":"FY2024-Q3","eventId":196853},{"period":"FY2024-Q4","eventId":238593},
+    {"period":"FY2025-Q1","eventId":310910},{"period":"FY2025-Q2","eventId":330647},{"period":"FY2025-Q3","eventId":342007},{"period":"FY2025-Q4","eventId":396525},
+    {"period":"FY2026-Q1","eventId":552462},{"period":"FY2026-Q2","eventId":586494}
+  ]},
+  "ELV": {"remaining":[
+    {"period":"FY2018-Q1","eventId":185580},{"period":"FY2018-Q2","eventId":185579},{"period":"FY2018-Q3","eventId":185577},{"period":"FY2018-Q4","eventId":185576},
+    {"period":"FY2019-Q1","eventId":185574},{"period":"FY2019-Q2","eventId":185573},{"period":"FY2019-Q3","eventId":185572},{"period":"FY2019-Q4","eventId":185571},
+    {"period":"FY2020-Q1","eventId":185570},{"period":"FY2020-Q2","eventId":185568},{"period":"FY2020-Q3","eventId":185567},{"period":"FY2020-Q4","eventId":185561},
+    {"period":"FY2021-Q1","eventId":1919},{"period":"FY2021-Q2","eventId":2783},{"period":"FY2021-Q3","eventId":293},{"period":"FY2021-Q4","eventId":13063},
+    {"period":"FY2022-Q1","eventId":19078},{"period":"FY2022-Q2","eventId":28923},{"period":"FY2022-Q3","eventId":28922},{"period":"FY2022-Q4","eventId":38301},
+    {"period":"FY2023-Q1","eventId":50773},{"period":"FY2023-Q2","eventId":64079},{"period":"FY2023-Q3","eventId":83747},{"period":"FY2023-Q4","eventId":120161},
+    {"period":"FY2024-Q1","eventId":161468},{"period":"FY2024-Q2","eventId":185929},{"period":"FY2024-Q3","eventId":213923},{"period":"FY2024-Q4","eventId":240559},
+    {"period":"FY2025-Q1","eventId":309008},{"period":"FY2025-Q2","eventId":337737},{"period":"FY2025-Q3","eventId":364174},{"period":"FY2025-Q4","eventId":396520},
+    {"period":"FY2026-Q1","eventId":547702},{"period":"FY2026-Q2","eventId":652921}
+  ]},
+  "BSX": {"remaining":[
+    {"period":"FY2018-Q1","eventId":179388},{"period":"FY2018-Q2","eventId":179386},{"period":"FY2018-Q3","eventId":179384},{"period":"FY2018-Q4","eventId":179383},
+    {"period":"FY2019-Q1","eventId":179382},{"period":"FY2019-Q2","eventId":179379},{"period":"FY2019-Q3","eventId":179378},{"period":"FY2019-Q4","eventId":179375},
+    {"period":"FY2020-Q1","eventId":179374},{"period":"FY2020-Q2","eventId":179372},{"period":"FY2020-Q3","eventId":179370},{"period":"FY2020-Q4","eventId":179355},
+    {"period":"FY2021-Q1","eventId":3419},{"period":"FY2021-Q2","eventId":5068},{"period":"FY2021-Q3","eventId":9146},{"period":"FY2021-Q4","eventId":13783},
+    {"period":"FY2022-Q1","eventId":19848},{"period":"FY2022-Q2","eventId":27061},{"period":"FY2022-Q3","eventId":29352},{"period":"FY2022-Q4","eventId":39445},
+    {"period":"FY2023-Q1","eventId":51629},{"period":"FY2023-Q2","eventId":65129},{"period":"FY2023-Q3","eventId":124264},{"period":"FY2023-Q4","eventId":126355},
+    {"period":"FY2024-Q1","eventId":163928},{"period":"FY2024-Q2","eventId":188703},{"period":"FY2024-Q3","eventId":215300},{"period":"FY2024-Q4","eventId":237511},
+    {"period":"FY2025-Q1","eventId":313039},{"period":"FY2025-Q2","eventId":337853},{"period":"FY2025-Q3","eventId":366062},{"period":"FY2025-Q4","eventId":401654},
+    {"period":"FY2026-Q1","eventId":551669},{"period":"FY2026-Q2","eventId":652836}
+  ]}
+}

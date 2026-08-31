@@ -1,0 +1,364 @@
+[
+  {
+    "tree_id": "msft-build-analyst-briefing",
+    "ticker": "MSFT",
+    "book": "desk_ops_v2",
+    "kind": "promise",
+    "seed": "FY2017-Q2",
+    "clock": "FY2017-Q4",
+    "novelty_quarters": 43,
+    "quarters_after_seed": 38,
+    "first_after": "FY2017-Q3",
+    "last_after": "FY2026-Q4",
+    "book_nodes": [
+      {
+        "fiscal_period": "FY2026-Q4",
+        "edge": "silent",
+        "excerpt": null
+      }
+    ],
+    "book_state": "open",
+    "book_slipped": true,
+    "object_hits": 15,
+    "tight_hits": 15,
+    "tight_preview": [
+      {
+        "fiscal_period": "FY2017-Q3",
+        "dimension": "management_confidence",
+        "status": "verbatim",
+        "excerpt": "What I look and say that this number shows is that we are doing and it is encouraging that the plan that we put in place, that the sales team has done a really terrific job of executing on. And all that does is build more confidence that both we've picked a good market and we're investing in the right type of people to make sure we land that opportunity at customers.",
+        "claim": "Amy Hood explicitly signals confidence in Intelligent Cloud investment payoff with operating income returning to growth"
+      },
+      {
+        "fiscal_period": "FY2017-Q4",
+        "dimension": "management_confidence",
+        "status": "verbatim",
+        "excerpt": "Microsoft 365 is a fundamental shift in how we design, build, and go-to-market to address customer needs.",
+        "claim": "Management frames Microsoft 365 as a fundamental go-to-market shift, not just a product"
+      },
+      {
+        "fiscal_period": "FY2017-Q4",
+        "dimension": "competitive_position",
+        "status": "verbatim",
+        "excerpt": "Earlier this month, we introduced Microsoft 365, which brings together Office 365, Windows 10, and Enterprise Mobility & Security in a complete, secure solution to empower employees, safeguard businesses, and simplify IT management. Microsoft 365 is a fundamental shift in how we design, build, and go-to-market to address customer needs. Fortune 500 customers Fed-Ex, Dow Chemical, Staples, Progressive Insurance all chose Microsoft 365.",
+        "claim": "Microsoft 365 launched as comprehensive bundled platform uniting Office 365, Windows 10, and EMS with Fortune 500 early wins"
+      },
+      {
+        "fiscal_period": "FY2019-Q4",
+        "dimension": "competitive_position",
+        "status": "verbatim",
+        "excerpt": "So when we think about capital allocation, what's happening in the Cloud, what's happening in the Edge, how we build the network to optimize for streaming the same infrastructure, for example, is what Sony has decided to use as well, and be on Azure as well as use our AI capability.",
+        "claim": "Sony announced as Azure infrastructure customer for game streaming, new synergy between gaming and cloud disclosed"
+      },
+      {
+        "fiscal_period": "FY2021-Q3",
+        "dimension": "competitive_position",
+        "status": "verbatim",
+        "excerpt": "The new Microsoft Mesh builds on this momentum allowing for holographic interactions with true presence in a natural way on any device. We've already seen early adoption by Accenture, which is using mesh to build immersive virtual office experiences.",
+        "claim": "New Microsoft Mesh platform announced as first-class metaverse play with early enterprise adoption"
+      },
+      {
+        "fiscal_period": "FY2021-Q3",
+        "dimension": "competitive_position",
+        "status": "verbatim",
+        "excerpt": "This quarter we introduced new industry clouds for financial services, manufacturing and nonprofits, building on the momentum of existing clouds for health care and retail.",
+        "claim": "New industry clouds for financial services, manufacturing, and nonprofits disclosed for the first time"
+      },
+      {
+        "fiscal_period": "FY2022-Q4",
+        "dimension": "competitive_position",
+        "status": "verbatim",
+        "excerpt": "Just 2 weeks ago, Netflix chose us as its exclusive technology and sales partner for its first ad-supported subscription offering, a validation of the differentiated value we provide to any publisher looking for a flexible partner willing to build and innovate with them.",
+        "claim": "Netflix exclusively chose Microsoft as its ad technology and sales partner, a new high-profile competitive win"
+      },
+      {
+        "fiscal_period": "FY2023-Q1",
+        "dimension": "competitive_position",
+        "status": "verbatim",
+        "excerpt": "Four years since our acquisition, GitHub is now at $1 billion in annual recurring revenue. And GitHub's developer first ethos has never been stronger. More than 90 million people now use the service to build software for any cloud on any platform up three times.",
+        "claim": "GitHub reaches $1 billion in ARR milestone, first disclosure of this threshold"
+      }
+    ],
+    "object_preview": [
+      {
+        "fiscal_period": "FY2017-Q3",
+        "dimension": "management_confidence",
+        "status": "verbatim",
+        "excerpt": "What I look and say that this number shows is that we are doing and it is encouraging that the plan that we put in place, that the sales team has done a really terrific job of executing on. And all that does is build more confidence that both we've picked a good market and we're investing in the right type of people to make sure we land that opportunity at customers.",
+        "claim": "Amy Hood explicitly signals confidence in Intelligent Cloud investment payoff with operating income returning to growth"
+      },
+      {
+        "fiscal_period": "FY2017-Q4",
+        "dimension": "management_confidence",
+        "status": "verbatim",
+        "excerpt": "Microsoft 365 is a fundamental shift in how we design, build, and go-to-market to address customer needs.",
+        "claim": "Management frames Microsoft 365 as a fundamental go-to-market shift, not just a product"
+      },
+      {
+        "fiscal_period": "FY2017-Q4",
+        "dimension": "competitive_position",
+        "status": "verbatim",
+        "excerpt": "Earlier this month, we introduced Microsoft 365, which brings together Office 365, Windows 10, and Enterprise Mobility & Security in a complete, secure solution to empower employees, safeguard businesses, and simplify IT management. Microsoft 365 is a fundamental shift in how we design, build, and go-to-market to address customer needs. Fortune 500 customers Fed-Ex, Dow Chemical, Staples, Progressive Insurance all chose Microsoft 365.",
+        "claim": "Microsoft 365 launched as comprehensive bundled platform uniting Office 365, Windows 10, and EMS with Fortune 500 early wins"
+      },
+      {
+        "fiscal_period": "FY2019-Q4",
+        "dimension": "competitive_position",
+        "status": "verbatim",
+        "excerpt": "So when we think about capital allocation, what's happening in the Cloud, what's happening in the Edge, how we build the network to optimize for streaming the same infrastructure, for example, is what Sony has decided to use as well, and be on Azure as well as use our AI capability.",
+        "claim": "Sony announced as Azure infrastructure customer for game streaming, new synergy between gaming and cloud disclosed"
+      },
+      {
+        "fiscal_period": "FY2021-Q3",
+        "dimension": "competitive_position",
+        "status": "verbatim",
+        "excerpt": "The new Microsoft Mesh builds on this momentum allowing for holographic interactions with true presence in a natural way on any device. We've already seen early adoption by Accenture, which is using mesh to build immersive virtual office experiences.",
+        "claim": "New Microsoft Mesh platform announced as first-class metaverse play with early enterprise adoption"
+      },
+      {
+        "fiscal_period": "FY2021-Q3",
+        "dimension": "competitive_position",
+        "status": "verbatim",
+        "excerpt": "This quarter we introduced new industry clouds for financial services, manufacturing and nonprofits, building on the momentum of existing clouds for health care and retail.",
+        "claim": "New industry clouds for financial services, manufacturing, and nonprofits disclosed for the first time"
+      }
+    ]
+  },
+  {
+    "tree_id": "crm-20b-next-goal",
+    "ticker": "CRM",
+    "book": "desk_ops_v2",
+    "kind": "goal",
+    "seed": "FY2017-Q3",
+    "clock": null,
+    "novelty_quarters": 42,
+    "quarters_after_seed": 38,
+    "first_after": "FY2017-Q4",
+    "last_after": "FY2027-Q1",
+    "book_nodes": [],
+    "book_state": "open",
+    "book_slipped": false,
+    "object_hits": 3,
+    "tight_hits": 3,
+    "tight_preview": [
+      {
+        "fiscal_period": "FY2018-Q2",
+        "dimension": "management_confidence",
+        "status": "composite",
+        "excerpt": "I'll tell you, we took our whole management team offsite two weeks ago to lay out our plan for what we call chapter three. Chapter one for us certainly was zero to $1 billion...Now, we're in chapter three, which is to go from $10 to $20 billion.",
+        "claim": "New 'chapter three' strategic framework articulated after management offsite"
+      },
+      {
+        "fiscal_period": "FY2021-Q1",
+        "dimension": "management_confidence",
+        "status": "composite",
+        "excerpt": "for the fiscal year 2021 we're updating our guide to approximately $20 billion representing 17% projected growth year-over-year. And we believe this guide is very appropriate given the current biological and economic environment worldwide... In light of uncertainty surrounding the COVID pandemic, we are reassessing our long-term revenue target for fiscal 2024 and we're planning on giving an update during the investor day.",
+        "claim": "Full-year revenue guide cut and long-term target suspended"
+      },
+      {
+        "fiscal_period": "FY2021-Q4",
+        "dimension": "management_confidence",
+        "status": "verbatim",
+        "excerpt": "There's never been a software company over $20 billion in revenue that is growing as fast as we are. And as we shared at our Investor Day last year, our long-term revenue target for the fiscal year 2026 is now $50 billion or basically we're going to double the company from where we are right now.",
+        "claim": "CEO reiterates unambiguous confidence in growth trajectory and long-term targets"
+      }
+    ],
+    "object_preview": [
+      {
+        "fiscal_period": "FY2018-Q2",
+        "dimension": "management_confidence",
+        "status": "composite",
+        "excerpt": "I'll tell you, we took our whole management team offsite two weeks ago to lay out our plan for what we call chapter three. Chapter one for us certainly was zero to $1 billion...Now, we're in chapter three, which is to go from $10 to $20 billion.",
+        "claim": "New 'chapter three' strategic framework articulated after management offsite"
+      },
+      {
+        "fiscal_period": "FY2021-Q1",
+        "dimension": "management_confidence",
+        "status": "composite",
+        "excerpt": "for the fiscal year 2021 we're updating our guide to approximately $20 billion representing 17% projected growth year-over-year. And we believe this guide is very appropriate given the current biological and economic environment worldwide... In light of uncertainty surrounding the COVID pandemic, we are reassessing our long-term revenue target for fiscal 2024 and we're planning on giving an update during the investor day.",
+        "claim": "Full-year revenue guide cut and long-term target suspended"
+      },
+      {
+        "fiscal_period": "FY2021-Q4",
+        "dimension": "management_confidence",
+        "status": "verbatim",
+        "excerpt": "There's never been a software company over $20 billion in revenue that is growing as fast as we are. And as we shared at our Investor Day last year, our long-term revenue target for the fiscal year 2026 is now $50 billion or basically we're going to double the company from where we are right now.",
+        "claim": "CEO reiterates unambiguous confidence in growth trajectory and long-term targets"
+      }
+    ]
+  },
+  {
+    "tree_id": "lly-dividend-december",
+    "ticker": "LLY",
+    "book": "desk_hc_v2",
+    "kind": "promise",
+    "seed": "FY2016-Q2",
+    "clock": "FY2016-Q4",
+    "novelty_quarters": 42,
+    "quarters_after_seed": 40,
+    "first_after": "FY2016-Q3",
+    "last_after": "FY2026-Q2",
+    "book_nodes": [
+      {
+        "fiscal_period": "FY2026-Q2",
+        "edge": "silent",
+        "excerpt": null
+      }
+    ],
+    "book_state": "open",
+    "book_slipped": true,
+    "object_hits": 3,
+    "tight_hits": 2,
+    "tight_preview": [
+      {
+        "fiscal_period": "FY2017-Q4",
+        "dimension": "management_confidence",
+        "status": "verbatim",
+        "excerpt": "we announced an 8% increase in the dividend, reflecting our confidence in the continued growth prospects of the company.",
+        "claim": "8% dividend increase announced as concrete confidence signal"
+      },
+      {
+        "fiscal_period": "FY2019-Q4",
+        "dimension": "management_confidence",
+        "status": "verbatim",
+        "excerpt": "We also announced a 15% dividend increase for the second consecutive year, showing our confidence in the outlook for the company.",
+        "claim": "Second consecutive 15% dividend increase cited as confidence signal"
+      }
+    ],
+    "object_preview": [
+      {
+        "fiscal_period": "FY2017-Q4",
+        "dimension": "management_confidence",
+        "status": "verbatim",
+        "excerpt": "we announced an 8% increase in the dividend, reflecting our confidence in the continued growth prospects of the company.",
+        "claim": "8% dividend increase announced as concrete confidence signal"
+      },
+      {
+        "fiscal_period": "FY2019-Q4",
+        "dimension": "management_confidence",
+        "status": "verbatim",
+        "excerpt": "We also announced a 15% dividend increase for the second consecutive year, showing our confidence in the outlook for the company.",
+        "claim": "Second consecutive 15% dividend increase cited as confidence signal"
+      },
+      {
+        "fiscal_period": "FY2020-Q1",
+        "dimension": "management_confidence",
+        "status": "verbatim",
+        "excerpt": "At this point, we do not expect to make additional share repurchases in the near term in order to maintain a cushion of liquidity and capacity for investment and continued dividend growth.",
+        "claim": "Management pauses share buybacks \u2014 a new capital-preservation signal not present in prior quarter"
+      }
+    ]
+  },
+  {
+    "tree_id": "isrg-davinci-x",
+    "ticker": "ISRG",
+    "book": "desk_hc_v2",
+    "kind": "promise",
+    "seed": "FY2017-Q1",
+    "clock": "FY2017-Q4",
+    "novelty_quarters": 42,
+    "quarters_after_seed": 37,
+    "first_after": "FY2017-Q2",
+    "last_after": "FY2026-Q2",
+    "book_nodes": [],
+    "book_state": "open",
+    "book_slipped": false,
+    "object_hits": 7,
+    "tight_hits": 7,
+    "tight_preview": [
+      {
+        "fiscal_period": "FY2017-Q2",
+        "dimension": "competitive_position",
+        "status": "composite",
+        "excerpt": "Of the 166 second quarter systems, 11 were X systems... During the quarter, the first clinical experience on da Vinci X occurred in Germany. Initial procedures include urology and gynecology with strong early utilization.",
+        "claim": "First real-world X placements and clinical use data disclosed"
+      },
+      {
+        "fiscal_period": "FY2017-Q4",
+        "dimension": "competitive_position",
+        "status": "verbatim",
+        "excerpt": "We did see a number of customers in Europe trade out their Sis for X product, so to get into the fourth-generation product and have access then to the latest instrumentation.",
+        "claim": "da Vinci X driving trade-ins among European customers seeking fourth-generation standardization"
+      },
+      {
+        "fiscal_period": "FY2018-Q2",
+        "dimension": "competitive_position",
+        "status": "verbatim",
+        "excerpt": "As the standalone systems, they should be at a slight premium to our da Vinci Xi, less than 20%-30%, more like in the 5% range.",
+        "claim": "SP ASP premium over Xi quantified for the first time at approximately 5%"
+      },
+      {
+        "fiscal_period": "FY2018-Q4",
+        "dimension": "macro_regulatory_risk",
+        "status": "verbatim",
+        "excerpt": "Our efforts in China will accelerate in 2019 with the da Vinci distribution arm of Fosun Pharma, Chindex, joining our joint venture this quarter. Combined with the release of the next system quota and the clearance of da Vinci Xi in China, we will be accelerating investments to establish our base to serve China over the long term.",
+        "claim": "Chindex joining the China JV formally announced as a Q4 event, accelerating China market entry"
+      },
+      {
+        "fiscal_period": "FY2020-Q2",
+        "dimension": "competitive_position",
+        "status": "verbatim",
+        "excerpt": "Beginning Q4 this year, we plan to introduce an updated set of select EndoWrist instruments for use with da Vinci X and Xi that will enable increased use beyond the current 10-use lifespan, part of our Extended Use Program. Extended use will vary from two to eight additional uses per instrument.",
+        "claim": "New Extended Use Program announced: instruments extended from 10 to 12-18 uses starting Q4 2020"
+      },
+      {
+        "fiscal_period": "FY2023-Q2",
+        "dimension": "competitive_position",
+        "status": "verbatim",
+        "excerpt": "We recently obtained NMPA registration for Xi local production in China. This means our da Vinci Xi will be able to compete for the locally sourced tender subset of the recently released updated national quota.",
+        "claim": "New: NMPA registration for locally produced Xi unlocks locally-sourced tender subset in China"
+      },
+      {
+        "fiscal_period": "FY2024-Q2",
+        "dimension": "management_confidence",
+        "status": "verbatim",
+        "excerpt": "One of the questions I would ask, and Dave, you can answer it, is, are there any procedures that physicians prefer using da Vinci Xi to da Vinci 5? In other words, is there any preference to stay with what they've got? Dave Rosa: Yeah, so, you know, Gary, in all of my discussions and with the team, surgeons prefer the use of da Vinci 5 for the reasons we talked about.",
+        "claim": "Management confident that surgeons universally prefer dv5 over Xi"
+      }
+    ],
+    "object_preview": [
+      {
+        "fiscal_period": "FY2017-Q2",
+        "dimension": "competitive_position",
+        "status": "composite",
+        "excerpt": "Of the 166 second quarter systems, 11 were X systems... During the quarter, the first clinical experience on da Vinci X occurred in Germany. Initial procedures include urology and gynecology with strong early utilization.",
+        "claim": "First real-world X placements and clinical use data disclosed"
+      },
+      {
+        "fiscal_period": "FY2017-Q4",
+        "dimension": "competitive_position",
+        "status": "verbatim",
+        "excerpt": "We did see a number of customers in Europe trade out their Sis for X product, so to get into the fourth-generation product and have access then to the latest instrumentation.",
+        "claim": "da Vinci X driving trade-ins among European customers seeking fourth-generation standardization"
+      },
+      {
+        "fiscal_period": "FY2018-Q2",
+        "dimension": "competitive_position",
+        "status": "verbatim",
+        "excerpt": "As the standalone systems, they should be at a slight premium to our da Vinci Xi, less than 20%-30%, more like in the 5% range.",
+        "claim": "SP ASP premium over Xi quantified for the first time at approximately 5%"
+      },
+      {
+        "fiscal_period": "FY2018-Q4",
+        "dimension": "macro_regulatory_risk",
+        "status": "verbatim",
+        "excerpt": "Our efforts in China will accelerate in 2019 with the da Vinci distribution arm of Fosun Pharma, Chindex, joining our joint venture this quarter. Combined with the release of the next system quota and the clearance of da Vinci Xi in China, we will be accelerating investments to establish our base to serve China over the long term.",
+        "claim": "Chindex joining the China JV formally announced as a Q4 event, accelerating China market entry"
+      },
+      {
+        "fiscal_period": "FY2020-Q2",
+        "dimension": "competitive_position",
+        "status": "verbatim",
+        "excerpt": "Beginning Q4 this year, we plan to introduce an updated set of select EndoWrist instruments for use with da Vinci X and Xi that will enable increased use beyond the current 10-use lifespan, part of our Extended Use Program. Extended use will vary from two to eight additional uses per instrument.",
+        "claim": "New Extended Use Program announced: instruments extended from 10 to 12-18 uses starting Q4 2020"
+      },
+      {
+        "fiscal_period": "FY2023-Q2",
+        "dimension": "competitive_position",
+        "status": "verbatim",
+        "excerpt": "We recently obtained NMPA registration for Xi local production in China. This means our da Vinci Xi will be able to compete for the locally sourced tender subset of the recently released updated national quota.",
+        "claim": "New: NMPA registration for locally produced Xi unlocks locally-sourced tender subset in China"
+      }
+    ]
+  }
+]

@@ -1,0 +1,116 @@
+{
+  "wave": "C",
+  "status": "complete",
+  "updated": "2026-08-19T09:33:00-04:00",
+  "tickers": {
+    "ISRG": {
+      "companyId": 6078,
+      "name": "Intuitive Surgical",
+      "status": "done",
+      "events_listed": 43,
+      "transcript_available": 43,
+      "written": [
+        "FY2015-Q4", "FY2016-Q1", "FY2016-Q2", "FY2016-Q3", "FY2016-Q4",
+        "FY2017-Q1", "FY2017-Q2", "FY2017-Q3", "FY2017-Q4",
+        "FY2018-Q1", "FY2018-Q2", "FY2018-Q3", "FY2018-Q4",
+        "FY2019-Q1", "FY2019-Q2", "FY2019-Q3", "FY2019-Q4",
+        "FY2020-Q1", "FY2020-Q2", "FY2020-Q3", "FY2020-Q4",
+        "FY2021-Q1", "FY2021-Q2", "FY2021-Q3", "FY2021-Q4",
+        "FY2022-Q1", "FY2022-Q2", "FY2022-Q3", "FY2022-Q4",
+        "FY2023-Q1", "FY2023-Q2", "FY2023-Q3", "FY2023-Q4",
+        "FY2024-Q1", "FY2024-Q2", "FY2024-Q3", "FY2024-Q4",
+        "FY2025-Q1", "FY2025-Q2", "FY2025-Q3", "FY2025-Q4",
+        "FY2026-Q1", "FY2026-Q2"
+      ],
+      "missing_transcripts": [],
+      "skipped_existing": [],
+      "note": "All 43 available events staged and assembled; all transcripts_raw files >2000 bytes."
+    },
+    "SYK": {
+      "companyId": 4857,
+      "name": "Stryker",
+      "status": "done",
+      "events_listed": 43,
+      "transcript_available": 43,
+      "written": [
+        "FY2015-Q4", "FY2016-Q1", "FY2016-Q2", "FY2016-Q3", "FY2016-Q4",
+        "FY2017-Q1", "FY2017-Q2", "FY2017-Q3", "FY2017-Q4",
+        "FY2018-Q1", "FY2018-Q2", "FY2018-Q3", "FY2018-Q4",
+        "FY2019-Q1", "FY2019-Q2", "FY2019-Q3", "FY2019-Q4",
+        "FY2020-Q1", "FY2020-Q2", "FY2020-Q3", "FY2020-Q4",
+        "FY2021-Q1", "FY2021-Q2", "FY2021-Q3", "FY2021-Q4",
+        "FY2022-Q1", "FY2022-Q2", "FY2022-Q3", "FY2022-Q4",
+        "FY2023-Q1", "FY2023-Q2", "FY2023-Q3", "FY2023-Q4",
+        "FY2024-Q1", "FY2024-Q2", "FY2024-Q3", "FY2024-Q4",
+        "FY2025-Q1", "FY2025-Q2", "FY2025-Q3", "FY2025-Q4",
+        "FY2026-Q1", "FY2026-Q2"
+      ],
+      "missing_transcripts": [],
+      "skipped_existing": [],
+      "note": "All 43 available events staged and assembled; all transcripts_raw files >2000 bytes."
+    },
+    "GILD": {
+      "companyId": 5113,
+      "name": "Gilead Sciences",
+      "status": "done",
+      "events_listed": 37,
+      "transcript_available": 34,
+      "written": [
+        "FY2018-Q1", "FY2018-Q2", "FY2018-Q3", "FY2018-Q4",
+        "FY2019-Q1", "FY2019-Q2", "FY2019-Q3", "FY2019-Q4",
+        "FY2020-Q1", "FY2020-Q2", "FY2020-Q3", "FY2020-Q4",
+        "FY2021-Q1", "FY2021-Q2", "FY2021-Q3", "FY2021-Q4",
+        "FY2022-Q1", "FY2022-Q2", "FY2022-Q3", "FY2022-Q4",
+        "FY2023-Q1", "FY2023-Q2", "FY2023-Q3", "FY2023-Q4",
+        "FY2024-Q1", "FY2024-Q2", "FY2024-Q3", "FY2024-Q4",
+        "FY2025-Q1", "FY2025-Q2", "FY2025-Q3", "FY2025-Q4",
+        "FY2026-Q1", "FY2026-Q2"
+      ],
+      "missing_transcripts": ["FY2015-Q4", "FY2016-Q4", "FY2017-Q4"],
+      "skipped_existing": [],
+      "note": "34 available events assembled to transcripts_raw. All remaining page-2 Q&A tails persisted (001.json next=null) for FY2023-Q2 through FY2026-Q2. No further GILD windows needed. Wave status left in_progress."
+    },
+    "VRTX": {
+      "companyId": 6557,
+      "name": "Vertex Pharmaceuticals",
+      "status": "done",
+      "events_listed": 36,
+      "transcript_available": 34,
+      "written": [
+        "FY2018-Q1", "FY2018-Q2", "FY2018-Q3", "FY2018-Q4",
+        "FY2019-Q1", "FY2019-Q2", "FY2019-Q3", "FY2019-Q4",
+        "FY2020-Q1", "FY2020-Q2", "FY2020-Q3", "FY2020-Q4",
+        "FY2021-Q1", "FY2021-Q2", "FY2021-Q3", "FY2021-Q4",
+        "FY2022-Q1", "FY2022-Q2", "FY2022-Q3", "FY2022-Q4",
+        "FY2023-Q1", "FY2023-Q2", "FY2023-Q3", "FY2023-Q4",
+        "FY2024-Q1", "FY2024-Q2", "FY2024-Q3", "FY2024-Q4",
+        "FY2025-Q1", "FY2025-Q2", "FY2025-Q3", "FY2025-Q4",
+        "FY2026-Q1", "FY2026-Q2"
+      ],
+      "missing_transcripts": ["FY2016-Q4", "FY2017-Q4"],
+      "skipped_existing": [],
+      "note": "34 available events assembled to transcripts_raw (all >2000 bytes). No events before FY2016-Q4; no Q1-Q3 for 2016-2017; Q4 2016-2017 have transcript.available=false. Six periods complete in one page (NEXT=None): FY2018-Q1/Q2, FY2019-Q4, FY2020-Q4, FY2021-Q1/Q2. All 28 page-2 Q&A tails persisted (001.json next=null); no further windows needed."
+    },
+    "MDT": {
+      "companyId": 4054,
+      "name": "Medtronic",
+      "status": "done",
+      "events_listed": 38,
+      "transcript_available": 36,
+      "written": [
+        "FY2018-Q1", "FY2018-Q2", "FY2018-Q3", "FY2018-Q4",
+        "FY2019-Q1", "FY2019-Q2", "FY2019-Q3", "FY2019-Q4",
+        "FY2020-Q1", "FY2020-Q2", "FY2020-Q3", "FY2020-Q4",
+        "FY2021-Q1", "FY2021-Q2", "FY2021-Q3", "FY2021-Q4",
+        "FY2022-Q1", "FY2022-Q2", "FY2022-Q3", "FY2022-Q4",
+        "FY2023-Q1", "FY2023-Q2", "FY2023-Q3", "FY2023-Q4",
+        "FY2024-Q1", "FY2024-Q2", "FY2024-Q3", "FY2024-Q4",
+        "FY2025-Q1", "FY2025-Q2", "FY2025-Q3", "FY2025-Q4",
+        "FY2026-Q1", "FY2026-Q2", "FY2026-Q3", "FY2026-Q4"
+      ],
+      "missing_transcripts": ["FY2016-Q4", "FY2017-Q4"],
+      "skipped_existing": [],
+      "note": "36 available events assembled to transcripts_raw (all >2000 bytes). Quartr fiscalYear/eventType used as-is (FYE offset). No events before FY2016-Q4; Q4 2016-2017 have transcript.available=false. All page-2 Q&A tails persisted (001.json next=null) for FY2018-Q1..FY2026-Q4. No remaining MDT tails. Wave status left in_progress."
+    }
+  }
+}

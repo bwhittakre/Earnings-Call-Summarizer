@@ -1,0 +1,3699 @@
+{
+  "updated_at": "2026-08-19T13:26:38+00:00",
+  "results": [
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "status": "failed",
+      "error": "resolve_companies_list() got an unexpected keyword argument 'client'"
+    },
+    {
+      "ticker": "LLY",
+      "fiscal_period": "FY2026-Q2",
+      "mode": "onboard",
+      "status": "failed",
+      "lookback_years": 10,
+      "reason": "Forced mode=onboard",
+      "prior_event_count": 43,
+      "transcripts_pulled": 43,
+      "prior_quarters": [
+        "FY2015-Q4"
+      ],
+      "output_quarters": [
+        "FY2016-Q1",
+        "FY2016-Q2",
+        "FY2016-Q3",
+        "FY2016-Q4",
+        "FY2017-Q1",
+        "FY2017-Q2",
+        "FY2017-Q3",
+        "FY2017-Q4",
+        "FY2018-Q1",
+        "FY2018-Q2",
+        "FY2018-Q3",
+        "FY2018-Q4",
+        "FY2019-Q1",
+        "FY2019-Q2",
+        "FY2019-Q3",
+        "FY2019-Q4",
+        "FY2020-Q1",
+        "FY2020-Q2",
+        "FY2020-Q3",
+        "FY2020-Q4",
+        "FY2021-Q1",
+        "FY2021-Q2",
+        "FY2021-Q3",
+        "FY2021-Q4",
+        "FY2022-Q1",
+        "FY2022-Q2",
+        "FY2022-Q3",
+        "FY2022-Q4",
+        "FY2023-Q1",
+        "FY2023-Q2",
+        "FY2023-Q3",
+        "FY2023-Q4",
+        "FY2024-Q1",
+        "FY2024-Q2",
+        "FY2024-Q3",
+        "FY2024-Q4",
+        "FY2025-Q1",
+        "FY2025-Q2",
+        "FY2025-Q3",
+        "FY2025-Q4",
+        "FY2026-Q1",
+        "FY2026-Q2"
+      ],
+      "estpermid": 30064846182,
+      "fiscal_calendar_written": true,
+      "history_import_note": "",
+      "allowlist_guidance": "LLY is already in the Roz ticker book.",
+      "steps": [
+        {
+          "step": "count_prior_events",
+          "prior_event_count": 43,
+          "source": "on_disk_mcp",
+          "note": "Quartr REST is opt-in (--use-quartr-rest). Mode uses on-disk MCP transcript count."
+        },
+        {
+          "step": "ticker_book",
+          "skipped": true,
+          "research_sector": "healthcare_large_cap",
+          "note": "skip_book_sync: sector file is managed by the caller"
+        },
+        {
+          "step": "classify",
+          "mode": "onboard",
+          "lookback_years": 10,
+          "reason": "Forced mode=onboard"
+        },
+        {
+          "step": "scaffold_quarters",
+          "prior_quarters": [
+            "FY2015-Q4"
+          ],
+          "output_quarters": [
+            "FY2016-Q1",
+            "FY2016-Q2",
+            "FY2016-Q3",
+            "FY2016-Q4",
+            "FY2017-Q1",
+            "FY2017-Q2",
+            "FY2017-Q3",
+            "FY2017-Q4",
+            "FY2018-Q1",
+            "FY2018-Q2",
+            "FY2018-Q3",
+            "FY2018-Q4",
+            "FY2019-Q1",
+            "FY2019-Q2",
+            "FY2019-Q3",
+            "FY2019-Q4",
+            "FY2020-Q1",
+            "FY2020-Q2",
+            "FY2020-Q3",
+            "FY2020-Q4",
+            "FY2021-Q1",
+            "FY2021-Q2",
+            "FY2021-Q3",
+            "FY2021-Q4",
+            "FY2022-Q1",
+            "FY2022-Q2",
+            "FY2022-Q3",
+            "FY2022-Q4",
+            "FY2023-Q1",
+            "FY2023-Q2",
+            "FY2023-Q3",
+            "FY2023-Q4",
+            "FY2024-Q1",
+            "FY2024-Q2",
+            "FY2024-Q3",
+            "FY2024-Q4",
+            "FY2025-Q1",
+            "FY2025-Q2",
+            "FY2025-Q3",
+            "FY2025-Q4",
+            "FY2026-Q1",
+            "FY2026-Q2"
+          ],
+          "on_disk": [
+            "FY2015-Q4",
+            "FY2016-Q1",
+            "FY2016-Q2",
+            "FY2016-Q3",
+            "FY2016-Q4",
+            "FY2017-Q1",
+            "FY2017-Q2",
+            "FY2017-Q3",
+            "FY2017-Q4",
+            "FY2018-Q1",
+            "FY2018-Q2",
+            "FY2018-Q3",
+            "FY2018-Q4",
+            "FY2019-Q1",
+            "FY2019-Q2",
+            "FY2019-Q3",
+            "FY2019-Q4",
+            "FY2020-Q1",
+            "FY2020-Q2",
+            "FY2020-Q3",
+            "FY2020-Q4",
+            "FY2021-Q1",
+            "FY2021-Q2",
+            "FY2021-Q3",
+            "FY2021-Q4",
+            "FY2022-Q1",
+            "FY2022-Q2",
+            "FY2022-Q3",
+            "FY2022-Q4",
+            "FY2023-Q1",
+            "FY2023-Q2",
+            "FY2023-Q3",
+            "FY2023-Q4",
+            "FY2024-Q1",
+            "FY2024-Q2",
+            "FY2024-Q3",
+            "FY2024-Q4",
+            "FY2025-Q1",
+            "FY2025-Q2",
+            "FY2025-Q3",
+            "FY2025-Q4",
+            "FY2026-Q1",
+            "FY2026-Q2"
+          ]
+        },
+        {
+          "step": "resolve_ids",
+          "estpermid": 30064846182,
+          "isin": "GB0005163141",
+          "barra_id": null,
+          "source": "overlay"
+        },
+        {
+          "step": "write_overlay",
+          "path": "C:\\Users\\BobbyWhittaker\\OneDrive - Cassius Capital\\Desktop\\Earnings Call Summarizer\\Structured Narrative\\config\\company_overlays\\LLY.json"
+        },
+        {
+          "step": "fiscal_calendar",
+          "written": true,
+          "calendar_type": "calendar_fiscal",
+          "fye_month": 12,
+          "fye_day": 31
+        },
+        {
+          "step": "failed",
+          "error": "Command failed (1): C:\\Users\\BobbyWhittaker\\OneDrive - Cassius Capital\\Desktop\\Earnings Call Summarizer\\.venv\\Scripts\\python.exe C:\\Users\\BobbyWhittaker\\OneDrive - Cassius Capital\\Desktop\\Earnings Call Summarizer\\Structured Narrative\\single_company_extractor.py --ticker LLY\nobbyWhittaker\\OneDrive - Cassius Capital\\Desktop\\Earnings Call Summarizer\\.venv\\Lib\\site-packages\\snowflake\\connector\\connection.py\", line 1219, in connect\n    self.__open_connection()\n  File \"C:\\Users\\BobbyWhittaker\\OneDrive - Cassius Capital\\Desktop\\Earnings Call Summarizer\\.venv\\Lib\\site-packages\\snowflake\\connector\\connection.py\", line 1660, in __open_connection\n    self.authenticate_with_retry(self.auth_class)\n  File \"C:\\Users\\BobbyWhittaker\\OneDrive - Cassius Capital\\Desktop\\Earnings Call Summarizer\\.venv\\Lib\\site-packages\\snowflake\\connector\\connection.py\", line 2017, in authenticate_with_retry\n    self._authenticate(auth_instance)\n  File \"C:\\Users\\BobbyWhittaker\\OneDrive - Cassius Capital\\Desktop\\Earnings Call Summarizer\\.venv\\Lib\\site-packages\\snowflake\\connector\\connection.py\", line 2064, in _authenticate\n    auth.authenticate(\n  File \"C:\\Users\\BobbyWhittaker\\OneDrive - Cassius Capital\\Desktop\\Earnings Call Summarizer\\.venv\\Lib\\site-packages\\snowflake\\connector\\auth\\_auth.py\", line 469, in authenticate\n    Error.errorhandler_wrapper(\n  File \"C:\\Users\\BobbyWhittaker\\OneDrive - Cassius Capital\\Desktop\\Earnings Call Summarizer\\.venv\\Lib\\site-packages\\snowflake\\connector\\errors.py\", line 298, in errorhandler_wrapper\n    handed_over = Error.hand_to_other_handler(\n                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\BobbyWhittaker\\OneDrive - Cassius Capital\\Desktop\\Earnings Call Summarizer\\.venv\\Lib\\site-packages\\snowflake\\connector\\errors.py\", line 361, in hand_to_other_handler\n    connection.errorhandler(connection, cursor, error_class, error_value)\n  File \"C:\\Users\\BobbyWhittaker\\OneDrive - Cassius Capital\\Desktop\\Earnings Call Summarizer\\.venv\\Lib\\site-packages\\snowflake\\connector\\errors.py\", line 229, in default_errorhandler\n    raise error_class(\nsnowflake.connector.errors.DatabaseError: 390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [ace2a508-fce5-4a60-8779-b6da161f24de]\n"
+        }
+      ],
+      "error": "Command failed (1): C:\\Users\\BobbyWhittaker\\OneDrive - Cassius Capital\\Desktop\\Earnings Call Summarizer\\.venv\\Scripts\\python.exe C:\\Users\\BobbyWhittaker\\OneDrive - Cassius Capital\\Desktop\\Earnings Call Summarizer\\Structured Narrative\\single_company_extractor.py --ticker LLY\nobbyWhittaker\\OneDrive - Cassius Capital\\Desktop\\Earnings Call Summarizer\\.venv\\Lib\\site-packages\\snowflake\\connector\\connection.py\", line 1219, in connect\n    self.__open_connection()\n  File \"C:\\Users\\BobbyWhittaker\\OneDrive - Cassius Capital\\Desktop\\Earnings Call Summarizer\\.venv\\Lib\\site-packages\\snowflake\\connector\\connection.py\", line 1660, in __open_connection\n    self.authenticate_with_retry(self.auth_class)\n  File \"C:\\Users\\BobbyWhittaker\\OneDrive - Cassius Capital\\Desktop\\Earnings Call Summarizer\\.venv\\Lib\\site-packages\\snowflake\\connector\\connection.py\", line 2017, in authenticate_with_retry\n    self._authenticate(auth_instance)\n  File \"C:\\Users\\BobbyWhittaker\\OneDrive - Cassius Capital\\Desktop\\Earnings Call Summarizer\\.venv\\Lib\\site-packages\\snowflake\\connector\\connection.py\", line 2064, in _authenticate\n    auth.authenticate(\n  File \"C:\\Users\\BobbyWhittaker\\OneDrive - Cassius Capital\\Desktop\\Earnings Call Summarizer\\.venv\\Lib\\site-packages\\snowflake\\connector\\auth\\_auth.py\", line 469, in authenticate\n    Error.errorhandler_wrapper(\n  File \"C:\\Users\\BobbyWhittaker\\OneDrive - Cassius Capital\\Desktop\\Earnings Call Summarizer\\.venv\\Lib\\site-packages\\snowflake\\connector\\errors.py\", line 298, in errorhandler_wrapper\n    handed_over = Error.hand_to_other_handler(\n                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\BobbyWhittaker\\OneDrive - Cassius Capital\\Desktop\\Earnings Call Summarizer\\.venv\\Lib\\site-packages\\snowflake\\connector\\errors.py\", line 361, in hand_to_other_handler\n    connection.errorhandler(connection, cursor, error_class, error_value)\n  File \"C:\\Users\\BobbyWhittaker\\OneDrive - Cassius Capital\\Desktop\\Earnings Call Summarizer\\.venv\\Lib\\site-packages\\snowflake\\connector\\errors.py\", line 229, in default_errorhandler\n    raise error_class(\nsnowflake.connector.errors.DatabaseError: 390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [ace2a508-fce5-4a60-8779-b6da161f24de]\n"
+    },
+    {
+      "ticker": "UNH",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [1b2eb498-eba0-435e-8a57-a100e9ea4858]"
+    },
+    {
+      "ticker": "JNJ",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [bdbd3661-31ef-409f-9676-5828931da1d2]"
+    },
+    {
+      "ticker": "ABBV",
+      "status": "failed",
+      "error": "390432 (08001): Failed to connect to DB: CKJIEDY-JBC56909.snowflakecomputing.com:443. Fail : Network policy is required. [89a0a1e7-6465-4ab3-85a5-54c20b7ed603]"
+    }
+  ]
+}

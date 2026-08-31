@@ -1,0 +1,442 @@
+[
+  {
+    "ticker": "AAPL",
+    "universe": "tech",
+    "novelty": true,
+    "book": "desk_ops_v2",
+    "trees": 1,
+    "seedable": 27,
+    "covered": 1,
+    "leftover": 26
+  },
+  {
+    "ticker": "ACN",
+    "universe": "tech",
+    "novelty": true,
+    "book": "desk_ops_v2",
+    "trees": 1,
+    "seedable": 22,
+    "covered": 1,
+    "leftover": 21
+  },
+  {
+    "ticker": "ADBE",
+    "universe": "tech",
+    "novelty": true,
+    "book": "desk_ops_v2",
+    "trees": 1,
+    "seedable": 25,
+    "covered": 1,
+    "leftover": 24
+  },
+  {
+    "ticker": "ADI",
+    "universe": "tech",
+    "novelty": true,
+    "book": "desk_ops_v2",
+    "trees": 1,
+    "seedable": 32,
+    "covered": 1,
+    "leftover": 31
+  },
+  {
+    "ticker": "ADSK",
+    "universe": "tech",
+    "novelty": true,
+    "book": "desk_ops_v2",
+    "trees": 1,
+    "seedable": 27,
+    "covered": 1,
+    "leftover": 26
+  },
+  {
+    "ticker": "AMAT",
+    "universe": "tech",
+    "novelty": true,
+    "book": "desk_ops_v2",
+    "trees": 1,
+    "seedable": 34,
+    "covered": 1,
+    "leftover": 33
+  },
+  {
+    "ticker": "AMD",
+    "universe": "tech",
+    "novelty": true,
+    "book": "desk_ops_v2",
+    "trees": 1,
+    "seedable": 29,
+    "covered": 1,
+    "leftover": 28
+  },
+  {
+    "ticker": "AMZN",
+    "universe": "tech",
+    "novelty": true,
+    "book": "desk_ops_v2",
+    "trees": 1,
+    "seedable": 23,
+    "covered": 1,
+    "leftover": 22
+  },
+  {
+    "ticker": "APH",
+    "universe": "tech",
+    "novelty": true,
+    "book": "desk_ops_v2",
+    "trees": 0,
+    "seedable": 4,
+    "covered": 0,
+    "leftover": 4
+  },
+  {
+    "ticker": "AVGO",
+    "universe": "tech",
+    "novelty": true,
+    "book": "desk_ops_v2",
+    "trees": 2,
+    "seedable": 38,
+    "covered": 2,
+    "leftover": 36
+  },
+  {
+    "ticker": "CRM",
+    "universe": "tech",
+    "novelty": true,
+    "book": "desk_ops_v2",
+    "trees": 1,
+    "seedable": 18,
+    "covered": 1,
+    "leftover": 17
+  },
+  {
+    "ticker": "CSCO",
+    "universe": "tech",
+    "novelty": true,
+    "book": "desk_ops_v2",
+    "trees": 1,
+    "seedable": 20,
+    "covered": 1,
+    "leftover": 19
+  },
+  {
+    "ticker": "CTSH",
+    "universe": "tech",
+    "novelty": true,
+    "book": "desk_ops_v2",
+    "trees": 1,
+    "seedable": 45,
+    "covered": 1,
+    "leftover": 44
+  },
+  {
+    "ticker": "IBM",
+    "universe": "tech",
+    "novelty": true,
+    "book": "desk_ops_v2",
+    "trees": 1,
+    "seedable": 21,
+    "covered": 1,
+    "leftover": 20
+  },
+  {
+    "ticker": "INTU",
+    "universe": "tech",
+    "novelty": true,
+    "book": "desk_ops_v2",
+    "trees": 1,
+    "seedable": 20,
+    "covered": 1,
+    "leftover": 19
+  },
+  {
+    "ticker": "LRCX",
+    "universe": "tech",
+    "novelty": true,
+    "book": "desk_ops_v2",
+    "trees": 1,
+    "seedable": 14,
+    "covered": 0,
+    "leftover": 14
+  },
+  {
+    "ticker": "MSFT",
+    "universe": "tech",
+    "novelty": true,
+    "book": "desk_ops_v2",
+    "trees": 1,
+    "seedable": 30,
+    "covered": 1,
+    "leftover": 29
+  },
+  {
+    "ticker": "MU",
+    "universe": "tech",
+    "novelty": true,
+    "book": "desk_ops_v2",
+    "trees": 1,
+    "seedable": 38,
+    "covered": 1,
+    "leftover": 37
+  },
+  {
+    "ticker": "NVDA",
+    "universe": "tech",
+    "novelty": true,
+    "book": "nvda_gold_v2",
+    "trees": 33,
+    "seedable": 31,
+    "covered": 31,
+    "leftover": 0
+  },
+  {
+    "ticker": "ORCL",
+    "universe": "tech",
+    "novelty": true,
+    "book": "desk_ops_v2",
+    "trees": 1,
+    "seedable": 41,
+    "covered": 1,
+    "leftover": 40
+  },
+  {
+    "ticker": "TEL",
+    "universe": "tech",
+    "novelty": true,
+    "book": "desk_ops_v2",
+    "trees": 1,
+    "seedable": 15,
+    "covered": 1,
+    "leftover": 14
+  },
+  {
+    "ticker": "TXN",
+    "universe": "tech",
+    "novelty": true,
+    "book": "desk_ops_v2",
+    "trees": 1,
+    "seedable": 41,
+    "covered": 1,
+    "leftover": 40
+  },
+  {
+    "ticker": "OPAL",
+    "universe": "tech",
+    "novelty": true,
+    "book": "desk_ops_v2",
+    "trees": 1,
+    "seedable": 8,
+    "covered": 1,
+    "leftover": 7
+  },
+  {
+    "ticker": "STRW",
+    "universe": "tech",
+    "novelty": true,
+    "book": "desk_ops_v2",
+    "trees": 1,
+    "seedable": 6,
+    "covered": 1,
+    "leftover": 5
+  },
+  {
+    "ticker": "LLY",
+    "universe": "healthcare",
+    "novelty": true,
+    "book": "desk_hc_v2",
+    "trees": 1,
+    "seedable": 44,
+    "covered": 1,
+    "leftover": 43
+  },
+  {
+    "ticker": "UNH",
+    "universe": "healthcare",
+    "novelty": true,
+    "book": "desk_hc_v2",
+    "trees": 1,
+    "seedable": 44,
+    "covered": 1,
+    "leftover": 43
+  },
+  {
+    "ticker": "JNJ",
+    "universe": "healthcare",
+    "novelty": true,
+    "book": "desk_hc_v2",
+    "trees": 1,
+    "seedable": 38,
+    "covered": 1,
+    "leftover": 37
+  },
+  {
+    "ticker": "ABBV",
+    "universe": "healthcare",
+    "novelty": true,
+    "book": "desk_hc_v2",
+    "trees": 1,
+    "seedable": 34,
+    "covered": 1,
+    "leftover": 33
+  },
+  {
+    "ticker": "MRK",
+    "universe": "healthcare",
+    "novelty": true,
+    "book": "desk_hc_v2",
+    "trees": 1,
+    "seedable": 24,
+    "covered": 1,
+    "leftover": 23
+  },
+  {
+    "ticker": "TMO",
+    "universe": "healthcare",
+    "novelty": true,
+    "book": "desk_hc_v2",
+    "trees": 1,
+    "seedable": 30,
+    "covered": 1,
+    "leftover": 29
+  },
+  {
+    "ticker": "ABT",
+    "universe": "healthcare",
+    "novelty": true,
+    "book": "desk_hc_v2",
+    "trees": 1,
+    "seedable": 32,
+    "covered": 1,
+    "leftover": 31
+  },
+  {
+    "ticker": "DHR",
+    "universe": "healthcare",
+    "novelty": true,
+    "book": "desk_hc_v2",
+    "trees": 1,
+    "seedable": 25,
+    "covered": 0,
+    "leftover": 25
+  },
+  {
+    "ticker": "PFE",
+    "universe": "healthcare",
+    "novelty": true,
+    "book": "desk_hc_v2",
+    "trees": 1,
+    "seedable": 44,
+    "covered": 1,
+    "leftover": 43
+  },
+  {
+    "ticker": "AMGN",
+    "universe": "healthcare",
+    "novelty": true,
+    "book": "desk_hc_v2",
+    "trees": 1,
+    "seedable": 24,
+    "covered": 1,
+    "leftover": 23
+  },
+  {
+    "ticker": "ISRG",
+    "universe": "healthcare",
+    "novelty": true,
+    "book": "desk_hc_v2",
+    "trees": 1,
+    "seedable": 28,
+    "covered": 1,
+    "leftover": 27
+  },
+  {
+    "ticker": "SYK",
+    "universe": "healthcare",
+    "novelty": true,
+    "book": "desk_hc_v2",
+    "trees": 1,
+    "seedable": 17,
+    "covered": 1,
+    "leftover": 16
+  },
+  {
+    "ticker": "GILD",
+    "universe": "healthcare",
+    "novelty": true,
+    "book": "desk_hc_v2",
+    "trees": 1,
+    "seedable": 31,
+    "covered": 1,
+    "leftover": 30
+  },
+  {
+    "ticker": "VRTX",
+    "universe": "healthcare",
+    "novelty": true,
+    "book": "desk_hc_v2",
+    "trees": 1,
+    "seedable": 41,
+    "covered": 1,
+    "leftover": 40
+  },
+  {
+    "ticker": "MDT",
+    "universe": "healthcare",
+    "novelty": true,
+    "book": "desk_hc_v2",
+    "trees": 1,
+    "seedable": 22,
+    "covered": 1,
+    "leftover": 21
+  },
+  {
+    "ticker": "BMY",
+    "universe": "healthcare",
+    "novelty": true,
+    "book": "desk_hc_v2",
+    "trees": 1,
+    "seedable": 21,
+    "covered": 1,
+    "leftover": 20
+  },
+  {
+    "ticker": "REGN",
+    "universe": "healthcare",
+    "novelty": true,
+    "book": "desk_hc_v2",
+    "trees": 1,
+    "seedable": 22,
+    "covered": 1,
+    "leftover": 21
+  },
+  {
+    "ticker": "CI",
+    "universe": "healthcare",
+    "novelty": true,
+    "book": "desk_hc_v2",
+    "trees": 1,
+    "seedable": 35,
+    "covered": 1,
+    "leftover": 34
+  },
+  {
+    "ticker": "ELV",
+    "universe": "healthcare",
+    "novelty": true,
+    "book": "desk_hc_v2",
+    "trees": 1,
+    "seedable": 23,
+    "covered": 1,
+    "leftover": 22
+  },
+  {
+    "ticker": "BSX",
+    "universe": "healthcare",
+    "novelty": true,
+    "book": "desk_hc_v2",
+    "trees": 1,
+    "seedable": 29,
+    "covered": 1,
+    "leftover": 28
+  }
+]

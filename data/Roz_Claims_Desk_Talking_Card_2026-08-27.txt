@@ -1,0 +1,20 @@
+Claims Desk — talking card — 27 August 2026
+Locked book generated_at=2026-08-17T17:28:40+00:00. Split asof-path-id-17aug-book-v1. Demo: http://localhost:8501/Claims_Desk
+Say these definitions once
+Type — printed fact, completed announcement, forward clock, or pending close. Only the last two are promises.
+State — open, kept, slipped, subject-changed. Kept = the object came back. Slipped is not automatically missed.
+Delivery — delivered, missed, unresolved, not-a-promise. Hand-labeled from the two cites. Not inferred from kept.
+Book counts (quote these)
+28 rows. Pilot 15. Same-beat backfill 13. State: kept 9, open 4, subject-changed 15, slipped 0. Delivery: delivered 1, missed 0, unresolved 3, not-a-promise 24. Deliver rate 1 / 1 (100%). Salesforce, Informatica, later Flex, and digital-twin TAM are em dashes, not zeros.
+Flex — read the two cites
+Seed — ADSK FY2022-Q2 · novelty_view · competitive_position · verbatim
+At the end of September, we will launch a new pay-as-you-go consumption model, called Flex. It matches the customer's cost with their usage.
+Follow-up — ADSK FY2022-Q3 · novelty_view · competitive_position · composite
+One of the things we're seeing with Flex is exactly what we expected to see. We're seeing a large percent of Flex business coming in is net new.
+Coverage: next quarter treated Flex as live usage mix — net new, occasional, and advanced-product buyers — not a restated launch date. Verdict: kept and delivered. Path ID hit on this row: false.
+Three unresolved clocks
+ADSK Flex transaction model — fiscal 25/26. Next quarter silent. Silence before the clock is not a miss.
+CRM Informatica — $8 billion pending close. No next-quarter cite that it closed or died.
+ADSK digital-twin TAM — no next quarter in the locked book. Cannot be scored.
+Do not say
+Kept means delivered. Deliver rate 0% on names with no scored promise. Path ID hit/miss as the desk verdict. The remaining 125. A new LLM. transcripts_raw. Healthcare mixed into this book. Promotion of production_v1.

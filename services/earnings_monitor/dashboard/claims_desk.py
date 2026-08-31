@@ -56,6 +56,16 @@ def fiscal_key(fiscal: str) -> tuple[int, int]:
     return (int(match.group(1)), int(match.group(2)))
 
 
+def clock_is_due(clock: str | None, fiscal_period: str) -> bool:
+    if not clock:
+        return False
+    clock_key = fiscal_key(clock)
+    here = fiscal_key(fiscal_period)
+    if clock_key[0] < 0 or here[0] < 0:
+        return False
+    return here >= clock_key
+
+
 def shift_fiscal(fiscal: str, delta: int) -> str | None:
     year, quarter = fiscal_key(fiscal)
     if year < 0:

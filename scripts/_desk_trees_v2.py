@@ -577,6 +577,52 @@ def build_book(
     }
 
 
+def build_ops_book(
+    catalog: Sequence[Mapping[str, object]],
+    novelty_by_ticker: Mapping[str, Mapping[str, object] | None],
+    *,
+    generated_at: str,
+    verify_excerpts: bool = True,
+    book_id: str = "desk_ops_v2",
+    split: str = "tech-ops-novelty-present",
+    caption: str | None = None,
+) -> dict[str, object]:
+    """Operational multi-ticker book. Not NVIDIA gold. Not the 17 Aug book."""
+    if generated_at == V1_LOCKED_GENERATED_AT:
+        raise SystemExit("ops book refuses the 17 Aug stamp")
+    if generated_at == NVDA_STAMP:
+        raise SystemExit("ops book refuses the NVIDIA gold stamp")
+    trees = [build_tree(item) for item in catalog]
+    evolved_keeps_parent_seed(trees)
+    if verify_excerpts:
+        for tree in trees:
+            ticker = str(tree.get("ticker") or "")
+            verify_tree_against_novelty(tree, novelty_by_ticker.get(ticker))
+    promises = [tree for tree in trees if tree.get("kind") == "promise"]
+    goals = [tree for tree in trees if tree.get("kind") == "goal"]
+    tickers = sorted({str(tree.get("ticker") or "") for tree in trees if tree.get("ticker")})
+    return {
+        "generated_at": generated_at,
+        "case_study_id": CASE_STUDY_ID,
+        "book_id": book_id,
+        "split": split,
+        "calendar": "per-ticker",
+        "caption": caption
+        or (
+            "Claims desk v2 operational book. Not NVIDIA gold. "
+            "Not the 17 Aug Rank IC book. Seed cites start trees; "
+            "walk does not invent delivered, hit, or missed."
+        ),
+        "n_trees": len(trees),
+        "n_promises": len(promises),
+        "n_goals": len(goals),
+        "tickers": tickers,
+        "deliver_rates": {"book": deliver_rate_counts(promises)},
+        "hit_rates": {"book": hit_rate_counts(goals)},
+        "trees": trees,
+    }
+
+
 def _novelty_path(ticker: str) -> Path:
     return (
         ROOT

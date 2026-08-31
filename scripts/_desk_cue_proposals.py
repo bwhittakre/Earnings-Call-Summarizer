@@ -18,26 +18,31 @@ if str(ROOT) not in sys.path:
 
 from scripts._desk_cue_queue import V1_STAMP, refuse_forbidden, refuse_stamp  # noqa: E402
 from scripts._desk_trees_v2 import FULL_SPLIT, NVDA_STAMP  # noqa: E402
+from scripts._desk_trees_v2_hc import HC_SPLIT, HC_STAMP  # noqa: E402
+from scripts._desk_trees_v2_ops import OPS_SPLIT, OPS_STAMP  # noqa: E402
 
 PROPOSALS_NAME = "desk_cue_proposals_v2.json"
 FY_RE = re.compile(r"\bFY\d{4}-Q[1-4]\b", re.I)
 SLUG_RE = re.compile(r"[^a-z0-9]+")
 
 
-def proposals_path(repo_root: Path | str | None = None) -> Path:
+def proposals_path(
+    repo_root: Path | str | None = None,
+    *,
+    ticker: str | None = None,
+) -> Path:
     root = Path(repo_root) if repo_root is not None else ROOT
-    return (
-        root
-        / "Structured Narrative"
-        / "output"
-        / "cross_company"
-        / "json"
-        / PROPOSALS_NAME
-    )
+    folder = root / "Structured Narrative" / "output" / "cross_company" / "json"
+    want = str(ticker or "").upper()
+    if want and want != "NVDA":
+        return folder / f"desk_cue_proposals_v2_{want}.json"
+    return folder / PROPOSALS_NAME
 
 
 def proposer_gate(queue: Mapping[str, object]) -> tuple[bool, str]:
-    gold = queue.get("gold") if isinstance(queue.get("gold"), Mapping) else {}
+    gold = queue.get("gold") if isinstance(queue.get("gold"), Mapping) else None
+    if gold is None:
+        return True, "ops"
     if gold.get("recall") != 1.0:
         return False, "gold_recall"
     return True, "ok"
@@ -55,14 +60,20 @@ def propose_clock(excerpt: str) -> str | None:
     return None
 
 
-def propose_from_missed(row: Mapping[str, object]) -> dict[str, object]:
+def propose_from_missed(
+    row: Mapping[str, object],
+    *,
+    ticker: str | None = None,
+) -> dict[str, object]:
     excerpt = str(row.get("excerpt") or "").strip()
     kind = str(row.get("class") or "promise")
     fiscal = str(row.get("fiscal_period") or "")
     words = " ".join(excerpt.split()[:8])
-    tree_id = f"nvda-proposed-{_slug(fiscal + '-' + words)}"
+    want = str(ticker or row.get("ticker") or "nvda").lower()
+    tree_id = f"{want}-proposed-{_slug(fiscal + '-' + words)}"
     return {
         "tree_id": tree_id,
+        "ticker": want.upper(),
         "kind": kind if kind in {"promise", "goal"} else "promise",
         "fiscal_period": fiscal or None,
         "excerpt": excerpt,
@@ -77,16 +88,23 @@ def build_cue_proposals(
     book: Mapping[str, object],
     queue: Mapping[str, object],
     now: datetime | None = None,
+    ticker: str | None = None,
 ) -> dict[str, object]:
     refuse_stamp(book.get("generated_at"))
     refuse_forbidden(queue)
     allowed, reason = proposer_gate(queue)
     stamped = now or datetime.now(timezone.utc)
+    stamp = str(book.get("generated_at") or "")
     missed = [row for row in (queue.get("missed") or []) if isinstance(row, Mapping)]
-    proposals = [propose_from_missed(row) for row in missed] if allowed else []
+    proposals = (
+        [propose_from_missed(row, ticker=ticker) for row in missed] if allowed else []
+    )
     return {
-        "generated_at": NVDA_STAMP,
-        "split": FULL_SPLIT,
+        "generated_at": stamp,
+        "split": FULL_SPLIT
+        if stamp == NVDA_STAMP
+        else (HC_SPLIT if stamp == HC_STAMP else OPS_SPLIT),
+        "ticker": str(ticker or queue.get("ticker") or "").upper() or None,
         "written_at": stamped.isoformat(),
         "gate": {"allowed": allowed, "reason": reason},
         "n_proposals": len(proposals),
@@ -104,9 +122,12 @@ def write_cue_proposals(
     book: Mapping[str, object],
     queue: Mapping[str, object],
     now: datetime | None = None,
+    ticker: str | None = None,
 ) -> dict[str, object]:
-    payload = build_cue_proposals(book=book, queue=queue, now=now)
-    path = proposals_path(repo_root)
+    payload = build_cue_proposals(
+        book=book, queue=queue, now=now, ticker=ticker
+    )
+    path = proposals_path(repo_root, ticker=ticker)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
     return payload

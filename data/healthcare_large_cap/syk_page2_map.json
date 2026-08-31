@@ -1,0 +1,10 @@
+{
+  "27885": {"period": "FY2022-Q3", "fromTimestamp": 3426.41},
+  "40458": {"period": "FY2022-Q4", "fromTimestamp": 3302.9},
+  "51573": {"period": "FY2023-Q1", "fromTimestamp": 3296.03},
+  "66066": {"period": "FY2023-Q2", "fromTimestamp": 3232.28},
+  "189829": {"period": "FY2024-Q2", "fromTimestamp": 3150.6},
+  "217099": {"period": "FY2024-Q3", "fromTimestamp": 3251.82},
+  "250739": {"period": "FY2024-Q4", "fromTimestamp": 3292.14},
+  "402794": {"period": "FY2025-Q4", "fromTimestamp": 3154.5}
+}

@@ -6,18 +6,127 @@ import os
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
-from services.earnings_monitor.dashboard.claims_desk import history_backdrop_window
+from services.earnings_monitor.dashboard.claims_desk import (
+    clock_is_due,
+    history_backdrop_window,
+)
+from services.earnings_monitor.dashboard.claims_horizon import (
+    HORIZON_CHOICES,
+    book_fiscal_span,
+    build_horizon_chart,
+    fiscal_span,
+    horizon_series,
+)
+from services.earnings_monitor.dashboard.claims_quotes import (
+    filter_quote_rows,
+    quote_rows,
+)
 from services.earnings_monitor.dashboard.company_labels import format_company_label
 from services.earnings_monitor.dashboard.data import DashboardData
 
-from scripts._desk_trees_v2 import clock_is_due
-
 _NVDA_STAMP = "2026-08-27T18:02:00+00:00"
 _V1_STAMP = "2026-08-17T17:28:40+00:00"
+_OPS_STAMP = "2026-08-31T14:18:00+00:00"
+_HC_STAMP = "2026-08-31T14:45:00+00:00"
 _TREES_FILENAME = "desk_trees_v2.json"
+_OPS_TREES_FILENAME = "desk_trees_ops_v2.json"
+_HC_TREES_FILENAME = "desk_trees_hc_v2.json"
 _METRICS_FILENAME = "desk_panel_metrics_v2.json"
 _QUEUE_FILENAME = "desk_cue_queue_v2.json"
+_OPS_QUEUE_INDEX = "desk_cue_queue_ops_v2.json"
+_HC_QUEUE_INDEX = "desk_cue_queue_hc_v2.json"
 _BOOK_NVDA = "nvda_gold_v2"
+_BOOK_OPS = "desk_ops_v2"
+_BOOK_HC = "desk_hc_v2"
+_HC_SECTORS = frozenset(
+    {
+        "healthcare_large_cap",
+        "healthcare_ex_payers",
+        "managed_care",
+        "medtech_tools",
+        "pharma_biotech",
+    }
+)
+_TECH_SECTORS = frozenset(
+    {
+        "xlk_tech",
+        "tech_core",
+        "software_pure",
+        "software_cloud",
+        "semis_cycle",
+        "semiconductors",
+        "mega_cap_tech",
+        "mega_inbook",
+        "equipment",
+        "designers",
+    }
+)
+_HC_TICKERS = frozenset(
+    {
+        "ABBV",
+        "ABT",
+        "AMGN",
+        "BMY",
+        "BSX",
+        "CI",
+        "DHR",
+        "ELV",
+        "GILD",
+        "ISRG",
+        "JNJ",
+        "LLY",
+        "MDT",
+        "MRK",
+        "PFE",
+        "REGN",
+        "SYK",
+        "TMO",
+        "UNH",
+        "VRTX",
+    }
+)
+
+
+def suggested_book(
+    sector_choice: str | None,
+    available: Sequence[str],
+    custom_tickers: Sequence[str] | None = None,
+) -> str:
+    """Default book for the Roz sector filter. Gold stays selectable."""
+    books = [str(name) for name in available]
+    sector = str(sector_choice or "")
+    if sector in _HC_SECTORS and _BOOK_HC in books:
+        return _BOOK_HC
+    if sector in _TECH_SECTORS and _BOOK_OPS in books:
+        return _BOOK_OPS
+    if sector == "Custom List":
+        customs = {
+            str(ticker).upper()
+            for ticker in (custom_tickers or ())
+            if str(ticker).strip()
+        }
+        if customs and customs <= _HC_TICKERS and _BOOK_HC in books:
+            return _BOOK_HC
+        if customs == {"NVDA"} and _BOOK_NVDA in books:
+            return _BOOK_NVDA
+        if _BOOK_OPS in books:
+            return _BOOK_OPS
+    for name in (_BOOK_NVDA, _BOOK_OPS, _BOOK_HC):
+        if name in books:
+            return name
+    return books[0] if books else _BOOK_NVDA
+
+
+def scored_rate_caption(n_scoreable: object, kind: str) -> str:
+    """Honest footnote. Em dash is not a 0% keep rate."""
+    if int(n_scoreable or 0) <= 0:
+        return f"No scored {kind} yet. Em dash is not a 0% keep rate."
+    return f"Scored {kind} only. Unresolved is an em dash."
+
+
+def show_trailing_credibility(book_choice: str) -> bool:
+    """Locked NVIDIA sidecar stays off ops and healthcare books."""
+    return book_choice == _BOOK_NVDA
 
 
 def load_desk_trees_v2(
@@ -50,6 +159,126 @@ def _cross_company_json(history_source: str | os.PathLike[str] | None) -> Path:
     if root.name == "output" or (root / "cross_company").is_dir():
         return root / "cross_company" / "json"
     return root / "output" / "cross_company" / "json"
+
+
+def load_desk_trees_ops_v2(
+    history_source: str | os.PathLike[str] | None = None,
+) -> dict[str, Any] | None:
+    """Read the operational book. Refuse gold and 17 Aug stamps."""
+    path = _cross_company_json(history_source) / _OPS_TREES_FILENAME
+    if not path.is_file():
+        return None
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError, TypeError):
+        return None
+    if not isinstance(payload, dict):
+        return None
+    stamp = str(payload.get("generated_at") or "")
+    if stamp in {_V1_STAMP, _NVDA_STAMP, _HC_STAMP} or stamp != _OPS_STAMP:
+        return None
+    return payload
+
+
+def load_desk_trees_hc_v2(
+    history_source: str | os.PathLike[str] | None = None,
+) -> dict[str, Any] | None:
+    """Read the healthcare book. Refuse gold, tech ops, and 17 Aug stamps."""
+    path = _cross_company_json(history_source) / _HC_TREES_FILENAME
+    if not path.is_file():
+        return None
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError, TypeError):
+        return None
+    if not isinstance(payload, dict):
+        return None
+    stamp = str(payload.get("generated_at") or "")
+    if stamp in {_V1_STAMP, _NVDA_STAMP, _OPS_STAMP} or stamp != _HC_STAMP:
+        return None
+    return payload
+
+
+def load_desk_cue_queue_ops_v2(
+    history_source: str | os.PathLike[str] | None = None,
+) -> dict[str, Any] | None:
+    """Merge per-ticker ops queues. Empty missed list is omitted by the page."""
+    folder = _cross_company_json(history_source)
+    index_path = folder / _OPS_QUEUE_INDEX
+    missed: list[dict[str, Any]] = []
+    n_seedable = 0
+    n_covered = 0
+    n_missed = 0
+    latest = None
+    for path in sorted(folder.glob("desk_cue_queue_v2_*.json")):
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError, TypeError):
+            continue
+        if not isinstance(payload, dict):
+            continue
+        stamp = str(payload.get("generated_at") or "")
+        if stamp != _OPS_STAMP:
+            continue
+        n_seedable += int(payload.get("n_seedable") or 0)
+        n_covered += int(payload.get("n_covered") or 0)
+        n_missed += int(payload.get("n_missed") or 0)
+        latest = payload.get("latest_quarter") or latest
+        for row in payload.get("missed") or []:
+            if isinstance(row, dict):
+                missed.append(row)
+    if index_path.is_file() or missed or n_seedable:
+        return {
+            "generated_at": _OPS_STAMP,
+            "latest_quarter": latest,
+            "n_seedable": n_seedable,
+            "n_covered": n_covered,
+            "n_missed": n_missed,
+            "missed": missed,
+            "gold": None,
+        }
+    return None
+
+
+def load_desk_cue_queue_hc_v2(
+    history_source: str | os.PathLike[str] | None = None,
+) -> dict[str, Any] | None:
+    """Merge per-ticker healthcare queues. Tech leftovers stay on the ops book."""
+    folder = _cross_company_json(history_source)
+    index_path = folder / _HC_QUEUE_INDEX
+    missed: list[dict[str, Any]] = []
+    n_seedable = 0
+    n_covered = 0
+    n_missed = 0
+    latest = None
+    for path in sorted(folder.glob("desk_cue_queue_v2_*.json")):
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError, TypeError):
+            continue
+        if not isinstance(payload, dict):
+            continue
+        stamp = str(payload.get("generated_at") or "")
+        if stamp != _HC_STAMP:
+            continue
+        n_seedable += int(payload.get("n_seedable") or 0)
+        n_covered += int(payload.get("n_covered") or 0)
+        n_missed += int(payload.get("n_missed") or 0)
+        latest = payload.get("latest_quarter") or latest
+        for row in payload.get("missed") or []:
+            if isinstance(row, dict):
+                missed.append(row)
+    if index_path.is_file() or missed or n_seedable:
+        return {
+            "generated_at": _HC_STAMP,
+            "latest_quarter": latest,
+            "n_seedable": n_seedable,
+            "n_covered": n_covered,
+            "n_missed": n_missed,
+            "missed": missed,
+            "gold": None,
+        }
+    return None
 
 
 def load_desk_cue_queue_v2(
@@ -186,6 +415,16 @@ def format_rate(rate: object) -> str:
     return f"{number:.0%}"
 
 
+def format_n_rate(rate: object, n: object, yes: object) -> str:
+    try:
+        count = int(n or 0)
+    except (TypeError, ValueError):
+        count = 0
+    if count <= 0:
+        return "—"
+    return f"{format_rate(rate)} ({yes}/{count})"
+
+
 def filter_trees_to_universe(
     trees: Sequence[Mapping[str, Any]],
     universe: Sequence[str] | None,
@@ -226,6 +465,148 @@ def tree_node_rows(tree: Mapping[str, Any]) -> list[dict[str, Any]]:
     return rows
 
 
+def _render_horizon_panel(st: Any, trees: Sequence[Mapping[str, Any]]) -> None:
+    st.subheader("Horizon keep rate")
+    st.caption(
+        "New series. A due clock with only a silent / slipped edge is a miss "
+        "here. Tree delivery stays unresolved. This is not the locked gold "
+        "6/7 desk_trust."
+    )
+    span_start, span_end = book_fiscal_span(trees)
+    periods_all = fiscal_span(span_start, span_end)
+    if not periods_all:
+        st.caption("No dated clocks to score.")
+        return
+    tickers = sorted(
+        {str(tree.get("ticker") or "").upper() for tree in trees if tree.get("ticker")}
+    )
+    col_h, col_k, col_c = st.columns(3)
+    with col_h:
+        horizon = st.selectbox("Horizon", list(HORIZON_CHOICES), index=0)
+    with col_k:
+        kind_choice = st.selectbox("Kind", ("promises", "goals", "both"), index=0)
+    with col_c:
+        company = st.selectbox("Company", ["all", *tickers], index=0)
+    col_a, col_b = st.columns(2)
+    with col_a:
+        start = st.selectbox("From", periods_all, index=0)
+    with col_b:
+        end_index = len(periods_all) - 1
+        end = st.selectbox("Through", periods_all, index=end_index)
+    kinds = None
+    if kind_choice == "promises":
+        kinds = ("promise",)
+    elif kind_choice == "goals":
+        kinds = ("goal",)
+    focus = None if company == "all" else company
+    window_periods = fiscal_span(str(start), str(end))
+    series = horizon_series(
+        trees,
+        window_periods,
+        horizon=horizon,
+        ticker=focus,
+        kinds=kinds,
+        window=(str(start), str(end)),
+    )
+    latest = series[-1] if series else {}
+    metric_a, metric_b = st.columns(2)
+    with metric_a:
+        st.metric(
+            "This-window quarterly (last period)",
+            format_n_rate(
+                latest.get("horizon_quarter_rate"),
+                latest.get("horizon_quarter_n"),
+                latest.get("horizon_quarter_yes"),
+            ),
+        )
+    with metric_b:
+        st.metric(
+            "Cumulative in window",
+            format_n_rate(
+                latest.get("horizon_cum_rate"),
+                latest.get("horizon_cum_n"),
+                latest.get("horizon_cum_yes"),
+            ),
+        )
+    chart = build_horizon_chart(series)
+    if chart is not None:
+        try:
+            st.altair_chart(chart, use_container_width=True)
+        except Exception as exc:  # noqa: BLE001
+            st.caption(f"Unable to render horizon chart: {exc}")
+    elif series:
+        st.dataframe(
+            [
+                {
+                    "fiscal_period": row.get("fiscal_period"),
+                    "quarterly": format_n_rate(
+                        row.get("horizon_quarter_rate"),
+                        row.get("horizon_quarter_n"),
+                        row.get("horizon_quarter_yes"),
+                    ),
+                    "cumulative": format_n_rate(
+                        row.get("horizon_cum_rate"),
+                        row.get("horizon_cum_n"),
+                        row.get("horizon_cum_yes"),
+                    ),
+                }
+                for row in series
+            ],
+            hide_index=True,
+            use_container_width=True,
+        )
+
+
+def _render_quote_table(st: Any, trees: Sequence[Mapping[str, Any]]) -> None:
+    rows = quote_rows(trees)
+    if not rows:
+        return
+    st.subheader("Quotes")
+    st.caption(
+        "Seed, later restatements, and the close. Silent quarters are omitted. "
+        "Slipped is a filter tag, not a typed miss."
+    )
+    outcomes = sorted({str(row.get("outcome") or "") for row in rows})
+    tickers = sorted({str(row.get("ticker") or "").upper() for row in rows if row.get("ticker")})
+    col_o, col_k, col_r = st.columns(3)
+    with col_o:
+        picked_outcomes = st.multiselect("Outcome", outcomes, default=outcomes)
+    with col_k:
+        picked_kinds = st.multiselect("Quote kind", ("promise", "goal"), default=("promise", "goal"))
+    with col_r:
+        picked_roles = st.multiselect(
+            "Role", ("seed", "change", "close"), default=("seed", "change", "close")
+        )
+    picked_tickers = None
+    if len(tickers) > 1:
+        picked_tickers = st.multiselect("Quote company", tickers, default=tickers)
+    filtered = filter_quote_rows(
+        rows,
+        outcomes=picked_outcomes,
+        kinds=picked_kinds,
+        roles=picked_roles,
+        tickers=picked_tickers,
+    )
+    st.dataframe(
+        [
+            {
+                "company": format_company_label(str(row.get("ticker") or "")),
+                "fiscal_period": row.get("fiscal_period"),
+                "role": row.get("role"),
+                "edge": row.get("edge"),
+                "kind": row.get("kind"),
+                "outcome": row.get("outcome"),
+                "claim": row.get("title"),
+                "clock": row.get("clock") or "—",
+                "excerpt": row.get("excerpt"),
+            }
+            for row in filtered
+        ],
+        hide_index=True,
+        use_container_width=True,
+    )
+
+
 def last_cited_fiscal(tree: Mapping[str, Any]) -> str | None:
     for node in reversed(list(tree.get("nodes") or [])):
         fiscal = str(node.get("fiscal_period") or "").strip()
@@ -243,39 +624,64 @@ def render_claims_trees(
     sector_tickers: Sequence[str] | None = None,
     sector_choice: str | None = None,
 ) -> None:
-    payload = load_desk_trees_v2()
-    if payload is None:
+    gold = load_desk_trees_v2()
+    ops = load_desk_trees_ops_v2()
+    healthcare = load_desk_trees_hc_v2()
+    if gold is None and ops is None and healthcare is None:
         st.info(
-            "Claims desk v2 is missing or the stamp is not the NVIDIA gold book."
+            "Claims desk v2 is missing or the stamp is not a recognized book."
         )
         return
-    books = [_BOOK_NVDA]
-    book_choice = st.selectbox("Book", books, index=0)
-    if book_choice != str(payload.get("book_id") or _BOOK_NVDA):
-        st.info("Only the NVIDIA gold book is loaded.")
-        return
+    books = [
+        name
+        for name, payload in (
+            (_BOOK_NVDA, gold),
+            (_BOOK_OPS, ops),
+            (_BOOK_HC, healthcare),
+        )
+        if payload
+    ]
     universe = None
     if sector_tickers is not None:
         universe = [str(ticker).upper() for ticker in sector_tickers]
+    default_book = suggested_book(
+        sector_choice,
+        books,
+        custom_tickers=universe if sector_choice == "Custom List" else None,
+    )
+    book_index = books.index(default_book) if default_book in books else 0
+    book_choice = st.selectbox(
+        "Book",
+        books,
+        index=book_index,
+        key=f"claims_trees_book_follow_{sector_choice or 'all'}",
+    )
+    payload = {_BOOK_NVDA: gold, _BOOK_OPS: ops, _BOOK_HC: healthcare}.get(book_choice)
+    if payload is None:
+        st.info("Selected book is not loaded.")
+        return
     trees = filter_trees_to_universe(list(payload.get("trees") or []), universe)
-    if not trees:
+    if not trees and book_choice == _BOOK_NVDA:
         st.info("No v2 trees in the current Roz universe filter.")
         return
+    if not trees:
+        st.caption("No typed trees yet. Uncovered cues still list leftover seeds.")
 
     deliver = (payload.get("deliver_rates") or {}).get("book") or {}
     hits = (payload.get("hit_rates") or {}).get("book") or {}
     st.caption(str(payload.get("caption") or ""))
+    window = list(payload.get("window") or [])
+    window_text = f"{window[0]}–{window[-1]}" if window else "operational, no gold window"
     st.caption(
         f"Stamp {payload.get('generated_at')} · {payload.get('split')} · "
         f"calendar {payload.get('calendar')} · "
-        f"window {payload.get('window', [''])[0]}–"
-        f"{payload.get('window', [''])[-1]}. "
+        f"window {window_text}. "
         f"Sector filter {sector_choice or 'all'} does not retune xlk_tech."
     )
     col_a, col_b = st.columns(2)
     with col_a:
         st.subheader("Deliver rate")
-        st.caption("Scored promises only. Unresolved is an em dash.")
+        st.caption(scored_rate_caption(deliver.get("n_scoreable"), "promises"))
         st.metric("Book deliver rate", format_rate(deliver.get("deliver_rate")))
         st.caption(
             f"{deliver.get('delivered', 0)} delivered / "
@@ -283,14 +689,14 @@ def render_claims_trees(
         )
     with col_b:
         st.subheader("Hit rate")
-        st.caption("Scored goals only. Still-want is an em dash.")
+        st.caption(scored_rate_caption(hits.get("n_scoreable"), "goals"))
         st.metric("Book hit rate", format_rate(hits.get("hit_rate")))
         st.caption(
             f"{hits.get('hit', 0)} hit / {hits.get('n_scoreable', 0)} scored"
         )
 
     metrics_payload = load_desk_panel_metrics_v2()
-    if metrics_payload:
+    if show_trailing_credibility(book_choice) and metrics_payload:
         st.subheader("Trailing credibility")
         st.caption(
             "Point-in-time expanding rates on management_confidence. "
@@ -319,7 +725,12 @@ def render_claims_trees(
                 use_container_width=True,
             )
 
-    queue = load_desk_cue_queue_v2()
+    if book_choice == _BOOK_NVDA:
+        queue = load_desk_cue_queue_v2()
+    elif book_choice == _BOOK_HC:
+        queue = load_desk_cue_queue_hc_v2()
+    else:
+        queue = load_desk_cue_queue_ops_v2()
     latest = latest_scored_fiscal(payload, queue)
     board = clock_board(trees, latest)
     st.subheader("Due and slipped")
@@ -360,6 +771,10 @@ def render_claims_trees(
             use_container_width=True,
         )
 
+    if trees:
+        _render_horizon_panel(st, trees)
+        _render_quote_table(st, trees)
+
     missed = list((queue or {}).get("missed") or [])
     if missed:
         st.subheader("Uncovered cues")
@@ -375,6 +790,7 @@ def render_claims_trees(
         st.dataframe(
             [
                 {
+                    "company": format_company_label(str(row.get("ticker") or "")),
                     "fiscal_period": row.get("fiscal_period"),
                     "class": row.get("class"),
                     "dimension": row.get("dimension"),
