@@ -782,6 +782,45 @@ def workshop_book_entry(
     }
 
 
+def _load_workshop_regimes(
+    history_source: os.PathLike[str] | str | None = None,
+) -> dict[str, Any] | None:
+    """Load the management-regimes sidecar for the workshop bundle."""
+    try:
+        from services.earnings_monitor.dashboard.claims_regimes import load_desk_regimes_v1
+        return load_desk_regimes_v1(history_source)
+    except Exception:
+        return None
+
+
+def _load_seed_candidates(
+    repo_root: Path | None = None,
+) -> dict[str, Any] | None:
+    """Load LLM-proposed seed candidates if present. Gated on file existence."""
+    root = repo_root or Path(__file__).resolve().parents[3]
+    path = root / "data" / "seed_batch_candidates.json"
+    if not path.is_file():
+        return None
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+
+
+def _load_terminal_candidates(
+    repo_root: Path | None = None,
+) -> dict[str, Any] | None:
+    """Load LLM-proposed terminal candidates if present. Gated on file existence."""
+    root = repo_root or Path(__file__).resolve().parents[3]
+    path = root / "data" / "terminal_score_candidates.json"
+    if not path.is_file():
+        return None
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+
+
 def workshop_bundle(
     history_source: str | os.PathLike[str] | None = None,
 ) -> dict[str, Any]:
@@ -826,6 +865,9 @@ def workshop_bundle(
         "transparency": load_desk_transparency_v2(history_source),
         "quant": load_desk_quant_v2(history_source),
         "expire_caption": EXPIRE_CAPTION,
+        "regimes": _load_workshop_regimes(history_source),
+        "seed_candidates": _load_seed_candidates(),
+        "terminal_candidates": _load_terminal_candidates(),
     }
 
 

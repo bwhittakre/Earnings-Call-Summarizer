@@ -852,6 +852,25 @@ def render_period_heatmap(
         return
     _plotly_chart(st, _heatmap_figure(rows, periods, signals), key="rank_ic_heatmap")
 
+    # ── Regime transition markers (non-breaking) ──────────────────────────
+    # Only show when viewing a single company (otherwise transitions from
+    # multiple CEOs across multiple tickers would clutter the caption).
+    if len(filters.universe) == 1:
+        try:
+            from scripts._desk_regimes import load_management_regimes, transition_fiscals
+            _regimes = load_management_regimes()
+            if _regimes:
+                _ticker = next(iter(filters.universe))
+                _transitions = transition_fiscals(_ticker, _regimes)
+                _visible = [t for t in _transitions if t in set(periods)]
+                if _visible:
+                    st.caption(
+                        "CEO transitions for this company (from config/management_regimes.json): "
+                        + ", ".join(_visible)
+                    )
+        except Exception:
+            pass
+
 
 def render_company_quarter(
     st: Any,

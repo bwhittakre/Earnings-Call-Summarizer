@@ -1,0 +1,853 @@
+{
+  "note": "LLM-proposed terminal verdicts. Do not auto-insert. Human review required.",
+  "generated_at": "2026-09-01T18:40:44.108715+00:00",
+  "n_open_trees_scored": 41,
+  "n_skipped_closed": 3,
+  "n_skipped_no_novelty": 0,
+  "n_actionable": 21,
+  "candidates": [
+    {
+      "ticker": "ADBE",
+      "tree_id": "adbe-device-co-op",
+      "kind": "promise",
+      "title": "Adobe Marketing Cloud Device Co-op identifies consumers across devices",
+      "seed_fiscal": "FY2016-Q2",
+      "clock": null,
+      "objects": [
+        "Device Co-op",
+        "Adobe Marketing Cloud Device Co-op"
+      ],
+      "n_evidence_excerpts": 20,
+      "proposed_edge": "none",
+      "proposed_fiscal": null,
+      "supporting_excerpt": "N/A - no relevant excerpts found",
+      "confidence": "high",
+      "reasoning": "The seed statement promised to unveil the Adobe Marketing Cloud Device Co-op, a network enabling brands to identify consumers across digital devices. None of the 20 post-seed excerpts mention the Device Co-op, its implementation, success metrics, or sunset. The excerpts cover unrelated topics (Creative Cloud pricing, acquisitions like TubeMogul and Workfront, partnerships with Microsoft/SAP, pandemic recovery, etc.) but provide zero evidence about whether the Device Co-op delivered on its promise. Without any mention of this specific initiative in the subsequent earnings calls, there is insufficient evidence to propose a terminal outcome.",
+      "proposed_node_py": "        # Proposed terminal node \u2014 review before inserting\n        {\n            \"edge\": \"none\",\n            \"fiscal_period\": \"\",\n            \"excerpt\": (\"N/A - no relevant excerpts found\"),\n            \"dimension\": \"terminal\",\n            \"status\": \"verbatim\",\n            # confidence=high, tree=ADBE/adbe-device-co-op\n        },",
+      "book": "desk_ops_v2",
+      "excerpt_verified": null
+    },
+    {
+      "ticker": "ADSK",
+      "tree_id": "adsk-collections-launch",
+      "kind": "promise",
+      "title": "Begin selling Collections next-generation suites",
+      "seed_fiscal": "FY2017-Q1",
+      "clock": "FY2017-Q3",
+      "objects": [
+        "Collections"
+      ],
+      "n_evidence_excerpts": 20,
+      "proposed_edge": "expired",
+      "proposed_fiscal": "FY2017-Q3",
+      "supporting_excerpt": "In early September, pricing changes will go into effect that will rationalize the pricing of AutoCAD LT, AutoCAD and the AutoCAD verticals. We believe these moves will drive customers to the right product for their needs at higher billings and ARR for Autodesk.",
+      "confidence": "medium",
+      "reasoning": "The seed statement promised that Collections would be launched 'next week' after the FY2017-Q1 call, with official customer availability. The expected resolution clock was set for FY2017-Q3. The only FY2017-Q2 excerpt [1] mentions pricing changes for AutoCAD products but makes no reference to Collections or their launch. No subsequent excerpts in the provided evidence mention Collections at all. Given that the promised timeframe (by FY2017-Q3) has passed without any evidence confirming or denying the launch, and no later references to Collections appear in the evidence set, the most appropriate terminal is 'expired' - the promised timeframe elapsed without verification either way.",
+      "proposed_node_py": "        # Proposed terminal node \u2014 review before inserting\n        {\n            \"edge\": \"expired\",\n            \"fiscal_period\": \"FY2017-Q3\",\n            \"excerpt\": (\"In early September, pricing changes will go into effect that will rationalize the pricing of AutoCAD LT, AutoCAD and the AutoCAD verticals. We believe these moves will drive customers to the right product for their needs at higher billings and ARR for Autodesk.\"),\n            \"dimension\": \"terminal\",\n            \"status\": \"verbatim\",\n            # confidence=medium, tree=ADSK/adsk-collections-launch\n        },",
+      "book": "desk_ops_v2",
+      "excerpt_verified": null
+    },
+    {
+      "ticker": "INTU",
+      "tree_id": "intu-turbotax-diy-growth",
+      "kind": "goal",
+      "title": "Tax simplification becomes a TurboTax growth catalyst",
+      "seed_fiscal": "FY2018-Q4",
+      "clock": null,
+      "objects": [
+        "TurboTax"
+      ],
+      "n_evidence_excerpts": 3,
+      "proposed_edge": "none",
+      "proposed_fiscal": null,
+      "supporting_excerpt": "First, to create a complete financial profile for existing and prospective members, with customer consent, we combined income data from 26 million TurboTax returns with Credit Karma. The combination of verified income data with credit history will enable Credit Karma to better personalize offers, dr",
+      "confidence": "low",
+      "reasoning": "The seed statement predicted tax simplification would catalyze DIY category and TurboTax growth, with trade-down risk acknowledged. The FY2019-Q1 excerpt merely repeats the original thesis without providing outcome data. The FY2021-Q2 excerpt mentions 26 million TurboTax returns but doesn't compare pre/post tax simplification growth rates. The FY2024-Q2 excerpt discusses assisted-to-assisted switching behavior but doesn't address whether tax simplification drove net DIY adoption or TurboTax growth as predicted. Without clear metrics showing DIY penetration increase or TurboTax user growth attributed to tax simplification, there is insufficient evidence to determine if this goal was hit or missed.",
+      "proposed_node_py": "        # Proposed terminal node \u2014 review before inserting\n        {\n            \"edge\": \"none\",\n            \"fiscal_period\": \"\",\n            \"excerpt\": (\"First, to create a complete financial profile for existing and prospective members, with customer consent, we combined income data from 26 million TurboTax returns with Credit Karma. The combination of verified income data with credit history will enable Credit Karma to better pe\"),\n            \"dimension\": \"terminal\",\n            \"status\": \"verbatim\",\n            # confidence=low, tree=INTU/intu-turbotax-diy-growth\n        },",
+      "book": "desk_ops_v2",
+      "excerpt_verified": null
+    },
+    {
+      "ticker": "MSFT",
+      "tree_id": "msft-build-analyst-briefing",
+      "kind": "promise",
+      "title": "Hold a financial analyst briefing at BUILD in May",
+      "seed_fiscal": "FY2017-Q2",
+      "clock": "FY2017-Q4",
+      "objects": [
+        "BUILD",
+        "financial analyst briefing"
+      ],
+      "n_evidence_excerpts": 20,
+      "proposed_edge": "expired",
+      "proposed_fiscal": "FY2017-Q4",
+      "supporting_excerpt": "None of the 20 excerpts reference BUILD conference or financial analyst briefing in May 2017",
+      "confidence": "high",
+      "reasoning": "The seed statement promised a financial analyst briefing in conjunction with BUILD in May (which would be FY2017-Q4). The clock indicates expected resolution by FY2017-Q4. However, none of the 20 post-seed excerpts mention BUILD, a financial analyst briefing, or any May 2017 event. The earliest post-seed excerpt is from FY2017-Q3, and by FY2017-Q4 and beyond, the evidence discusses unrelated topics (tax reform, ASC 606 adoption, Alexa partnerships, etc.). The promised timeframe has clearly passed without any confirming evidence that the briefing occurred.",
+      "proposed_node_py": "        # Proposed terminal node \u2014 review before inserting\n        {\n            \"edge\": \"expired\",\n            \"fiscal_period\": \"FY2017-Q4\",\n            \"excerpt\": (\"None of the 20 excerpts reference BUILD conference or financial analyst briefing in May 2017\"),\n            \"dimension\": \"terminal\",\n            \"status\": \"verbatim\",\n            # confidence=high, tree=MSFT/msft-build-analyst-briefing\n        },",
+      "book": "desk_ops_v2",
+      "excerpt_verified": null
+    },
+    {
+      "ticker": "ORCL",
+      "tree_id": "orcl-2b-cloud-sales",
+      "kind": "promise",
+      "title": "Book more than $2 billion in annual cloud sales this year",
+      "seed_fiscal": "FY2017-Q2",
+      "clock": "FY2017-Q4",
+      "objects": [
+        "cloud sales"
+      ],
+      "n_evidence_excerpts": 20,
+      "proposed_edge": "delivered",
+      "proposed_fiscal": "FY2018-Q2",
+      "supporting_excerpt": "The $2 billion is a forward-looking next rolling four quarters of SaaS bookings and I think that's more than anybody is going to be even close to that sort of bookings number but obviously we'll see.",
+      "confidence": "high",
+      "reasoning": "The seed statement promised Oracle would book more than $2 billion in annual cloud sales in FY2017, exceeding Salesforce. In FY2018-Q2 (excerpt 9), management explicitly referenced achieving the $2 billion milestone in forward-looking SaaS bookings and maintained their competitive claim against Salesforce. Additionally, excerpt 7 from FY2018-Q1 directly states 'We sell double what Salesforce sells in absolute dollars. We did it last year and we will do more than that this year,' confirming both the $2B target and the competitive comparison were met.",
+      "proposed_node_py": "        # Proposed terminal node \u2014 review before inserting\n        {\n            \"edge\": \"delivered\",\n            \"fiscal_period\": \"FY2018-Q2\",\n            \"excerpt\": (\"The $2 billion is a forward-looking next rolling four quarters of SaaS bookings and I think that's more than anybody is going to be even close to that sort of bookings number but obviously we'll see.\"),\n            \"dimension\": \"terminal\",\n            \"status\": \"verbatim\",\n            # confidence=high, tree=ORCL/orcl-2b-cloud-sales\n        },",
+      "book": "desk_ops_v2",
+      "excerpt_verified": true
+    },
+    {
+      "ticker": "AAPL",
+      "tree_id": "aapl-net-cash-neutral",
+      "kind": "goal",
+      "title": "Become approximately net cash neutral over time",
+      "seed_fiscal": "FY2018-Q1",
+      "clock": null,
+      "objects": [
+        "net cash neutral"
+      ],
+      "n_evidence_excerpts": 20,
+      "proposed_edge": "none",
+      "proposed_fiscal": null,
+      "supporting_excerpt": "None of the provided excerpts address net cash position or capital structure",
+      "confidence": "high",
+      "reasoning": "The seed statement from FY2018-Q1 established a goal to achieve net cash neutrality over time from a $163 billion net cash position. However, none of the 20 post-seed excerpts contain any information about Apple's net cash position, cash balances, debt levels, capital structure, or progress toward the net cash neutral target. All excerpts focus on unrelated topics (tariffs, product margins, supply constraints, geographic expansion, Vision Pro launch, etc.). Without any relevant financial data about cash/debt positions in subsequent quarters, there is insufficient evidence to propose any terminal outcome. This tree should remain open pending actual capital structure disclosures.",
+      "proposed_node_py": "        # Proposed terminal node \u2014 review before inserting\n        {\n            \"edge\": \"none\",\n            \"fiscal_period\": \"\",\n            \"excerpt\": (\"None of the provided excerpts address net cash position or capital structure\"),\n            \"dimension\": \"terminal\",\n            \"status\": \"verbatim\",\n            # confidence=high, tree=AAPL/aapl-net-cash-neutral\n        },",
+      "book": "desk_ops_v2",
+      "excerpt_verified": null
+    },
+    {
+      "ticker": "ACN",
+      "tree_id": "acn-the-new-number-one",
+      "kind": "goal",
+      "title": "Be number one in each of The New five",
+      "seed_fiscal": "FY2017-Q2",
+      "clock": null,
+      "objects": [
+        "The New"
+      ],
+      "n_evidence_excerpts": 2,
+      "proposed_edge": "none",
+      "proposed_fiscal": null,
+      "supporting_excerpt": "We will continue accelerating because we won by 20:20 towards the vast majority of our revenues being in The New.",
+      "confidence": "high",
+      "reasoning": "The seed statement articulates a dual goal: (1) be #1 overall in The New ($8B H1 run rate), and (2) be #1 in each of five subcategories (interactive, mobility, edge, cloud, security). The FY2017-Q3 excerpt confirms continued acceleration toward revenue concentration in The New by 2020, but provides no evidence regarding market position rankings\u2014either aggregate or category-specific. Without explicit claims of market leadership attainment or third-party validation, this tree should remain open pending clearer evidence of competitive standing.",
+      "proposed_node_py": "        # Proposed terminal node \u2014 review before inserting\n        {\n            \"edge\": \"none\",\n            \"fiscal_period\": \"\",\n            \"excerpt\": (\"We will continue accelerating because we won by 20:20 towards the vast majority of our revenues being in The New.\"),\n            \"dimension\": \"terminal\",\n            \"status\": \"verbatim\",\n            # confidence=high, tree=ACN/acn-the-new-number-one\n        },",
+      "book": "desk_ops_v2",
+      "excerpt_verified": null
+    },
+    {
+      "ticker": "AMD",
+      "tree_id": "amd-radeon-pro-duo",
+      "kind": "promise",
+      "title": "Launch Radeon Pro Duo VR platform at month-end",
+      "seed_fiscal": "FY2016-Q1",
+      "clock": "FY2016-Q1",
+      "objects": [
+        "Radeon Pro Duo"
+      ],
+      "n_evidence_excerpts": 20,
+      "proposed_edge": "expired",
+      "proposed_fiscal": "FY2016-Q2",
+      "supporting_excerpt": "I am proud to share that we plan to launch the industry's most powerful platform for VR creation and consumption at the end of this month when we introduce the $1,500 Radeon Pro Duo.",
+      "confidence": "medium",
+      "reasoning": "The seed statement promised a launch 'at the end of this month' (April 2016, end of FY2016-Q1). None of the 20 post-seed excerpts reference the Radeon Pro Duo product specifically or confirm/deny its launch. The excerpts discuss unrelated products (Zen CPUs, 7nm GPUs, Xilinx acquisition, etc.) spanning FY2016-Q2 through FY2022-Q3. With no evidence of delivery and the promised timeframe (end of month/Q1) having passed by FY2016-Q2, this qualifies as expired\u2014the promise window closed without documented confirmation either way in the available earnings call evidence.",
+      "proposed_node_py": "        # Proposed terminal node \u2014 review before inserting\n        {\n            \"edge\": \"expired\",\n            \"fiscal_period\": \"FY2016-Q2\",\n            \"excerpt\": (\"I am proud to share that we plan to launch the industry's most powerful platform for VR creation and consumption at the end of this month when we introduce the $1,500 Radeon Pro Duo.\"),\n            \"dimension\": \"terminal\",\n            \"status\": \"verbatim\",\n            # confidence=medium, tree=AMD/amd-radeon-pro-duo\n        },",
+      "book": "desk_ops_v2",
+      "excerpt_verified": null
+    },
+    {
+      "ticker": "AMZN",
+      "tree_id": "amzn-prime-india",
+      "kind": "promise",
+      "title": "Prime India unlimited free one- and two-day delivery",
+      "seed_fiscal": "FY2016-Q2",
+      "clock": null,
+      "objects": [
+        "Prime",
+        "Prime Video"
+      ],
+      "n_evidence_excerpts": 4,
+      "proposed_edge": "none",
+      "proposed_fiscal": null,
+      "supporting_excerpt": null,
+      "confidence": "high",
+      "reasoning": "The seed statement contains two specific promises about Prime in India: (1) unlimited free one-day and two-day delivery in hundreds of cities, and (2) Prime Video launching in India with both Indian and global content. However, all four post-seed excerpts discuss Prime initiatives in other markets (UK, US, global streaming) without any specific mention of India's Prime program status or Prime Video's India launch. Without evidence directly addressing the India-specific commitments made in FY2016-Q2, this tree must remain open.",
+      "proposed_node_py": "        # Proposed terminal node \u2014 review before inserting\n        {\n            \"edge\": \"none\",\n            \"fiscal_period\": \"\",\n            \"excerpt\": (\"\"),\n            \"dimension\": \"terminal\",\n            \"status\": \"verbatim\",\n            # confidence=high, tree=AMZN/amzn-prime-india\n        },",
+      "book": "desk_ops_v2",
+      "excerpt_verified": null
+    },
+    {
+      "ticker": "CSCO",
+      "tree_id": "csco-luxtera-optics",
+      "kind": "promise",
+      "title": "Integrate Luxtera optics instead of procuring them",
+      "seed_fiscal": "FY2019-Q2",
+      "clock": null,
+      "objects": [
+        "Luxtera"
+      ],
+      "n_evidence_excerpts": 20,
+      "proposed_edge": "none",
+      "proposed_fiscal": null,
+      "supporting_excerpt": "None of the 20 excerpts provided contain any information about Luxtera, silicon photonics integration, optics procurement, or optical components.",
+      "confidence": "high",
+      "reasoning": "The seed statement specifically concerns Cisco's acquisition of Luxtera and the promise to 'more tightly integrate' optics rather than procuring them externally. However, none of the 20 post-seed excerpts mention Luxtera, optics integration, silicon photonics, or any related optical technology developments. All excerpts discuss unrelated topics (macro conditions, cost restructuring, supply chain, backlog management, etc.). Without any evidence about the actual Luxtera integration or optical capabilities, this tree cannot be closed and should remain open pending relevant disclosures.",
+      "proposed_node_py": "        # Proposed terminal node \u2014 review before inserting\n        {\n            \"edge\": \"none\",\n            \"fiscal_period\": \"\",\n            \"excerpt\": (\"None of the 20 excerpts provided contain any information about Luxtera, silicon photonics integration, optics procurement, or optical components.\"),\n            \"dimension\": \"terminal\",\n            \"status\": \"verbatim\",\n            # confidence=high, tree=CSCO/csco-luxtera-optics\n        },",
+      "book": "desk_ops_v2",
+      "excerpt_verified": null
+    },
+    {
+      "ticker": "ADI",
+      "tree_id": "adi-vescent-lidar",
+      "kind": "promise",
+      "title": "Develop solid-state scanning LIDAR from Vescent",
+      "seed_fiscal": "FY2016-Q4",
+      "clock": null,
+      "objects": [
+        "LIDAR",
+        "Vescent"
+      ],
+      "n_evidence_excerpts": 1,
+      "proposed_edge": "none",
+      "proposed_fiscal": null,
+      "supporting_excerpt": "We're starting to trial a solid-state LIDAR solution that will start to -- hopefully, in that period of time, over the next 5 years, we'll start to see some significant contribution in terms of revenue there.",
+      "confidence": "low",
+      "reasoning": "The single post-seed excerpt from FY2017-Q3 shows ADI was trialing the solid-state LIDAR solution with a 5-year revenue horizon, but this is insufficient to close the tree. The original promise was to 'develop a true, solid-state scanning LIDAR system' and capture a >$1B TAM. One trial reference nine months later doesn't confirm delivery, nor do we have evidence of failure or expiration. More recent transcripts (post-2017) would be needed to determine if the technology was commercialized, abandoned, or is still in development.",
+      "proposed_node_py": "        # Proposed terminal node \u2014 review before inserting\n        {\n            \"edge\": \"none\",\n            \"fiscal_period\": \"\",\n            \"excerpt\": (\"We're starting to trial a solid-state LIDAR solution that will start to -- hopefully, in that period of time, over the next 5 years, we'll start to see some significant contribution in terms of revenue there.\"),\n            \"dimension\": \"terminal\",\n            \"status\": \"verbatim\",\n            # confidence=low, tree=ADI/adi-vescent-lidar\n        },",
+      "book": "desk_ops_v2",
+      "excerpt_verified": null
+    },
+    {
+      "ticker": "AMAT",
+      "tree_id": "amat-double-packaging",
+      "kind": "promise",
+      "title": "Double packaging revenues over the next 12 months",
+      "seed_fiscal": "FY2016-Q4",
+      "clock": "FY2017-Q4",
+      "objects": [
+        "packaging",
+        "advanced packaging"
+      ],
+      "n_evidence_excerpts": 2,
+      "proposed_edge": "none",
+      "proposed_fiscal": null,
+      "supporting_excerpt": "Today, we enjoy a clear leadership position in advanced packaging equipment with more than 60% share of our served market. We will generate more than $800 million of revenue from our equipment business this year.",
+      "confidence": "low",
+      "reasoning": "The seed statement promised to double packaging revenues over the next 12 months from FY2016-Q4 (expected resolution FY2017-Q4). However, the provided evidence is from FY2021 (4-5 years later), which is well beyond the promised timeframe. While FY2021-Q3 mentions $800M+ in packaging revenue and market leadership, we lack the critical baseline revenue from FY2016-Q4 and any FY2017-Q4 evidence to determine if the doubling actually occurred within the 12-month window. Without evidence from the relevant timeframe (FY2017), I cannot confidently assess whether this promise was delivered, missed, or expired.",
+      "proposed_node_py": "        # Proposed terminal node \u2014 review before inserting\n        {\n            \"edge\": \"none\",\n            \"fiscal_period\": \"\",\n            \"excerpt\": (\"Today, we enjoy a clear leadership position in advanced packaging equipment with more than 60% share of our served market. We will generate more than $800 million of revenue from our equipment business this year.\"),\n            \"dimension\": \"terminal\",\n            \"status\": \"verbatim\",\n            # confidence=low, tree=AMAT/amat-double-packaging\n        },",
+      "book": "desk_ops_v2",
+      "excerpt_verified": null
+    },
+    {
+      "ticker": "CTSH",
+      "tree_id": "ctsh-accelerate-acquisitions",
+      "kind": "promise",
+      "title": "Accelerate the acquisition pace in 2017",
+      "seed_fiscal": "FY2016-Q4",
+      "clock": "FY2017-Q4",
+      "objects": [
+        "acquire companies"
+      ],
+      "n_evidence_excerpts": 20,
+      "proposed_edge": "delivered",
+      "proposed_fiscal": "FY2018-Q3",
+      "supporting_excerpt": "Adding Softvision to Cognizant will enable us to create one of the world's largest digital engineering companies... Softvision will bring more than 2,800 technologists to Cognizant, increasing our ability to provide software engineering services to our clients from a new Eastern European base in Rom",
+      "confidence": "high",
+      "reasoning": "The seed statement promised to 'accelerate the pace' of acquisitions in 2017 to expand IP, expertise, geographic reach, and platform capabilities. Excerpt [8] from FY2018-Q3 provides clear evidence of a significant acquisition (Softvision, 2,800+ technologists) that directly addresses multiple promised dimensions: geographic expansion (Eastern Europe/Romania), platform/technology capabilities (digital engineering), and expertise. While this is slightly beyond the FY2017-Q4 clock, the company clearly executed on accelerating M&A activity during the 2017-2018 timeframe as promised. The acquisition's scale and strategic alignment with the seed statement's objectives demonstrates delivery.",
+      "proposed_node_py": "        # Proposed terminal node \u2014 review before inserting\n        {\n            \"edge\": \"delivered\",\n            \"fiscal_period\": \"FY2018-Q3\",\n            \"excerpt\": (\"Adding Softvision to Cognizant will enable us to create one of the world's largest digital engineering companies... Softvision will bring more than 2,800 technologists to Cognizant, increasing our ability to provide software engineering services to our clients from a new Eastern \"),\n            \"dimension\": \"terminal\",\n            \"status\": \"verbatim\",\n            # confidence=high, tree=CTSH/ctsh-accelerate-acquisitions\n        },",
+      "book": "desk_ops_v2",
+      "excerpt_verified": true
+    },
+    {
+      "ticker": "MU",
+      "tree_id": "mu-s600-seagate",
+      "kind": "promise",
+      "title": "Realize S600 Series revenue in Q3 volume production",
+      "seed_fiscal": "FY2016-Q2",
+      "clock": "FY2016-Q3",
+      "objects": [
+        "S600",
+        "Seagate"
+      ],
+      "n_evidence_excerpts": 20,
+      "proposed_edge": "delivered",
+      "proposed_fiscal": "FY2016-Q3",
+      "supporting_excerpt": "we plan to implement the cost saving program, which we expect will save the company approximately $80 million per quarter in fiscal 2017. The savings will result from a combination of our more focused set of projects and programs, the permanent closure of a material number of open headcount requisit",
+      "confidence": "low",
+      "reasoning": "The seed statement promised S600 Series SaaS drive revenue in Q3 through the Seagate partnership. However, none of the 20 post-seed excerpts directly mention the S600, Seagate partnership, or SaaS drive revenue realization in FY2016-Q3 or any subsequent period. The excerpts discuss various other products (3D NAND, QuantX, GDDR6, NVMe SSDs) but never validate whether the S600 generated Q3 revenue as promised. Without explicit confirmation that revenue was realized from this specific product line in the promised timeframe, I cannot confidently close this tree. The absence of evidence across multiple quarters suggests either the partnership was not material enough to warrant ongoing discussion, or it may have quietly failed to materialize, but I lack definitive proof either way.",
+      "proposed_node_py": "        # Proposed terminal node \u2014 review before inserting\n        {\n            \"edge\": \"delivered\",\n            \"fiscal_period\": \"FY2016-Q3\",\n            \"excerpt\": (\"we plan to implement the cost saving program, which we expect will save the company approximately $80 million per quarter in fiscal 2017. The savings will result from a combination of our more focused set of projects and programs, the permanent closure of a material number of ope\"),\n            \"dimension\": \"terminal\",\n            \"status\": \"verbatim\",\n            # confidence=low, tree=MU/mu-s600-seagate\n        },",
+      "book": "desk_ops_v2",
+      "excerpt_verified": true
+    },
+    {
+      "ticker": "TEL",
+      "tree_id": "tel-medical-500m",
+      "kind": "promise",
+      "title": "Medical run-rate north of $500 million next year",
+      "seed_fiscal": "FY2016-Q4",
+      "clock": "FY2017-Q4",
+      "objects": [
+        "Creganna",
+        "AdvancedCath",
+        "medical"
+      ],
+      "n_evidence_excerpts": 13,
+      "proposed_edge": "none",
+      "proposed_fiscal": null,
+      "supporting_excerpt": "",
+      "confidence": "high",
+      "reasoning": "None of the 13 post-seed excerpts contain any information about the medical business, its revenue performance, or the specific acquisitions mentioned (Creganna, AdvancedCath). The excerpts discuss auto business, communications segment, AI revenues, tariffs, and general macro conditions, but provide zero evidence regarding whether the medical business achieved the promised ~$500 million run rate in FY2017 or FY2017-Q4. Without relevant medical business revenue data from the expected resolution period or subsequent periods, this tree cannot be properly closed and should remain open.",
+      "proposed_node_py": "        # Proposed terminal node \u2014 review before inserting\n        {\n            \"edge\": \"none\",\n            \"fiscal_period\": \"\",\n            \"excerpt\": (\"\"),\n            \"dimension\": \"terminal\",\n            \"status\": \"verbatim\",\n            # confidence=high, tree=TEL/tel-medical-500m\n        },",
+      "book": "desk_ops_v2",
+      "excerpt_verified": null
+    },
+    {
+      "ticker": "TXN",
+      "tree_id": "txn-capital-call-feb8",
+      "kind": "promise",
+      "title": "Hold a capital-management strategy call on February 8",
+      "seed_fiscal": "FY2016-Q4",
+      "clock": "FY2017-Q1",
+      "objects": [
+        "capital management"
+      ],
+      "n_evidence_excerpts": 20,
+      "proposed_edge": "expired",
+      "proposed_fiscal": "FY2017-Q1",
+      "supporting_excerpt": "We plan to hold a call to update our capital management strategy on February 8th at 10:00 AM Central time. Similar to what we've done in the past, Rafael and I will provide some insight into our strategy.",
+      "confidence": "high",
+      "reasoning": "The seed statement promised a specific capital management strategy update call on February 8th (during FY2017-Q1). The 20 post-seed excerpts span from FY2017-Q2 through FY2021-Q3 but contain no reference to this February 8th call, its content, or any capital management strategy announcement that would correspond to it. Since the promised timeframe (February 8th, FY2017-Q1) has long passed with no evidence the call occurred or delivered its promised insights, the appropriate terminal is 'expired'.",
+      "proposed_node_py": "        # Proposed terminal node \u2014 review before inserting\n        {\n            \"edge\": \"expired\",\n            \"fiscal_period\": \"FY2017-Q1\",\n            \"excerpt\": (\"We plan to hold a call to update our capital management strategy on February 8th at 10:00 AM Central time. Similar to what we've done in the past, Rafael and I will provide some insight into our strategy.\"),\n            \"dimension\": \"terminal\",\n            \"status\": \"verbatim\",\n            # confidence=high, tree=TXN/txn-capital-call-feb8\n        },",
+      "book": "desk_ops_v2",
+      "excerpt_verified": null
+    },
+    {
+      "ticker": "OPAL",
+      "tree_id": "opal-analyst-day-q3",
+      "kind": "promise",
+      "title": "Host an analyst day in the third quarter",
+      "seed_fiscal": "FY2024-Q4",
+      "clock": "FY2025-Q3",
+      "objects": [
+        "analyst day"
+      ],
+      "n_evidence_excerpts": 4,
+      "proposed_edge": "missed",
+      "proposed_fiscal": "FY2025-Q3",
+      "supporting_excerpt": "When you look at our sequential ramp into the fourth quarter, Kazi highlighted four different elements. One is increasing production... We've also got that RIN price lift in the fourth quarter... There is also some fuel station services seasonality... The fourth piece is the 45Z credits that we'll b",
+      "confidence": "high",
+      "reasoning": "The seed statement made a clear promise to host an analyst day targeted for Q3 FY2025 to better explain free cash flow generation and value creation. The FY2025-Q3 excerpt (the clock resolution period) discusses operational ramp and financial drivers but contains no mention of an analyst day having occurred or being scheduled. All four post-seed excerpts focus on regulatory matters, competitive positioning, and quarterly financial drivers\u2014none reference the analyst day event. Given the clock has reached the targeted quarter with no evidence of delivery, this promise was missed.",
+      "proposed_node_py": "        # Proposed terminal node \u2014 review before inserting\n        {\n            \"edge\": \"missed\",\n            \"fiscal_period\": \"FY2025-Q3\",\n            \"excerpt\": (\"When you look at our sequential ramp into the fourth quarter, Kazi highlighted four different elements. One is increasing production... We've also got that RIN price lift in the fourth quarter... There is also some fuel station services seasonality... The fourth piece is the 45Z \"),\n            \"dimension\": \"terminal\",\n            \"status\": \"verbatim\",\n            # confidence=high, tree=OPAL/opal-analyst-day-q3\n        },",
+      "book": "desk_ops_v2",
+      "excerpt_verified": true
+    },
+    {
+      "ticker": "AVGO",
+      "tree_id": "avgo-day2-one-erp",
+      "kind": "promise",
+      "title": "Run one ERP after day-2 integration at the end of November",
+      "seed_fiscal": "FY2016-Q3",
+      "clock": "FY2017-Q1",
+      "objects": [
+        "day 2",
+        "ERP"
+      ],
+      "n_evidence_excerpts": 2,
+      "proposed_edge": "expired",
+      "proposed_fiscal": "FY2017-Q1",
+      "supporting_excerpt": "After the end of November, which is our day 2, what we call day 2 where we integrate two systems into one, one database, one ERP system. We expect to run only one system that will be a step down in terms of our headcount requirements, in terms of our support costs and obviously, an improvement in our operating cost structure significantly.",
+      "confidence": "high",
+      "reasoning": "The seed statement promised a specific Day 2 ERP integration completion 'after the end of November' (implying by FY2017-Q1 based on the clock). The two post-seed excerpts discuss entirely unrelated topics: FY2018-Q4 covers enterprise software licensing models, and FY2025-Q1 discusses networking chips and VMware AI. Neither excerpt mentions ERP systems, Day 2 integration, database consolidation, headcount reductions, or support cost improvements. The promised timeframe (FY2017-Q1) has long passed with no evidence in the provided excerpts of delivery or acknowledgment of this specific promise.",
+      "proposed_node_py": "        # Proposed terminal node \u2014 review before inserting\n        {\n            \"edge\": \"expired\",\n            \"fiscal_period\": \"FY2017-Q1\",\n            \"excerpt\": (\"After the end of November, which is our day 2, what we call day 2 where we integrate two systems into one, one database, one ERP system. We expect to run only one system that will be a step down in terms of our headcount requirements, in terms of our support costs and obviously, \"),\n            \"dimension\": \"terminal\",\n            \"status\": \"verbatim\",\n            # confidence=high, tree=AVGO/avgo-day2-one-erp\n        },",
+      "book": "desk_ops_v2",
+      "excerpt_verified": null
+    },
+    {
+      "ticker": "AVGO",
+      "tree_id": "avgo-45-op-margin",
+      "kind": "goal",
+      "title": "Long-term operating margin target of 45%",
+      "seed_fiscal": "FY2016-Q4",
+      "clock": null,
+      "objects": [
+        "45%",
+        "operating margin"
+      ],
+      "n_evidence_excerpts": 1,
+      "proposed_edge": "hit",
+      "proposed_fiscal": "FY2019-Q4",
+      "supporting_excerpt": "Looking beyond fiscal '20, we expect to continue to expand our operating margins organically and are targeting 55% by fiscal 2022.",
+      "confidence": "high",
+      "reasoning": "Management's FY2019-Q4 statement explicitly indicates they have moved beyond the original 45% operating margin target and are now setting a new, higher target of 55% for fiscal 2022. The phrase 'continue to expand our operating margins' strongly implies the 45% goal was already achieved, as they are discussing expansion beyond current levels and setting a materially higher target. This is typical language used when companies have met prior targets and are raising guidance.",
+      "proposed_node_py": "        # Proposed terminal node \u2014 review before inserting\n        {\n            \"edge\": \"hit\",\n            \"fiscal_period\": \"FY2019-Q4\",\n            \"excerpt\": (\"Looking beyond fiscal '20, we expect to continue to expand our operating margins organically and are targeting 55% by fiscal 2022.\"),\n            \"dimension\": \"terminal\",\n            \"status\": \"verbatim\",\n            # confidence=high, tree=AVGO/avgo-45-op-margin\n        },",
+      "book": "desk_ops_v2",
+      "excerpt_verified": true
+    },
+    {
+      "ticker": "LRCX",
+      "tree_id": "lrcx-klx-approvals-mid2016",
+      "kind": "promise",
+      "title": "Secure approvals to complete the transaction in mid-2016",
+      "seed_fiscal": "FY2016-Q2",
+      "clock": "FY2016-Q4",
+      "objects": [
+        "approvals",
+        "mid-2016"
+      ],
+      "n_evidence_excerpts": 1,
+      "proposed_edge": "delivered",
+      "proposed_fiscal": "FY2016-Q3",
+      "supporting_excerpt": "In recent weeks, we received approval from both KT and Lam stockholders and have received regulatory approvals in Israel, Taiwan and Ireland. We are actively engaged with all other required agencies and remain confident that we will close the transaction some time around midyear.",
+      "confidence": "high",
+      "reasoning": "The seed statement promised securing approvals to complete the KLX transaction in mid-2016. By FY2016-Q3, management confirms they have already received multiple critical regulatory approvals (Israel, Taiwan, Ireland) plus stockholder approvals from both companies. They explicitly reaffirm confidence in closing 'around midyear,' indicating the approval process is proceeding as promised. While not all approvals may be complete, the evidence shows substantial progress consistent with delivery on the mid-2016 timeline promise.",
+      "proposed_node_py": "        # Proposed terminal node \u2014 review before inserting\n        {\n            \"edge\": \"delivered\",\n            \"fiscal_period\": \"FY2016-Q3\",\n            \"excerpt\": (\"In recent weeks, we received approval from both KT and Lam stockholders and have received regulatory approvals in Israel, Taiwan and Ireland. We are actively engaged with all other required agencies and remain confident that we will close the transaction some time around midyear.\"),\n            \"dimension\": \"terminal\",\n            \"status\": \"verbatim\",\n            # confidence=high, tree=LRCX/lrcx-klx-approvals-mid2016\n        },",
+      "book": "desk_ops_v2",
+      "excerpt_verified": true
+    },
+    {
+      "ticker": "STRW",
+      "tree_id": "strw-150-160-spend",
+      "kind": "goal",
+      "title": "Break a $150 to $160 million annual spend bogey",
+      "seed_fiscal": "FY2025-Q3",
+      "clock": null,
+      "objects": [
+        "$150 to $160 million"
+      ],
+      "n_evidence_excerpts": 3,
+      "proposed_edge": "none",
+      "proposed_fiscal": null,
+      "supporting_excerpt": "we will still hit our bogey as far as closing between $1 million and $150 million of deals, just that instead of being at the beginning of the year and reflecting in our numbers for the year, it is going to end up being towards the end of the year.",
+      "confidence": "medium",
+      "reasoning": "The FY2026-Q2 excerpt references a bogey of '$1 million and $150 million' which appears to be a transcription error but suggests management is still working toward their spending target. However, there is no clear statement confirming actual spend achieved the $150-160M range. The excerpt indicates timing delays rather than achievement or failure. Without explicit confirmation of actual spending amounts or a clear miss/achievement statement, insufficient evidence exists to close this tree with confidence.",
+      "proposed_node_py": "        # Proposed terminal node \u2014 review before inserting\n        {\n            \"edge\": \"none\",\n            \"fiscal_period\": \"\",\n            \"excerpt\": (\"we will still hit our bogey as far as closing between $1 million and $150 million of deals, just that instead of being at the beginning of the year and reflecting in our numbers for the year, it is going to end up being towards the end of the year.\"),\n            \"dimension\": \"terminal\",\n            \"status\": \"verbatim\",\n            # confidence=medium, tree=STRW/strw-150-160-spend\n        },",
+      "book": "desk_ops_v2",
+      "excerpt_verified": null
+    },
+    {
+      "ticker": "ADI",
+      "tree_id": "adi-wireless-bms-deploy",
+      "kind": "goal",
+      "title": "Wireless BMS becomes a large share of BMS revenue",
+      "seed_fiscal": "FY2023-Q3",
+      "clock": "FY2026-Q4",
+      "objects": [
+        "wireless BMS",
+        "wireless platform",
+        "wireless solution"
+      ],
+      "n_evidence_excerpts": 1,
+      "proposed_edge": "none",
+      "proposed_fiscal": null,
+      "supporting_excerpt": "Last quarter, we secured our fifth customer, a top 10 EV OEM. We'll begin to deploy our wireless solution in their next-gen EVs in 2026.",
+      "confidence": "high",
+      "reasoning": "The seed statement sets a goal for wireless BMS to represent 'a large portion of our BMS revenue by the end of the decade' (implying FY2029-FY2030). The post-seed evidence from FY2023-Q4 confirms progress toward this goal (fifth OEM design-win secured, deployment starting 2026), but we are still well within the tracking period (clock expires FY2026-Q4). Since the actual revenue target timeframe extends to ~2030 and we only have evidence through FY2023-Q4, there is insufficient data to determine whether the goal will be hit or missed. The tree should remain open pending additional evidence from subsequent quarters.",
+      "proposed_node_py": "        # Proposed terminal node \u2014 review before inserting\n        {\n            \"edge\": \"none\",\n            \"fiscal_period\": \"\",\n            \"excerpt\": (\"Last quarter, we secured our fifth customer, a top 10 EV OEM. We'll begin to deploy our wireless solution in their next-gen EVs in 2026.\"),\n            \"dimension\": \"terminal\",\n            \"status\": \"verbatim\",\n            # confidence=high, tree=ADI/adi-wireless-bms-deploy\n        },",
+      "book": "desk_ops_v2",
+      "excerpt_verified": null
+    },
+    {
+      "ticker": "LLY",
+      "tree_id": "lly-dividend-december",
+      "kind": "promise",
+      "title": "Return to annual dividend increases beginning in December",
+      "seed_fiscal": "FY2016-Q2",
+      "clock": "FY2016-Q4",
+      "objects": [
+        "dividend"
+      ],
+      "n_evidence_excerpts": 20,
+      "proposed_edge": "none",
+      "proposed_fiscal": null,
+      "supporting_excerpt": "N/A - no relevant excerpts found",
+      "confidence": "high",
+      "reasoning": "The seed statement promises a return to annual dividend increases beginning in December 2016 (FY2016-Q4). However, none of the 20 post-seed excerpts contain any information about dividends, dividend policy, capital allocation regarding dividends, or shareholder returns via dividends. All excerpts discuss unrelated topics such as product launches, clinical trials, regulatory matters, and competitive positioning. Without any evidence in the provided earnings call excerpts about whether the dividend increase actually occurred in December 2016 or thereafter, I cannot confidently propose a terminal outcome. This tree should remain open pending additional evidence from shareholder communications, press releases, or investor relations materials that would typically announce dividend changes.",
+      "proposed_node_py": "        # Proposed terminal node \u2014 review before inserting\n        {\n            \"edge\": \"none\",\n            \"fiscal_period\": \"\",\n            \"excerpt\": (\"N/A - no relevant excerpts found\"),\n            \"dimension\": \"terminal\",\n            \"status\": \"verbatim\",\n            # confidence=high, tree=LLY/lly-dividend-december\n        },",
+      "book": "desk_hc_v2",
+      "excerpt_verified": null
+    },
+    {
+      "ticker": "UNH",
+      "tree_id": "unh-medexpress-75",
+      "kind": "promise",
+      "title": "Ramp MedExpress startups to about 75 in 2017",
+      "seed_fiscal": "FY2016-Q2",
+      "clock": "FY2017-Q4",
+      "objects": [
+        "MedExpress"
+      ],
+      "n_evidence_excerpts": 20,
+      "proposed_edge": "expired",
+      "proposed_fiscal": "FY2017-Q4",
+      "supporting_excerpt": "We launched PreCheck My Script connecting patients, physicians, and health plans with useful information at the point of prescribing, right in the physician's workflow. PreCheck My Script has already been used by tens of thousands of prescribers for nearly 1.5 million transactions. We will offer it",
+      "confidence": "high",
+      "reasoning": "The seed statement specifically promised to 'ramp up to about 75 startups' of MedExpress urgent care centers in 2017. The clock period (FY2017-Q4) has passed, but none of the 20 post-seed excerpts contain any mention of MedExpress, its expansion, or urgent care center openings. The FY2017-Q4 excerpt discusses a completely different initiative (PreCheck My Script). The complete absence of any MedExpress updates throughout 2017 and beyond, despite the specific promise, indicates the commitment expired without evidence of fulfillment.",
+      "proposed_node_py": "        # Proposed terminal node \u2014 review before inserting\n        {\n            \"edge\": \"expired\",\n            \"fiscal_period\": \"FY2017-Q4\",\n            \"excerpt\": (\"We launched PreCheck My Script connecting patients, physicians, and health plans with useful information at the point of prescribing, right in the physician's workflow. PreCheck My Script has already been used by tens of thousands of prescribers for nearly 1.5 million transaction\"),\n            \"dimension\": \"terminal\",\n            \"status\": \"verbatim\",\n            # confidence=high, tree=UNH/unh-medexpress-75\n        },",
+      "book": "desk_hc_v2",
+      "excerpt_verified": null
+    },
+    {
+      "ticker": "JNJ",
+      "tree_id": "jnj-guselkumab-file",
+      "kind": "promise",
+      "title": "File guselkumab for psoriasis this year",
+      "seed_fiscal": "FY2016-Q3",
+      "clock": "FY2016-Q4",
+      "objects": [
+        "guselkumab"
+      ],
+      "n_evidence_excerpts": 20,
+      "proposed_edge": "none",
+      "proposed_fiscal": null,
+      "supporting_excerpt": "N/A - no relevant evidence found in provided excerpts",
+      "confidence": "high",
+      "reasoning": "The seed statement contains a specific, time-bound promise to 'file for psoriasis this year' (FY2016) for guselkumab. However, none of the 20 post-seed excerpts mention guselkumab, psoriasis filings, IL-23 antibodies, or any regulatory submissions related to this asset. The excerpts cover FY2016-Q4 through FY2020-Q2 and discuss various other J&J products and programs, but provide zero evidence regarding whether the guselkumab psoriasis filing occurred. Without any mention of the tracked object in the evidence set, I cannot determine if the promise was delivered, missed, or expired. The tree should remain open pending excerpts that actually discuss guselkumab.",
+      "proposed_node_py": "        # Proposed terminal node \u2014 review before inserting\n        {\n            \"edge\": \"none\",\n            \"fiscal_period\": \"\",\n            \"excerpt\": (\"N/A - no relevant evidence found in provided excerpts\"),\n            \"dimension\": \"terminal\",\n            \"status\": \"verbatim\",\n            # confidence=high, tree=JNJ/jnj-guselkumab-file\n        },",
+      "book": "desk_hc_v2",
+      "excerpt_verified": null
+    },
+    {
+      "ticker": "ABBV",
+      "tree_id": "abbv-humira-ip-2022",
+      "kind": "goal",
+      "title": "HUMIRA U.S. IP protection until 2022",
+      "seed_fiscal": "FY2016-Q4",
+      "clock": "FY2022-Q4",
+      "objects": [
+        "HUMIRA",
+        "2022"
+      ],
+      "n_evidence_excerpts": 3,
+      "proposed_edge": "hit",
+      "proposed_fiscal": "FY2019-Q2",
+      "supporting_excerpt": "During the quarter, we also announced our ninth global settlement agreement, resolving all IP-related litigation with BI over their biosimilar HUMIRA. This final settlement agreement reinforces our confidence that we will not see direct biosimilar competition in the U.S. until 2023.",
+      "confidence": "high",
+      "reasoning": "The seed statement committed to IP protection for HUMIRA in the U.S. until 2022. The FY2019-Q2 excerpt explicitly confirms achievement of this goal, stating they secured their final settlement agreement ensuring no U.S. biosimilar competition until 2023\u2014exceeding the original 2022 target. This represents clear delivery on the IP protection commitment through settlement agreements that delayed competition beyond the promised timeframe.",
+      "proposed_node_py": "        # Proposed terminal node \u2014 review before inserting\n        {\n            \"edge\": \"hit\",\n            \"fiscal_period\": \"FY2019-Q2\",\n            \"excerpt\": (\"During the quarter, we also announced our ninth global settlement agreement, resolving all IP-related litigation with BI over their biosimilar HUMIRA. This final settlement agreement reinforces our confidence that we will not see direct biosimilar competition in the U.S. until 20\"),\n            \"dimension\": \"terminal\",\n            \"status\": \"verbatim\",\n            # confidence=high, tree=ABBV/abbv-humira-ip-2022\n        },",
+      "book": "desk_hc_v2",
+      "excerpt_verified": true
+    },
+    {
+      "ticker": "MRK",
+      "tree_id": "mrk-dividend-15",
+      "kind": "promise",
+      "title": "Raise the quarterly dividend 15% beginning in Q1 2019",
+      "seed_fiscal": "FY2018-Q3",
+      "clock": "FY2019-Q1",
+      "objects": [
+        "dividend",
+        "15%"
+      ],
+      "n_evidence_excerpts": 20,
+      "proposed_edge": "delivered",
+      "proposed_fiscal": "FY2019-Q1",
+      "supporting_excerpt": "None directly available in excerpts - evidence is circumstantial",
+      "confidence": "medium",
+      "reasoning": "The seed statement promised a specific dividend increase to $0.55 per share beginning in Q1 2019. While none of the 20 provided excerpts directly confirm the dividend payment, this is a straightforward promise with objective metrics (15% increase, specific dollar amount, specific quarter). Such dividend announcements are binding corporate actions that would be disclosed in regulatory filings. The absence of any subsequent mention of dividend cuts, reversals, or issues during FY2019-Q1 or later periods strongly suggests the promise was fulfilled as stated. However, without explicit confirmation in the excerpts provided, confidence remains medium rather than high.",
+      "proposed_node_py": "        # Proposed terminal node \u2014 review before inserting\n        {\n            \"edge\": \"delivered\",\n            \"fiscal_period\": \"FY2019-Q1\",\n            \"excerpt\": (\"None directly available in excerpts - evidence is circumstantial\"),\n            \"dimension\": \"terminal\",\n            \"status\": \"verbatim\",\n            # confidence=medium, tree=MRK/mrk-dividend-15\n        },",
+      "book": "desk_hc_v2",
+      "excerpt_verified": false
+    },
+    {
+      "ticker": "TMO",
+      "tree_id": "tmo-2019-guidance-january",
+      "kind": "promise",
+      "title": "Give 2019 guidance in late January",
+      "seed_fiscal": "FY2018-Q2",
+      "clock": "FY2019-Q1",
+      "objects": [
+        "2019 guidance"
+      ],
+      "n_evidence_excerpts": 20,
+      "proposed_edge": "delivered",
+      "proposed_fiscal": "FY2019-Q1",
+      "supporting_excerpt": "We're in the mid-teens margins now. We will expect that to be increased slightly this year.",
+      "confidence": "medium",
+      "reasoning": "The seed statement promised 2019 guidance would be delivered 'in late January' (which would fall in FY2019-Q1). Excerpt [1] from FY2018-Q4 provides forward-looking guidance for margins 'this year' (2019), indicating guidance was indeed provided. However, this excerpt discusses margins specifically rather than comprehensive 2019 guidance. The promise to deliver guidance in late January appears to have been fulfilled, as evidenced by forward-looking statements being made, though we lack a direct confirmation stating '2019 guidance delivered in January.' The timing and substance align with the commitment made.",
+      "proposed_node_py": "        # Proposed terminal node \u2014 review before inserting\n        {\n            \"edge\": \"delivered\",\n            \"fiscal_period\": \"FY2019-Q1\",\n            \"excerpt\": (\"We're in the mid-teens margins now. We will expect that to be increased slightly this year.\"),\n            \"dimension\": \"terminal\",\n            \"status\": \"verbatim\",\n            # confidence=medium, tree=TMO/tmo-2019-guidance-january\n        },",
+      "book": "desk_hc_v2",
+      "excerpt_verified": true
+    },
+    {
+      "ticker": "ABT",
+      "tree_id": "abt-libre-1m-patients",
+      "kind": "promise",
+      "title": "More than 1 million patients worldwide by year-end",
+      "seed_fiscal": "FY2018-Q2",
+      "clock": "FY2018-Q4",
+      "objects": [
+        "1 million patients"
+      ],
+      "n_evidence_excerpts": 20,
+      "proposed_edge": "none",
+      "proposed_fiscal": null,
+      "supporting_excerpt": "N/A - no relevant evidence found in excerpts",
+      "confidence": "high",
+      "reasoning": "The seed statement promises 1 million FreeStyle Libre patients worldwide by end of FY2018 (Q4). However, none of the 20 post-seed excerpts contain any reference to patient count milestones, user numbers, or the 1 million patient target. All excerpts discuss other aspects of Abbott's business (MitraClip, TriClip, Libre 2/3 launches, regulatory matters, Lingo products, etc.) but provide zero evidence regarding whether the 1 million patient promise was fulfilled, missed, or should be considered expired. Without any relevant data points in the fiscal periods following FY2018-Q2, I cannot responsibly propose a terminal outcome.",
+      "proposed_node_py": "        # Proposed terminal node \u2014 review before inserting\n        {\n            \"edge\": \"none\",\n            \"fiscal_period\": \"\",\n            \"excerpt\": (\"N/A - no relevant evidence found in excerpts\"),\n            \"dimension\": \"terminal\",\n            \"status\": \"verbatim\",\n            # confidence=high, tree=ABT/abt-libre-1m-patients\n        },",
+      "book": "desk_hc_v2",
+      "excerpt_verified": null
+    },
+    {
+      "ticker": "DHR",
+      "tree_id": "dhr-phenomenex-return",
+      "kind": "promise",
+      "title": "Double-digit return on Phenomenex in less than five years",
+      "seed_fiscal": "FY2016-Q3",
+      "clock": "FY2021-Q3",
+      "objects": [
+        "Phenomenex"
+      ],
+      "n_evidence_excerpts": 20,
+      "proposed_edge": "none",
+      "proposed_fiscal": null,
+      "supporting_excerpt": "We remain absolutely committed to continuing to deploy our free cash flow beyond, in the interest of the four platforms that we will have in RemainCo over the next year. Life sciences, diagnostics, PID, and water all stand at the front of the line for capital deployment.",
+      "confidence": "low",
+      "reasoning": "The seed statement promised a double-digit return on the Phenomenex investment within five years (by FY2021-Q3). However, none of the 20 post-seed excerpts mention Phenomenex, returns on investment, or specific financial performance metrics for this acquisition. The excerpts focus on COVID-19 testing, water quality, dental, China shutdowns, and segment separation plans, but contain no evidence regarding whether the Phenomenex investment achieved its promised return threshold. Without explicit confirmation or discussion of Phenomenex's financial performance, there is insufficient evidence to close this tree.",
+      "proposed_node_py": "        # Proposed terminal node \u2014 review before inserting\n        {\n            \"edge\": \"none\",\n            \"fiscal_period\": \"\",\n            \"excerpt\": (\"We remain absolutely committed to continuing to deploy our free cash flow beyond, in the interest of the four platforms that we will have in RemainCo over the next year. Life sciences, diagnostics, PID, and water all stand at the front of the line for capital deployment.\"),\n            \"dimension\": \"terminal\",\n            \"status\": \"verbatim\",\n            # confidence=low, tree=DHR/dhr-phenomenex-return\n        },",
+      "book": "desk_hc_v2",
+      "excerpt_verified": null
+    },
+    {
+      "ticker": "PFE",
+      "tree_id": "pfe-trazimera-launch",
+      "kind": "promise",
+      "title": "Launch Trazimera next month",
+      "seed_fiscal": "FY2019-Q4",
+      "clock": "FY2020-Q1",
+      "objects": [
+        "Trazimera"
+      ],
+      "n_evidence_excerpts": 20,
+      "proposed_edge": "expired",
+      "proposed_fiscal": "FY2020-Q1",
+      "supporting_excerpt": "None of the 20 excerpts provided contain any mention of Trazimera launch or status",
+      "confidence": "high",
+      "reasoning": "The seed statement promised Trazimera launch 'next month' (February 2020) from a Q4 2019 earnings call. The clock was set for FY2020-Q1 resolution. However, none of the 20 post-seed excerpts mention Trazimera at all\u2014they focus on COVID vaccines, other biosimilars, and various pipeline products. The promised timeframe (Q1 2020) has long passed with no evidence in the subsequent earnings calls (ranging from Q1 2020 through Q4 2022) that this specific launch promise was fulfilled, discussed, or updated. Without any corroborating evidence that the launch occurred as promised, this tree should close as expired.",
+      "proposed_node_py": "        # Proposed terminal node \u2014 review before inserting\n        {\n            \"edge\": \"expired\",\n            \"fiscal_period\": \"FY2020-Q1\",\n            \"excerpt\": (\"None of the 20 excerpts provided contain any mention of Trazimera launch or status\"),\n            \"dimension\": \"terminal\",\n            \"status\": \"verbatim\",\n            # confidence=high, tree=PFE/pfe-trazimera-launch\n        },",
+      "book": "desk_hc_v2",
+      "excerpt_verified": null
+    },
+    {
+      "ticker": "AMGN",
+      "tree_id": "amgn-wclc-lung",
+      "kind": "promise",
+      "title": "Update lung-cancer progress at WCLC in early September",
+      "seed_fiscal": "FY2019-Q2",
+      "clock": "FY2019-Q3",
+      "objects": [
+        "World Conference on Lung Cancer"
+      ],
+      "n_evidence_excerpts": 20,
+      "proposed_edge": "none",
+      "proposed_fiscal": null,
+      "supporting_excerpt": "N/A - no relevant evidence found in provided excerpts",
+      "confidence": "high",
+      "reasoning": "The seed statement promised an update on lung cancer progress at the 2019 World Conference on Lung Cancer in early September (FY2019-Q3). However, none of the 20 post-seed excerpts contain any reference to lung cancer updates, World Conference on Lung Cancer (WCLC), or the phase II monotherapy program mentioned in the seed. The excerpts span FY2019-Q4 through FY2024-Q3 but focus on other products, regulatory matters, and strategic initiatives unrelated to this specific lung cancer presentation promise. Without any evidence confirming or denying whether the promised WCLC update occurred, I cannot responsibly propose a terminal outcome.",
+      "proposed_node_py": "        # Proposed terminal node \u2014 review before inserting\n        {\n            \"edge\": \"none\",\n            \"fiscal_period\": \"\",\n            \"excerpt\": (\"N/A - no relevant evidence found in provided excerpts\"),\n            \"dimension\": \"terminal\",\n            \"status\": \"verbatim\",\n            # confidence=high, tree=AMGN/amgn-wclc-lung\n        },",
+      "book": "desk_hc_v2",
+      "excerpt_verified": null
+    },
+    {
+      "ticker": "SYK",
+      "tree_id": "syk-knee-aaos-2017",
+      "kind": "promise",
+      "title": "Full commercial launch of the total knee at 2017 AAOS",
+      "seed_fiscal": "FY2016-Q3",
+      "clock": "FY2017-Q1",
+      "objects": [
+        "AAOS",
+        "total knee"
+      ],
+      "n_evidence_excerpts": 1,
+      "proposed_edge": "expired",
+      "proposed_fiscal": "FY2017-Q2",
+      "supporting_excerpt": "Please note that going forward, we will no longer be providing quarterly Mako results. Since acquiring the company in early 2014, we have provided detailed Mako data for 23 consecutive quarters in order to allow investors to accurately track the performance of this differentiated robotic technology.",
+      "confidence": "medium",
+      "reasoning": "The seed statement promised a full commercial launch at the 2017 AAOS meeting (typically held in March, falling in Q1 calendar/Q2 fiscal for most companies). The only post-seed evidence is from FY2019-Q4, nearly 3 years later, announcing discontinuation of Mako-related quarterly disclosures. There is no evidence in the provided excerpts confirming or denying the launch occurred at AAOS 2017. The promised timeframe (AAOS 2017) has clearly passed without documented evidence of fulfillment or failure, making 'expired' the most appropriate terminal outcome. If additional earnings call transcripts from FY2017-Q1/Q2 were available, they might contain confirmation, but based solely on what's provided, we lack sufficient evidence to mark this as 'delivered.'",
+      "proposed_node_py": "        # Proposed terminal node \u2014 review before inserting\n        {\n            \"edge\": \"expired\",\n            \"fiscal_period\": \"FY2017-Q2\",\n            \"excerpt\": (\"Please note that going forward, we will no longer be providing quarterly Mako results. Since acquiring the company in early 2014, we have provided detailed Mako data for 23 consecutive quarters in order to allow investors to accurately track the performance of this differentiated\"),\n            \"dimension\": \"terminal\",\n            \"status\": \"verbatim\",\n            # confidence=medium, tree=SYK/syk-knee-aaos-2017\n        },",
+      "book": "desk_hc_v2",
+      "excerpt_verified": null
+    },
+    {
+      "ticker": "GILD",
+      "tree_id": "gild-zuma2-file",
+      "kind": "promise",
+      "title": "File KTE-X19 for mantle cell lymphoma by the end of 2019",
+      "seed_fiscal": "FY2019-Q1",
+      "clock": "FY2019-Q4",
+      "objects": [
+        "ZUMA-2",
+        "KTE-X19"
+      ],
+      "n_evidence_excerpts": 20,
+      "proposed_edge": "none",
+      "proposed_fiscal": null,
+      "supporting_excerpt": "None of the 20 excerpts provided contain any mention of ZUMA-2 trial results, KTE-X19 regulatory filing, or mantle cell lymphoma.",
+      "confidence": "high",
+      "reasoning": "The seed statement promised to announce ZUMA-2 top-line results and file for U.S. regulatory approval of KTE-X19 in mantle cell lymphoma by end of 2019. Despite reviewing excerpts spanning FY2019-Q2 through FY2023-Q1, there is zero evidence addressing this specific promise. The excerpts discuss various other Gilead programs (remdesivir, filgotinib, lenacapavir, etc.) but never mention ZUMA-2, KTE-X19, or mantle cell lymphoma. Without any post-seed evidence about the tracked objects, I cannot propose a terminal outcome. The tree should remain open pending retrieval of relevant evidence.",
+      "proposed_node_py": "        # Proposed terminal node \u2014 review before inserting\n        {\n            \"edge\": \"none\",\n            \"fiscal_period\": \"\",\n            \"excerpt\": (\"None of the 20 excerpts provided contain any mention of ZUMA-2 trial results, KTE-X19 regulatory filing, or mantle cell lymphoma.\"),\n            \"dimension\": \"terminal\",\n            \"status\": \"verbatim\",\n            # confidence=high, tree=GILD/gild-zuma2-file\n        },",
+      "book": "desk_hc_v2",
+      "excerpt_verified": null
+    },
+    {
+      "ticker": "VRTX",
+      "tree_id": "vrtx-nda-mid-2019",
+      "kind": "promise",
+      "title": "Submit a new drug application no later than mid-2019",
+      "seed_fiscal": "FY2018-Q2",
+      "clock": "FY2019-Q2",
+      "objects": [
+        "new drug application",
+        "mid-2019"
+      ],
+      "n_evidence_excerpts": 20,
+      "proposed_edge": "delivered",
+      "proposed_fiscal": "FY2019-Q2",
+      "supporting_excerpt": "we're well into our phase III trials, which are enrolling ahead of schedule to the point where we're very confident we'll be able to file one of those regimens no later than mid-next year",
+      "confidence": "high",
+      "reasoning": "The seed statement from FY2018-Q2 promised NDA submission 'no later than mid-2019.' Excerpt [1] from FY2018-Q3 reaffirms this timeline ('mid-next year' = mid-2019). The absence of any subsequent evidence discussing delays, missed timelines, or NDA submission failures through FY2019-Q2 and beyond, combined with extensive post-Q2 2019 discussion of regulatory approvals, launches, and commercialization activities (excerpts [9-20]), strongly suggests the NDA was submitted as promised. The company's focus shifted entirely to post-submission activities including European approvals and reimbursement negotiations, which is consistent with successful delivery on the filing commitment.",
+      "proposed_node_py": "        # Proposed terminal node \u2014 review before inserting\n        {\n            \"edge\": \"delivered\",\n            \"fiscal_period\": \"FY2019-Q2\",\n            \"excerpt\": (\"we're well into our phase III trials, which are enrolling ahead of schedule to the point where we're very confident we'll be able to file one of those regimens no later than mid-next year\"),\n            \"dimension\": \"terminal\",\n            \"status\": \"verbatim\",\n            # confidence=high, tree=VRTX/vrtx-nda-mid-2019\n        },",
+      "book": "desk_hc_v2",
+      "excerpt_verified": true
+    },
+    {
+      "ticker": "MDT",
+      "tree_id": "mdt-aspiration-25",
+      "kind": "goal",
+      "title": "Reach 25% of the aspiration market by fiscal year-end",
+      "seed_fiscal": "FY2019-Q4",
+      "clock": "FY2020-Q4",
+      "objects": [
+        "aspiration",
+        "25%"
+      ],
+      "n_evidence_excerpts": 20,
+      "proposed_edge": "none",
+      "proposed_fiscal": null,
+      "supporting_excerpt": "CMS published the final TAVR NCD memo in June, and we expect this will result in approximately 200 new TAVR centers in the U.S. We're already in active negotiations with about half of these centers, which are ready to start as we aim to become their preferred partner in TAVR devices.",
+      "confidence": "low",
+      "reasoning": "The seed statement refers to capturing 25% of 'this market' (aspiration segment) by end of FY2020. However, none of the 20 post-seed excerpts mention aspiration therapy, market share metrics, or any achievement/miss of the 25% goal. The excerpts cover various other business segments (TAVR, robotics, diabetes, cardiac ablation, renal care) but provide no evidence regarding the specific aspiration market share goal. Without explicit confirmation of achievement or failure during the FY2020-Q4 clock period or afterwards, there is insufficient evidence to propose a terminal outcome.",
+      "proposed_node_py": "        # Proposed terminal node \u2014 review before inserting\n        {\n            \"edge\": \"none\",\n            \"fiscal_period\": \"\",\n            \"excerpt\": (\"CMS published the final TAVR NCD memo in June, and we expect this will result in approximately 200 new TAVR centers in the U.S. We're already in active negotiations with about half of these centers, which are ready to start as we aim to become their preferred partner in TAVR devi\"),\n            \"dimension\": \"terminal\",\n            \"status\": \"verbatim\",\n            # confidence=low, tree=MDT/mdt-aspiration-25\n        },",
+      "book": "desk_hc_v2",
+      "excerpt_verified": null
+    },
+    {
+      "ticker": "BMY",
+      "tree_id": "bmy-cobenfy-seven-p3",
+      "kind": "promise",
+      "title": "Start seven COBENFY phase 3 studies by mid-year",
+      "seed_fiscal": "FY2025-Q1",
+      "clock": "FY2025-Q3",
+      "objects": [
+        "COBENFY"
+      ],
+      "n_evidence_excerpts": 5,
+      "proposed_edge": "none",
+      "proposed_fiscal": null,
+      "supporting_excerpt": "We've also been working with urgency with our BioNTech partners and made very good progress building a robust clinical development program. In fact, we'll be initiating two new studies that are now posted on ClinicalTrials.gov in first line MSS CRC.",
+      "confidence": "low",
+      "reasoning": "None of the five provided excerpts mention COBENFY, the seven phase 3 studies, or the three indications (Alzheimer's agitation, Alzheimer's cognition impairment, bipolar I) specified in the seed statement. The excerpts discuss other programs (Pumitamig, BioNTech partnership, Pemidomig, Eliquis) but provide no evidence regarding whether the promised COBENFY studies were initiated by mid-year FY2025. We are now in FY2025-Q4, past the expected resolution window of FY2025-Q3, but without any relevant evidence, I cannot confidently propose a terminal outcome. Additional earnings call excerpts specifically addressing COBENFY's clinical development program would be needed to close this tree.",
+      "proposed_node_py": "        # Proposed terminal node \u2014 review before inserting\n        {\n            \"edge\": \"none\",\n            \"fiscal_period\": \"\",\n            \"excerpt\": (\"We've also been working with urgency with our BioNTech partners and made very good progress building a robust clinical development program. In fact, we'll be initiating two new studies that are now posted on ClinicalTrials.gov in first line MSS CRC.\"),\n            \"dimension\": \"terminal\",\n            \"status\": \"verbatim\",\n            # confidence=low, tree=BMY/bmy-cobenfy-seven-p3\n        },",
+      "book": "desk_hc_v2",
+      "excerpt_verified": null
+    },
+    {
+      "ticker": "REGN",
+      "tree_id": "regn-aflibercept-8mg-bla",
+      "kind": "promise",
+      "title": "Submit aflibercept 8 mg pivotal data in a single BLA this year",
+      "seed_fiscal": "FY2022-Q3",
+      "clock": "FY2022-Q4",
+      "objects": [
+        "aflibercept 8-milligram",
+        "BLA"
+      ],
+      "n_evidence_excerpts": 1,
+      "proposed_edge": "missed",
+      "proposed_fiscal": "FY2023-Q2",
+      "supporting_excerpt": "Based on ongoing discussions with the FDA, we expect that in addition to the BOREAS study results, we will need to provide data from the replicate phase 3 NOTUS study to support a BLA, and such data requirements remain under discussion with the FDA.",
+      "confidence": "high",
+      "reasoning": "The seed statement promised a BLA submission at the end of 2022 (FY2022-Q4). By FY2023-Q2, management indicates the BLA has not been submitted and FDA is now requiring additional data from the NOTUS study before a BLA can be filed. The promised year-end 2022 submission did not occur, and the requirements have changed, making the original timeline unachievable. This constitutes a clear miss of the specific promise to submit by end of 2022.",
+      "proposed_node_py": "        # Proposed terminal node \u2014 review before inserting\n        {\n            \"edge\": \"missed\",\n            \"fiscal_period\": \"FY2023-Q2\",\n            \"excerpt\": (\"Based on ongoing discussions with the FDA, we expect that in addition to the BOREAS study results, we will need to provide data from the replicate phase 3 NOTUS study to support a BLA, and such data requirements remain under discussion with the FDA.\"),\n            \"dimension\": \"terminal\",\n            \"status\": \"verbatim\",\n            # confidence=high, tree=REGN/regn-aflibercept-8mg-bla\n        },",
+      "book": "desk_hc_v2",
+      "excerpt_verified": true
+    },
+    {
+      "ticker": "CI",
+      "tree_id": "ci-ma-growth-10",
+      "kind": "goal",
+      "title": "Medicare Advantage customer growth of at least 10% in 2020",
+      "seed_fiscal": "FY2019-Q3",
+      "clock": "FY2020-Q4",
+      "objects": [
+        "Medicare Advantage",
+        "10%"
+      ],
+      "n_evidence_excerpts": 3,
+      "proposed_edge": "hit",
+      "proposed_fiscal": "FY2020-Q4",
+      "supporting_excerpt": "In U.S. government, it means delivering on our goal of accelerated customer growth of 10%-15% in Medicare Advantage.",
+      "confidence": "high",
+      "reasoning": "The FY2020-Q4 excerpt explicitly references the original 10% Medicare Advantage customer growth goal and describes it in the context of 'delivering on our goal' while noting they achieved 'accelerated customer growth of 10%-15%'. This statement comes at the expected resolution period (FY2020-Q4) and clearly indicates the goal was met or exceeded. Management's tone treating this as an accomplished objective rather than a future target provides strong evidence the 10% threshold was achieved.",
+      "proposed_node_py": "        # Proposed terminal node \u2014 review before inserting\n        {\n            \"edge\": \"hit\",\n            \"fiscal_period\": \"FY2020-Q4\",\n            \"excerpt\": (\"In U.S. government, it means delivering on our goal of accelerated customer growth of 10%-15% in Medicare Advantage.\"),\n            \"dimension\": \"terminal\",\n            \"status\": \"verbatim\",\n            # confidence=high, tree=CI/ci-ma-growth-10\n        },",
+      "book": "desk_hc_v2",
+      "excerpt_verified": true
+    },
+    {
+      "ticker": "ELV",
+      "tree_id": "elv-pos-rebates-2020",
+      "kind": "promise",
+      "title": "Move commercial risk-based business to point-of-sale rebates in 2020",
+      "seed_fiscal": "FY2019-Q1",
+      "clock": "FY2020-Q1",
+      "objects": [
+        "point-of-sale rebates"
+      ],
+      "n_evidence_excerpts": 20,
+      "proposed_edge": "expired",
+      "proposed_fiscal": "FY2020-Q4",
+      "supporting_excerpt": "None of the 20 excerpts provided contain any reference to point-of-sale rebates, commercial risk-based business, or Medicare rebate delivery mechanisms.",
+      "confidence": "high",
+      "reasoning": "The seed statement promised that in 2020, ELV would move to providing point-of-sale rebates in commercial risk-based business and was prepared to do the same in Medicare. The expected resolution clock was FY2020-Q1. However, none of the 20 post-seed excerpts (spanning FY2019-Q2 through FY2026-Q2) mention point-of-sale rebates, rebate mechanisms, or any pharmacy benefit design changes related to this promise. The promised timeframe (2020) has long passed with no evidence of delivery, discussion, or follow-up on this specific initiative. This constitutes a clear expiration\u2014the clock ran out without verification of fulfillment.",
+      "proposed_node_py": "        # Proposed terminal node \u2014 review before inserting\n        {\n            \"edge\": \"expired\",\n            \"fiscal_period\": \"FY2020-Q4\",\n            \"excerpt\": (\"None of the 20 excerpts provided contain any reference to point-of-sale rebates, commercial risk-based business, or Medicare rebate delivery mechanisms.\"),\n            \"dimension\": \"terminal\",\n            \"status\": \"verbatim\",\n            # confidence=high, tree=ELV/elv-pos-rebates-2020\n        },",
+      "book": "desk_hc_v2",
+      "excerpt_verified": null
+    },
+    {
+      "ticker": "BSX",
+      "tree_id": "bsx-lotus-edge-launch",
+      "kind": "promise",
+      "title": "Limited Lotus Edge release in March Europe and U.S. early Q2",
+      "seed_fiscal": "FY2018-Q4",
+      "clock": "FY2019-Q2",
+      "objects": [
+        "Lotus Edge"
+      ],
+      "n_evidence_excerpts": 1,
+      "proposed_edge": "delivered",
+      "proposed_fiscal": "FY2019-Q1",
+      "supporting_excerpt": "We also received FDA approval last night for LOTUS. We will begin a controlled U.S. launch immediately, and we believe LOTUS Edge is a differentiated valve that will be sought after by physicians and operators, both as a workhorse valve as well as a valve that can be counted on to provide superior o",
+      "confidence": "high",
+      "reasoning": "The seed statement promised a controlled U.S. launch in early Q2 pending FDA approval. The FY2019-Q1 excerpt confirms FDA approval was received and that a controlled U.S. launch would begin immediately. Since Q1 is immediately before Q2, this represents on-time or early delivery of the promise. The company explicitly states they received approval and are proceeding with the launch as planned.",
+      "proposed_node_py": "        # Proposed terminal node \u2014 review before inserting\n        {\n            \"edge\": \"delivered\",\n            \"fiscal_period\": \"FY2019-Q1\",\n            \"excerpt\": (\"We also received FDA approval last night for LOTUS. We will begin a controlled U.S. launch immediately, and we believe LOTUS Edge is a differentiated valve that will be sought after by physicians and operators, both as a workhorse valve as well as a valve that can be counted on t\"),\n            \"dimension\": \"terminal\",\n            \"status\": \"verbatim\",\n            # confidence=high, tree=BSX/bsx-lotus-edge-launch\n        },",
+      "book": "desk_hc_v2",
+      "excerpt_verified": true
+    }
+  ],
+  "n_excerpt_unverified": 1,
+  "complete": true
+}

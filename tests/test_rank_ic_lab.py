@@ -45,6 +45,7 @@ ROZ_VIEWS = (
     "Company history",
     "Claims Desk",
     "Claims Trees",
+    "Management Regimes",
     "Dimension panel",
     "Cross-company",
     "Narrative vs quant",

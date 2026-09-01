@@ -396,6 +396,24 @@ def render_claims_trees_view(
     )
 
 
+def render_claims_regimes_view(
+    st: Any,
+    data: DashboardData,
+    *,
+    sector_tickers: Sequence[str] | None = None,
+    sector_choice: str | None = None,
+) -> None:
+    from .claims_regimes import render_claims_regimes
+
+    st.header("Management Regimes")
+    render_claims_regimes(
+        st,
+        data,
+        sector_tickers=sector_tickers,
+        sector_choice=sector_choice,
+    )
+
+
 def render_company_history(
     st: Any,
     data: DashboardData,
@@ -520,6 +538,30 @@ def render_dimension_heatmap(
         "convention as Consolidated / Rank IC Research). Fiscal period is in the "
         "tooltip. Color scales are fixed (narrative [-2, +2]; quant z / gap [-3, +3])."
     )
+
+    # ── Regime boundary captions (non-breaking) ──────────────────────────
+    # In Single mode, show transition dates below the heatmap as a caption.
+    if mode == "Single" and selected:
+        try:
+            from scripts._desk_regimes import load_management_regimes, regimes_for_ticker, transition_fiscals
+            _regimes = load_management_regimes()
+            if _regimes:
+                _ticker = selected[0]
+                _tick_regimes = regimes_for_ticker(_ticker, _regimes)
+                _transitions = transition_fiscals(_ticker, _regimes)
+                if _tick_regimes:
+                    _cur = _tick_regimes[-1]
+                    _caption_parts = [
+                        f"Current CEO: **{_cur.get('named_person')}** (since {_cur.get('start_fiscal')})"
+                    ]
+                    if _transitions:
+                        _caption_parts.append(
+                            "Regime transitions: " + ", ".join(_transitions)
+                        )
+                    st.caption(" · ".join(_caption_parts) + "  *(from config/management_regimes.json)*")
+        except Exception:
+            pass
+
     _table(
         st,
         [
@@ -1186,6 +1228,7 @@ VIEWS = {
     "Company history": render_company_history,
     "Claims Desk": render_claims_desk_view,
     "Claims Trees": render_claims_trees_view,
+    "Management Regimes": render_claims_regimes_view,
     "Dimension panel": render_dimension_heatmap,
     "Cross-company": render_cross_company,
     "Narrative vs quant": render_narrative_vs_quant,

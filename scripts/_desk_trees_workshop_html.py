@@ -135,6 +135,9 @@ _TEMPLATE = r"""<!DOCTYPE html>
   <div id="known-delivered"></div>
   <div id="transparency"></div>
   <div id="quant"></div>
+  <div id="management-regimes"></div>
+  <div id="seed-candidates"></div>
+  <div id="terminal-candidates"></div>
   <div id="credibility"></div>
   <div id="clocks"></div>
   <div id="horizon"></div>
@@ -416,6 +419,7 @@ function render() {
 
   renderTransparency(book);
   renderQuant(book);
+  renderManagementRegimes(book.book_id);
 
   const cred = document.getElementById("credibility");
   if (book.book_id === "nvda_gold_v2" && DESK.metrics) {
@@ -648,10 +652,210 @@ function renderTrees(trees) {
   }
   document.getElementById("list-bucket").onchange = () => renderTrees(trees);
 }
+function renderManagementRegimes(book) {
+  const host = document.getElementById("management-regimes");
+  const sidecar = DESK.regimes;
+  if (!sidecar) { host.innerHTML = ""; return; }
+  const bookBlock = (sidecar.books || {})[book] || {};
+  const regimes = sidecar.regimes || [];
+  const regimeRates = bookBlock.regime_rates || {};
+  const transferLedger = bookBlock.transfer_ledger || [];
+
+  // Current-regime rates table
+  const rateRows = [];
+  for (const [regimeId, data] of Object.entries(regimeRates)) {
+    const counts = data.known_delivered_counts || {};
+    const kd = counts.known_delivered_rate != null ? (counts.known_delivered_rate * 100).toFixed(0) + "%" : "—";
+    const ss = counts.settled_share != null ? (counts.settled_share * 100).toFixed(0) + "%" : "—";
+    const regimeMeta = regimes.find(r => r.regime_id === regimeId) || {};
+    rateRows.push([
+      esc(regimeMeta.ticker || ""),
+      esc(regimeMeta.named_person || regimeId),
+      esc(regimeMeta.start_fiscal || ""),
+      esc(regimeMeta.end_fiscal || "present"),
+      esc(String(data.n_trees || 0)),
+      esc(kd),
+      esc(ss),
+    ]);
+  }
+  rateRows.sort((a, b) => a[0].localeCompare(b[0]));
+
+  let html = "<h2>Management Regimes</h2>";
+  html += "<p class='cap'>" + esc(sidecar.caption || "") + "</p>";
+
+  if (rateRows.length) {
+    html += "<h3>Current-regime accountability rates</h3>";
+    html += table(
+      ["Ticker", "CEO", "From", "To", "Trees", "KD rate", "Settled %"],
+      rateRows
+    );
+  }
+
+  // Transfer ledger
+  if (transferLedger.length) {
+    const kindLabels = {
+      "prior_closed": "Closed before transition",
+      "inherited_adopted": "Adopted by new regime",
+      "inherited_closed_by_successor": "Closed by successor",
+      "inherited_overdue": "Inherited — overdue",
+      "inherited_ignored": "Inherited — ignored",
+    };
+    html += "<h3>Cite-transfer ledger</h3>";
+    html += "<p class='cap'>Trees that were seeded under one CEO and outlived a regime transition. ";
+    html += "<em>Inherited — overdue</em>: open at transition with a past-due clock. ";
+    html += "<em>Inherited — ignored</em>: open, clock not yet due. ";
+    html += "<em>Adopted</em>: new regime posted a non-silent cite. ";
+    html += "<em>Closed by successor</em>: new regime provided the terminal node.</p>";
+    const ledgerRows = transferLedger.map(e => [
+      esc(e.ticker || ""),
+      esc(e.title || ""),
+      esc(kindLabels[e.transfer_kind] || e.transfer_kind || ""),
+      esc(e.seed_regime_person || e.seed_regime || ""),
+      esc(e.seed_fiscal || ""),
+      esc(e.transition_fiscal || ""),
+      esc(e.clock || "—"),
+      esc(e.delivery || "—"),
+    ]);
+    html += table(
+      ["Ticker", "Title", "Transfer kind", "Seeded under", "Seed fiscal", "Transition", "Clock", "Delivery"],
+      ledgerRows
+    );
+  } else {
+    html += "<p class='cap'>No regime-crossing trees in this book.</p>";
+  }
+
+  host.innerHTML = html;
+}
+
+function confidenceBadge(conf) {
+  const colors = { high: "#5cb85c", medium: "#f0ad4e", low: "#d9534f" };
+  const c = String(conf || "").toLowerCase();
+  const bg = colors[c] || "#666";
+  return '<span style="background:' + bg + ';color:#111;border-radius:4px;padding:1px 7px;font-size:11px;font-weight:600;">' + esc(conf || "—") + '</span>';
+}
+function edgeBadge(edge) {
+  const colors = { delivered: "#5cb85c", hit: "#5cb85c", missed: "#d9534f", expired: "#f0ad4e", none: "#888" };
+  const c = String(edge || "").toLowerCase();
+  const bg = colors[c] || "#888";
+  return '<span style="background:' + bg + ';color:#111;border-radius:4px;padding:1px 7px;font-size:11px;font-weight:600;">' + esc(edge || "—") + '</span>';
+}
+function citeBadge(verified) {
+  if (verified === null || verified === undefined) return '<span class="muted">—</span>';
+  return verified
+    ? '<span style="color:#5cb85c;font-weight:600" title="Excerpt found verbatim in source">✓</span>'
+    : '<span style="color:#d9534f;font-weight:600" title="LLM paraphrased — re-cite from novelty_view before typing">✗ paraphrased</span>';
+}
+
+function renderSeedCandidates() {
+  const host = document.getElementById("seed-candidates");
+  const data = DESK.seed_candidates;
+  if (!data) { host.innerHTML = ""; return; }
+  const byTicker = data.candidates_by_ticker || {};
+  const priority = new Set(data.priority_tickers || []);
+  // Tickers: priority first, then alphabetical
+  const allTickers = Object.keys(byTicker);
+  const ordered = [
+    ...allTickers.filter(t => priority.has(t)),
+    ...allTickers.filter(t => !priority.has(t)).sort(),
+  ];
+  let html = "<h2>Seed Candidates</h2>";
+  html += "<p class='cap'>LLM-proposed tree seeds from " + esc(String(data.n_cue_rows_reviewed || 0)) +
+    " uncovered cue rows across " + esc(String(data.n_tickers_scanned || 0)) + " tickers. " +
+    "Do not auto-insert. Human review required before typing into catalog files.</p>";
+  html += "<p class='cap'><strong>" + esc(String(data.n_proposed_seeds || 0)) + "</strong> proposed seeds · " +
+    esc(String(data.n_excerpt_unverified || 0)) + " with paraphrased excerpts (✗ — re-cite before typing) · " +
+    "Generated " + esc((data.generated_at || "").slice(0, 10)) +
+    (data.complete === false ? " · <span style='color:var(--warn)'>PARTIAL RUN</span>" : "") + "</p>";
+  if (!ordered.length) {
+    html += "<p class='empty'>No candidate file found. Run scripts/_desk_seed_batch.py to generate.</p>";
+    host.innerHTML = html;
+    return;
+  }
+  for (const ticker of ordered) {
+    const cands = byTicker[ticker] || [];
+    if (!cands.length) continue;
+    const isPriority = priority.has(ticker);
+    html += "<h3>" + esc(labelOf(ticker)) + (isPriority ? " <span style='color:#c4b48a;font-size:11px'>[regime-transition]</span>" : "") + "</h3>";
+    html += "<table><thead><tr>";
+    html += "<th>Conf</th><th>Cite</th><th>Kind</th><th>Bucket</th><th>Title</th><th>Fiscal</th><th>Clock</th><th>Excerpt</th><th>Rationale</th><th>Seed</th>";
+    html += "</tr></thead><tbody>";
+    for (const cand of cands) {
+      const seed = cand.seed || {};
+      html += "<tr>";
+      html += "<td>" + confidenceBadge(cand.confidence) + "</td>";
+      html += "<td>" + citeBadge(cand.excerpt_verified) + "</td>";
+      html += "<td>" + esc(cand.kind || "") + "</td>";
+      html += "<td>" + esc(DESK.bucket_labels[cand.bucket] || cand.bucket || "") + "</td>";
+      html += "<td>" + esc(cand.title || "") + "</td>";
+      html += "<td>" + esc(seed.fiscal_period || "") + "</td>";
+      html += "<td>" + esc(seed.clock || "—") + "</td>";
+      html += "<td style='max-width:300px'>" + esc((seed.excerpt || "").slice(0, 200)) + "…</td>";
+      html += "<td style='max-width:200px'>" + esc(cand.rationale || "") + "</td>";
+      const py = esc(cand.proposed_seed_py || "");
+      html += "<td><details><summary style='cursor:pointer;color:var(--accent)'>dict</summary><pre style='font-size:11px;margin:4px 0;white-space:pre-wrap;max-width:420px'>" + py + "</pre></details></td>";
+      html += "</tr>";
+    }
+    html += "</tbody></table>";
+  }
+  host.innerHTML = html;
+}
+
+function renderTerminalCandidates() {
+  const host = document.getElementById("terminal-candidates");
+  const data = DESK.terminal_candidates;
+  if (!data) { host.innerHTML = ""; return; }
+  const candidates = data.candidates || [];
+  let html = "<h2>Terminal Candidates</h2>";
+  html += "<p class='cap'>LLM-proposed terminal verdicts for " + esc(String(data.n_open_trees_scored || 0)) +
+    " open trees. Do not auto-insert. Human review required before typing nodes into catalog files.</p>";
+  html += "<p class='cap'><strong>" + esc(String(data.n_actionable || 0)) + "</strong> actionable (not none, ≥ medium confidence) · " +
+    esc(String(data.n_excerpt_unverified || 0)) + " scored verdicts quote text not found in novelty_view (✗) · " +
+    "Generated " + esc((data.generated_at || "").slice(0, 10)) +
+    (data.complete === false ? " · <span style='color:var(--warn)'>PARTIAL RUN</span>" : "") + "</p>";
+  if (!candidates.length) {
+    html += "<p class='empty'>No candidate file found. Run scripts/_desk_terminal_candidates.py to generate.</p>";
+    host.innerHTML = html;
+    return;
+  }
+  // Group by book
+  const byBook = {};
+  for (const c of candidates) {
+    const bk = c.book || "unknown";
+    if (!byBook[bk]) byBook[bk] = [];
+    byBook[bk].push(c);
+  }
+  for (const [book, rows] of Object.entries(byBook)) {
+    html += "<h3>" + esc(book) + "</h3>";
+    html += "<table><thead><tr>";
+    html += "<th>Edge</th><th>Conf</th><th>Cite</th><th>Company</th><th>Title</th><th>Kind</th><th>Seed fiscal</th><th>Proposed fiscal</th><th>Evidence q</th><th>Reasoning</th><th>Node</th>";
+    html += "</tr></thead><tbody>";
+    for (const cand of rows) {
+      html += "<tr>";
+      html += "<td>" + edgeBadge(cand.proposed_edge) + "</td>";
+      html += "<td>" + confidenceBadge(cand.confidence) + "</td>";
+      html += "<td>" + citeBadge(cand.excerpt_verified) + "</td>";
+      html += "<td>" + esc(labelOf(cand.ticker)) + "</td>";
+      html += "<td>" + esc(cand.title || "") + "</td>";
+      html += "<td>" + esc(cand.kind || "") + "</td>";
+      html += "<td>" + esc(cand.seed_fiscal || "") + "</td>";
+      html += "<td>" + esc(cand.proposed_fiscal || "—") + "</td>";
+      html += "<td>" + esc(String(cand.n_evidence_excerpts || 0)) + "</td>";
+      html += "<td style='max-width:260px'>" + esc((cand.reasoning || "").slice(0, 220)) + "</td>";
+      const py = esc(cand.proposed_node_py || "");
+      html += "<td><details><summary style='cursor:pointer;color:var(--accent)'>node</summary><pre style='font-size:11px;margin:4px 0;white-space:pre-wrap;max-width:420px'>" + py + "</pre></details></td>";
+      html += "</tr>";
+    }
+    html += "</tbody></table>";
+  }
+  host.innerHTML = html;
+}
+
 function boot() {
   document.getElementById("book-controls").innerHTML =
     select("book", DESK.book_order, DESK.default_book, "Book");
   document.getElementById("book").onchange = render;
+  renderSeedCandidates();
+  renderTerminalCandidates();
   render();
 }
 boot();

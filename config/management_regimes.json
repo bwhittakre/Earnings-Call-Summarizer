@@ -1,0 +1,722 @@
+[
+  {
+    "regime_id": "nvda-huang-ceo",
+    "ticker": "NVDA",
+    "role": "CEO",
+    "named_person": "Jensen Huang",
+    "start_fiscal": "FY2016-Q2",
+    "end_fiscal": null,
+    "succession_type": null,
+    "notes": "CEO since NVDA founding in 1993; no transition in tracking window"
+  },
+  {
+    "regime_id": "aapl-cook-ceo",
+    "ticker": "AAPL",
+    "role": "CEO",
+    "named_person": "Tim Cook",
+    "start_fiscal": "FY2018-Q1",
+    "end_fiscal": null,
+    "succession_type": null,
+    "notes": "CEO since 2011; single-regime in tracking window. AAPL FYE Sep 30 — Q1=Oct-Dec"
+  },
+  {
+    "regime_id": "acn-nanterme-ceo",
+    "ticker": "ACN",
+    "role": "CEO",
+    "named_person": "Pierre Nanterme",
+    "start_fiscal": "FY2017-Q2",
+    "end_fiscal": "FY2019-Q1",
+    "succession_type": "retirement",
+    "notes": "Took medical leave Dec 2018; died Jan 31, 2019. ACN FYE Aug 31 — Q1=Sep-Nov, Q2=Dec-Feb"
+  },
+  {
+    "regime_id": "acn-sweet-ceo",
+    "ticker": "ACN",
+    "role": "CEO",
+    "named_person": "Julie Sweet",
+    "start_fiscal": "FY2020-Q1",
+    "end_fiscal": null,
+    "succession_type": null,
+    "notes": "David Rowland was interim CEO Jan-Aug 2019; Sweet confirmed CEO Sept 1, 2019. FY2020-Q1=Sep-Nov 2019"
+  },
+  {
+    "regime_id": "adbe-narayen-ceo",
+    "ticker": "ADBE",
+    "role": "CEO",
+    "named_person": "Shantanu Narayen",
+    "start_fiscal": "FY2016-Q2",
+    "end_fiscal": null,
+    "succession_type": null,
+    "notes": "CEO since 2007; single-regime in tracking window. ADBE FYE ~Nov 27"
+  },
+  {
+    "regime_id": "adi-roche-ceo",
+    "ticker": "ADI",
+    "role": "CEO",
+    "named_person": "Vincent Roche",
+    "start_fiscal": "FY2016-Q4",
+    "end_fiscal": null,
+    "succession_type": null,
+    "notes": "CEO since April 2013; single-regime in tracking window through FY2026. ADI FYE ~Nov 1"
+  },
+  {
+    "regime_id": "adsk-bass-ceo",
+    "ticker": "ADSK",
+    "role": "CEO",
+    "named_person": "Carl Bass",
+    "start_fiscal": "FY2017-Q1",
+    "end_fiscal": "FY2018-Q1",
+    "succession_type": "resignation",
+    "notes": "Resigned Feb 2017. ADSK FYE Jan 31 — FY2017-Q1=Feb-Apr 2016, FY2018-Q1=Feb-Apr 2017"
+  },
+  {
+    "regime_id": "adsk-anagnost-ceo",
+    "ticker": "ADSK",
+    "role": "CEO",
+    "named_person": "Andrew Anagnost",
+    "start_fiscal": "FY2018-Q2",
+    "end_fiscal": null,
+    "succession_type": null,
+    "notes": "CEO from June 2017. ADSK FY2018-Q2=May-Jul 2017"
+  },
+  {
+    "regime_id": "amat-dickerson-ceo",
+    "ticker": "AMAT",
+    "role": "CEO",
+    "named_person": "Gary Dickerson",
+    "start_fiscal": "FY2016-Q4",
+    "end_fiscal": null,
+    "succession_type": null,
+    "notes": "CEO since 2012/2013; single-regime in tracking window. AMAT FYE ~Oct 26"
+  },
+  {
+    "regime_id": "amd-su-ceo",
+    "ticker": "AMD",
+    "role": "CEO",
+    "named_person": "Lisa Su",
+    "start_fiscal": "FY2016-Q1",
+    "end_fiscal": null,
+    "succession_type": null,
+    "notes": "CEO since Oct 2014; single-regime in tracking window"
+  },
+  {
+    "regime_id": "amzn-bezos-ceo",
+    "ticker": "AMZN",
+    "role": "CEO",
+    "named_person": "Jeff Bezos",
+    "start_fiscal": "FY2016-Q2",
+    "end_fiscal": "FY2021-Q2",
+    "succession_type": "transition",
+    "notes": "Transitioned to Executive Chairman July 5, 2021. Last earnings call Q2 2021"
+  },
+  {
+    "regime_id": "amzn-jassy-ceo",
+    "ticker": "AMZN",
+    "role": "CEO",
+    "named_person": "Andy Jassy",
+    "start_fiscal": "FY2021-Q3",
+    "end_fiscal": null,
+    "succession_type": null,
+    "notes": "CEO from July 5, 2021; first earnings call Q3 2021"
+  },
+  {
+    "regime_id": "avgo-tan-ceo",
+    "ticker": "AVGO",
+    "role": "CEO",
+    "named_person": "Hock Tan",
+    "start_fiscal": "FY2016-Q3",
+    "end_fiscal": null,
+    "succession_type": null,
+    "notes": "CEO since 2006; single-regime in tracking window. AVGO FYE ~Nov 1"
+  },
+  {
+    "regime_id": "crm-benioff-ceo",
+    "ticker": "CRM",
+    "role": "CEO",
+    "named_person": "Marc Benioff",
+    "start_fiscal": "FY2017-Q3",
+    "end_fiscal": null,
+    "succession_type": null,
+    "notes": "CEO since founding; Keith Block was co-CEO Nov 2018-Jan 2020 but Benioff remained; treated as single regime. CRM FYE Jan 31"
+  },
+  {
+    "regime_id": "csco-robbins-ceo",
+    "ticker": "CSCO",
+    "role": "CEO",
+    "named_person": "Chuck Robbins",
+    "start_fiscal": "FY2019-Q2",
+    "end_fiscal": null,
+    "succession_type": null,
+    "notes": "CEO since July 2015; single-regime in tracking window. CSCO FYE July 31"
+  },
+  {
+    "regime_id": "ctsh-dsouza-ceo",
+    "ticker": "CTSH",
+    "role": "CEO",
+    "named_person": "Francisco D'Souza",
+    "start_fiscal": "FY2016-Q4",
+    "end_fiscal": "FY2019-Q1",
+    "succession_type": "retirement",
+    "notes": "Stepped down as CEO Feb 2019; remained board member"
+  },
+  {
+    "regime_id": "ctsh-humphries-ceo",
+    "ticker": "CTSH",
+    "role": "CEO",
+    "named_person": "Brian Humphries",
+    "start_fiscal": "FY2019-Q2",
+    "end_fiscal": "FY2022-Q1",
+    "succession_type": "resignation",
+    "notes": "CEO April 2019 - January 2022; resigned"
+  },
+  {
+    "regime_id": "ctsh-kumar-ceo",
+    "ticker": "CTSH",
+    "role": "CEO",
+    "named_person": "Ravi Kumar S",
+    "start_fiscal": "FY2022-Q1",
+    "end_fiscal": null,
+    "succession_type": null,
+    "notes": "CEO from February 2022"
+  },
+  {
+    "regime_id": "ibm-rometty-ceo",
+    "ticker": "IBM",
+    "role": "CEO",
+    "named_person": "Ginni Rometty",
+    "start_fiscal": "FY2016-Q3",
+    "end_fiscal": "FY2019-Q4",
+    "succession_type": "retirement",
+    "notes": "CEO Jan 2012 - April 2020; last earnings call Q4 2019 (Jan 2020)"
+  },
+  {
+    "regime_id": "ibm-krishna-ceo",
+    "ticker": "IBM",
+    "role": "CEO",
+    "named_person": "Arvind Krishna",
+    "start_fiscal": "FY2020-Q1",
+    "end_fiscal": null,
+    "succession_type": null,
+    "notes": "CEO from April 6, 2020; first call Q1 2020 on April 20, 2020"
+  },
+  {
+    "regime_id": "intu-smith-ceo",
+    "ticker": "INTU",
+    "role": "CEO",
+    "named_person": "Brad Smith",
+    "start_fiscal": "FY2018-Q4",
+    "end_fiscal": "FY2019-Q2",
+    "succession_type": "retirement",
+    "notes": "CEO until Jan 1, 2019. INTU FYE Jul 31 — FY2018-Q4=May-Jul 2018, FY2019-Q2=Nov 2018-Jan 2019"
+  },
+  {
+    "regime_id": "intu-goodarzi-ceo",
+    "ticker": "INTU",
+    "role": "CEO",
+    "named_person": "Sasan Goodarzi",
+    "start_fiscal": "FY2019-Q3",
+    "end_fiscal": null,
+    "succession_type": null,
+    "notes": "CEO from Jan 1, 2019. INTU FY2019-Q3=Feb-Apr 2019; first call ~May 2019"
+  },
+  {
+    "regime_id": "lrcx-anstice-ceo",
+    "ticker": "LRCX",
+    "role": "CEO",
+    "named_person": "Martin Anstice",
+    "start_fiscal": "FY2016-Q2",
+    "end_fiscal": "FY2019-Q2",
+    "succession_type": "resignation",
+    "notes": "Resigned Dec 2018. LRCX FYE ~Jun 28 — FY2019-Q2=Oct-Dec 2018"
+  },
+  {
+    "regime_id": "lrcx-archer-ceo",
+    "ticker": "LRCX",
+    "role": "CEO",
+    "named_person": "Tim Archer",
+    "start_fiscal": "FY2019-Q3",
+    "end_fiscal": null,
+    "succession_type": null,
+    "notes": "CEO from January 2019. LRCX FY2019-Q3=Jan-Mar 2019; first call ~April 2019"
+  },
+  {
+    "regime_id": "msft-nadella-ceo",
+    "ticker": "MSFT",
+    "role": "CEO",
+    "named_person": "Satya Nadella",
+    "start_fiscal": "FY2017-Q2",
+    "end_fiscal": null,
+    "succession_type": null,
+    "notes": "CEO since Feb 2014; single-regime in tracking window. MSFT FYE Jun 30"
+  },
+  {
+    "regime_id": "mu-durcan-ceo",
+    "ticker": "MU",
+    "role": "CEO",
+    "named_person": "D. Mark Durcan",
+    "start_fiscal": "FY2016-Q2",
+    "end_fiscal": "FY2017-Q3",
+    "succession_type": "retirement",
+    "notes": "Retired May 2017. MU FYE ~Sept 3 — FY2017-Q3=Mar-May 2017"
+  },
+  {
+    "regime_id": "mu-mehrotra-ceo",
+    "ticker": "MU",
+    "role": "CEO",
+    "named_person": "Sanjay Mehrotra",
+    "start_fiscal": "FY2017-Q4",
+    "end_fiscal": null,
+    "succession_type": null,
+    "notes": "CEO from May 2017. MU FY2017-Q4=Jun-Aug 2017; first call Sep 2017"
+  },
+  {
+    "regime_id": "opal-comora-maurer-ceo",
+    "ticker": "OPAL",
+    "role": "CEO",
+    "named_person": "Adam Comora / Jonathan Maurer",
+    "start_fiscal": "FY2024-Q4",
+    "end_fiscal": null,
+    "succession_type": null,
+    "notes": "OPAL Fuels co-CEOs; seed FY2024-Q4. Recent entry, single-regime"
+  },
+  {
+    "regime_id": "orcl-hurd-catz-ceo",
+    "ticker": "ORCL",
+    "role": "CEO",
+    "named_person": "Mark Hurd / Safra Catz",
+    "start_fiscal": "FY2017-Q2",
+    "end_fiscal": "FY2020-Q1",
+    "succession_type": "transition",
+    "notes": "Co-CEOs. Mark Hurd died Oct 18, 2019. ORCL FYE May 31 — FY2020-Q1=Jun-Aug 2019"
+  },
+  {
+    "regime_id": "orcl-catz-ceo",
+    "ticker": "ORCL",
+    "role": "CEO",
+    "named_person": "Safra Catz",
+    "start_fiscal": "FY2020-Q2",
+    "end_fiscal": null,
+    "succession_type": null,
+    "notes": "Sole CEO after Hurd death Oct 2019. ORCL FY2020-Q2=Sep-Nov 2019; first call ~Dec 2019"
+  },
+  {
+    "regime_id": "strw-ceo",
+    "ticker": "STRW",
+    "role": "CEO",
+    "named_person": "Moishe Gubin",
+    "start_fiscal": "FY2025-Q3",
+    "end_fiscal": null,
+    "succession_type": null,
+    "notes": "Strawberry Fields REIT; recent seed FY2025-Q3. Single-regime entry. CEO name to verify."
+  },
+  {
+    "regime_id": "tel-lynch-ceo",
+    "ticker": "TEL",
+    "role": "CEO",
+    "named_person": "Tom Lynch",
+    "start_fiscal": "FY2016-Q1",
+    "end_fiscal": "FY2016-Q1",
+    "succession_type": "transition",
+    "notes": "TE Connectivity. Became Executive Chairman March 2016. TEL FYE ~Sept 25 — FY2016-Q1=Oct-Dec 2015"
+  },
+  {
+    "regime_id": "tel-curtin-ceo",
+    "ticker": "TEL",
+    "role": "CEO",
+    "named_person": "Terrence Curtin",
+    "start_fiscal": "FY2016-Q2",
+    "end_fiscal": null,
+    "succession_type": null,
+    "notes": "CEO from March 1, 2016. TEL FY2016-Q2=Jan-Mar 2016; first call ~May 2016"
+  },
+  {
+    "regime_id": "txn-templeton-ceo",
+    "ticker": "TXN",
+    "role": "CEO",
+    "named_person": "Rich Templeton",
+    "start_fiscal": "FY2016-Q4",
+    "end_fiscal": "FY2020-Q4",
+    "succession_type": "transition",
+    "notes": "CEO until April 1, 2021; became Executive Chairman. Last earnings call Q4 2020 (Jan 2021)"
+  },
+  {
+    "regime_id": "txn-ilan-ceo",
+    "ticker": "TXN",
+    "role": "CEO",
+    "named_person": "Haviv Ilan",
+    "start_fiscal": "FY2021-Q1",
+    "end_fiscal": null,
+    "succession_type": null,
+    "notes": "CEO from April 1, 2021; first earnings call Q1 2021 on April 22, 2021"
+  },
+  {
+    "regime_id": "abbv-gonzalez-ceo",
+    "ticker": "ABBV",
+    "role": "CEO",
+    "named_person": "Richard Gonzalez",
+    "start_fiscal": "FY2016-Q4",
+    "end_fiscal": "FY2022-Q4",
+    "succession_type": "retirement",
+    "notes": "Founding CEO of AbbVie from 2013; retired Dec 31, 2022"
+  },
+  {
+    "regime_id": "abbv-michael-ceo",
+    "ticker": "ABBV",
+    "role": "CEO",
+    "named_person": "Robert Michael",
+    "start_fiscal": "FY2023-Q1",
+    "end_fiscal": null,
+    "succession_type": null,
+    "notes": "CEO from January 1, 2023; first call Q1 2023"
+  },
+  {
+    "regime_id": "abt-white-ceo",
+    "ticker": "ABT",
+    "role": "CEO",
+    "named_person": "Miles White",
+    "start_fiscal": "FY2018-Q2",
+    "end_fiscal": "FY2019-Q4",
+    "succession_type": "retirement",
+    "notes": "CEO 1999-2020; last earnings call Q4 2019 (Jan 2020)"
+  },
+  {
+    "regime_id": "abt-ford-ceo",
+    "ticker": "ABT",
+    "role": "CEO",
+    "named_person": "Robert Ford",
+    "start_fiscal": "FY2020-Q1",
+    "end_fiscal": null,
+    "succession_type": null,
+    "notes": "CEO from March 31, 2020; first call Q1 2020 (April 2020)"
+  },
+  {
+    "regime_id": "amgn-bradway-ceo",
+    "ticker": "AMGN",
+    "role": "CEO",
+    "named_person": "Robert Bradway",
+    "start_fiscal": "FY2019-Q2",
+    "end_fiscal": null,
+    "succession_type": null,
+    "notes": "CEO since 2012; single-regime in tracking window"
+  },
+  {
+    "regime_id": "bmy-caforio-ceo",
+    "ticker": "BMY",
+    "role": "CEO",
+    "named_person": "Giovanni Caforio",
+    "start_fiscal": "FY2016-Q1",
+    "end_fiscal": "FY2023-Q3",
+    "succession_type": "transition",
+    "notes": "CEO 2015 - Oct 2023; became Executive Chairman Nov 2023"
+  },
+  {
+    "regime_id": "bmy-boerner-ceo",
+    "ticker": "BMY",
+    "role": "CEO",
+    "named_person": "Christopher Boerner",
+    "start_fiscal": "FY2023-Q4",
+    "end_fiscal": null,
+    "succession_type": null,
+    "notes": "CEO from November 1, 2023; first call Q4 2023 (Feb 2024)"
+  },
+  {
+    "regime_id": "bsx-mahoney-ceo",
+    "ticker": "BSX",
+    "role": "CEO",
+    "named_person": "Michael Mahoney",
+    "start_fiscal": "FY2018-Q4",
+    "end_fiscal": null,
+    "succession_type": null,
+    "notes": "CEO since 2012; single-regime in tracking window"
+  },
+  {
+    "regime_id": "ci-cordani-ceo",
+    "ticker": "CI",
+    "role": "CEO",
+    "named_person": "David Cordani",
+    "start_fiscal": "FY2019-Q3",
+    "end_fiscal": null,
+    "succession_type": null,
+    "notes": "CEO since 2009; single-regime in tracking window"
+  },
+  {
+    "regime_id": "dhr-joyce-ceo",
+    "ticker": "DHR",
+    "role": "CEO",
+    "named_person": "Thomas Joyce",
+    "start_fiscal": "FY2016-Q3",
+    "end_fiscal": "FY2020-Q2",
+    "succession_type": "retirement",
+    "notes": "CEO through Aug 31, 2020; retired"
+  },
+  {
+    "regime_id": "dhr-blair-ceo",
+    "ticker": "DHR",
+    "role": "CEO",
+    "named_person": "Rainer Blair",
+    "start_fiscal": "FY2020-Q3",
+    "end_fiscal": null,
+    "succession_type": null,
+    "notes": "CEO from September 1, 2020; first call Q3 2020 (Oct 2020)"
+  },
+  {
+    "regime_id": "elv-swedish-ceo",
+    "ticker": "ELV",
+    "role": "CEO",
+    "named_person": "Joseph Swedish",
+    "start_fiscal": "FY2016-Q1",
+    "end_fiscal": "FY2017-Q3",
+    "succession_type": "retirement",
+    "notes": "CEO until Nov 5, 2017. Last call Q3 2017"
+  },
+  {
+    "regime_id": "elv-boudreaux-ceo",
+    "ticker": "ELV",
+    "role": "CEO",
+    "named_person": "Gail Boudreaux",
+    "start_fiscal": "FY2018-Q1",
+    "end_fiscal": null,
+    "succession_type": null,
+    "notes": "CEO from November 5, 2017; first call Q1 2018 (Feb 2018)"
+  },
+  {
+    "regime_id": "gild-milligan-ceo",
+    "ticker": "GILD",
+    "role": "CEO",
+    "named_person": "John Milligan",
+    "start_fiscal": "FY2016-Q1",
+    "end_fiscal": "FY2018-Q4",
+    "succession_type": "resignation",
+    "notes": "CEO until March 2019; resigned"
+  },
+  {
+    "regime_id": "gild-oday-ceo",
+    "ticker": "GILD",
+    "role": "CEO",
+    "named_person": "Daniel O'Day",
+    "start_fiscal": "FY2019-Q1",
+    "end_fiscal": null,
+    "succession_type": null,
+    "notes": "CEO from March 11, 2019; first call Q1 2019 (April/May 2019)"
+  },
+  {
+    "regime_id": "isrg-guthart-ceo",
+    "ticker": "ISRG",
+    "role": "CEO",
+    "named_person": "Gary Guthart",
+    "start_fiscal": "FY2017-Q1",
+    "end_fiscal": null,
+    "succession_type": null,
+    "notes": "CEO since 2010; single-regime in tracking window"
+  },
+  {
+    "regime_id": "jnj-gorsky-ceo",
+    "ticker": "JNJ",
+    "role": "CEO",
+    "named_person": "Alex Gorsky",
+    "start_fiscal": "FY2016-Q3",
+    "end_fiscal": "FY2021-Q4",
+    "succession_type": "retirement",
+    "notes": "CEO Apr 2012 - Jan 2022; last call Q4 2021 (Jan 2022). JNJ FYE ~Jan 3 (calendar)"
+  },
+  {
+    "regime_id": "jnj-duato-ceo",
+    "ticker": "JNJ",
+    "role": "CEO",
+    "named_person": "Joaquin Duato",
+    "start_fiscal": "FY2022-Q1",
+    "end_fiscal": null,
+    "succession_type": null,
+    "notes": "CEO from January 3, 2022; first call Q1 2022 (April 2022)"
+  },
+  {
+    "regime_id": "lly-lechleiter-ceo",
+    "ticker": "LLY",
+    "role": "CEO",
+    "named_person": "John Lechleiter",
+    "start_fiscal": "FY2016-Q2",
+    "end_fiscal": "FY2016-Q4",
+    "succession_type": "retirement",
+    "notes": "CEO until Dec 31, 2016"
+  },
+  {
+    "regime_id": "lly-ricks-ceo",
+    "ticker": "LLY",
+    "role": "CEO",
+    "named_person": "David Ricks",
+    "start_fiscal": "FY2017-Q1",
+    "end_fiscal": null,
+    "succession_type": null,
+    "notes": "CEO from January 1, 2017; first call Q1 2017"
+  },
+  {
+    "regime_id": "mdt-ishrak-ceo",
+    "ticker": "MDT",
+    "role": "CEO",
+    "named_person": "Omar Ishrak",
+    "start_fiscal": "FY2019-Q4",
+    "end_fiscal": "FY2020-Q3",
+    "succession_type": "retirement",
+    "notes": "CEO 2011 - April 2020. MDT FYE ~Apr 24 — FY2020-Q3=Nov 2019-Jan 2020; last full quarter before Martha"
+  },
+  {
+    "regime_id": "mdt-martha-ceo",
+    "ticker": "MDT",
+    "role": "CEO",
+    "named_person": "Geoff Martha",
+    "start_fiscal": "FY2020-Q4",
+    "end_fiscal": null,
+    "succession_type": null,
+    "notes": "CEO from April 27, 2020. MDT FY2020-Q4=Feb-Apr 2020; first call Jun 2020"
+  },
+  {
+    "regime_id": "mrk-frazier-ceo",
+    "ticker": "MRK",
+    "role": "CEO",
+    "named_person": "Kenneth Frazier",
+    "start_fiscal": "FY2018-Q3",
+    "end_fiscal": "FY2021-Q1",
+    "succession_type": "retirement",
+    "notes": "CEO until June 30, 2021; retired"
+  },
+  {
+    "regime_id": "mrk-davis-ceo",
+    "ticker": "MRK",
+    "role": "CEO",
+    "named_person": "Robert Davis",
+    "start_fiscal": "FY2021-Q2",
+    "end_fiscal": null,
+    "succession_type": null,
+    "notes": "CEO from July 1, 2021; first call Q2 2021 (July 2021)"
+  },
+  {
+    "regime_id": "pfe-read-ceo",
+    "ticker": "PFE",
+    "role": "CEO",
+    "named_person": "Ian Read",
+    "start_fiscal": "FY2016-Q1",
+    "end_fiscal": "FY2018-Q4",
+    "succession_type": "retirement",
+    "notes": "CEO until Dec 31, 2018; became Executive Chairman"
+  },
+  {
+    "regime_id": "pfe-bourla-ceo",
+    "ticker": "PFE",
+    "role": "CEO",
+    "named_person": "Albert Bourla",
+    "start_fiscal": "FY2019-Q1",
+    "end_fiscal": null,
+    "succession_type": null,
+    "notes": "CEO from January 1, 2019; first call Q1 2019 (April 2019)"
+  },
+  {
+    "regime_id": "regn-schleifer-ceo",
+    "ticker": "REGN",
+    "role": "CEO",
+    "named_person": "Leonard Schleifer",
+    "start_fiscal": "FY2022-Q3",
+    "end_fiscal": null,
+    "succession_type": null,
+    "notes": "CEO since REGN founding in 1988; single-regime in tracking window"
+  },
+  {
+    "regime_id": "syk-lobo-ceo",
+    "ticker": "SYK",
+    "role": "CEO",
+    "named_person": "Kevin Lobo",
+    "start_fiscal": "FY2016-Q3",
+    "end_fiscal": null,
+    "succession_type": null,
+    "notes": "CEO since 2012; single-regime in tracking window"
+  },
+  {
+    "regime_id": "tmo-casper-ceo",
+    "ticker": "TMO",
+    "role": "CEO",
+    "named_person": "Marc Casper",
+    "start_fiscal": "FY2018-Q2",
+    "end_fiscal": null,
+    "succession_type": null,
+    "notes": "CEO since 2009; single-regime in tracking window"
+  },
+  {
+    "regime_id": "unh-hemsley-ceo-1",
+    "ticker": "UNH",
+    "role": "CEO",
+    "named_person": "Stephen Hemsley",
+    "start_fiscal": "FY2016-Q2",
+    "end_fiscal": "FY2017-Q3",
+    "succession_type": "transition",
+    "notes": "CEO until Sept 1, 2017; became Executive Chairman. Last call Q3 2017"
+  },
+  {
+    "regime_id": "unh-wichmann-ceo",
+    "ticker": "UNH",
+    "role": "CEO",
+    "named_person": "David Wichmann",
+    "start_fiscal": "FY2017-Q4",
+    "end_fiscal": "FY2021-Q1",
+    "succession_type": "resignation",
+    "notes": "CEO Sept 1, 2017 - Feb 2021; stepped back for health reasons"
+  },
+  {
+    "regime_id": "unh-witty-ceo",
+    "ticker": "UNH",
+    "role": "CEO",
+    "named_person": "Andrew Witty",
+    "start_fiscal": "FY2021-Q2",
+    "end_fiscal": "FY2022-Q3",
+    "succession_type": "resignation",
+    "notes": "CEO from April 2021; stepped down Oct 17, 2022"
+  },
+  {
+    "regime_id": "unh-hemsley-ceo-2",
+    "ticker": "UNH",
+    "role": "CEO",
+    "named_person": "Stephen Hemsley",
+    "start_fiscal": "FY2022-Q4",
+    "end_fiscal": "FY2023-Q3",
+    "succession_type": "transition",
+    "notes": "Interim/acting CEO from Oct 2022 through Oct 2023. UNH same person, second stint."
+  },
+  {
+    "regime_id": "unh-thompson-ceo",
+    "ticker": "UNH",
+    "role": "CEO",
+    "named_person": "Brian Thompson",
+    "start_fiscal": "FY2023-Q4",
+    "end_fiscal": "FY2024-Q3",
+    "succession_type": "transition",
+    "notes": "CEO Nov 1, 2023 - Dec 4, 2024. Died Dec 4, 2024."
+  },
+  {
+    "regime_id": "unh-hemsley-ceo-3",
+    "ticker": "UNH",
+    "role": "CEO",
+    "named_person": "Stephen Hemsley",
+    "start_fiscal": "FY2025-Q1",
+    "end_fiscal": null,
+    "succession_type": null,
+    "notes": "Returned as CEO from January 2025 after Thompson death"
+  },
+  {
+    "regime_id": "vrtx-leiden-ceo",
+    "ticker": "VRTX",
+    "role": "CEO",
+    "named_person": "Jeffrey Leiden",
+    "start_fiscal": "FY2018-Q2",
+    "end_fiscal": "FY2020-Q1",
+    "succession_type": "transition",
+    "notes": "CEO until May 2020; became Executive Chairman"
+  },
+  {
+    "regime_id": "vrtx-kewalramani-ceo",
+    "ticker": "VRTX",
+    "role": "CEO",
+    "named_person": "Reshma Kewalramani",
+    "start_fiscal": "FY2020-Q2",
+    "end_fiscal": null,
+    "succession_type": null,
+    "notes": "CEO from May 2020; first call Q2 2020 (July 2020)"
+  }
+]
