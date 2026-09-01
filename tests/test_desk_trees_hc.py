@@ -5,7 +5,7 @@ import json
 
 import pytest
 
-from scripts._desk_trees_v2 import NVDA_STAMP, build_ops_book
+from scripts._desk_trees_v2 import BUCKETS, NVDA_STAMP, build_ops_book
 from scripts._desk_trees_v2_hc import (
     HC_BOOK_ID,
     HC_STAMP,
@@ -50,6 +50,12 @@ def test_hc_catalog_skips_gold_and_tech() -> None:
     assert "MSFT" not in tickers
     assert set(HC_TICKERS) == tickers
     by_id = {str(tree["tree_id"]): tree for tree in HC_TREES}
+    assert {tree.get("bucket") for tree in HC_TREES} <= set(BUCKETS)
+    assert all(tree.get("bucket") for tree in HC_TREES)
+    assert by_id["tmo-2019-guidance-january"]["bucket"] == "guidance"
+    assert by_id["ci-ma-growth-10"]["bucket"] == "demand"
+    assert by_id["lly-dividend-december"]["bucket"] == "capital_allocation"
+    assert by_id["abbv-humira-ip-2022"]["bucket"] == "macro_regulatory_risk"
     assert any(
         node.get("edge") == "delivered"
         for node in by_id["isrg-davinci-x"].get("nodes") or ()

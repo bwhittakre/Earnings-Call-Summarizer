@@ -53,6 +53,26 @@ WINDOW: tuple[str, ...] = (
 )
 
 KINDS = ("promise", "goal")
+BUCKETS = (
+    "demand",
+    "margins",
+    "earnings_power",
+    "capital_allocation",
+    "guidance",
+    "management_confidence",
+    "competitive_position",
+    "macro_regulatory_risk",
+)
+BUCKET_LABELS = {
+    "demand": "Demand",
+    "margins": "Margins",
+    "earnings_power": "Earnings power",
+    "capital_allocation": "Capital allocation",
+    "guidance": "Guidance",
+    "management_confidence": "Management confidence",
+    "competitive_position": "Competitive position",
+    "macro_regulatory_risk": "Macro / regulatory risk",
+}
 PROMISE_EDGES = (
     "restated",
     "evolved",
@@ -61,6 +81,7 @@ PROMISE_EDGES = (
     "delivered",
     "missed",
     "abandoned",
+    "expired",
 )
 GOAL_EDGES = (
     "restated",
@@ -72,12 +93,57 @@ GOAL_EDGES = (
     "still-want",
     "dropped",
     "harden-to-promise",
+    "expired",
 )
-PROMISE_TERMINAL = ("delivered", "missed", "abandoned")
-GOAL_TERMINAL = ("hit", "missed", "dropped")
+PROMISE_TERMINAL = ("delivered", "missed", "abandoned", "expired")
+GOAL_TERMINAL = ("hit", "missed", "dropped", "expired")
 PROMISE_SCORED = ("delivered", "missed")
 GOAL_SCORED = ("hit", "missed")
+HARDEN_EDGE = "harden-to-promise"
+BECAME_PROMISE = "became-promise"
+KIND_LABEL_PROMISE_WAS_GOAL = "promise (was goal)"
+EXPIRED_EDGE = "expired"
+EDGE_LABELS = {
+    HARDEN_EDGE: "became a promise",
+    EXPIRED_EDGE: "expired",
+}
+QUANT_OPS = ("between", "gte", "lte", "eq")
+DEFAULT_SILENCE_QUARTERS = 4
+DEFAULT_UNCLOCKED_CAP_QUARTERS = 8
+NOVELTY_OPTIONAL_EDGES = frozenset({"silent", "expired"})
 FY_RE = re.compile(r"^FY(\d{4})-Q([1-4])$")
+
+
+def has_became_promise(nodes: Sequence[Mapping[str, object]]) -> bool:
+    return any(str(node.get("edge") or "") == HARDEN_EDGE for node in nodes)
+
+
+def current_kind(kind: str, nodes: Sequence[Mapping[str, object]]) -> str:
+    if kind == "goal" and has_became_promise(nodes):
+        return "promise"
+    return kind
+
+
+def kind_label(kind: str, nodes: Sequence[Mapping[str, object]] | None = None) -> str:
+    if kind == "goal" and has_became_promise(nodes or ()):
+        return KIND_LABEL_PROMISE_WAS_GOAL
+    return kind
+
+
+def edge_label(edge: str) -> str:
+    return EDGE_LABELS.get(str(edge or ""), str(edge or ""))
+
+
+def normalize_bucket(value: object) -> str | None:
+    raw = str(value or "").strip()
+    return raw or None
+
+
+def bucket_label(value: object) -> str:
+    key = normalize_bucket(value)
+    if key is None:
+        return "unbucketed"
+    return BUCKET_LABELS.get(key, key)
 
 
 def fiscal_key(fiscal: str) -> tuple[int, int]:
@@ -112,6 +178,55 @@ def clock_is_due(clock: str | None, fiscal_period: str) -> bool:
     if clock_key[0] < 0 or here[0] < 0:
         return False
     return here >= clock_key
+
+
+def shift_fiscal(fiscal: str, delta: int) -> str | None:
+    year, quarter = fiscal_key(fiscal)
+    if year < 0:
+        return None
+    index = year * 4 + (quarter - 1) + int(delta)
+    if index < 0:
+        return None
+    new_year, new_q0 = divmod(index, 4)
+    return f"FY{new_year}-Q{new_q0 + 1}"
+
+
+def normalize_expire(value: object) -> str | None:
+    raw = str(value or "").strip().upper()
+    if fiscal_key(raw)[0] < 0:
+        return None
+    return raw
+
+
+def normalize_quant(value: object) -> dict[str, object] | None:
+    if not isinstance(value, Mapping):
+        return None
+    measure = value.get("measure")
+    try:
+        measure_n = int(measure) if measure is not None and str(measure).strip() else None
+    except (TypeError, ValueError):
+        measure_n = None
+    op = str(value.get("op") or "").strip() or None
+    if op and op not in QUANT_OPS:
+        raise SystemExit(f"unknown quant op {op!r}")
+    threshold = value.get("threshold")
+    silence = value.get("silence_quarters", DEFAULT_SILENCE_QUARTERS)
+    cap = value.get("unclocked_cap_quarters", DEFAULT_UNCLOCKED_CAP_QUARTERS)
+    try:
+        silence_n = int(silence)
+        cap_n = int(cap)
+    except (TypeError, ValueError):
+        raise SystemExit("quant silence_quarters and unclocked_cap_quarters must be ints")
+    return {
+        "measure": measure_n,
+        "op": op,
+        "threshold": threshold,
+        "unit": str(value.get("unit") or "").strip() or None,
+        "cadence": str(value.get("cadence") or "annual").strip() or "annual",
+        "silence_quarters": silence_n,
+        "retry": str(value.get("retry") or "annual").strip() or "annual",
+        "unclocked_cap_quarters": cap_n,
+    }
 
 
 def citation_for(
@@ -152,7 +267,11 @@ def last_edge(nodes: Sequence[Mapping[str, object]]) -> str | None:
 
 def is_terminal(kind: str, nodes: Sequence[Mapping[str, object]]) -> bool:
     edge = last_edge(nodes)
-    return bool(edge) and edge in tree_terminal_edge(kind)
+    if not edge:
+        return False
+    if has_became_promise(nodes):
+        return edge in PROMISE_TERMINAL
+    return edge in tree_terminal_edge(kind)
 
 
 def current_clock(seed: Mapping[str, object], nodes: Sequence[Mapping[str, object]]) -> str | None:
@@ -173,7 +292,8 @@ def resolve_branch_state(
 ) -> tuple[str, bool]:
     """Return (state, slipped). Slipped is not missed."""
     edge = last_edge(nodes)
-    if kind == "promise":
+    scoring = current_kind(kind, nodes)
+    if scoring == "promise":
         if edge in PROMISE_TERMINAL:
             return edge, False
         if edge == "silent" and last_fiscal and clock_is_due(clock, last_fiscal):
@@ -187,11 +307,15 @@ def resolve_branch_state(
 
 
 def promise_outcome(kind: str, nodes: Sequence[Mapping[str, object]]) -> str:
-    if kind != "promise":
+    if current_kind(kind, nodes) != "promise":
         return "not-a-promise"
     edge = last_edge(nodes)
+    if edge == HARDEN_EDGE:
+        return "unresolved"
     if edge in PROMISE_SCORED:
         return edge
+    if edge == EXPIRED_EDGE:
+        return EXPIRED_EDGE
     if edge == "abandoned":
         return "unresolved"
     return "unresolved"
@@ -200,10 +324,33 @@ def promise_outcome(kind: str, nodes: Sequence[Mapping[str, object]]) -> str:
 def goal_outcome(kind: str, nodes: Sequence[Mapping[str, object]]) -> str | None:
     if kind != "goal":
         return None
+    if has_became_promise(nodes):
+        return BECAME_PROMISE
     edge = last_edge(nodes)
-    if edge in GOAL_SCORED or edge in ("still-want", "dropped"):
+    if edge in GOAL_SCORED or edge in ("still-want", "dropped", EXPIRED_EDGE):
         return edge
     return "still-want"
+
+
+def promise_score_set(trees: Sequence[Mapping[str, object]]) -> list[Mapping[str, object]]:
+    """Origin promises plus goals that became promises. One tree, one score."""
+    return [
+        tree
+        for tree in trees
+        if tree.get("kind") == "promise" or tree.get("current_kind") == "promise"
+    ]
+
+
+def conversion_counts(trees: Sequence[Mapping[str, object]]) -> dict[str, object]:
+    goals = [tree for tree in trees if tree.get("kind") == "goal"]
+    became = [tree for tree in goals if tree.get("goal_outcome") == BECAME_PROMISE]
+    n_goals = len(goals)
+    n_became = len(became)
+    return {
+        "n_goals": n_goals,
+        "n_became_promise": n_became,
+        "harden_rate": (n_became / n_goals) if n_goals else None,
+    }
 
 
 def deliver_rate_counts(trees: Sequence[Mapping[str, object]]) -> dict[str, object]:
@@ -230,6 +377,106 @@ def hit_rate_counts(trees: Sequence[Mapping[str, object]]) -> dict[str, object]:
     }
 
 
+def last_node_edge(tree: Mapping[str, object]) -> str | None:
+    nodes = [node for node in (tree.get("nodes") or []) if isinstance(node, Mapping)]
+    if not nodes:
+        return None
+    return str(nodes[-1].get("edge") or "") or None
+
+
+def unclocked_cap_fiscal(tree: Mapping[str, object]) -> str | None:
+    quant = tree.get("quant")
+    if not isinstance(quant, Mapping):
+        return None
+    clock = str(tree.get("clock") or "").strip() or None
+    seed = tree.get("seed") or {}
+    if not clock:
+        clock = str(seed.get("clock") or "").strip() or None
+    if clock:
+        return None
+    seed_fiscal = str(seed.get("fiscal_period") or "")
+    try:
+        cap_n = int(quant.get("unclocked_cap_quarters") or DEFAULT_UNCLOCKED_CAP_QUARTERS)
+    except (TypeError, ValueError):
+        cap_n = DEFAULT_UNCLOCKED_CAP_QUARTERS
+    return shift_fiscal(seed_fiscal, cap_n)
+
+
+def tree_aged_bucket(tree: Mapping[str, object], as_of: str | None) -> str | None:
+    """Aged book bucket. Expiry is unknown, never delivered or dropped."""
+    delivery = str(tree.get("delivery") or "")
+    goal = str(tree.get("goal_outcome") or "")
+    state = str(tree.get("state") or "")
+    edge = last_node_edge(tree)
+    if delivery == "delivered" or goal == "hit":
+        return "confirmed"
+    if delivery == "missed" or goal == "missed":
+        return "failed"
+    if goal == "dropped" or edge == "abandoned" or state == "abandoned":
+        return "withdrawn"
+    if (
+        delivery == EXPIRED_EDGE
+        or goal == EXPIRED_EDGE
+        or state == EXPIRED_EDGE
+        or edge == EXPIRED_EDGE
+    ):
+        return "unknown"
+    if not as_of or fiscal_key(as_of)[0] < 0:
+        return None
+    due = (
+        clock_is_due(str(tree.get("clock") or "") or None, as_of)
+        or clock_is_due(str(tree.get("expire") or "") or None, as_of)
+        or clock_is_due(unclocked_cap_fiscal(tree), as_of)
+    )
+    if due:
+        return "unknown"
+    return None
+
+
+def known_delivered_counts(
+    trees: Sequence[Mapping[str, object]],
+    as_of: str | None,
+) -> dict[str, object]:
+    confirmed = failed = withdrawn = unknown = 0
+    for tree in trees:
+        if not isinstance(tree, Mapping):
+            continue
+        bucket = tree_aged_bucket(tree, as_of)
+        if bucket == "confirmed":
+            confirmed += 1
+        elif bucket == "failed":
+            failed += 1
+        elif bucket == "withdrawn":
+            withdrawn += 1
+        elif bucket == "unknown":
+            unknown += 1
+    aged = confirmed + failed + withdrawn + unknown
+    return {
+        "n_confirmed": confirmed,
+        "n_failed": failed,
+        "n_withdrawn": withdrawn,
+        "n_unknown": unknown,
+        "n_aged": aged,
+        "known_delivered_rate": (confirmed / aged) if aged else None,
+        "settled_share": ((confirmed + failed + withdrawn) / aged) if aged else None,
+    }
+
+
+def known_delivered_caption(counts: Mapping[str, object] | None) -> str:
+    payload = counts or {}
+    aged = int(payload.get("n_aged") or 0)
+    if aged <= 0:
+        return "No aged trees yet. Em dash is not a 0% known-delivered rate."
+    confirmed = int(payload.get("n_confirmed") or 0)
+    unknown = int(payload.get("n_unknown") or 0)
+    return (
+        "This is what we know has been delivered. "
+        f"{confirmed} of {aged} aged trees are confirmed delivered. "
+        f"{unknown} unknown. Aged trees we cannot settle sit in the denominator. "
+        "Expiry is not delivered and not dropped."
+    )
+
+
 def _require_seed_cite(tree: Mapping[str, object]) -> str:
     seed = tree.get("seed") or {}
     excerpt = str(seed.get("excerpt") or "").strip()
@@ -242,24 +489,40 @@ def validate_catalog_tree(item: Mapping[str, object]) -> None:
     kind = str(item.get("kind") or "")
     if kind not in KINDS:
         raise SystemExit(f"unknown kind {kind!r} on {item.get('tree_id')}")
+    bucket = normalize_bucket(item.get("bucket"))
+    if bucket is not None and bucket not in BUCKETS:
+        raise SystemExit(f"unknown bucket {bucket!r} on {item.get('tree_id')}")
     seed = item.get("seed") or {}
     if not isinstance(seed, Mapping):
         raise SystemExit(f"tree {item.get('tree_id')} missing seed")
     _require_seed_cite(item)
     parent_cite = str(seed.get("excerpt") or "")
-    allowed = allowed_edges(kind)
     previous = str(seed.get("fiscal_period") or "")
     clock = str(seed.get("clock") or "").strip() or None
+    converted = False
     for node in item.get("nodes") or []:
         if not isinstance(node, Mapping):
             raise SystemExit(f"tree {item.get('tree_id')} has a non-object node")
         edge = str(node.get("edge") or "")
+        if kind == "goal" and converted:
+            allowed = PROMISE_EDGES
+        elif kind == "goal":
+            allowed = GOAL_EDGES
+        else:
+            allowed = PROMISE_EDGES
         if edge not in allowed:
             raise SystemExit(
                 f"tree {item.get('tree_id')} forbids edge {edge!r} on {kind}"
+                + (" after became a promise" if converted else "")
             )
         fiscal = str(node.get("fiscal_period") or "")
-        if fiscal_key(fiscal) <= fiscal_key(previous):
+        same_call_harden = (
+            edge == HARDEN_EDGE
+            and not converted
+            and fiscal_key(fiscal) == fiscal_key(previous)
+            and fiscal_key(fiscal)[0] >= 0
+        )
+        if not same_call_harden and fiscal_key(fiscal) <= fiscal_key(previous):
             raise SystemExit(
                 f"tree {item.get('tree_id')} nodes must advance after {previous}"
             )
@@ -277,7 +540,10 @@ def validate_catalog_tree(item: Mapping[str, object]) -> None:
             clock = new_clock
         elif str(node.get("clock") or "").strip():
             clock = str(node.get("clock") or "").strip()
-        if edge != "silent" and not str(node.get("excerpt") or "").strip():
+        if (
+            edge not in NOVELTY_OPTIONAL_EDGES
+            and not str(node.get("excerpt") or "").strip()
+        ):
             raise SystemExit(
                 f"tree {item.get('tree_id')} {fiscal} {edge} missing excerpt"
             )
@@ -285,7 +551,7 @@ def validate_catalog_tree(item: Mapping[str, object]) -> None:
             raise SystemExit(
                 f"tree {item.get('tree_id')} evolved child lost the parent seed cite"
             )
-        if edge in ("delivered", "abandoned") and kind != "promise":
+        if edge in ("delivered", "abandoned") and kind != "promise" and not converted:
             raise SystemExit(
                 f"tree {item.get('tree_id')} used promise terminal on a {kind}"
             )
@@ -293,6 +559,8 @@ def validate_catalog_tree(item: Mapping[str, object]) -> None:
             raise SystemExit(
                 f"tree {item.get('tree_id')} used goal terminal on a {kind}"
             )
+        if edge == HARDEN_EDGE:
+            converted = True
         previous = fiscal
 
 
@@ -316,6 +584,7 @@ def materialize_node(
         "excerpt": excerpt,
         "dimension": dimension,
         "status": status,
+        "edge_label": edge_label(edge),
         "citation": None
         if edge == "silent"
         else citation_for(ticker, fiscal, dimension, status),
@@ -362,7 +631,10 @@ def build_tree(item: Mapping[str, object]) -> dict[str, object]:
         "tree_id": str(item.get("tree_id") or ""),
         "ticker": ticker,
         "kind": kind,
+        "current_kind": current_kind(kind, nodes),
+        "kind_label": kind_label(kind, nodes),
         "beat_id": str(item.get("beat_id") or ""),
+        "bucket": normalize_bucket(item.get("bucket")),
         "title": str(item.get("title") or ""),
         "objects": [str(token) for token in (item.get("objects") or ())],
         "parent_tree_id": str(item.get("parent_tree_id") or "").strip() or None,
@@ -384,6 +656,8 @@ def build_tree(item: Mapping[str, object]) -> dict[str, object]:
         "delivery": promise_outcome(kind, nodes),
         "goal_outcome": goal_outcome(kind, nodes),
         "open": not is_terminal(kind, nodes),
+        "expire": normalize_expire(item.get("expire")),
+        "quant": normalize_quant(item.get("quant")),
         "coverage_summary": next(
             (
                 str(node.get("coverage_summary") or "").strip()
@@ -444,7 +718,10 @@ def walk_open_tree(
     built["slipped"] = slipped
     built["delivery"] = promise_outcome(kind, nodes)
     built["goal_outcome"] = goal_outcome(kind, nodes)
+    built["current_kind"] = current_kind(kind, nodes)
+    built["kind_label"] = kind_label(kind, nodes)
     built["open"] = not is_terminal(kind, nodes)
+    built["bucket"] = normalize_bucket(built.get("bucket"))
     return built
 
 
@@ -495,7 +772,9 @@ def verify_tree_against_novelty(
             f"{tree.get('tree_id')} seed excerpt missing from {fiscal} novelty_view"
         )
     for node in tree.get("nodes") or []:
-        if str(node.get("edge") or "") == "silent":
+        if str(node.get("edge") or "") in NOVELTY_OPTIONAL_EDGES:
+            continue
+        if str(node.get("delivery_basis") or "") == "quant":
             continue
         node_fiscal = str(node.get("fiscal_period") or "")
         node_excerpt = str(node.get("excerpt") or "")
@@ -544,11 +823,11 @@ def build_book(
         for tree in trees
         if str((tree.get("seed") or {}).get("fiscal_period") or "") in WINDOW
     ]
-    gold_promises = [tree for tree in gold_trees if tree.get("kind") == "promise"]
+    gold_promises = promise_score_set(gold_trees)
     gold_goals = [tree for tree in gold_trees if tree.get("kind") == "goal"]
     deliver = deliver_rate_counts(gold_promises)
     hits = hit_rate_counts(gold_goals)
-    deliver_full = deliver_rate_counts(promises)
+    deliver_full = deliver_rate_counts(promise_score_set(trees))
     hits_full = hit_rate_counts(goals)
     if hits.get("n_scoreable") and deliver.get("n_scoreable"):
         # Goal hits must never enter the promise deliver rate.
@@ -571,6 +850,7 @@ def build_book(
         "n_promises": len(promises),
         "n_goals": len(goals),
         "n_gold_trees": len(gold_trees),
+        "conversion": conversion_counts(trees),
         "deliver_rates": {"book": deliver, "full_history": deliver_full},
         "hit_rates": {"book": hits, "full_history": hits_full},
         "trees": trees,
@@ -617,7 +897,8 @@ def build_ops_book(
         "n_promises": len(promises),
         "n_goals": len(goals),
         "tickers": tickers,
-        "deliver_rates": {"book": deliver_rate_counts(promises)},
+        "conversion": conversion_counts(trees),
+        "deliver_rates": {"book": deliver_rate_counts(promise_score_set(trees))},
         "hit_rates": {"book": hit_rate_counts(goals)},
         "trees": trees,
     }

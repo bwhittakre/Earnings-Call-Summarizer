@@ -12,7 +12,7 @@ def tree_outcome(tree: Mapping[str, Any]) -> str:
     delivery = str(tree.get("delivery") or "")
     goal = str(tree.get("goal_outcome") or "")
     state = str(tree.get("state") or "")
-    if kind == "promise" and delivery == "delivered":
+    if delivery == "delivered":
         return "delivered"
     if kind == "goal" and goal == "hit":
         return "hit"

@@ -1,0 +1,19 @@
+---
+description: Keep Roz Claims Trees and the standalone claims desk HTML identical
+globs: services/earnings_monitor/dashboard/claims_*.py,scripts/_desk_trees*,scripts/_desk_*workshop*,tests/test_claims_*.py
+alwaysApply: false
+---
+
+# Claims desk dual surface
+
+Roz Claims Trees and the standalone workshop HTML
+(`Structured Narrative/output/cross_company/reports/claims_desk.html`)
+are the same desk.
+
+- Change filters, rates, buckets, edges, captions, or the tree
+  list in both surfaces unless the user says they may differ.
+- Shared helpers live in
+  `services/earnings_monitor/dashboard/claims_trees.py`.
+- After a desk change, rebuild the HTML with
+  `python scripts/_desk_trees_workshop_html.py`.
+- Do not give the workshop its own scoring path.

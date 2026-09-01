@@ -11,6 +11,7 @@ HC_TREES: tuple[dict[str, object], ...] = (
         "ticker": "LLY",
         "kind": "promise",
         "beat_id": "dividend-restore",
+        "bucket": "capital_allocation",
         "title": "Return to annual dividend increases beginning in December",
         "objects": ("dividend",),
         "seed": {
@@ -48,6 +49,7 @@ HC_TREES: tuple[dict[str, object], ...] = (
         "ticker": "UNH",
         "kind": "promise",
         "beat_id": "medexpress-ramp",
+        "bucket": "competitive_position",
         "title": "Ramp MedExpress startups to about 75 in 2017",
         "objects": ("MedExpress",),
         "seed": {
@@ -69,6 +71,7 @@ HC_TREES: tuple[dict[str, object], ...] = (
         "ticker": "JNJ",
         "kind": "promise",
         "beat_id": "guselkumab-pso",
+        "bucket": "competitive_position",
         "title": "File guselkumab for psoriasis this year",
         "objects": ("guselkumab",),
         "seed": {
@@ -93,6 +96,7 @@ HC_TREES: tuple[dict[str, object], ...] = (
         "ticker": "ABBV",
         "kind": "goal",
         "beat_id": "humira-ip",
+        "bucket": "macro_regulatory_risk",
         "title": "HUMIRA U.S. IP protection until 2022",
         "objects": ("HUMIRA", "2022"),
         "seed": {
@@ -114,6 +118,7 @@ HC_TREES: tuple[dict[str, object], ...] = (
         "ticker": "MRK",
         "kind": "promise",
         "beat_id": "dividend-hike",
+        "bucket": "capital_allocation",
         "title": "Raise the quarterly dividend 15% beginning in Q1 2019",
         "objects": ("dividend", "15%"),
         "seed": {
@@ -135,6 +140,7 @@ HC_TREES: tuple[dict[str, object], ...] = (
         "ticker": "TMO",
         "kind": "promise",
         "beat_id": "january-guidance",
+        "bucket": "guidance",
         "title": "Give 2019 guidance in late January",
         "objects": ("2019 guidance",),
         "seed": {
@@ -156,6 +162,7 @@ HC_TREES: tuple[dict[str, object], ...] = (
         "ticker": "ABT",
         "kind": "promise",
         "beat_id": "libre-1m",
+        "bucket": "demand",
         "title": "More than 1 million patients worldwide by year-end",
         "objects": ("1 million patients",),
         "seed": {
@@ -178,6 +185,7 @@ HC_TREES: tuple[dict[str, object], ...] = (
         "ticker": "DHR",
         "kind": "promise",
         "beat_id": "phenomenex-roi",
+        "bucket": "capital_allocation",
         "title": "Double-digit return on Phenomenex in less than five years",
         "objects": ("Phenomenex",),
         "seed": {
@@ -200,6 +208,7 @@ HC_TREES: tuple[dict[str, object], ...] = (
         "ticker": "PFE",
         "kind": "promise",
         "beat_id": "trazimera",
+        "bucket": "competitive_position",
         "title": "Launch Trazimera next month",
         "objects": ("Trazimera",),
         "seed": {
@@ -222,6 +231,7 @@ HC_TREES: tuple[dict[str, object], ...] = (
         "ticker": "AMGN",
         "kind": "promise",
         "beat_id": "wclc-update",
+        "bucket": "competitive_position",
         "title": "Update lung-cancer progress at WCLC in early September",
         "objects": ("World Conference on Lung Cancer",),
         "seed": {
@@ -245,6 +255,7 @@ HC_TREES: tuple[dict[str, object], ...] = (
         "ticker": "ISRG",
         "kind": "promise",
         "beat_id": "davinci-x",
+        "bucket": "competitive_position",
         "title": "Launch the da Vinci X upgrade over the next several quarters",
         "objects": ("da Vinci X",),
         "seed": {
@@ -291,6 +302,7 @@ HC_TREES: tuple[dict[str, object], ...] = (
         "ticker": "SYK",
         "kind": "promise",
         "beat_id": "knee-aaos",
+        "bucket": "competitive_position",
         "title": "Full commercial launch of the total knee at 2017 AAOS",
         "objects": ("AAOS", "total knee"),
         "seed": {
@@ -313,6 +325,7 @@ HC_TREES: tuple[dict[str, object], ...] = (
         "ticker": "GILD",
         "kind": "promise",
         "beat_id": "zuma-2",
+        "bucket": "macro_regulatory_risk",
         "title": "File KTE-X19 for mantle cell lymphoma by the end of 2019",
         "objects": ("ZUMA-2", "KTE-X19"),
         "seed": {
@@ -337,6 +350,7 @@ HC_TREES: tuple[dict[str, object], ...] = (
         "ticker": "VRTX",
         "kind": "promise",
         "beat_id": "triple-nda",
+        "bucket": "macro_regulatory_risk",
         "title": "Submit a new drug application no later than mid-2019",
         "objects": ("new drug application", "mid-2019"),
         "seed": {
@@ -357,6 +371,7 @@ HC_TREES: tuple[dict[str, object], ...] = (
         "ticker": "MDT",
         "kind": "goal",
         "beat_id": "aspiration-share",
+        "bucket": "competitive_position",
         "title": "Reach 25% of the aspiration market by fiscal year-end",
         "objects": ("aspiration", "25%"),
         "seed": {
@@ -380,6 +395,7 @@ HC_TREES: tuple[dict[str, object], ...] = (
         "ticker": "BMY",
         "kind": "promise",
         "beat_id": "cobenfy-pivotal",
+        "bucket": "competitive_position",
         "title": "Start seven COBENFY phase 3 studies by mid-year",
         "objects": ("COBENFY",),
         "seed": {
@@ -402,6 +418,7 @@ HC_TREES: tuple[dict[str, object], ...] = (
         "ticker": "REGN",
         "kind": "promise",
         "beat_id": "aflibercept-8mg",
+        "bucket": "macro_regulatory_risk",
         "title": "Submit aflibercept 8 mg pivotal data in a single BLA this year",
         "objects": ("aflibercept 8-milligram", "BLA"),
         "seed": {
@@ -425,6 +442,7 @@ HC_TREES: tuple[dict[str, object], ...] = (
         "ticker": "CI",
         "kind": "goal",
         "beat_id": "ma-10",
+        "bucket": "demand",
         "title": "Medicare Advantage customer growth of at least 10% in 2020",
         "objects": ("Medicare Advantage", "10%"),
         "seed": {
@@ -446,6 +464,7 @@ HC_TREES: tuple[dict[str, object], ...] = (
         "ticker": "ELV",
         "kind": "promise",
         "beat_id": "pos-rebates",
+        "bucket": "competitive_position",
         "title": "Move commercial risk-based business to point-of-sale rebates in 2020",
         "objects": ("point-of-sale rebates",),
         "seed": {
@@ -467,6 +486,7 @@ HC_TREES: tuple[dict[str, object], ...] = (
         "ticker": "BSX",
         "kind": "promise",
         "beat_id": "lotus-edge",
+        "bucket": "competitive_position",
         "title": "Limited Lotus Edge release in March Europe and U.S. early Q2",
         "objects": ("Lotus Edge",),
         "seed": {

@@ -11,6 +11,7 @@ OPS_TREES: tuple[dict[str, object], ...] = (
         "ticker": "ADBE",
         "kind": "promise",
         "beat_id": "device-co-op",
+        "bucket": "competitive_position",
         "title": "Adobe Marketing Cloud Device Co-op identifies consumers across devices",
         "objects": ("Device Co-op", "Adobe Marketing Cloud Device Co-op"),
         "seed": {
@@ -33,6 +34,7 @@ OPS_TREES: tuple[dict[str, object], ...] = (
         "ticker": "ADSK",
         "kind": "promise",
         "beat_id": "collections",
+        "bucket": "competitive_position",
         "title": "Begin selling Collections next-generation suites",
         "objects": ("Collections",),
         "seed": {
@@ -57,6 +59,7 @@ OPS_TREES: tuple[dict[str, object], ...] = (
         "ticker": "CRM",
         "kind": "goal",
         "beat_id": "twenty-billion",
+        "bucket": "earnings_power",
         "title": "Next goal is $20 billion of revenue",
         "objects": ("$20 billion", "20 billion"),
         "seed": {
@@ -119,8 +122,10 @@ OPS_TREES: tuple[dict[str, object], ...] = (
         "ticker": "IBM",
         "kind": "promise",
         "beat_id": "promontory-watson",
+        "bucket": "competitive_position",
         "title": "Train Watson on Promontory financial-regulation expertise",
         "objects": ("Promontory", "Watson"),
+        "expire": "FY2018-Q3",
         "seed": {
             "fiscal_period": "FY2016-Q3",
             "claim_type": "forward_clock",
@@ -136,13 +141,23 @@ OPS_TREES: tuple[dict[str, object], ...] = (
             "dimension": "competitive_position",
             "status": "verbatim",
         },
-        "nodes": (),
+        "nodes": (
+            {
+                "fiscal_period": "FY2018-Q3",
+                "edge": "expired",
+                "excerpt": (
+                    "Never followed up in a way we can settle. Completeness is "
+                    "unfeasible. Not a miss and not a withdrawal."
+                ),
+            },
+        ),
     },
     {
         "tree_id": "intu-turbotax-diy-growth",
         "ticker": "INTU",
         "kind": "goal",
         "beat_id": "turbotax-growth",
+        "bucket": "demand",
         "title": "Tax simplification becomes a TurboTax growth catalyst",
         "objects": ("TurboTax",),
         "seed": {
@@ -165,6 +180,7 @@ OPS_TREES: tuple[dict[str, object], ...] = (
         "ticker": "MSFT",
         "kind": "promise",
         "beat_id": "build-briefing",
+        "bucket": "management_confidence",
         "title": "Hold a financial analyst briefing at BUILD in May",
         "objects": ("BUILD", "financial analyst briefing"),
         "seed": {
@@ -186,6 +202,7 @@ OPS_TREES: tuple[dict[str, object], ...] = (
         "ticker": "ORCL",
         "kind": "promise",
         "beat_id": "cloud-2b",
+        "bucket": "demand",
         "title": "Book more than $2 billion in annual cloud sales this year",
         "objects": ("cloud sales",),
         "seed": {
@@ -206,6 +223,7 @@ OPS_TREES: tuple[dict[str, object], ...] = (
         "ticker": "AAPL",
         "kind": "goal",
         "beat_id": "net-cash-neutral",
+        "bucket": "capital_allocation",
         "title": "Become approximately net cash neutral over time",
         "objects": ("net cash neutral",),
         "seed": {
@@ -229,6 +247,7 @@ OPS_TREES: tuple[dict[str, object], ...] = (
         "ticker": "ACN",
         "kind": "goal",
         "beat_id": "the-new",
+        "bucket": "competitive_position",
         "title": "Be number one in each of The New five",
         "objects": ("The New",),
         "seed": {
@@ -251,6 +270,7 @@ OPS_TREES: tuple[dict[str, object], ...] = (
         "ticker": "AMD",
         "kind": "promise",
         "beat_id": "radeon-pro-duo",
+        "bucket": "competitive_position",
         "title": "Launch Radeon Pro Duo VR platform at month-end",
         "objects": ("Radeon Pro Duo",),
         "seed": {
@@ -272,6 +292,7 @@ OPS_TREES: tuple[dict[str, object], ...] = (
         "ticker": "AMZN",
         "kind": "promise",
         "beat_id": "prime-india",
+        "bucket": "demand",
         "title": "Prime India unlimited free one- and two-day delivery",
         "objects": ("Prime", "Prime Video"),
         "seed": {
@@ -297,6 +318,7 @@ OPS_TREES: tuple[dict[str, object], ...] = (
         "ticker": "CSCO",
         "kind": "promise",
         "beat_id": "luxtera",
+        "bucket": "competitive_position",
         "title": "Integrate Luxtera optics instead of procuring them",
         "objects": ("Luxtera",),
         "seed": {
@@ -319,6 +341,7 @@ OPS_TREES: tuple[dict[str, object], ...] = (
         "ticker": "ADI",
         "kind": "promise",
         "beat_id": "vescent-lidar",
+        "bucket": "competitive_position",
         "title": "Develop solid-state scanning LIDAR from Vescent",
         "objects": ("LIDAR", "Vescent"),
         "seed": {
@@ -342,6 +365,7 @@ OPS_TREES: tuple[dict[str, object], ...] = (
         "ticker": "AMAT",
         "kind": "promise",
         "beat_id": "packaging",
+        "bucket": "demand",
         "title": "Double packaging revenues over the next 12 months",
         "objects": ("packaging", "advanced packaging"),
         "seed": {
@@ -364,6 +388,7 @@ OPS_TREES: tuple[dict[str, object], ...] = (
         "ticker": "CTSH",
         "kind": "promise",
         "beat_id": "acquire-2017",
+        "bucket": "capital_allocation",
         "title": "Accelerate the acquisition pace in 2017",
         "objects": ("acquire companies",),
         "seed": {
@@ -386,6 +411,7 @@ OPS_TREES: tuple[dict[str, object], ...] = (
         "ticker": "MU",
         "kind": "promise",
         "beat_id": "s600",
+        "bucket": "demand",
         "title": "Realize S600 Series revenue in Q3 volume production",
         "objects": ("S600", "Seagate"),
         "seed": {
@@ -410,6 +436,7 @@ OPS_TREES: tuple[dict[str, object], ...] = (
         "ticker": "TEL",
         "kind": "promise",
         "beat_id": "medical-500",
+        "bucket": "demand",
         "title": "Medical run-rate north of $500 million next year",
         "objects": ("Creganna", "AdvancedCath", "medical"),
         "seed": {
@@ -433,6 +460,7 @@ OPS_TREES: tuple[dict[str, object], ...] = (
         "ticker": "TXN",
         "kind": "promise",
         "beat_id": "capital-call",
+        "bucket": "capital_allocation",
         "title": "Hold a capital-management strategy call on February 8",
         "objects": ("capital management",),
         "seed": {
@@ -454,6 +482,7 @@ OPS_TREES: tuple[dict[str, object], ...] = (
         "ticker": "OPAL",
         "kind": "promise",
         "beat_id": "analyst-day",
+        "bucket": "capital_allocation",
         "title": "Host an analyst day in the third quarter",
         "objects": ("analyst day",),
         "seed": {
@@ -478,6 +507,7 @@ OPS_TREES: tuple[dict[str, object], ...] = (
         "ticker": "AVGO",
         "kind": "promise",
         "beat_id": "day2-erp",
+        "bucket": "margins",
         "title": "Run one ERP after day-2 integration at the end of November",
         "objects": ("day 2", "ERP"),
         "seed": {
@@ -502,6 +532,7 @@ OPS_TREES: tuple[dict[str, object], ...] = (
         "ticker": "AVGO",
         "kind": "goal",
         "beat_id": "forty-five-margin",
+        "bucket": "margins",
         "title": "Long-term operating margin target of 45%",
         "objects": ("45%", "operating margin"),
         "seed": {
@@ -524,6 +555,7 @@ OPS_TREES: tuple[dict[str, object], ...] = (
         "ticker": "LRCX",
         "kind": "promise",
         "beat_id": "klx-approvals",
+        "bucket": "macro_regulatory_risk",
         "title": "Secure approvals to complete the transaction in mid-2016",
         "objects": ("approvals", "mid-2016"),
         "seed": {
@@ -544,8 +576,23 @@ OPS_TREES: tuple[dict[str, object], ...] = (
         "ticker": "STRW",
         "kind": "goal",
         "beat_id": "spend-bogey",
+        "bucket": "capital_allocation",
         "title": "Break a $150 to $160 million annual spend bogey",
         "objects": ("$150 to $160 million",),
+        "expire": "FY2027-Q3",
+        "quant": {
+            "measure": None,
+            "op": "between",
+            "threshold": [150, 160],
+            "unit": "million",
+            "cadence": "annual",
+            "silence_quarters": 4,
+            "unclocked_cap_quarters": 8,
+        },
+        "coverage_summary": (
+            "IBES Capex (22) prints 0–88 and is not this REIT spend bogey. "
+            "No invented measure. Runner stays pending until FY2027-Q3."
+        ),
         "seed": {
             "fiscal_period": "FY2025-Q3",
             "claim_type": "forward_clock",
@@ -559,5 +606,47 @@ OPS_TREES: tuple[dict[str, object], ...] = (
             "status": "verbatim",
         },
         "nodes": (),
+    },
+    {
+        "tree_id": "adi-wireless-bms-deploy",
+        "ticker": "ADI",
+        "kind": "goal",
+        "beat_id": "wireless-bms",
+        "bucket": "competitive_position",
+        "title": "Wireless BMS becomes a large share of BMS revenue",
+        "objects": ("wireless BMS", "wireless platform", "wireless solution"),
+        "seed": {
+            "fiscal_period": "FY2023-Q3",
+            "claim_type": "forward_clock",
+            "clock": None,
+            "excerpt": (
+                "Currently, our wireless BMS is designed in at four OEMs, and we "
+                "expect another large OEM to adopt it in the coming quarters. Given "
+                "this momentum and the cutting-edge value proposition, we believe "
+                "the wireless platform will represent a large portion of our BMS "
+                "revenue by the end of the decade."
+            ),
+            "dimension": "competitive_position",
+            "status": "verbatim",
+        },
+        "nodes": (
+            {
+                "fiscal_period": "FY2023-Q4",
+                "edge": "harden-to-promise",
+                "clock": "FY2026-Q4",
+                "excerpt": (
+                    "Last quarter, we secured our fifth customer, a top 10 EV OEM. "
+                    "We'll begin to deploy our wireless solution in their next-gen "
+                    "EVs in 2026."
+                ),
+                "dimension": "competitive_position",
+                "status": "verbatim",
+                "coverage_summary": (
+                    "Same object. Want for wireless BMS share became a dated "
+                    "deploy will. Clock is calendar 2026, scored as FY2026-Q4. "
+                    "Not delivered."
+                ),
+            },
+        ),
     },
 )

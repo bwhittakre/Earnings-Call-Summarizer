@@ -44,6 +44,7 @@ ROZ_VIEWS = (
     "Event inbox",
     "Company history",
     "Claims Desk",
+    "Claims Trees",
     "Dimension panel",
     "Cross-company",
     "Narrative vs quant",

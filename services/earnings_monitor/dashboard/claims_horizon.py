@@ -89,7 +89,7 @@ def horizon_event(
     horizon: str | int | None = 1,
 ) -> dict[str, Any] | None:
     """One event at the clock quarter. Slip miss does not change tree.delivery."""
-    kind = str(tree.get("kind") or "")
+    kind = str(tree.get("current_kind") or tree.get("kind") or "")
     if kind not in {"promise", "goal"}:
         return None
     seed = tree.get("seed") or {}
