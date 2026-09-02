@@ -1,0 +1,2283 @@
+{
+  "note": "Candidates only. Do not auto-insert. Gold is not scanned.",
+  "n_typed_goals": 5,
+  "n_leftover_goals": 121,
+  "typed_goals": [
+    {
+      "book": "desk_ops_v2",
+      "source": "typed-goal",
+      "ticker": "INTU",
+      "tree_id": "intu-turbotax-diy-growth",
+      "title": "Tax simplification becomes a TurboTax growth catalyst",
+      "seed_fiscal": "FY2018-Q4",
+      "will_fiscal": "FY2021-Q2",
+      "objects": [
+        "TurboTax"
+      ],
+      "matched": [
+        "TurboTax"
+      ],
+      "excerpt": "First, to create a complete financial profile for existing and prospective members, with customer consent, we combined income data from 26 million TurboTax returns with Credit Karma. The combination of verified income data with credit history will enable Credit Karma to better personalize offers, driving engagement and creating a win-win-win for our members, partners and us over time.",
+      "dimension": "competitive_position",
+      "status": "verbatim",
+      "n_later_hits": 2
+    },
+    {
+      "book": "desk_ops_v2",
+      "source": "typed-goal",
+      "ticker": "ACN",
+      "tree_id": "acn-the-new-number-one",
+      "title": "Be number one in each of The New five",
+      "seed_fiscal": "FY2017-Q2",
+      "will_fiscal": "FY2017-Q3",
+      "objects": [
+        "The New"
+      ],
+      "matched": [
+        "The New"
+      ],
+      "excerpt": "there is an expectation that indeed the new administration will launch critical reforms in order to boost the business and economy growth. And this economic reform probably I would say the one which are the most important, the healthcare reform, the tax reform, the trade reform and anything linked to the infrastructure investments... fact of the matter they are not yet being announced or executed",
+      "dimension": "macro_regulatory_risk",
+      "status": "composite",
+      "n_later_hits": 1
+    },
+    {
+      "book": "desk_ops_v2",
+      "source": "typed-goal",
+      "ticker": "AVGO",
+      "tree_id": "avgo-45-op-margin",
+      "title": "Long-term operating margin target of 45%",
+      "seed_fiscal": "FY2016-Q4",
+      "will_fiscal": "FY2019-Q4",
+      "objects": [
+        "45%",
+        "operating margin"
+      ],
+      "matched": [
+        "operating margin"
+      ],
+      "excerpt": "Looking beyond fiscal '20, we expect to continue to expand our operating margins organically and are targeting 55% by fiscal 2022.",
+      "dimension": "management_confidence",
+      "status": "verbatim",
+      "n_later_hits": 1
+    },
+    {
+      "book": "desk_hc_v2",
+      "source": "typed-goal",
+      "ticker": "ABBV",
+      "tree_id": "abbv-humira-ip-2022",
+      "title": "HUMIRA U.S. IP protection until 2022",
+      "seed_fiscal": "FY2016-Q4",
+      "will_fiscal": "FY2018-Q3",
+      "objects": [
+        "HUMIRA",
+        "2022"
+      ],
+      "matched": [
+        "HUMIRA"
+      ],
+      "excerpt": "we are confident in our ability to deliver double-digit earnings growth once again in 2019. Importantly, we expect to deliver this level of growth despite a number of factors, including direct biosimilar competition impacting our more than $6 billion international HUMIRA business",
+      "dimension": "management_confidence",
+      "status": "verbatim",
+      "n_later_hits": 3
+    },
+    {
+      "book": "desk_hc_v2",
+      "source": "typed-goal",
+      "ticker": "CI",
+      "tree_id": "ci-ma-growth-10",
+      "title": "Medicare Advantage customer growth of at least 10% in 2020",
+      "seed_fiscal": "FY2019-Q3",
+      "will_fiscal": "FY2020-Q4",
+      "objects": [
+        "Medicare Advantage",
+        "10%"
+      ],
+      "matched": [
+        "Medicare Advantage",
+        "10%"
+      ],
+      "excerpt": "In U.S. government, it means delivering on our goal of accelerated customer growth of 10%-15% in Medicare Advantage. It also means continue to expand our geographic footprint in the individual exchange market, where, for example, in 2021, we'll be offered in 220 counties. This is a more than 50% year-over-year increase.",
+      "dimension": "competitive_position",
+      "status": "verbatim",
+      "n_later_hits": 3
+    }
+  ],
+  "leftover_goals": [
+    {
+      "book": "desk_ops_v2",
+      "source": "leftover-goal",
+      "ticker": "AAPL",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2016-Q3",
+      "will_fiscal": "FY2023-Q4",
+      "objects": [
+        "books",
+        "movies",
+        "currently",
+        "stores",
+        "mentioned",
+        "context",
+        "stores",
+        "months"
+      ],
+      "matched": [
+        "stores",
+        "stores"
+      ],
+      "excerpt": "We're purposely bringing it out in our stores only, so we can really put a great deal of attention on the last mile of it. We'll be offering demos in the stores and it will be very different process than the -- a normal grab-and-go kind of process.",
+      "dimension": "management_confidence",
+      "status": "verbatim",
+      "n_later_hits": 2,
+      "goal_excerpt": "For books and movies, we currently have those stores off, as you mentioned. To put this in some context, those two stores for the months that we had them operational, which was several months, the revenue was less than $1 million. And so it's not a revenue-related issue. From our point of view, this is a service we want to provide our customers. And so we're working very closely with the appropriate government agencies."
+    },
+    {
+      "book": "desk_ops_v2",
+      "source": "leftover-goal",
+      "ticker": "AAPL",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2019-Q3",
+      "will_fiscal": "FY2020-Q3",
+      "objects": [
+        "terms",
+        "exclusions",
+        "making",
+        "continue",
+        "doing",
+        "working",
+        "investing",
+        "currently"
+      ],
+      "matched": [
+        "working"
+      ],
+      "excerpt": "Production has been affected for Apple TV+ as I think it has for most people. We are working to get restarted. I don't have a precise date yet when we will get it restarted, but there will be some impact because we shut down in the March time frame and are yet to really restart in a significant way particularly for those that are shut in the LA area given the current status of the virus.",
+      "dimension": "macro_regulatory_risk",
+      "status": "verbatim",
+      "n_later_hits": 4,
+      "goal_excerpt": "In terms of the exclusions, we've been making the Mac Pro in the U.S., we want to continue doing that. And so, we're working and investing currently in capacity to do so, because we want to continue to be here. And so that's what's behind the exclusions. And so, we're explaining that and hope for a positive outcome."
+    },
+    {
+      "book": "desk_ops_v2",
+      "source": "leftover-goal",
+      "ticker": "AAPL",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2021-Q2",
+      "will_fiscal": "FY2022-Q4",
+      "objects": [
+        "supply",
+        "constraints",
+        "impact"
+      ],
+      "matched": [
+        "impact"
+      ],
+      "excerpt": "Specifically on Services, we expect to grow but to be impacted by the macroeconomic environment increasingly affecting foreign exchange, digital advertising and gaming.",
+      "dimension": "macro_regulatory_risk",
+      "status": "verbatim",
+      "n_later_hits": 1,
+      "goal_excerpt": "we believe supply constraints will have a revenue impact of $3 billion to $4 billion in the June quarter."
+    },
+    {
+      "book": "desk_ops_v2",
+      "source": "leftover-goal",
+      "ticker": "AAPL",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2021-Q2",
+      "will_fiscal": "FY2023-Q4",
+      "objects": [
+        "issue",
+        "legacy",
+        "nodes",
+        "legacy",
+        "nodes",
+        "different",
+        "people",
+        "industry"
+      ],
+      "matched": [
+        "different"
+      ],
+      "excerpt": "We're purposely bringing it out in our stores only, so we can really put a great deal of attention on the last mile of it. We'll be offering demos in the stores and it will be very different process than the -- a normal grab-and-go kind of process.",
+      "dimension": "management_confidence",
+      "status": "verbatim",
+      "n_later_hits": 2,
+      "goal_excerpt": "Most of our issue is on legacy nodes. And so on legacy nodes, there are many different people, not only in the same industry, but across other industries that are using legacy nodes... we believe supply constraints will have a revenue impact of $3 billion to $4 billion in the June quarter."
+    },
+    {
+      "book": "desk_ops_v2",
+      "source": "leftover-goal",
+      "ticker": "AAPL",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2022-Q3",
+      "will_fiscal": "FY2025-Q3",
+      "objects": [
+        "Overall",
+        "yearoveryear",
+        "accelerate",
+        "during",
+        "September",
+        "compared",
+        "despite",
+        "approximately"
+      ],
+      "matched": [
+        "during",
+        "September"
+      ],
+      "excerpt": "We are significantly growing our investment, we did during the June quarter, we will again in the September quarter. I'm not putting specific numbers behind that at this point, but you can probably tell from the guidance that things are moving up. We are also reallocating a fair number of people to focus on AI features within the company.",
+      "dimension": "management_confidence",
+      "status": "verbatim",
+      "n_later_hits": 1,
+      "goal_excerpt": "Overall, we believe our year-over-year revenue growth will accelerate during the September quarter compared to the June quarter despite approximately 600 basis points of negative year-over-year impact from foreign exchange."
+    },
+    {
+      "book": "desk_ops_v2",
+      "source": "leftover-goal",
+      "ticker": "ACN",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2017-Q4",
+      "will_fiscal": "FY2024-Q4",
+      "objects": [
+        "behind",
+        "scenario",
+        "business",
+        "factored",
+        "administration",
+        "extent",
+        "thats",
+        "uncertainty"
+      ],
+      "matched": [
+        "business"
+      ],
+      "excerpt": "we switched these, right? We said, 'We have a lot more visibility in our business in January or February,' because that's where budgets are set... We've now permanently shifted that promotion cycle. So we will do our big promotion cycle in June and our smaller one in December.",
+      "dimension": "management_confidence",
+      "status": "anchored",
+      "n_later_hits": 3,
+      "goal_excerpt": "Now we've have year behind us and I believe that my scenario, if you will, that the business as factored was a could or could not expect from the administration. So to some extent that's less uncertainty with what might come."
+    },
+    {
+      "book": "desk_ops_v2",
+      "source": "leftover-goal",
+      "ticker": "ACN",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2022-Q2",
+      "will_fiscal": "FY2024-Q4",
+      "objects": [
+        "shared",
+        "discontinuing",
+        "business",
+        "Russia",
+        "working",
+        "support",
+        "nearly",
+        "employees"
+      ],
+      "matched": [
+        "business"
+      ],
+      "excerpt": "we switched these, right? We said, 'We have a lot more visibility in our business in January or February,' because that's where budgets are set... We've now permanently shifted that promotion cycle. So we will do our big promotion cycle in June and our smaller one in December.",
+      "dimension": "management_confidence",
+      "status": "anchored",
+      "n_later_hits": 3,
+      "goal_excerpt": "As we've shared, we are discontinuing our business in Russia. We are working to support our nearly 2,300 employees there, and we want to thank them for their dedication and commitment to Accenture over the years."
+    },
+    {
+      "book": "desk_ops_v2",
+      "source": "leftover-goal",
+      "ticker": "ACN",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2022-Q3",
+      "will_fiscal": "FY2023-Q1",
+      "objects": [
+        "shared",
+        "recent",
+        "Investor",
+        "Analyst",
+        "forces",
+        "clients",
+        "harness",
+        "decade"
+      ],
+      "matched": [
+        "clients"
+      ],
+      "excerpt": "Over the last quarter, as we can all read, the economic estimates for 2023 continue to decline. While the latest industry estimates for 2023's technology spending continue to show robust growth of 5% or so, we will see how the market evolves as clients finalize 2023 budgets.",
+      "dimension": "macro_regulatory_risk",
+      "status": "verbatim",
+      "n_later_hits": 3,
+      "goal_excerpt": "As we shared at our recent Investor and Analyst Day, we believe there are five forces that our clients must harness over the next decade and that in turn will drive our growth. Total enterprise reinvention, talent, sustainability, the Metaverse continuum and the ongoing tech revolution."
+    },
+    {
+      "book": "desk_ops_v2",
+      "source": "leftover-goal",
+      "ticker": "ADBE",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2017-Q1",
+      "will_fiscal": "FY2017-Q3",
+      "objects": [
+        "summary",
+        "amazing",
+        "start",
+        "another",
+        "record",
+        "Adobe",
+        "remain",
+        "bullish"
+      ],
+      "matched": [
+        "Adobe"
+      ],
+      "excerpt": "We recently acquired best-in-class 360-degree and virtual reality software from Mettle. The acquisition complements Adobe Creative Cloud's existing 360/VR cinematic production technology, and we will integrate this functionality natively into future releases of Premiere Pro and After Effects.",
+      "dimension": "competitive_position",
+      "status": "verbatim",
+      "n_later_hits": 6,
+      "goal_excerpt": "In summary, Q1 was an amazing start to what we believe will be another record year for Adobe. We remain bullish about our prospects for the rest of the year and beyond."
+    },
+    {
+      "book": "desk_ops_v2",
+      "source": "leftover-goal",
+      "ticker": "ADI",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2020-Q2",
+      "will_fiscal": "FY2020-Q3",
+      "objects": [
+        "present",
+        "somewhere",
+        "region",
+        "market",
+        "share",
+        "share",
+        "above",
+        "given"
+      ],
+      "matched": [
+        "market"
+      ],
+      "excerpt": "In our communications business, we announced the collaboration with Intel to create a flexible radio platform that will enable customers to scale their 5G networks more quickly and more economically. The high-performance ORAN compliance solution leverages our market-leading software-defined transceiver technologies.",
+      "dimension": "competitive_position",
+      "status": "verbatim",
+      "n_later_hits": 2,
+      "goal_excerpt": "At the present time we have somewhere in the region of 40% to 45% market share in BMS. And we believe that share will grow above 50% given the design pipeline that we have and the commitments that we have from customers across the globe."
+    },
+    {
+      "book": "desk_ops_v2",
+      "source": "leftover-goal",
+      "ticker": "ADI",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2024-Q4",
+      "will_fiscal": "FY2026-Q2",
+      "objects": [
+        "cuttingedge",
+        "analog",
+        "mixedsignal",
+        "power",
+        "capabilities",
+        "foundation",
+        "leadership",
+        "position"
+      ],
+      "matched": [
+        "power",
+        "capabilities"
+      ],
+      "excerpt": "2027 is when we expect to start seeing the surge in demand. There's a lot of design-ins in train at this point in time. The combination of Empower with ADI's large manufacturing and go-to-market capabilities will enable us to get to more places more quickly and get into production much, much faster.",
+      "dimension": "competitive_position",
+      "status": "verbatim",
+      "n_later_hits": 1,
+      "goal_excerpt": "ADI's cutting-edge analog, mixed-signal, and power capabilities are the foundation for the leadership position we've established in the AI-related SOC and high-bandwidth memory test market, where our content per tester stretches into the hundreds of thousands of dollars. Now, looking ahead, we're developing additional mixed-signal and digital capabilities to further reduce test time and power requirements, which we believe will result in more than 20% additional ADI content per tester."
+    },
+    {
+      "book": "desk_ops_v2",
+      "source": "leftover-goal",
+      "ticker": "ADSK",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2017-Q2",
+      "will_fiscal": "FY2019-Q3",
+      "objects": [
+        "early",
+        "September",
+        "pricing",
+        "changes",
+        "effect",
+        "rationalize",
+        "pricing",
+        "AutoCAD"
+      ],
+      "matched": [
+        "early"
+      ],
+      "excerpt": "We ended the quarter with the sum of both metrics at 32% [ph], a level we have not seen for four years. And as Andrew said, we plan to nearly double this metric in the next few years.",
+      "dimension": "management_confidence",
+      "status": "verbatim",
+      "n_later_hits": 3,
+      "goal_excerpt": "In early September, pricing changes will go into effect that will rationalize the pricing of AutoCAD LT, AutoCAD and the AutoCAD verticals. We believe these moves will drive customers to the right product for their needs at higher billings and ARR for Autodesk."
+    },
+    {
+      "book": "desk_ops_v2",
+      "source": "leftover-goal",
+      "ticker": "ADSK",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2024-Q1",
+      "will_fiscal": "FY2024-Q2",
+      "objects": [
+        "managing",
+        "business",
+        "metric",
+        "strikes",
+        "right",
+        "balance",
+        "between",
+        "driving"
+      ],
+      "matched": [
+        "business"
+      ],
+      "excerpt": "If the strike continues for months on end, we will likely see an increased impact on our media and entertainment business. It's still growing now. It definitely slowed down in Q2, but it's still growing.",
+      "dimension": "competitive_position",
+      "status": "verbatim",
+      "n_later_hits": 3,
+      "goal_excerpt": "we're managing the business to this metric and feel it strikes the right balance between driving top-line growth and delivering on disciplined profit and cash flow growth. We intend to make meaningful steps over time toward achieving our 45% or more goal, regardless of the macroeconomic backdrop."
+    },
+    {
+      "book": "desk_ops_v2",
+      "source": "leftover-goal",
+      "ticker": "ADSK",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2024-Q2",
+      "will_fiscal": "FY2026-Q2",
+      "objects": [
+        "clear",
+        "managing",
+        "business",
+        "metric",
+        "strikes",
+        "right",
+        "balance",
+        "between"
+      ],
+      "matched": [
+        "business"
+      ],
+      "excerpt": "We'll monetize these things through a combination of subscription, consumption, and outcomes. Also, business models that we are well ahead of the industry on with regards to making them mainstream in our offerings.",
+      "dimension": "competitive_position",
+      "status": "verbatim",
+      "n_later_hits": 2,
+      "goal_excerpt": "But let me be clear, we're managing the business to this metric and feel it strikes the right balance between driving top line growth and delivering disciplined profit and cash flow growth. We intend to make meaningful steps over time toward achieving our 45% or more goal regardless of the macroeconomic backdrop."
+    },
+    {
+      "book": "desk_ops_v2",
+      "source": "leftover-goal",
+      "ticker": "ADSK",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2024-Q3",
+      "will_fiscal": "FY2025-Q2",
+      "objects": [
+        "introduced",
+        "transaction",
+        "model",
+        "gives",
+        "Autodesk",
+        "direct",
+        "relationship",
+        "customers"
+      ],
+      "matched": [
+        "transaction",
+        "model"
+      ],
+      "excerpt": "Stripping out the effects of margins from FX and the new transaction model, we expect to be towards the midpoint of our fiscal 2026 non-GAAP operating margin target of 38% to 40% in fiscal 2025, a year ahead of schedule and representing about 300 basis points of improvement since fiscal 2023.",
+      "dimension": "management_confidence",
+      "status": "verbatim",
+      "n_later_hits": 2,
+      "goal_excerpt": "We introduced a new transaction model for Flex, which gives Autodesk a more direct relationship with its customers and more closely integrates with its channel partners. We began testing the new transaction model across our product suite in Australia a couple of weeks ago. Assuming the launch proceeds is expected in fiscal '25 and '26, we intend to transition our indirect business to the new transaction model in all our major markets globally."
+    },
+    {
+      "book": "desk_ops_v2",
+      "source": "leftover-goal",
+      "ticker": "ADSK",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2024-Q4",
+      "will_fiscal": "FY2026-Q2",
+      "objects": [
+        "things",
+        "business",
+        "fully",
+        "integrated",
+        "starting",
+        "fully",
+        "integrated",
+        "getgo"
+      ],
+      "matched": [
+        "things",
+        "business"
+      ],
+      "excerpt": "We'll monetize these things through a combination of subscription, consumption, and outcomes. Also, business models that we are well ahead of the industry on with regards to making them mainstream in our offerings.",
+      "dimension": "competitive_position",
+      "status": "verbatim",
+      "n_later_hits": 2,
+      "goal_excerpt": "Those things are past us now, the business is fully integrated. It's starting the year off, not only fully integrated from the get-go, but with all of the processes, plans and capabilities all lined up according to how we want to grow the business heading into the year."
+    },
+    {
+      "book": "desk_ops_v2",
+      "source": "leftover-goal",
+      "ticker": "ADSK",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2025-Q3",
+      "will_fiscal": "FY2026-Q2",
+      "objects": [
+        "heard",
+        "foundation",
+        "model",
+        "thats",
+        "driving",
+        "automated",
+        "drawing",
+        "creation"
+      ],
+      "matched": [
+        "model"
+      ],
+      "excerpt": "We'll monetize these things through a combination of subscription, consumption, and outcomes. Also, business models that we are well ahead of the industry on with regards to making them mainstream in our offerings.",
+      "dimension": "competitive_position",
+      "status": "verbatim",
+      "n_later_hits": 2,
+      "goal_excerpt": "you heard about a foundation model that's driving automated drawing creation. You heard about a foundation model that's driving automated sketch generation and sketch constraints...we're ahead of our competitors in this space. We intend to be ahead."
+    },
+    {
+      "book": "desk_ops_v2",
+      "source": "leftover-goal",
+      "ticker": "AMAT",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2016-Q2",
+      "will_fiscal": "FY2016-Q3",
+      "objects": [
+        "logic",
+        "spending",
+        "levels",
+        "similar",
+        "factors",
+        "consideration",
+        "wafer",
+        "equipment"
+      ],
+      "matched": [
+        "spending"
+      ],
+      "excerpt": "By the end of this year, we will have grown our share of total NAND spending by almost 7 points above our 2012 baseline.",
+      "dimension": "competitive_position",
+      "status": "verbatim",
+      "n_later_hits": 7,
+      "goal_excerpt": "In logic, we believe that spending levels will be very similar to last year and when we take all of these factors into consideration, we believe that 2016 wafer fab equipment investments will be similar to 2015 with some upside potential."
+    },
+    {
+      "book": "desk_ops_v2",
+      "source": "leftover-goal",
+      "ticker": "AMAT",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2017-Q2",
+      "will_fiscal": "FY2017-Q4",
+      "objects": [
+        "people",
+        "therell",
+        "policy",
+        "change",
+        "facilitate",
+        "return",
+        "overseas",
+        "locations"
+      ],
+      "matched": [
+        "policy",
+        "overseas"
+      ],
+      "excerpt": "As you take a look at the tax structure and the proportion of cash that gets generated overseas versus onshore, there is a structural impediment to us being more aggressive from a dividend perspective in the near-term, but this is something that gets a lot of \u2013 we're spending a lot of time discussing this and we're watching tax policy out of Washington very closely. And when we get clarity on tax policy, then we'll be able to determine what the right long-term proportion of dividend versus share repurchase is.",
+      "dimension": "macro_regulatory_risk",
+      "status": "verbatim",
+      "n_later_hits": 1,
+      "goal_excerpt": "Many people believe that there'll be some type of tax policy change this year or next which will ease and facilitate the return of cash from overseas locations. Well, we're kind of hedging our bets. We're not sure about the timing and we want to stay committed to shareholder returns and keep our tax structure in place until there are any substantive changes."
+    },
+    {
+      "book": "desk_ops_v2",
+      "source": "leftover-goal",
+      "ticker": "AMAT",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2017-Q3",
+      "will_fiscal": "FY2021-Q2",
+      "objects": [
+        "China",
+        "theyre",
+        "trying",
+        "present",
+        "domestic",
+        "content",
+        "build",
+        "secure"
+      ],
+      "matched": [
+        "China",
+        "domestic"
+      ],
+      "excerpt": "domestic China maybe profiling in line with the overall WFE markets and we'll keep an eye on it and we'll keep updating each and every quarter, but we kind of see it up in line with the overall market.",
+      "dimension": "macro_regulatory_risk",
+      "status": "verbatim",
+      "n_later_hits": 2,
+      "goal_excerpt": "In China, they're trying to grow the present domestic content, build a secure supply chain and it's a long-term strategy. The investments are not as efficient. Many of the investments next year will be in pilot plants in China, but we believe that this market will continue to grow over time."
+    },
+    {
+      "book": "desk_ops_v2",
+      "source": "leftover-goal",
+      "ticker": "AMAT",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2018-Q4",
+      "will_fiscal": "FY2021-Q2",
+      "objects": [
+        "think",
+        "prudent",
+        "create",
+        "expectation",
+        "around",
+        "shallow",
+        "gradual",
+        "Ushaped"
+      ],
+      "matched": [
+        "around"
+      ],
+      "excerpt": "In Process Diagnostics and Control, we expect to grow around 50% in 2021 and generate more than $900 million of revenue from our e-beam products... In 2021, we expect to generate more than $400 million of revenue from our first integrated material solutions. In addition, revenues from our advanced packaging product portfolio are on track to exceed $800 million, almost doubling since 2019.",
+      "dimension": "competitive_position",
+      "status": "composite",
+      "n_later_hits": 6,
+      "goal_excerpt": "we think it's prudent to create an expectation around a shallow, gradual, U-shaped recovery of the semi business into 2019. And so for a variety of reasons, I don't think we want to put a stake in the ground and call it a definitive bottom."
+    },
+    {
+      "book": "desk_ops_v2",
+      "source": "leftover-goal",
+      "ticker": "AMAT",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2020-Q3",
+      "will_fiscal": "FY2022-Q1",
+      "objects": [
+        "Based",
+        "customers",
+        "current",
+        "spending",
+        "levels",
+        "sustained",
+        "higher",
+        "major"
+      ],
+      "matched": [
+        "Based",
+        "major"
+      ],
+      "excerpt": "in the transition from FinFET to first-generation gate-all-around, our transistor TAM grows by more than $1 billion per 100,000 wafer starts per month. And based on our tool of record positions, we expect to capture the majority of the inflection.",
+      "dimension": "competitive_position",
+      "status": "verbatim",
+      "n_later_hits": 5,
+      "goal_excerpt": "Based on what we hear from our customers, we believe current spending levels will be sustained or even higher in 2021... I was on a call with one of our major foundry/logic customers two nights ago, and not only strength in 2020 but also into 2021."
+    },
+    {
+      "book": "desk_ops_v2",
+      "source": "leftover-goal",
+      "ticker": "AMAT",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2022-Q4",
+      "will_fiscal": "FY2023-Q2",
+      "objects": [
+        "expected",
+        "pullback",
+        "overall",
+        "wafer",
+        "equipment",
+        "spending",
+        "Applieds",
+        "business"
+      ],
+      "matched": [
+        "equipment"
+      ],
+      "excerpt": "On May 22, we will formally announce a major strategic investment in a new high-velocity innovation platform focused on next-generation equipment and process technologies.",
+      "dimension": "management_confidence",
+      "status": "verbatim",
+      "n_later_hits": 2,
+      "goal_excerpt": "While all of this adds up to an expected pullback in overall wafer fab equipment spending next year, we believe that Applied's business will be more resilient than the underlying market for three key reasons."
+    },
+    {
+      "book": "desk_ops_v2",
+      "source": "leftover-goal",
+      "ticker": "AMAT",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2024-Q3",
+      "will_fiscal": "FY2025-Q2",
+      "objects": [
+        "major",
+        "inflection",
+        "vertical",
+        "transistor",
+        "architectures",
+        "materialsenabled",
+        "market",
+        "opportunity"
+      ],
+      "matched": [
+        "major",
+        "inflection",
+        "market"
+      ],
+      "excerpt": "Applied is best positioned as a major device architecture inflection that will enable that roadmap to be realized. Third, we are seeing strong traction with our high-velocity co-innovation strategy, where earlier and deeper collaboration with our customers and partners is enabling us to bring next-generation technology to market faster than ever before.",
+      "dimension": "management_confidence",
+      "status": "verbatim",
+      "n_later_hits": 1,
+      "goal_excerpt": "The next major DRAM inflection from 6F^2 to 4F^2, or vertical transistor architectures... is materials-enabled, and we expect our market opportunity to grow by approximately 10% to around $6.5 billion for each 100,000 wafer starts per month of capacity... we believe the subsequent transition to 3D DRAM will grow our addressable market by an incremental 15%"
+    },
+    {
+      "book": "desk_ops_v2",
+      "source": "leftover-goal",
+      "ticker": "AMD",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2016-Q2",
+      "will_fiscal": "FY2020-Q2",
+      "objects": [
+        "terms",
+        "volume",
+        "availability",
+        "first",
+        "limited",
+        "volume",
+        "towards",
+        "fourth"
+      ],
+      "matched": [
+        "first"
+      ],
+      "excerpt": "We had originally assumed that the PC market would be down in the second half, and we now expect that we will grow in the PC processors for the second half compared to the first half.",
+      "dimension": "management_confidence",
+      "status": "verbatim",
+      "n_later_hits": 4,
+      "goal_excerpt": "In terms of true volume availability, I believe it will be in the first quarter of 2017. We may ship some limited volume towards the end of the fourth quarter based on how bring-up goes and the customer readiness."
+    },
+    {
+      "book": "desk_ops_v2",
+      "source": "leftover-goal",
+      "ticker": "AMD",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2020-Q3",
+      "will_fiscal": "FY2022-Q3",
+      "objects": [
+        "Financial",
+        "Analyst",
+        "talked",
+        "right",
+        "company",
+        "think",
+        "stays",
+        "track"
+      ],
+      "matched": [
+        "think"
+      ],
+      "excerpt": "As we go into next year, I think the industry is calling mid-single digits. I think that would be a good case. I think we should model down to -10%.",
+      "dimension": "macro_regulatory_risk",
+      "status": "verbatim",
+      "n_later_hits": 4,
+      "goal_excerpt": "At our Financial Analyst Day, we talked about 20% CAGR as the right target for our company. I think all of that stays on track. We are a high-growth business, and we want to remain a high-growth business. I think Xilinx brings a lot of opportunities that are additive to that model when you look at the markets and the capabilities, and just the margins and the free cash flow generation. 20% CAGR is the right target for the combined business."
+    },
+    {
+      "book": "desk_ops_v2",
+      "source": "leftover-goal",
+      "ticker": "AMD",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2021-Q3",
+      "will_fiscal": "FY2021-Q4",
+      "objects": [
+        "supply",
+        "constraints",
+        "around",
+        "matched",
+        "continue",
+        "first",
+        "being",
+        "using"
+      ],
+      "matched": [
+        "first"
+      ],
+      "excerpt": "We were pleased to announce that China's State Administration for Market Regulation approved the transaction on 27th January. The only remaining regulatory approval required is FTC approval of our HSR refiling, and we expect to close the transaction in the first quarter of 2022.",
+      "dimension": "macro_regulatory_risk",
+      "status": "verbatim",
+      "n_later_hits": 1,
+      "goal_excerpt": "There are some supply constraints around matched sets that we believe will continue into the first half of the year. That being the case, you know, what we're using from a planning assumption standpoint is that the PC market may be flattish, as we go from 2021 into 2022."
+    },
+    {
+      "book": "desk_ops_v2",
+      "source": "leftover-goal",
+      "ticker": "AMD",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2025-Q1",
+      "will_fiscal": "FY2025-Q3",
+      "objects": [
+        "diffusion",
+        "actively",
+        "working",
+        "government",
+        "theyre",
+        "thinking",
+        "through",
+        "rules"
+      ],
+      "matched": [
+        "working"
+      ],
+      "excerpt": "We have received some licenses for MI308, so we're appreciative of the administration supporting some licenses for MI308. We're still working with our customers on the demand environment and sort of what the overall opportunity is. And so we'll be able to update that more in the next couple of months.",
+      "dimension": "macro_regulatory_risk",
+      "status": "anchored",
+      "n_later_hits": 1,
+      "goal_excerpt": "on the AI diffusion side, we're very actively working with the government as they're thinking through these rules. It's a very fine balance that we have to have. At the end of the day, when we look at sort of the U.S. AI companies, we have leading-edge technology. We want to ensure that the rest of the world can really use us as the primary platform."
+    },
+    {
+      "book": "desk_ops_v2",
+      "source": "leftover-goal",
+      "ticker": "AMZN",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2023-Q3",
+      "will_fiscal": "FY2025-Q2",
+      "objects": [
+        "billions",
+        "dollars",
+        "several",
+        "years",
+        "think",
+        "unique",
+        "broad",
+        "approach"
+      ],
+      "matched": [
+        "several",
+        "think"
+      ],
+      "excerpt": "I don't believe that we will have fully resolved the amount of capacity we need for the amount of demand that we have in a couple of quarters. I think it will take several quarters. But I do expect that it's going to get better each quarter, and I'm optimistic about that.",
+      "dimension": "management_confidence",
+      "status": "verbatim",
+      "n_later_hits": 1,
+      "goal_excerpt": "I believe will be tens of billions of dollars of revenue for AWS over the next several years, I think we have a unique and broad approach that's really resonating with customers."
+    },
+    {
+      "book": "desk_ops_v2",
+      "source": "leftover-goal",
+      "ticker": "AVGO",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2016-Q2",
+      "will_fiscal": "FY2016-Q4",
+      "objects": [
+        "gross",
+        "margin",
+        "front",
+        "given",
+        "market",
+        "needs",
+        "technology",
+        "leadership"
+      ],
+      "matched": [
+        "margin"
+      ],
+      "excerpt": "We are raising our long-term operating margin target to 45%, a significant increase from our prior model. We expect to drive to this long-term target through a combination of the full realization of material cost synergies and operating leverage on a larger scale.",
+      "dimension": "management_confidence",
+      "status": "verbatim",
+      "n_later_hits": 7,
+      "goal_excerpt": "On the gross margin front given the market needs for our technology and the leadership positions we have, coupled with ongoing cost reductions in our supply chain, we see potential opportunities overtime to push gross margins beyond 60% we've already delivered this quarter. Turning to operating expense. We believe the completion of integration activities and our focus on return on investment will allow us to drive R&D expenses to 16% of net revenue within the next few quarters."
+    },
+    {
+      "book": "desk_ops_v2",
+      "source": "leftover-goal",
+      "ticker": "AVGO",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2016-Q2",
+      "will_fiscal": "FY2016-Q4",
+      "objects": [
+        "result",
+        "currently",
+        "intend",
+        "limit",
+        "outstanding",
+        "gross",
+        "approximately",
+        "times"
+      ],
+      "matched": [
+        "result",
+        "approximately"
+      ],
+      "excerpt": "As a result, in fiscal 2017, we expect to pay approximately $400 million in cash taxes, which will include the impact of cash taxes if any associated with the IP integration.",
+      "dimension": "macro_regulatory_risk",
+      "status": "verbatim",
+      "n_later_hits": 3,
+      "goal_excerpt": "As a result, we currently intend to limit the paid down of outstanding term loan into our gross debt is approximately two times EBITDA at which time we intend to start pulling excess cash with the purpose of M&A, as well as review our capital structure generally including our long term debt alternative."
+    },
+    {
+      "book": "desk_ops_v2",
+      "source": "leftover-goal",
+      "ticker": "AVGO",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2020-Q3",
+      "will_fiscal": "FY2022-Q2",
+      "objects": [
+        "recession",
+        "still",
+        "dealing",
+        "COVID",
+        "election",
+        "coming",
+        "think"
+      ],
+      "matched": [
+        "think"
+      ],
+      "excerpt": "As you look at the aggregate value here and then you look at the EBITDA expectations, we expect to drive double-digit cash-on-cash returns. That's always been our criteria, and we think that's going to create a lot of value for shareholders.",
+      "dimension": "management_confidence",
+      "status": "verbatim",
+      "n_later_hits": 4,
+      "goal_excerpt": "keep in mind, we are in a recession, we're still dealing with COVID, we've got an election coming. And so, I think we want to wait."
+    },
+    {
+      "book": "desk_ops_v2",
+      "source": "leftover-goal",
+      "ticker": "AVGO",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2023-Q3",
+      "will_fiscal": "FY2025-Q2",
+      "objects": [
+        "continue",
+        "constructively",
+        "regulators",
+        "other",
+        "jurisdiction",
+        "advanced",
+        "stages",
+        "process"
+      ],
+      "matched": [
+        "continue"
+      ],
+      "excerpt": "the increased density in scale-up is 5-10 times more than in scale-out. That is the part that kind of pleasantly surprised us, which is why this past quarter, Q2, the AI networking portion continues at about 40% from what we reported a quarter ago for Q1. At that time, I said I expect it to drop. It has not.",
+      "dimension": "competitive_position",
+      "status": "verbatim",
+      "n_later_hits": 2,
+      "goal_excerpt": "We continue to work constructively with regulators in a few other jurisdiction and are in the advanced stages of the process towards obtaining the remaining required regulatory approvals, which we believe will be received before October 30th. We continue to expect to close on October 30th, 2023."
+    },
+    {
+      "book": "desk_ops_v2",
+      "source": "leftover-goal",
+      "ticker": "CRM",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2017-Q3",
+      "will_fiscal": "FY2023-Q1",
+      "objects": [
+        "regards",
+        "election",
+        "think",
+        "really",
+        "important",
+        "outcome",
+        "outcome",
+        "moving"
+      ],
+      "matched": [
+        "think"
+      ],
+      "excerpt": "If there is a consolidation of vendors with our customers, I think we're extremely well placed. We are the only ones with the Customer 360. There's nobody else in the market who is able to offer the full suite of clouds. And if that is the case, and customers choose to continue to move more of their business to it, we'll welcome it with both arms.",
+      "dimension": "competitive_position",
+      "status": "verbatim",
+      "n_later_hits": 3,
+      "goal_excerpt": "in regards to the election, I think is really important. Look, some of us many not have had the outcome that we want, some of us have the outcome we did want. In my view, it's in the past. We're moving forward... I have talked to now a number of customers this week, and I have met with CEOs of some of largest companies in the world this week. And in each and every case, all of them are moving forward"
+    },
+    {
+      "book": "desk_ops_v2",
+      "source": "leftover-goal",
+      "ticker": "CRM",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2023-Q3",
+      "will_fiscal": "FY2025-Q2",
+      "objects": [
+        "Therefore",
+        "pretty",
+        "provide",
+        "guidance",
+        "fiscal"
+      ],
+      "matched": [
+        "fiscal"
+      ],
+      "excerpt": "You know, my goal is that by the end of fiscal year 2026, that we will have a billion agents... when we think about pricing, it will be on a consumption basis, and when we think about that, we think about saying to our customers, and we have, 'It's about $2 per conversation.'",
+      "dimension": "management_confidence",
+      "status": "anchored",
+      "n_later_hits": 1,
+      "goal_excerpt": "Therefore, at this time, we believe it will be pretty sure to provide revenue guidance for the next fiscal year."
+    },
+    {
+      "book": "desk_ops_v2",
+      "source": "leftover-goal",
+      "ticker": "CRM",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2023-Q3",
+      "will_fiscal": "FY2025-Q2",
+      "objects": [
+        "experiencing",
+        "unpredictable",
+        "macro",
+        "environment",
+        "customers",
+        "looking",
+        "ensure",
+        "businesses"
+      ],
+      "matched": [
+        "customers"
+      ],
+      "excerpt": "You know, my goal is that by the end of fiscal year 2026, that we will have a billion agents... when we think about pricing, it will be on a consumption basis, and when we think about that, we think about saying to our customers, and we have, 'It's about $2 per conversation.'",
+      "dimension": "management_confidence",
+      "status": "anchored",
+      "n_later_hits": 2,
+      "goal_excerpt": "We are experiencing a very unpredictable macro environment as our customers are looking to ensure their businesses are also healthy for the long term. Compounding that dynamic is an unprecedented foreign currency market. Therefore, at this time, we believe it will be pretty sure to provide revenue guidance for the next fiscal year."
+    },
+    {
+      "book": "desk_ops_v2",
+      "source": "leftover-goal",
+      "ticker": "CRM",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2023-Q4",
+      "will_fiscal": "FY2025-Q2",
+      "objects": [
+        "think",
+        "opportunity",
+        "bundle",
+        "products",
+        "together",
+        "differently",
+        "front",
+        "customers"
+      ],
+      "matched": [
+        "think",
+        "customers"
+      ],
+      "excerpt": "You know, my goal is that by the end of fiscal year 2026, that we will have a billion agents... when we think about pricing, it will be on a consumption basis, and when we think about that, we think about saying to our customers, and we have, 'It's about $2 per conversation.'",
+      "dimension": "management_confidence",
+      "status": "anchored",
+      "n_later_hits": 3,
+      "goal_excerpt": "I think we have an opportunity to bundle products together and to show up differently in front of our customers, to consolidate organizations that have been stand-alone sales organizations in the past. Bundling products together, driving higher ASP per salesperson is really what we want to go do next year."
+    },
+    {
+      "book": "desk_ops_v2",
+      "source": "leftover-goal",
+      "ticker": "CRM",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2024-Q3",
+      "will_fiscal": "FY2025-Q2",
+      "objects": [
+        "think",
+        "willing",
+        "turned",
+        "corner",
+        "because",
+        "customers",
+        "still",
+        "measured"
+      ],
+      "matched": [
+        "think",
+        "customers"
+      ],
+      "excerpt": "You know, my goal is that by the end of fiscal year 2026, that we will have a billion agents... when we think about pricing, it will be on a consumption basis, and when we think about that, we think about saying to our customers, and we have, 'It's about $2 per conversation.'",
+      "dimension": "management_confidence",
+      "status": "anchored",
+      "n_later_hits": 3,
+      "goal_excerpt": "I don't think we're willing to say to you on the call, hey, we've turned the corner. We want to but we're not sure because for a lot of customers, they still are measured in their buying environments. You know that. You talk to these customers. You talk to the channel partners. They're somewhat measured in their buying environments. But I would say people are a lot less measured than they were is one way to put it. There's definitely a reduction in the measured environment."
+    },
+    {
+      "book": "desk_ops_v2",
+      "source": "leftover-goal",
+      "ticker": "CTSH",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2016-Q2",
+      "will_fiscal": "FY2020-Q1",
+      "objects": [
+        "learned",
+        "little",
+        "adjusting",
+        "adjusted",
+        "enough",
+        "positioned",
+        "additional",
+        "surprises"
+      ],
+      "matched": [
+        "additional"
+      ],
+      "excerpt": "While we anticipate that the revenue impact related to this issue will be largely resolved by the middle of the quarter, we do anticipate the revenue and corresponding margin impact to be in the range of $50 million to $70 million for the quarter. Additionally, we expect to incur certain legal, consulting and other costs associated with the investigation, service restoration and remediation of the breach.",
+      "dimension": "macro_regulatory_risk",
+      "status": "verbatim",
+      "n_later_hits": 3,
+      "goal_excerpt": "We learned a little bit last quarter, you don't want to keep adjusting, so we want to make sure we adjusted it enough that we're well positioned for any additional surprises that may happen because of uncertainty around the elections, Brexit and so forth, so we want to be conservative when we cut, so we cut just once, or at least just this one additional time."
+    },
+    {
+      "book": "desk_ops_v2",
+      "source": "leftover-goal",
+      "ticker": "CTSH",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2016-Q2",
+      "will_fiscal": "FY2021-Q1",
+      "objects": [
+        "Obviously",
+        "uncertainty",
+        "around",
+        "elections",
+        "creates",
+        "uncertainty",
+        "adjusted",
+        "enough"
+      ],
+      "matched": [
+        "around"
+      ],
+      "excerpt": "We have a huge effort underway around automation, not just in delivery, but also some very exciting IP that we have been developing, that hopefully we'll be able to talk about in the next quarter or so that I think will completely set us apart in the industry.",
+      "dimension": "competitive_position",
+      "status": "verbatim",
+      "n_later_hits": 2,
+      "goal_excerpt": "Obviously some of the uncertainty around the U.S. elections creates some uncertainty... we want to make sure we adjusted it enough that we're well positioned for any additional surprises that may happen because of uncertainty around the elections, Brexit and so forth."
+    },
+    {
+      "book": "desk_ops_v2",
+      "source": "leftover-goal",
+      "ticker": "CTSH",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2019-Q3",
+      "will_fiscal": "FY2020-Q1",
+      "objects": [
+        "context",
+        "announced",
+        "today",
+        "targeting",
+        "adjusted",
+        "operating",
+        "margins",
+        "range"
+      ],
+      "matched": [
+        "range"
+      ],
+      "excerpt": "While we anticipate that the revenue impact related to this issue will be largely resolved by the middle of the quarter, we do anticipate the revenue and corresponding margin impact to be in the range of $50 million to $70 million for the quarter. Additionally, we expect to incur certain legal, consulting and other costs associated with the investigation, service restoration and remediation of the breach.",
+      "dimension": "macro_regulatory_risk",
+      "status": "verbatim",
+      "n_later_hits": 6,
+      "goal_excerpt": "In the context of the Fit for Growth Plan we announced today, we are targeting adjusted operating margins in 2020 to be in the range of 16% to 17%."
+    },
+    {
+      "book": "desk_ops_v2",
+      "source": "leftover-goal",
+      "ticker": "CTSH",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2022-Q1",
+      "will_fiscal": "FY2024-Q4",
+      "objects": [
+        "actually",
+        "think",
+        "stand",
+        "implications",
+        "lasting",
+        "scale",
+        "India",
+        "actually"
+      ],
+      "matched": [
+        "India"
+      ],
+      "excerpt": "we were notified that we won a new strategic partnership with a leading insurance provider to establish their GCC in India. We will work to enhance their operational efficiency, accelerate digital transformation, and expand their global talent footprint, leveraging our deep expertise in building and scaling GCCs.",
+      "dimension": "competitive_position",
+      "status": "verbatim",
+      "n_later_hits": 3,
+      "goal_excerpt": "I actually think if I stand back from the here and now, I believe that the implications will be lasting and that our scale in India, which we're actually tying into our digital studios around the rest of the world, which are very much part of our digital and global delivery network, they'll ultimately help us distinguish ourselves."
+    },
+    {
+      "book": "desk_ops_v2",
+      "source": "leftover-goal",
+      "ticker": "CTSH",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2022-Q3",
+      "will_fiscal": "FY2023-Q2",
+      "objects": [
+        "Kumar",
+        "President",
+        "Cognizant",
+        "Americas",
+        "midJanuary",
+        "indiscernible",
+        "where",
+        "served"
+      ],
+      "matched": [
+        "Cognizant"
+      ],
+      "excerpt": "earlier today, we announced that as a part of our expanded partnership with Google, we'll be building on Google Cloud's Generative AI technology with Cognizant's AI domain expertise to create a healthcare large language model. This LLM is designed to simplify and improve the accuracy of complex healthcare administrative tasks and strengthen business outcomes for healthcare organizations.",
+      "dimension": "competitive_position",
+      "status": "verbatim",
+      "n_later_hits": 6,
+      "goal_excerpt": "Ravi Kumar, President of Cognizant Americas. He will join us in mid-January from [indiscernible], where he served as President for the past 6 years. Ravi brings client centricity and a growth mindset that we believe will help improve our U.S. revenue trajectory."
+    },
+    {
+      "book": "desk_ops_v2",
+      "source": "leftover-goal",
+      "ticker": "CTSH",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2022-Q4",
+      "will_fiscal": "FY2023-Q2",
+      "objects": [
+        "entire",
+        "laserfocused",
+        "reevaluating",
+        "gotomarket",
+        "strategy",
+        "enhancing",
+        "strength",
+        "portfolio"
+      ],
+      "matched": [
+        "strength"
+      ],
+      "excerpt": "earlier today, we announced that as a part of our expanded partnership with Google, we'll be building on Google Cloud's Generative AI technology with Cognizant's AI domain expertise to create a healthcare large language model. This LLM is designed to simplify and improve the accuracy of complex healthcare administrative tasks and strengthen business outcomes for healthcare organizations.",
+      "dimension": "competitive_position",
+      "status": "verbatim",
+      "n_later_hits": 2,
+      "goal_excerpt": "Ravi, the entire team and I are laser-focused on reevaluating our go-to-market strategy, enhancing the strength of this portfolio and have initiated a series of actions, including certain leadership changes, that we believe will give us the best opportunity to improve our performance. We are seeing early signs of success with select global banking relationships where we have successfully shifted our portfolio mix towards higher growth in strategic areas."
+    },
+    {
+      "book": "desk_ops_v2",
+      "source": "leftover-goal",
+      "ticker": "INTU",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2020-Q1",
+      "will_fiscal": "FY2021-Q2",
+      "objects": [
+        "existing",
+        "customers",
+        "upgrading",
+        "evolve",
+        "because",
+        "actually",
+        "accelerate",
+        "acquisition"
+      ],
+      "matched": [
+        "existing"
+      ],
+      "excerpt": "First, to create a complete financial profile for existing and prospective members, with customer consent, we combined income data from 26 million TurboTax returns with Credit Karma. The combination of verified income data with credit history will enable Credit Karma to better personalize offers, driving engagement and creating a win-win-win for our members, partners and us over time.",
+      "dimension": "competitive_position",
+      "status": "verbatim",
+      "n_later_hits": 7,
+      "goal_excerpt": "So we've seen about a 75%, 25% mix, 75% existing customers upgrading and 25% new. And over time, we expect that to evolve a bit because we want to actually accelerate the acquisition of new customers that we have. As we've shared before, there's about 180,000 customers within QBO base that are a fit for QBO Advanced."
+    },
+    {
+      "book": "desk_ops_v2",
+      "source": "leftover-goal",
+      "ticker": "INTU",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2022-Q1",
+      "will_fiscal": "FY2024-Q4",
+      "objects": [
+        "supply",
+        "chain",
+        "challenges",
+        "generally",
+        "talked",
+        "peers",
+        "start",
+        "addressed"
+      ],
+      "matched": [
+        "start"
+      ],
+      "excerpt": "Starting in Q1, we'll be changing the name of our Small Business and Self-Employed Group to Global Business Solutions Group... we now expect online paying customer growth of 5%-10%. This reflects our shift in emphasis towards ARPC as we scale mid-market.",
+      "dimension": "competitive_position",
+      "status": "composite",
+      "n_later_hits": 1,
+      "goal_excerpt": "some of the supply chain challenges that generally we believe as I talked to my peers will get -- start to get addressed by the second half of 2022, first half of 2023"
+    },
+    {
+      "book": "desk_ops_v2",
+      "source": "leftover-goal",
+      "ticker": "MSFT",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2018-Q2",
+      "will_fiscal": "FY2022-Q1",
+      "objects": [
+        "approach",
+        "brings",
+        "assistants",
+        "Thats",
+        "working",
+        "Alexa",
+        "welcome",
+        "devices"
+      ],
+      "matched": [
+        "devices"
+      ],
+      "excerpt": "I do think demand will exceed supply in PCs and Surface for us. This quarter, particularly in premium devices, in consoles for Xbox and another bit of -- another challenge I noted will just be -- we'll just need to watch the advertising market through the quarter, because obviously their willingness to spend is entirely connected to their supply as well.",
+      "dimension": "macro_regulatory_risk",
+      "status": "verbatim",
+      "n_later_hits": 2,
+      "goal_excerpt": "we want to take an approach that brings all assistants. That's why we are working with Alexa, we would welcome it on our devices, because we believe in a world where our own assistant should be available everywhere and so should other assistants be available on our devices"
+    },
+    {
+      "book": "desk_ops_v2",
+      "source": "leftover-goal",
+      "ticker": "MSFT",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2026-Q1",
+      "will_fiscal": "FY2026-Q3",
+      "objects": [
+        "saying",
+        "demand",
+        "demand",
+        "something",
+        "serve",
+        "longterm",
+        "interest",
+        "thats"
+      ],
+      "matched": [
+        "demand",
+        "demand"
+      ],
+      "excerpt": "We remain confident in the return on these investments, given higher demand signals and increasing product usage as well as the efficiencies we're already driving across the platform. Even with these additional investments and continued efforts to bring GPU, CPU and storage capacity online faster, we expect to remain constrained at least through 2026.",
+      "dimension": "management_confidence",
+      "status": "verbatim",
+      "n_later_hits": 1,
+      "goal_excerpt": "We sort of use all of that to make sure we are saying yes to all the demand that we want, we say no to some of the demand that may be something that we could serve, but it's not in our long-term interest. And so that's sort of the decision-making we have done, and we feel very, very good about the decisions. In some sense, I feel even each time we say no to, the day after, I feel better."
+    },
+    {
+      "book": "desk_ops_v2",
+      "source": "leftover-goal",
+      "ticker": "MU",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2016-Q4",
+      "will_fiscal": "FY2018-Q1",
+      "objects": [
+        "seeing",
+        "early",
+        "signs",
+        "significant",
+        "price",
+        "movements",
+        "before",
+        "ahead"
+      ],
+      "matched": [
+        "seeing",
+        "early",
+        "significant"
+      ],
+      "excerpt": "We sampled industry-leading 16Gb-per-second GDDR6 products to key customers and are seeing significant interest in automotive and networking applications that need the high bandwidth this memory provides. We plan to ramp GDDR6 to production in early calendar 2018 for the graphics market, followed by other high-performance applications such as automotive and networking.",
+      "dimension": "competitive_position",
+      "status": "verbatim",
+      "n_later_hits": 6,
+      "goal_excerpt": "we're seeing some early signs of significant price movements. And as we've done in the past, we want to wait before we get ahead of ourselves in projecting what may come as we move further out into the quarter but I do think that the trend is positive and the bias is positive."
+    },
+    {
+      "book": "desk_ops_v2",
+      "source": "leftover-goal",
+      "ticker": "MU",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2016-Q4",
+      "will_fiscal": "FY2017-Q1",
+      "objects": [
+        "estimate",
+        "industry",
+        "range",
+        "compares",
+        "longterm",
+        "demand",
+        "forecast",
+        "range"
+      ],
+      "matched": [
+        "range",
+        "range"
+      ],
+      "excerpt": "This month just after our quarter closed, we finalized the acquisition of Inotera in Taiwan, which we expect to continue to provide strategic and financial opportunities for the company... We borrow $2.5 billion relative to Inotera, so we would expect that to be somewhere -- total debt to be somewhere in the range of $12 billion, high $12 billion maybe $13 billion.",
+      "dimension": "macro_regulatory_risk",
+      "status": "composite",
+      "n_later_hits": 6,
+      "goal_excerpt": "For NAND, we estimate 2017 industry bit growth in the high 30% to low 40% range, which is in line with 2016. This compares to our long-term bit demand growth forecast in the low to mid 40% range. Despite significant investments in 3D conversions across the industry, we believe that 2017 supply growth will be relatively balanced with demand given the disruption in the fab output related to these conversions."
+    },
+    {
+      "book": "desk_ops_v2",
+      "source": "leftover-goal",
+      "ticker": "MU",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2019-Q2",
+      "will_fiscal": "FY2020-Q1",
+      "objects": [
+        "fiscal",
+        "began",
+        "shipments",
+        "large",
+        "first",
+        "client",
+        "features",
+        "internally"
+      ],
+      "matched": [
+        "fiscal"
+      ],
+      "excerpt": "Recent trends in our business give us optimism that our fiscal second quarter will mark the bottom for our financial performance, which we expect to start improving in our fiscal third quarter, with continued recovery in the second half of calendar 2020.",
+      "dimension": "management_confidence",
+      "status": "verbatim",
+      "n_later_hits": 8,
+      "goal_excerpt": "In fiscal Q2, we began revenue shipments to a large PC OEM for our first NVMe client SSD, which features our internally designed controller, and are in active qualifications with other customers. We intend to introduce cloud and enterprise NVMe SSDs later this calendar year."
+    },
+    {
+      "book": "desk_ops_v2",
+      "source": "leftover-goal",
+      "ticker": "ORCL",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2018-Q2",
+      "will_fiscal": "FY2023-Q1",
+      "objects": [
+        "mandatory",
+        "repatriation",
+        "outside",
+        "United",
+        "States",
+        "companies",
+        "least",
+        "estimate"
+      ],
+      "matched": [
+        "companies"
+      ],
+      "excerpt": "And we expect next quarter, we'll be announcing some brands and companies moving off of Amazon to OCI that will shock you.",
+      "dimension": "management_confidence",
+      "status": "verbatim",
+      "n_later_hits": 1,
+      "goal_excerpt": "I believe that it is mandatory repatriation. So, a tax will be due on all cash outside the United States for all of those companies, and I believe we'd need to book it, or at least book an estimate for it in the quarter that the tax law changes. That will make our tax rate look sort of strange."
+    },
+    {
+      "book": "desk_ops_v2",
+      "source": "leftover-goal",
+      "ticker": "ORCL",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2020-Q4",
+      "will_fiscal": "FY2026-Q3",
+      "objects": [
+        "countries",
+        "begin",
+        "reopening",
+        "economies",
+        "discussions",
+        "already",
+        "resumed",
+        "Since"
+      ],
+      "matched": [
+        "begin"
+      ],
+      "excerpt": "We delivered significant growth with AWS, beginning Q3 with two AWS regions live, exiting Q3 with eight AWS regions live, and we will exit Q4 with 22 AWS regions live.",
+      "dimension": "competitive_position",
+      "status": "verbatim",
+      "n_later_hits": 1,
+      "goal_excerpt": "As countries begin reopening their economies, many of these discussions have already resumed. Since these were not losses to competitors, we believe that most of this business will ultimately be booked."
+    },
+    {
+      "book": "desk_ops_v2",
+      "source": "leftover-goal",
+      "ticker": "ORCL",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2024-Q3",
+      "will_fiscal": "FY2024-Q4",
+      "objects": [
+        "think",
+        "cloud",
+        "companies",
+        "Japan",
+        "adopt",
+        "companies",
+        "companies",
+        "Japan"
+      ],
+      "matched": [
+        "cloud"
+      ],
+      "excerpt": "I'm pleased to announce that we've signed another multi-cloud partnership this time with Google. OCI and Google Cloud Network interconnect is available immediately in 10 regions, and we will be live with Oracle database at Google Cloud in September.",
+      "dimension": "competitive_position",
+      "status": "verbatim",
+      "n_later_hits": 3,
+      "goal_excerpt": "We think all of the cloud companies in Japan are going to adopt OCI. Plus a lot of big companies, the big car companies in Japan. We want around their own, the phone companies in Japan will want their own, the technology companies in Japan will want their own Oracle regions."
+    },
+    {
+      "book": "desk_ops_v2",
+      "source": "leftover-goal",
+      "ticker": "TEL",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2016-Q2",
+      "will_fiscal": "FY2016-Q4",
+      "objects": [
+        "previously",
+        "thought",
+        "orders",
+        "continue",
+        "accelerate",
+        "through",
+        "orders",
+        "China"
+      ],
+      "matched": [
+        "orders",
+        "orders",
+        "China"
+      ],
+      "excerpt": "That small engine incentive ends in December, and we've seen actually some acceleration in orders before that as they build. I think when you sit there, we will have production in China step down quarter one to quarter two. But then, we do expect to come back into growth to more normal levels later in the year.",
+      "dimension": "macro_regulatory_risk",
+      "status": "verbatim",
+      "n_later_hits": 5,
+      "goal_excerpt": "we previously thought that orders were continue to accelerate through the rest of the year while we believe the auto orders in China will continue to recover. We are now expecting orders outside of auto this will remain at the current levels that we are experienced in the second quarter."
+    },
+    {
+      "book": "desk_ops_v2",
+      "source": "leftover-goal",
+      "ticker": "TEL",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2022-Q4",
+      "will_fiscal": "FY2025-Q2",
+      "objects": [
+        "charges",
+        "fourth",
+        "anticipate",
+        "taking",
+        "first",
+        "certainly",
+        "geared",
+        "towards"
+      ],
+      "matched": [
+        "anticipate"
+      ],
+      "excerpt": "For those products that are affected by enacted tariffs, we estimate a cost impact of approximately 3% of sales. We anticipate that about one-third of this impact will be mitigated by sourcing changes by TE and our customers. We expect to recover the vast majority of the remaining two-thirds of the tariff impact through pricing actions which will represent about 2 percentage points of price related to tariff recovery in the third quarter.",
+      "dimension": "macro_regulatory_risk",
+      "status": "verbatim",
+      "n_later_hits": 1,
+      "goal_excerpt": "The charges that we took in the fourth quarter and that I anticipate taking in the first quarter, certainly are more geared towards a bit more of a somber view of the macroeconomic view, and we want to make sure that we are getting ahead of that."
+    },
+    {
+      "book": "desk_ops_v2",
+      "source": "leftover-goal",
+      "ticker": "TXN",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2016-Q2",
+      "will_fiscal": "FY2021-Q3",
+      "objects": [
+        "really",
+        "change",
+        "investment",
+        "levels",
+        "drivers",
+        "business",
+        "really",
+        "industry"
+      ],
+      "matched": [
+        "business"
+      ],
+      "excerpt": "Our range is a 130-190 days, frankly, we'll probably end up being at the higher end of that range just because we feel so good about the business model and how good that inventory will be, and how it sets us up for the next upturn on the other side, given the long-lived nature of that in the north.",
+      "dimension": "management_confidence",
+      "status": "verbatim",
+      "n_later_hits": 5,
+      "goal_excerpt": "But it won't really change our investment levels and what we believe will be the drivers for our business and really the industry over the next 5 years and 10 years."
+    },
+    {
+      "book": "desk_ops_v2",
+      "source": "leftover-goal",
+      "ticker": "TXN",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2016-Q2",
+      "will_fiscal": "FY2016-Q3",
+      "objects": [
+        "macro",
+        "environment",
+        "continue",
+        "relatively",
+        "execute",
+        "inside",
+        "market",
+        "share"
+      ],
+      "matched": [
+        "share"
+      ],
+      "excerpt": "I think we've gained share each of the last six years. I think we're on track to be able to put a seven figure up and we'll wait for the numbers to get posted before we declare that.",
+      "dimension": "competitive_position",
+      "status": "verbatim",
+      "n_later_hits": 7,
+      "goal_excerpt": "that macro environment has been, and we believe will continue to be relatively slow, and so it's up to us to execute as best we can inside of it to gain market share."
+    },
+    {
+      "book": "desk_ops_v2",
+      "source": "leftover-goal",
+      "ticker": "TXN",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2021-Q2",
+      "will_fiscal": "FY2023-Q4",
+      "objects": [
+        "Thats",
+        "purchase",
+        "price",
+        "through",
+        "CapEx",
+        "addition",
+        "factory",
+        "ready"
+      ],
+      "matched": [
+        "CapEx"
+      ],
+      "excerpt": "the ITC investment tax credit 25% credit on CapEx or manufacturing in the United States. We have accrued to-date over the last year and a half or so $1.4 billion. We expect to get about $500 million of that later this year, probably in fourth quarter as far as the current law and regulations stipulate.",
+      "dimension": "macro_regulatory_risk",
+      "status": "verbatim",
+      "n_later_hits": 4,
+      "goal_excerpt": "That's a $900 million purchase price, which will run through CapEx, but then in addition to that factory, it's ready for production once we qualify it, but at relatively low volumes. We still have to add CapEx at factory to take it to the volumes that we want and that will happen over time. And think of that CapEx is probably going to be -- is probably going to run about half of what RFAB2 CapEx will run."
+    },
+    {
+      "book": "desk_ops_v2",
+      "source": "leftover-goal",
+      "ticker": "OPAL",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2024-Q1",
+      "will_fiscal": "FY2024-Q4",
+      "objects": [
+        "point",
+        "eRINs",
+        "included",
+        "question",
+        "belief",
+        "bipartisan",
+        "support",
+        "where"
+      ],
+      "matched": [
+        "point"
+      ],
+      "excerpt": "When you mentioned BP's pivot, their pivot did not pivot away from RNG. It was really other renewables. I will just kind of point that out. You are right, the Waste Management portfolio and others were on the market, and others will likely come to market during the course of this year and we will be in there evaluating it and looking at the opportunities as they arise.",
+      "dimension": "competitive_position",
+      "status": "verbatim",
+      "n_later_hits": 3,
+      "goal_excerpt": "we are at some point, we believe e-RINs will get included into the RFS. And the question is when. And we have the belief that we may be able to get bipartisan support for it where it's pretty clear that the Biden administration has been really supportive of inserting it into the program. And we think it makes a lot of sense for a lot of the Republican constituents out there as well."
+    },
+    {
+      "book": "desk_hc_v2",
+      "source": "leftover-goal",
+      "ticker": "LLY",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2016-Q1",
+      "will_fiscal": "FY2018-Q2",
+      "objects": [
+        "policy",
+        "ultimately",
+        "medicine",
+        "pilot",
+        "cover",
+        "everybody",
+        "essentially",
+        "think"
+      ],
+      "matched": [
+        "think"
+      ],
+      "excerpt": "I think we'll be, right now as far as we've seen, the only CGRP antibody that has 100% clearance data, so 100% reduction in migraines. That's statistically significant in our clinical trials.",
+      "dimension": "competitive_position",
+      "status": "verbatim",
+      "n_later_hits": 6,
+      "goal_excerpt": "We believe it's bad policy, and ultimately we believe it's bad medicine. The term is pilot, but it's going to cover everybody, and it's going to essentially, I think sort of lay out an experiment on the backs of some very sick people who we want to make sure remain able to gain access to the medicines they need."
+    },
+    {
+      "book": "desk_hc_v2",
+      "source": "leftover-goal",
+      "ticker": "LLY",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2017-Q1",
+      "will_fiscal": "FY2018-Q3",
+      "objects": [
+        "yesterday",
+        "announced",
+        "MONARCH",
+        "study",
+        "abemaciclib",
+        "primary",
+        "endpoint",
+        "interim"
+      ],
+      "matched": [
+        "study"
+      ],
+      "excerpt": "As we've shared, as part of tirzepatide's phase III program, we are planning to study three maintenance doses at 5, 10 and 15 milligrams. I think what we've learned is that we should titrate in smaller increments.",
+      "dimension": "competitive_position",
+      "status": "verbatim",
+      "n_later_hits": 7,
+      "goal_excerpt": "Just yesterday, we announced that the MONARCH 3 study of abemaciclib met its primary endpoint at an interim analysis... We intend to begin global regulatory submissions of these results in Q3 2017."
+    },
+    {
+      "book": "desk_hc_v2",
+      "source": "leftover-goal",
+      "ticker": "LLY",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2017-Q2",
+      "will_fiscal": "FY2018-Q2",
+      "objects": [
+        "developed",
+        "criteria",
+        "apply",
+        "across",
+        "board",
+        "assets",
+        "already",
+        "clinical"
+      ],
+      "matched": [
+        "clinical"
+      ],
+      "excerpt": "I think we'll be, right now as far as we've seen, the only CGRP antibody that has 100% clearance data, so 100% reduction in migraines. That's statistically significant in our clinical trials.",
+      "dimension": "competitive_position",
+      "status": "verbatim",
+      "n_later_hits": 4,
+      "goal_excerpt": "We've developed a set of criteria that we can apply across the board to assets already in clinical development, assets we want to advance into the clinic, and those we may want to bring in from the outside."
+    },
+    {
+      "book": "desk_hc_v2",
+      "source": "leftover-goal",
+      "ticker": "LLY",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2017-Q2",
+      "will_fiscal": "FY2018-Q4",
+      "objects": [
+        "accomplish",
+        "developed",
+        "criteria",
+        "apply",
+        "across",
+        "board",
+        "assets",
+        "already"
+      ],
+      "matched": [
+        "already"
+      ],
+      "excerpt": "We ended the year, even though we launched late, at a 20% NBRx, and we're currently looking at a 26% already in January... starting February 1st, we will have best-in-class access in 2019 versus the other CGRPs. We are on all three major PBMs.",
+      "dimension": "competitive_position",
+      "status": "composite",
+      "n_later_hits": 3,
+      "goal_excerpt": "To accomplish this, we've developed a set of criteria that we can apply across the board to assets already in clinical development, assets we want to advance into the clinic, and those we may want to bring in from the outside. First, we must have a clear hypothesis. What is the dependency we're attacking?"
+    },
+    {
+      "book": "desk_hc_v2",
+      "source": "leftover-goal",
+      "ticker": "LLY",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2018-Q2",
+      "will_fiscal": "FY2019-Q1",
+      "objects": [
+        "Based",
+        "review",
+        "concluded",
+        "aftertax",
+        "value",
+        "Lilly",
+        "shareholders",
+        "maximized"
+      ],
+      "matched": [
+        "Based"
+      ],
+      "excerpt": "Based on positive phase II data in Crohn's disease, which we'll be presenting in a few weeks at DDW, we're now moving quickly into phase III for Crohn's disease yet this year.",
+      "dimension": "management_confidence",
+      "status": "verbatim",
+      "n_later_hits": 5,
+      "goal_excerpt": "Based on this review, we concluded that after-tax value for Lilly shareholders would be maximized by pursuing an IPO and subsequent separation of Elanco. We believe independence will allow Elanco to efficiently deploy its resources to those growth opportunities that best serve its customers."
+    },
+    {
+      "book": "desk_hc_v2",
+      "source": "leftover-goal",
+      "ticker": "LLY",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2021-Q3",
+      "will_fiscal": "FY2025-Q3",
+      "objects": [
+        "requested",
+        "changes",
+        "warning",
+        "inhibitors",
+        "include",
+        "serious",
+        "heartrelated",
+        "events"
+      ],
+      "matched": [
+        "include"
+      ],
+      "excerpt": "While the global development program for retatrutide includes people with a broad range of BMIs specifically spanning across overweight and obesity, we anticipate we'll be focused on the clinical profile of this medicine in patients where the clinical needs are the highest.",
+      "dimension": "competitive_position",
+      "status": "verbatim",
+      "n_later_hits": 1,
+      "goal_excerpt": "The FDA has requested changes to the box warning for all JAK inhibitors to include serious heart-related events, cancer, blood clots, and deaths. We believe in light of that, it's most likely that the JAKs will be placed after the biologics also the treatment of rheumatoid arthritis... We would expect some regulatory actions prior to the end of this year."
+    },
+    {
+      "book": "desk_hc_v2",
+      "source": "leftover-goal",
+      "ticker": "LLY",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2022-Q1",
+      "will_fiscal": "FY2022-Q4",
+      "objects": [
+        "intend",
+        "complete",
+        "initial",
+        "submission",
+        "enabling",
+        "potential",
+        "regulatory",
+        "decision"
+      ],
+      "matched": [
+        "submission",
+        "potential",
+        "regulatory"
+      ],
+      "excerpt": "We actually believe that the lebrikizumab has the potential to become a first-line biologic. It's important, though, to have in mind that we announced this submission at the Q3 earnings call, and we expect a traditional regulatory pathway here, so we will not launch until most likely Q4 of 2023.",
+      "dimension": "competitive_position",
+      "status": "verbatim",
+      "n_later_hits": 3,
+      "goal_excerpt": "We intend to complete our initial submission yet in Q2, enabling a potential regulatory decision in early 2023. We believe it would be beneficial for donanemab to obtain accelerated approval proximal to the TRAILBLAZER-ALZ 2 phase III readout in mid-2023, which would enable parallel discussions with CMS regarding outright coverage and expedited review time for full FDA approval."
+    },
+    {
+      "book": "desk_hc_v2",
+      "source": "leftover-goal",
+      "ticker": "LLY",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2023-Q2",
+      "will_fiscal": "FY2024-Q3",
+      "objects": [
+        "pleased",
+        "commercial",
+        "production",
+        "started",
+        "North",
+        "Carolina",
+        "capacity",
+        "supply"
+      ],
+      "matched": [
+        "pleased"
+      ],
+      "excerpt": "We are pleased to share that we expect U.S. regulatory action for tirzepatide in adults with obesity and obstructive sleep apnea yet this year, and that we will submit for U.S. approval of tirzepatide in adults with obesity and heart failure with preserved ejection fraction before the end of this year.",
+      "dimension": "macro_regulatory_risk",
+      "status": "verbatim",
+      "n_later_hits": 1,
+      "goal_excerpt": "We're pleased that commercial production has started at our RTP site in North Carolina. Even as we ramp up capacity at RTP, we believe supply will likely remain tight in the coming months and quarters due to significant demand."
+    },
+    {
+      "book": "desk_hc_v2",
+      "source": "leftover-goal",
+      "ticker": "UNH",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2016-Q3",
+      "will_fiscal": "FY2016-Q4",
+      "objects": [
+        "continue",
+        "build",
+        "Optum",
+        "market",
+        "market",
+        "emerge",
+        "national",
+        "platform"
+      ],
+      "matched": [
+        "Optum",
+        "market",
+        "market"
+      ],
+      "excerpt": "If you looked at our 75-market strategy that we've been executing against today, we are in 28 markets. With this acquisition, we will pick up about 17 more markets. About 50% of SCA markets overlap with us, but there are 17 new markets. This is going to accelerate our growth, obviously. This is a very key point in the growth of OptumCare.",
+      "dimension": "competitive_position",
+      "status": "verbatim",
+      "n_later_hits": 12,
+      "goal_excerpt": "You should expect to see us continue to build out Optum Care market by market to emerge as a national platform for primary care-driven ambulatory care services. We aim to expand our care delivery through owned or affiliated clinics to more than 75 local markets, where more than 200 million people reside."
+    },
+    {
+      "book": "desk_hc_v2",
+      "source": "leftover-goal",
+      "ticker": "UNH",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2017-Q1",
+      "will_fiscal": "FY2018-Q3",
+      "objects": [
+        "enterprisewide",
+        "ambitious",
+        "targeting",
+        "worldclass",
+        "within",
+        "seven",
+        "years",
+        "seven"
+      ],
+      "matched": [
+        "within"
+      ],
+      "excerpt": "I would offer at this distance the current market consensus estimate for adjusted earnings per share captures our 2019 outlook within a typically sized range. As always, we will seek to perform to our full potential.",
+      "dimension": "management_confidence",
+      "status": "verbatim",
+      "n_later_hits": 1,
+      "goal_excerpt": "Our enterprise-wide goal is ambitious. We are targeting a world-class NPS of 70 within seven years, or 70 in seven."
+    },
+    {
+      "book": "desk_hc_v2",
+      "source": "leftover-goal",
+      "ticker": "UNH",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2019-Q1",
+      "will_fiscal": "FY2024-Q1",
+      "objects": [
+        "investments",
+        "coming",
+        "healthcare",
+        "innovation",
+        "movement",
+        "intend",
+        "multiyear",
+        "multibilliondollar"
+      ],
+      "matched": [
+        "healthcare"
+      ],
+      "excerpt": "UnitedHealthcare was honored to secure major Medicaid wins in Virginia, Texas, and Michigan. While we were disappointed in the outcome in Florida, we'll be seeking to better understand the process and considerations there.",
+      "dimension": "competitive_position",
+      "status": "verbatim",
+      "n_later_hits": 2,
+      "goal_excerpt": "our investments in the coming wave of healthcare innovation, a movement we intend to lead, and our multiyear, multibillion-dollar effort to improve our medical and operating cost basis for the benefit of our customers, we expect sustained growth and performance for UnitedHealth Group this year, in 2020, and for many years beyond."
+    },
+    {
+      "book": "desk_hc_v2",
+      "source": "leftover-goal",
+      "ticker": "UNH",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2022-Q2",
+      "will_fiscal": "FY2022-Q3",
+      "objects": [
+        "Based",
+        "initial",
+        "intend",
+        "introduce",
+        "individual",
+        "Medicare",
+        "Advantage",
+        "members"
+      ],
+      "matched": [
+        "Based"
+      ],
+      "excerpt": "in September, we announced a long-term collaboration with Walmart to provide Optum technology and expertise that will enable America's largest retailer to provide value-based care to consumers in its clinics. Starting in 2023, we will jointly develop 15 Walmart health clinics in Florida and Georgia, and will extend into additional geographies over time.",
+      "dimension": "competitive_position",
+      "status": "verbatim",
+      "n_later_hits": 2,
+      "goal_excerpt": "Based on this initial work, we intend to introduce the card to all our individual Medicare Advantage members in 2023."
+    },
+    {
+      "book": "desk_hc_v2",
+      "source": "leftover-goal",
+      "ticker": "UNH",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2025-Q3",
+      "will_fiscal": "FY2025-Q4",
+      "objects": [
+        "submitted",
+        "filings",
+        "nearly",
+        "states",
+        "where",
+        "participate",
+        "reflect",
+        "morbidity"
+      ],
+      "matched": [
+        "reflect"
+      ],
+      "excerpt": "Looking briefly to 2027, the Advance Notice published yesterday simply doesn't reflect the reality of medical utilization and cost trends... it will mean very meaningful benefit reductions, and we'll once again need to take a hard look at our geographic footprint, our product footprint across the country, and has the likelihood to play out not dissimilar to how 2026 did in terms of modifications to plan footprint and benefits.",
+      "dimension": "macro_regulatory_risk",
+      "status": "composite",
+      "n_later_hits": 1,
+      "goal_excerpt": "We have submitted rate filings in nearly all of the 30 states where we participate that reflect 2025 morbidity and experience. These include average rate increases of over 25%...we believe these actions will establish a sustainable premium base while likely reducing our ACA enrollment by approximately two-thirds."
+    },
+    {
+      "book": "desk_hc_v2",
+      "source": "leftover-goal",
+      "ticker": "JNJ",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2016-Q1",
+      "will_fiscal": "FY2019-Q4",
+      "objects": [
+        "assumption",
+        "regard",
+        "REMICADE",
+        "biosimilar",
+        "remains",
+        "unchanged",
+        "recent",
+        "approval"
+      ],
+      "matched": [
+        "regard"
+      ],
+      "excerpt": "with respect to the meeting, I believe it's next month, February 4th, regarding testing methods around talc. We certainly welcome any discussion around the safety and efficacy of the product specifically. We will not be active participants at that meeting. However, I can say that our current internal testing methods exceed that of current FDA standards for cosmetic talc.",
+      "dimension": "macro_regulatory_risk",
+      "status": "verbatim",
+      "n_later_hits": 4,
+      "goal_excerpt": "Our assumption with regard to REMICADE biosimilar remains unchanged even with the recent FDA approval of INFLECTRA due to our intellectual property, which we intend to defend... the U.S. Patent, the '471 patent extends to 2018, another patent that we have extends to 2027."
+    },
+    {
+      "book": "desk_hc_v2",
+      "source": "leftover-goal",
+      "ticker": "JNJ",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2016-Q2",
+      "will_fiscal": "FY2017-Q4",
+      "objects": [
+        "today",
+        "orthopedic",
+        "surgery",
+        "business",
+        "multiproduct",
+        "agreements",
+        "agreements",
+        "perform"
+      ],
+      "matched": [
+        "business"
+      ],
+      "excerpt": "we expect to improve margins in 2018 by approximately 100 basis points as we continue key margin-improving initiatives in our business.",
+      "dimension": "management_confidence",
+      "status": "verbatim",
+      "n_later_hits": 10,
+      "goal_excerpt": "today, about 25% of our U.S. orthopedic and surgery business is in multi-product line agreements. These agreements perform almost 2 times better than single product contract agreements. We see this percentage growing to 40% in the near future, which we believe will help us accelerate our business going forward."
+    },
+    {
+      "book": "desk_hc_v2",
+      "source": "leftover-goal",
+      "ticker": "JNJ",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2017-Q4",
+      "will_fiscal": "FY2019-Q1",
+      "objects": [
+        "Regarding",
+        "ZYTIGA",
+        "disagree",
+        "Patent",
+        "Trademark",
+        "Office",
+        "ruling",
+        "contradicts"
+      ],
+      "matched": [
+        "Patent"
+      ],
+      "excerpt": "I would see 2019 as a trough, and once we anniversary some of these patent losses, we should be even stronger than we were in the first quarter and back to that well above market projection for pharmaceutical.",
+      "dimension": "management_confidence",
+      "status": "verbatim",
+      "n_later_hits": 3,
+      "goal_excerpt": "Regarding ZYTIGA, we disagree with the Patent and Trademark Office ruling last week on the IPR, which contradicts their earlier decision to grant the patent. We believe the 483 patent is valid and will continue vigorously to defend it."
+    },
+    {
+      "book": "desk_hc_v2",
+      "source": "leftover-goal",
+      "ticker": "JNJ",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2018-Q1",
+      "will_fiscal": "FY2019-Q1",
+      "objects": [
+        "pleased",
+        "announce",
+        "during",
+        "first",
+        "acquisition",
+        "Orthotaxy",
+        "provide",
+        "nextgeneration"
+      ],
+      "matched": [
+        "first"
+      ],
+      "excerpt": "I would see 2019 as a trough, and once we anniversary some of these patent losses, we should be even stronger than we were in the first quarter and back to that well above market projection for pharmaceutical.",
+      "dimension": "management_confidence",
+      "status": "verbatim",
+      "n_later_hits": 11,
+      "goal_excerpt": "We were pleased to announce during the first quarter the acquisition of Orthotaxy, which we believe will provide next-generation robotic-assisted orthopedic surgery, which will be on display at our May 16th Analyst Day."
+    },
+    {
+      "book": "desk_hc_v2",
+      "source": "leftover-goal",
+      "ticker": "ABBV",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2017-Q3",
+      "will_fiscal": "FY2017-Q4",
+      "objects": [
+        "estimate",
+        "nominal",
+        "sales",
+        "potential",
+        "risankizumab",
+        "indications",
+        "outlined",
+        "approximately"
+      ],
+      "matched": [
+        "approximately"
+      ],
+      "excerpt": "Over the next five years, we plan to invest roughly $2.5 billion in capital within the United States, and are currently evaluating additional expansion of our U.S. facilities. In 2018, we also plan to accelerate our pension funding by $750 million, as well as enhancing our non-executive employee compensation. We're also planning a one-time charitable contribution of approximately $350 million to select not-for-profit organizations.",
+      "dimension": "macro_regulatory_risk",
+      "status": "anchored",
+      "n_later_hits": 6,
+      "goal_excerpt": "We estimate the nominal sales potential for risankizumab for the 4 indications I just outlined to be approximately $5 billion in 2025...we believe upadacitinib will be a significant growth driver for AbbVie, with nominal sales across six indications of approximately $6.5 billion in 2025...We believe that VENCLEXTA's nominal sales potential in 2025 across multiple hematological malignancies is approximately $6 billion."
+    },
+    {
+      "book": "desk_hc_v2",
+      "source": "leftover-goal",
+      "ticker": "ABBV",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2020-Q3",
+      "will_fiscal": "FY2023-Q4",
+      "objects": [
+        "looked",
+        "consensus",
+        "comfortable",
+        "consensus",
+        "other",
+        "things",
+        "primarily",
+        "around"
+      ],
+      "matched": [
+        "around"
+      ],
+      "excerpt": "I would, though, if you're modeling that, I would kind of peak it out at around 50%. I think that's where we'll hit a peak at the operating margin. But we do see expansion both in 2025 on that return to robust growth, including the impact of the two transactions, ImmunoGen and Cerevel.",
+      "dimension": "management_confidence",
+      "status": "verbatim",
+      "n_later_hits": 1,
+      "goal_excerpt": "I'd also say that as we've looked at consensus, we're comfortable with what we see in consensus in 2021. We want to see a few other things just play out primarily around COVID."
+    },
+    {
+      "book": "desk_hc_v2",
+      "source": "leftover-goal",
+      "ticker": "ABBV",
+      "tree_id": null,
+      "title": null,
+      "seed_fiscal": "FY2022-Q2",
+      "will_fiscal": "FY2024-Q1",
+      "objects": [
+        "recently",
+        "discussed",
+        "results",
+        "regulatory",
+        "agencies",
+        "based",
+        "strength",
+        "intend"
+      ],
+      "matched": [
+        "based"
+      ],
+      "excerpt": "Based on the totality of the data from our Transform-1 trial and following recent feedback from regulators, we will not be submitting navitoclax for approval in myelofibrosis, and we will wind down the Transform-2 study in the relapsed refractory setting.",
+      "dimension": "management_confidence",
+      "status": "verbatim",
+      "n_later_hits": 2,
+      "goal_excerpt": "We recently discussed these results with regulatory agencies, and based on the strength of the data, we intend to submit regulatory applications later this year for accelerated approval of epcoritamab in patients with relapsed refractory large B-cell lymphoma. We expect approval decisions in 2023."
+    }
+  ]
+}

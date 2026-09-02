@@ -14,6 +14,12 @@ OPS_TREES: tuple[dict[str, object], ...] = (
         "bucket": "competitive_position",
         "title": "Adobe Marketing Cloud Device Co-op identifies consumers across devices",
         "objects": ("Device Co-op", "Adobe Marketing Cloud Device Co-op"),
+        "match": {
+            "anchors": ("Device Co-op", "Co-op", "cooperative", "device graph"),
+            "context": ("Marketing Cloud", "brands", "devices", "identity", "consumers"),
+            "exclude": (),
+            "generic": None,
+        },
         "seed": {
             "fiscal_period": "FY2016-Q2",
             "claim_type": "forward_clock",
@@ -37,6 +43,12 @@ OPS_TREES: tuple[dict[str, object], ...] = (
         "bucket": "competitive_position",
         "title": "Begin selling Collections next-generation suites",
         "objects": ("Collections",),
+        "match": {
+            "anchors": ("Collections", "industry collections"),
+            "context": ("launch", "launched", "suites", "subscription", "August 1", "selling", "next generation"),
+            "exclude": ("cash collections", "collections of receivables", "collection of receivables", "collection efforts"),
+            "generic": True,
+        },
         "seed": {
             "fiscal_period": "FY2017-Q1",
             "claim_type": "forward_clock",
@@ -160,6 +172,12 @@ OPS_TREES: tuple[dict[str, object], ...] = (
         "bucket": "demand",
         "title": "Tax simplification becomes a TurboTax growth catalyst",
         "objects": ("TurboTax",),
+        "match": {
+            "anchors": ("TurboTax",),
+            "context": ("units", "growth", "DIY", "category", "share", "tax season", "customers"),
+            "exclude": (),
+            "generic": None,
+        },
         "seed": {
             "fiscal_period": "FY2018-Q4",
             "claim_type": "forward_clock",
@@ -183,6 +201,12 @@ OPS_TREES: tuple[dict[str, object], ...] = (
         "bucket": "management_confidence",
         "title": "Hold a financial analyst briefing at BUILD in May",
         "objects": ("BUILD", "financial analyst briefing"),
+        "match": {
+            "anchors": ("BUILD", "Build conference", "analyst briefing", "financial analyst briefing", "analyst day", "analyst meeting", "financial analyst meeting", "investor briefing"),
+            "context": ("May", "Seattle", "investor community", "developer conference", "May 10th", "hosted"),
+            "exclude": ("build out", "build on", "build upon", "building", "built", "not build"),
+            "generic": None,
+        },
         "seed": {
             "fiscal_period": "FY2017-Q2",
             "claim_type": "forward_clock",
@@ -205,6 +229,12 @@ OPS_TREES: tuple[dict[str, object], ...] = (
         "bucket": "demand",
         "title": "Book more than $2 billion in annual cloud sales this year",
         "objects": ("cloud sales",),
+        "match": {
+            "anchors": ("cloud sales", "annual cloud sales", "cloud bookings", "$2 billion", "2 billion"),
+            "context": ("book", "booked", "salesforce", "this year", "fiscal year", "cloud"),
+            "exclude": (),
+            "generic": None,
+        },
         "seed": {
             "fiscal_period": "FY2017-Q2",
             "claim_type": "forward_clock",
@@ -226,6 +256,12 @@ OPS_TREES: tuple[dict[str, object], ...] = (
         "bucket": "capital_allocation",
         "title": "Become approximately net cash neutral over time",
         "objects": ("net cash neutral",),
+        "match": {
+            "anchors": ("net cash neutral", "net cash"),
+            "context": ("neutral", "capital return", "over time", "optimal capital structure"),
+            "exclude": (),
+            "generic": None,
+        },
         "seed": {
             "fiscal_period": "FY2018-Q1",
             "claim_type": "forward_clock",
@@ -250,6 +286,12 @@ OPS_TREES: tuple[dict[str, object], ...] = (
         "bucket": "competitive_position",
         "title": "Be number one in each of The New five",
         "objects": ("The New",),
+        "match": {
+            "anchors": ("The New",),
+            "context": ("number one", "leader", "leadership", "digital", "cloud", "security", "rotation", "billion"),
+            "exclude": ("the new normal", "the new year", "the new fiscal"),
+            "generic": True,
+        },
         "seed": {
             "fiscal_period": "FY2017-Q2",
             "claim_type": "forward_clock",
@@ -273,6 +315,12 @@ OPS_TREES: tuple[dict[str, object], ...] = (
         "bucket": "competitive_position",
         "title": "Launch Radeon Pro Duo VR platform at month-end",
         "objects": ("Radeon Pro Duo",),
+        "match": {
+            "anchors": ("Radeon Pro Duo", "Radeon Pro", "Pro Duo", "VR"),
+            "context": ("launch", "launched", "shipping", "introduced", "creation", "platform"),
+            "exclude": (),
+            "generic": None,
+        },
         "seed": {
             "fiscal_period": "FY2016-Q1",
             "claim_type": "forward_clock",
@@ -295,6 +343,12 @@ OPS_TREES: tuple[dict[str, object], ...] = (
         "bucket": "demand",
         "title": "Prime India unlimited free one- and two-day delivery",
         "objects": ("Prime", "Prime Video"),
+        "match": {
+            "anchors": ("India", "Prime India"),
+            "context": ("Prime", "Prime Video", "launched", "members", "delivery", "customers", "Amazon.in"),
+            "exclude": (),
+            "generic": None,
+        },
         "seed": {
             "fiscal_period": "FY2016-Q2",
             "claim_type": "forward_clock",
@@ -321,6 +375,12 @@ OPS_TREES: tuple[dict[str, object], ...] = (
         "bucket": "competitive_position",
         "title": "Integrate Luxtera optics instead of procuring them",
         "objects": ("Luxtera",),
+        "match": {
+            "anchors": ("Luxtera", "silicon photonics", "optics"),
+            "context": ("acquisition", "closed", "integration", "400G", "optical"),
+            "exclude": (),
+            "generic": None,
+        },
         "seed": {
             "fiscal_period": "FY2019-Q2",
             "claim_type": "forward_clock",
@@ -344,6 +404,12 @@ OPS_TREES: tuple[dict[str, object], ...] = (
         "bucket": "competitive_position",
         "title": "Develop solid-state scanning LIDAR from Vescent",
         "objects": ("LIDAR", "Vescent"),
+        "match": {
+            "anchors": ("LIDAR", "Vescent", "solid-state LIDAR"),
+            "context": ("automotive", "ADAS", "solid-state", "scanning", "sampling", "design win"),
+            "exclude": (),
+            "generic": None,
+        },
         "seed": {
             "fiscal_period": "FY2016-Q4",
             "claim_type": "forward_clock",
@@ -368,6 +434,12 @@ OPS_TREES: tuple[dict[str, object], ...] = (
         "bucket": "demand",
         "title": "Double packaging revenues over the next 12 months",
         "objects": ("packaging", "advanced packaging"),
+        "match": {
+            "anchors": ("advanced packaging", "packaging"),
+            "context": ("double", "doubled", "revenue", "12 months", "record", "growth"),
+            "exclude": ("packaging materials",),
+            "generic": None,
+        },
         "seed": {
             "fiscal_period": "FY2016-Q4",
             "claim_type": "forward_clock",
@@ -391,6 +463,12 @@ OPS_TREES: tuple[dict[str, object], ...] = (
         "bucket": "capital_allocation",
         "title": "Accelerate the acquisition pace in 2017",
         "objects": ("acquire companies",),
+        "match": {
+            "anchors": ("acquisition", "acquisitions", "acquired", "acquire"),
+            "context": ("announced", "completed", "closed", "agreement", "tuck-in", "digital", "capabilities", "companies"),
+            "exclude": (),
+            "generic": True,
+        },
         "seed": {
             "fiscal_period": "FY2016-Q4",
             "claim_type": "forward_clock",
@@ -414,6 +492,12 @@ OPS_TREES: tuple[dict[str, object], ...] = (
         "bucket": "demand",
         "title": "Realize S600 Series revenue in Q3 volume production",
         "objects": ("S600", "Seagate"),
+        "match": {
+            "anchors": ("S600", "Seagate", "enterprise SSD", "SAS SSD"),
+            "context": ("ship", "shipping", "shipped", "revenue", "qualification", "partnership", "drive"),
+            "exclude": (),
+            "generic": None,
+        },
         "seed": {
             "fiscal_period": "FY2016-Q2",
             "claim_type": "forward_clock",
@@ -439,6 +523,12 @@ OPS_TREES: tuple[dict[str, object], ...] = (
         "bucket": "demand",
         "title": "Medical run-rate north of $500 million next year",
         "objects": ("Creganna", "AdvancedCath", "medical"),
+        "match": {
+            "anchors": ("Creganna", "AdvancedCath", "medical"),
+            "context": ("$500 million", "500 million", "run rate", "medical business", "sales", "revenue"),
+            "exclude": (),
+            "generic": None,
+        },
         "seed": {
             "fiscal_period": "FY2016-Q4",
             "claim_type": "forward_clock",
@@ -463,6 +553,12 @@ OPS_TREES: tuple[dict[str, object], ...] = (
         "bucket": "capital_allocation",
         "title": "Hold a capital-management strategy call on February 8",
         "objects": ("capital management",),
+        "match": {
+            "anchors": ("capital management", "capital management strategy", "capital management call"),
+            "context": ("February", "call", "update", "strategy", "dividend", "buyback"),
+            "exclude": (),
+            "generic": None,
+        },
         "seed": {
             "fiscal_period": "FY2016-Q4",
             "claim_type": "forward_clock",
@@ -485,6 +581,12 @@ OPS_TREES: tuple[dict[str, object], ...] = (
         "bucket": "capital_allocation",
         "title": "Host an analyst day in the third quarter",
         "objects": ("analyst day",),
+        "match": {
+            "anchors": ("analyst day", "investor day", "analyst meeting", "investor meeting", "investor event", "analyst event"),
+            "context": ("host", "hosted", "third quarter", "Q3", "date", "September", "October"),
+            "exclude": (),
+            "generic": None,
+        },
         "seed": {
             "fiscal_period": "FY2024-Q4",
             "claim_type": "forward_clock",
@@ -510,6 +612,12 @@ OPS_TREES: tuple[dict[str, object], ...] = (
         "bucket": "margins",
         "title": "Run one ERP after day-2 integration at the end of November",
         "objects": ("day 2", "ERP"),
+        "match": {
+            "anchors": ("day 2", "ERP", "one ERP", "single ERP"),
+            "context": ("integration", "integrate", "systems", "database", "headcount", "November", "Broadcom"),
+            "exclude": (),
+            "generic": None,
+        },
         "seed": {
             "fiscal_period": "FY2016-Q3",
             "claim_type": "forward_clock",
@@ -535,6 +643,12 @@ OPS_TREES: tuple[dict[str, object], ...] = (
         "bucket": "margins",
         "title": "Long-term operating margin target of 45%",
         "objects": ("45%", "operating margin"),
+        "match": {
+            "anchors": ("45%", "operating margin"),
+            "context": ("target", "long-term", "long term", "model", "operating margin", "45%"),
+            "exclude": (),
+            "generic": None,
+        },
         "seed": {
             "fiscal_period": "FY2016-Q4",
             "claim_type": "forward_clock",
@@ -557,7 +671,13 @@ OPS_TREES: tuple[dict[str, object], ...] = (
         "beat_id": "klx-approvals",
         "bucket": "macro_regulatory_risk",
         "title": "Secure approvals to complete the transaction in mid-2016",
-        "objects": ("approvals", "mid-2016"),
+        "objects": ("approvals", "KLA"),  # mid-2016 is the clock
+        "match": {
+            "anchors": ("KLA", "KLA-Tencor", "approval", "regulatory approval", "merger"),
+            "context": ("China", "MOFCOM", "close", "closing", "terminate", "terminated", "DOJ", "regulators", "transaction"),
+            "exclude": (),
+            "generic": None,
+        },
         "seed": {
             "fiscal_period": "FY2016-Q2",
             "claim_type": "forward_clock",
@@ -579,6 +699,12 @@ OPS_TREES: tuple[dict[str, object], ...] = (
         "bucket": "capital_allocation",
         "title": "Break a $150 to $160 million annual spend bogey",
         "objects": ("$150 to $160 million",),
+        "match": {
+            "anchors": ("$150 to $160 million", "$150 million", "$160 million", "150 million", "160 million"),
+            "context": ("spend", "spent", "deploy", "deployed", "acquisitions", "deals", "year", "capital"),
+            "exclude": (),
+            "generic": None,
+        },
         "expire": "FY2027-Q3",
         "quant": {
             "measure": None,
@@ -615,6 +741,12 @@ OPS_TREES: tuple[dict[str, object], ...] = (
         "bucket": "competitive_position",
         "title": "Wireless BMS becomes a large share of BMS revenue",
         "objects": ("wireless BMS", "wireless platform", "wireless solution"),
+        "match": {
+            "anchors": ("wireless BMS", "wireless battery management", "wireless platform", "wireless solution"),
+            "context": ("OEM", "OEMs", "design", "designed in", "adopt", "production", "electric vehicle", "EV"),
+            "exclude": (),
+            "generic": None,
+        },
         "seed": {
             "fiscal_period": "FY2023-Q3",
             "claim_type": "forward_clock",

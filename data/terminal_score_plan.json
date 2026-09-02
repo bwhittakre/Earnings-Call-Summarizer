@@ -1,0 +1,2943 @@
+{
+  "note": "PLAN MODE: no API calls were made; est_* fields are pre-flight estimates.",
+  "generated_at": "2026-09-02T16:45:31.885343+00:00",
+  "complete": true,
+  "plan_mode": true,
+  "evidence_source": "transcripts_raw via scripts/_desk_retrieval.py (Tier 0-3 free; Tier 4-5 budget-gated)",
+  "n_open_trees_scored": 40,
+  "n_needs_review": 1,
+  "needs_review_reasons": {
+    "no_transcripts_indexed": 1
+  },
+  "n_skipped_closed": 3,
+  "n_skipped_gold": 0,
+  "n_actionable": 0,
+  "n_excerpt_unverified": 0,
+  "budget": {
+    "fallback_allowed_usd": 0.0,
+    "fallback_spent_usd": 0.0,
+    "fallback_remaining_usd": 0.0,
+    "sonnet_spent_usd": 0.0,
+    "total_spent_usd": 0.0,
+    "fallback_trees": 0,
+    "refused_trees": 0,
+    "n_paid_calls": 0
+  },
+  "usage": {},
+  "coverage": {
+    "trees": 41,
+    "window_quarters": 145,
+    "window_present": 145,
+    "window_missing": 0,
+    "trees_no_index": 1
+  },
+  "tier_counts": {
+    "0": 31,
+    "3": 9
+  },
+  "needs_review": [
+    {
+      "ticker": "CSCO",
+      "tree_id": "csco-luxtera-optics",
+      "kind": "promise",
+      "title": "Integrate Luxtera optics instead of procuring them",
+      "reason": "no_transcripts_indexed",
+      "detail": "no indexed transcripts for ticker",
+      "seed_fiscal": "FY2019-Q2",
+      "clock": null,
+      "clock_window": [],
+      "transcripts_present": 0,
+      "transcripts_missing": [],
+      "quarters_searched": 0,
+      "seed_excerpt": "Our acquisition of Luxtera will further augment our existing capability around silicon and optics, enabling our customers to build the fastest and most efficient networks...Instead of us having to go out and procure the optics, we'll be able to more tightly integrate them.",
+      "anchors_tried": [
+        "Luxtera",
+        "silicon photonics",
+        "optics"
+      ],
+      "context_tried": [
+        "acquisition",
+        "closed",
+        "integration",
+        "400G",
+        "optical"
+      ],
+      "generic_inferred": {},
+      "retrieval_tier": null,
+      "book": "desk_ops_v2"
+    }
+  ],
+  "candidates": [
+    {
+      "ticker": "ADBE",
+      "tree_id": "adbe-device-co-op",
+      "kind": "promise",
+      "title": "Adobe Marketing Cloud Device Co-op identifies consumers across devices",
+      "seed_fiscal": "FY2016-Q2",
+      "clock": null,
+      "objects": [
+        "Device Co-op",
+        "Adobe Marketing Cloud Device Co-op"
+      ],
+      "anchors": [
+        "Device Co-op",
+        "Co-op",
+        "cooperative",
+        "device graph"
+      ],
+      "plan": true,
+      "proposed_edge": null,
+      "confidence": null,
+      "n_evidence_excerpts": 1,
+      "retrieval": {
+        "tier": 3,
+        "n_sentences": 1,
+        "n_hits_total": 1,
+        "quarters_searched": [
+          "FY2016-Q3",
+          "FY2016-Q4",
+          "FY2017-Q1",
+          "FY2017-Q2",
+          "FY2017-Q3",
+          "FY2017-Q4",
+          "FY2018-Q1",
+          "FY2018-Q2",
+          "FY2018-Q3",
+          "FY2018-Q4",
+          "FY2019-Q1",
+          "FY2019-Q2",
+          "FY2019-Q3",
+          "FY2019-Q4",
+          "FY2020-Q1",
+          "FY2020-Q2",
+          "FY2020-Q3",
+          "FY2020-Q4",
+          "FY2021-Q1",
+          "FY2021-Q2",
+          "FY2021-Q3",
+          "FY2021-Q4",
+          "FY2022-Q1",
+          "FY2022-Q2",
+          "FY2022-Q3",
+          "FY2022-Q4",
+          "FY2023-Q1",
+          "FY2023-Q2",
+          "FY2023-Q3",
+          "FY2023-Q4",
+          "FY2024-Q1",
+          "FY2024-Q2",
+          "FY2024-Q3",
+          "FY2024-Q4",
+          "FY2025-Q1",
+          "FY2025-Q2",
+          "FY2025-Q3",
+          "FY2025-Q4",
+          "FY2026-Q1",
+          "FY2026-Q2"
+        ],
+        "window": [],
+        "window_missing": [],
+        "generic_inferred": {
+          "Device Co-op": false,
+          "Co-op": false,
+          "cooperative": false,
+          "device graph": false
+        },
+        "alias_snapshot": {
+          "Device Co-op": [
+            "device coop",
+            "devicecoop"
+          ],
+          "Co-op": [
+            "coop"
+          ],
+          "cooperative": [
+            "cooperative"
+          ],
+          "device graph": [
+            "device graph",
+            "devicegraph"
+          ]
+        },
+        "notes": [
+          "no clock: tiers 0-2 skipped",
+          "tier 3 resolved with tier 0 rule"
+        ],
+        "est_tokens": 855,
+        "actual_tokens": null,
+        "usd": null,
+        "est_usd": 0.00496,
+        "triage": null
+      },
+      "book": "desk_ops_v2"
+    },
+    {
+      "ticker": "ADSK",
+      "tree_id": "adsk-collections-launch",
+      "kind": "promise",
+      "title": "Begin selling Collections next-generation suites",
+      "seed_fiscal": "FY2017-Q1",
+      "clock": "FY2017-Q3",
+      "objects": [
+        "Collections"
+      ],
+      "anchors": [
+        "Collections",
+        "industry collections"
+      ],
+      "plan": true,
+      "proposed_edge": null,
+      "confidence": null,
+      "n_evidence_excerpts": 20,
+      "retrieval": {
+        "tier": 0,
+        "n_sentences": 20,
+        "n_hits_total": 24,
+        "quarters_searched": [
+          "FY2017-Q2",
+          "FY2017-Q3",
+          "FY2017-Q4",
+          "FY2018-Q1"
+        ],
+        "window": [
+          "FY2017-Q2",
+          "FY2017-Q3",
+          "FY2017-Q4",
+          "FY2018-Q1"
+        ],
+        "window_missing": [],
+        "generic_inferred": {
+          "Collections": true,
+          "industry collections": true
+        },
+        "alias_snapshot": {
+          "Collections": [
+            "collection"
+          ],
+          "industry collections": [
+            "industry collection",
+            "industrycollection"
+          ]
+        },
+        "notes": [
+          "generic overridden by catalog: True",
+          "capped 24 hits to 20"
+        ],
+        "est_tokens": 3485,
+        "actual_tokens": null,
+        "usd": null,
+        "est_usd": 0.01286,
+        "triage": null
+      },
+      "book": "desk_ops_v2"
+    },
+    {
+      "ticker": "INTU",
+      "tree_id": "intu-turbotax-diy-growth",
+      "kind": "goal",
+      "title": "Tax simplification becomes a TurboTax growth catalyst",
+      "seed_fiscal": "FY2018-Q4",
+      "clock": null,
+      "objects": [
+        "TurboTax"
+      ],
+      "anchors": [
+        "TurboTax"
+      ],
+      "plan": true,
+      "proposed_edge": null,
+      "confidence": null,
+      "n_evidence_excerpts": 20,
+      "retrieval": {
+        "tier": 3,
+        "n_sentences": 20,
+        "n_hits_total": 384,
+        "quarters_searched": [
+          "FY2019-Q1",
+          "FY2019-Q2",
+          "FY2019-Q3",
+          "FY2019-Q4",
+          "FY2020-Q1",
+          "FY2020-Q2",
+          "FY2020-Q3",
+          "FY2020-Q4",
+          "FY2021-Q1",
+          "FY2021-Q2",
+          "FY2021-Q3",
+          "FY2021-Q4",
+          "FY2022-Q1",
+          "FY2022-Q2",
+          "FY2022-Q3",
+          "FY2022-Q4",
+          "FY2023-Q1",
+          "FY2023-Q2",
+          "FY2023-Q3",
+          "FY2023-Q4",
+          "FY2024-Q1",
+          "FY2024-Q2",
+          "FY2024-Q3",
+          "FY2024-Q4",
+          "FY2025-Q1",
+          "FY2025-Q2",
+          "FY2025-Q3",
+          "FY2025-Q4",
+          "FY2026-Q1",
+          "FY2026-Q2",
+          "FY2026-Q3"
+        ],
+        "window": [],
+        "window_missing": [],
+        "generic_inferred": {
+          "TurboTax": true
+        },
+        "alias_snapshot": {
+          "TurboTax": [
+            "turbotax"
+          ]
+        },
+        "notes": [
+          "no clock: tiers 0-2 skipped",
+          "tier 3 resolved with tier 0 rule",
+          "capped 384 hits to 20"
+        ],
+        "est_tokens": 3301,
+        "actual_tokens": null,
+        "usd": null,
+        "est_usd": 0.0123,
+        "triage": null
+      },
+      "book": "desk_ops_v2"
+    },
+    {
+      "ticker": "MSFT",
+      "tree_id": "msft-build-analyst-briefing",
+      "kind": "promise",
+      "title": "Hold a financial analyst briefing at BUILD in May",
+      "seed_fiscal": "FY2017-Q2",
+      "clock": "FY2017-Q4",
+      "objects": [
+        "BUILD",
+        "financial analyst briefing"
+      ],
+      "anchors": [
+        "BUILD",
+        "Build conference",
+        "analyst briefing",
+        "financial analyst briefing",
+        "analyst day",
+        "analyst meeting",
+        "financial analyst meeting",
+        "investor briefing"
+      ],
+      "plan": true,
+      "proposed_edge": null,
+      "confidence": null,
+      "n_evidence_excerpts": 4,
+      "retrieval": {
+        "tier": 0,
+        "n_sentences": 4,
+        "n_hits_total": 4,
+        "quarters_searched": [
+          "FY2017-Q3",
+          "FY2017-Q4",
+          "FY2018-Q1",
+          "FY2018-Q2"
+        ],
+        "window": [
+          "FY2017-Q3",
+          "FY2017-Q4",
+          "FY2018-Q1",
+          "FY2018-Q2"
+        ],
+        "window_missing": [],
+        "generic_inferred": {
+          "BUILD": true,
+          "Build conference": false,
+          "analyst briefing": false,
+          "financial analyst briefing": false,
+          "analyst day": false,
+          "analyst meeting": false,
+          "financial analyst meeting": false,
+          "investor briefing": false
+        },
+        "alias_snapshot": {
+          "BUILD": [
+            "build"
+          ],
+          "Build conference": [
+            "build conference",
+            "buildconference"
+          ],
+          "analyst briefing": [
+            "analyst briefing",
+            "analystbriefing"
+          ],
+          "financial analyst briefing": [
+            "financial analyst briefing"
+          ],
+          "analyst day": [
+            "analyst day",
+            "analystday"
+          ],
+          "analyst meeting": [
+            "analyst meeting",
+            "analystmeeting"
+          ],
+          "financial analyst meeting": [
+            "financial analyst meeting"
+          ],
+          "investor briefing": [
+            "investor briefing",
+            "investorbriefing"
+          ]
+        },
+        "notes": [],
+        "est_tokens": 1132,
+        "actual_tokens": null,
+        "usd": null,
+        "est_usd": 0.0058,
+        "triage": null
+      },
+      "book": "desk_ops_v2"
+    },
+    {
+      "ticker": "ORCL",
+      "tree_id": "orcl-2b-cloud-sales",
+      "kind": "promise",
+      "title": "Book more than $2 billion in annual cloud sales this year",
+      "seed_fiscal": "FY2017-Q2",
+      "clock": "FY2017-Q4",
+      "objects": [
+        "cloud sales"
+      ],
+      "anchors": [
+        "cloud sales",
+        "annual cloud sales",
+        "cloud bookings",
+        "$2 billion",
+        "2 billion"
+      ],
+      "plan": true,
+      "proposed_edge": null,
+      "confidence": null,
+      "n_evidence_excerpts": 14,
+      "retrieval": {
+        "tier": 0,
+        "n_sentences": 14,
+        "n_hits_total": 14,
+        "quarters_searched": [
+          "FY2017-Q3",
+          "FY2017-Q4",
+          "FY2018-Q1",
+          "FY2018-Q2"
+        ],
+        "window": [
+          "FY2017-Q3",
+          "FY2017-Q4",
+          "FY2018-Q1",
+          "FY2018-Q2"
+        ],
+        "window_missing": [],
+        "generic_inferred": {
+          "cloud sales": false,
+          "annual cloud sales": false,
+          "cloud bookings": false,
+          "$2 billion": true,
+          "2 billion": true
+        },
+        "alias_snapshot": {
+          "cloud sales": [
+            "cloud sale",
+            "cloudsale"
+          ],
+          "annual cloud sales": [
+            "annual cloud sale"
+          ],
+          "cloud bookings": [
+            "cloud booking",
+            "cloudbooking"
+          ],
+          "$2 billion": [
+            "$2 billion"
+          ],
+          "2 billion": [
+            "$2 billion"
+          ]
+        },
+        "notes": [],
+        "est_tokens": 2027,
+        "actual_tokens": null,
+        "usd": null,
+        "est_usd": 0.00848,
+        "triage": null
+      },
+      "book": "desk_ops_v2"
+    },
+    {
+      "ticker": "AAPL",
+      "tree_id": "aapl-net-cash-neutral",
+      "kind": "goal",
+      "title": "Become approximately net cash neutral over time",
+      "seed_fiscal": "FY2018-Q1",
+      "clock": null,
+      "objects": [
+        "net cash neutral"
+      ],
+      "anchors": [
+        "net cash neutral",
+        "net cash"
+      ],
+      "plan": true,
+      "proposed_edge": null,
+      "confidence": null,
+      "n_evidence_excerpts": 20,
+      "retrieval": {
+        "tier": 3,
+        "n_sentences": 20,
+        "n_hits_total": 50,
+        "quarters_searched": [
+          "FY2018-Q2",
+          "FY2018-Q3",
+          "FY2018-Q4",
+          "FY2019-Q1",
+          "FY2019-Q2",
+          "FY2019-Q3",
+          "FY2019-Q4",
+          "FY2020-Q1",
+          "FY2020-Q2",
+          "FY2020-Q3",
+          "FY2020-Q4",
+          "FY2021-Q1",
+          "FY2021-Q2",
+          "FY2021-Q3",
+          "FY2021-Q4",
+          "FY2022-Q1",
+          "FY2022-Q2",
+          "FY2022-Q3",
+          "FY2022-Q4",
+          "FY2023-Q1",
+          "FY2023-Q2",
+          "FY2023-Q3",
+          "FY2023-Q4",
+          "FY2024-Q1",
+          "FY2024-Q2",
+          "FY2024-Q3",
+          "FY2024-Q4",
+          "FY2025-Q1",
+          "FY2025-Q2",
+          "FY2025-Q3",
+          "FY2025-Q4",
+          "FY2026-Q1",
+          "FY2026-Q2"
+        ],
+        "window": [],
+        "window_missing": [],
+        "generic_inferred": {
+          "net cash neutral": false,
+          "net cash": false
+        },
+        "alias_snapshot": {
+          "net cash neutral": [
+            "net cash neutral"
+          ],
+          "net cash": [
+            "net cash",
+            "netcash"
+          ]
+        },
+        "notes": [
+          "no clock: tiers 0-2 skipped",
+          "tier 3 resolved with tier 0 rule",
+          "capped 50 hits to 20"
+        ],
+        "est_tokens": 2765,
+        "actual_tokens": null,
+        "usd": null,
+        "est_usd": 0.01069,
+        "triage": null
+      },
+      "book": "desk_ops_v2"
+    },
+    {
+      "ticker": "ACN",
+      "tree_id": "acn-the-new-number-one",
+      "kind": "goal",
+      "title": "Be number one in each of The New five",
+      "seed_fiscal": "FY2017-Q2",
+      "clock": null,
+      "objects": [
+        "The New"
+      ],
+      "anchors": [
+        "The New"
+      ],
+      "plan": true,
+      "proposed_edge": null,
+      "confidence": null,
+      "n_evidence_excerpts": 20,
+      "retrieval": {
+        "tier": 3,
+        "n_sentences": 20,
+        "n_hits_total": 139,
+        "quarters_searched": [
+          "FY2017-Q3",
+          "FY2017-Q4",
+          "FY2018-Q1",
+          "FY2018-Q2",
+          "FY2018-Q3",
+          "FY2018-Q4",
+          "FY2019-Q1",
+          "FY2019-Q2",
+          "FY2019-Q3",
+          "FY2019-Q4",
+          "FY2020-Q1",
+          "FY2020-Q2",
+          "FY2020-Q3",
+          "FY2020-Q4",
+          "FY2021-Q1",
+          "FY2021-Q2",
+          "FY2021-Q3",
+          "FY2021-Q4",
+          "FY2022-Q1",
+          "FY2022-Q2",
+          "FY2022-Q3",
+          "FY2022-Q4",
+          "FY2023-Q1",
+          "FY2023-Q2",
+          "FY2023-Q3",
+          "FY2023-Q4",
+          "FY2024-Q1",
+          "FY2024-Q2",
+          "FY2024-Q3",
+          "FY2024-Q4",
+          "FY2025-Q1",
+          "FY2025-Q2",
+          "FY2025-Q3",
+          "FY2025-Q4",
+          "FY2026-Q1",
+          "FY2026-Q2"
+        ],
+        "window": [],
+        "window_missing": [],
+        "generic_inferred": {
+          "The New": true
+        },
+        "alias_snapshot": {
+          "The New": [
+            "the new",
+            "thenew"
+          ]
+        },
+        "notes": [
+          "generic overridden by catalog: True",
+          "no clock: tiers 0-2 skipped",
+          "tier 3 resolved with tier 0 rule",
+          "capped 139 hits to 20"
+        ],
+        "est_tokens": 3390,
+        "actual_tokens": null,
+        "usd": null,
+        "est_usd": 0.01257,
+        "triage": null
+      },
+      "book": "desk_ops_v2"
+    },
+    {
+      "ticker": "AMD",
+      "tree_id": "amd-radeon-pro-duo",
+      "kind": "promise",
+      "title": "Launch Radeon Pro Duo VR platform at month-end",
+      "seed_fiscal": "FY2016-Q1",
+      "clock": "FY2016-Q1",
+      "objects": [
+        "Radeon Pro Duo"
+      ],
+      "anchors": [
+        "Radeon Pro Duo",
+        "Radeon Pro",
+        "Pro Duo",
+        "VR"
+      ],
+      "plan": true,
+      "proposed_edge": null,
+      "confidence": null,
+      "n_evidence_excerpts": 5,
+      "retrieval": {
+        "tier": 0,
+        "n_sentences": 5,
+        "n_hits_total": 5,
+        "quarters_searched": [
+          "FY2016-Q2",
+          "FY2016-Q3"
+        ],
+        "window": [
+          "FY2016-Q2",
+          "FY2016-Q3"
+        ],
+        "window_missing": [],
+        "generic_inferred": {
+          "Radeon Pro Duo": false,
+          "Radeon Pro": false,
+          "Pro Duo": false,
+          "VR": true
+        },
+        "alias_snapshot": {
+          "Radeon Pro Duo": [
+            "radeon pro duo",
+            "rpd"
+          ],
+          "Radeon Pro": [
+            "radeon pro",
+            "radeonpro"
+          ],
+          "Pro Duo": [
+            "pro duo",
+            "produo"
+          ],
+          "VR": [
+            "vr"
+          ]
+        },
+        "notes": [],
+        "est_tokens": 1341,
+        "actual_tokens": null,
+        "usd": null,
+        "est_usd": 0.00642,
+        "triage": null
+      },
+      "book": "desk_ops_v2"
+    },
+    {
+      "ticker": "AMZN",
+      "tree_id": "amzn-prime-india",
+      "kind": "promise",
+      "title": "Prime India unlimited free one- and two-day delivery",
+      "seed_fiscal": "FY2016-Q2",
+      "clock": null,
+      "objects": [
+        "Prime",
+        "Prime Video"
+      ],
+      "anchors": [
+        "India",
+        "Prime India"
+      ],
+      "plan": true,
+      "proposed_edge": null,
+      "confidence": null,
+      "n_evidence_excerpts": 20,
+      "retrieval": {
+        "tier": 3,
+        "n_sentences": 20,
+        "n_hits_total": 41,
+        "quarters_searched": [
+          "FY2016-Q3",
+          "FY2016-Q4",
+          "FY2017-Q1",
+          "FY2017-Q2",
+          "FY2017-Q3",
+          "FY2017-Q4",
+          "FY2018-Q1",
+          "FY2018-Q2",
+          "FY2018-Q3",
+          "FY2018-Q4",
+          "FY2019-Q1",
+          "FY2019-Q2",
+          "FY2019-Q3",
+          "FY2019-Q4",
+          "FY2020-Q1",
+          "FY2020-Q2",
+          "FY2020-Q3",
+          "FY2020-Q4",
+          "FY2021-Q1",
+          "FY2021-Q2",
+          "FY2021-Q3",
+          "FY2021-Q4",
+          "FY2022-Q1",
+          "FY2022-Q2",
+          "FY2022-Q3",
+          "FY2022-Q4",
+          "FY2023-Q1",
+          "FY2023-Q2",
+          "FY2023-Q3",
+          "FY2023-Q4",
+          "FY2024-Q1",
+          "FY2024-Q2",
+          "FY2024-Q3",
+          "FY2024-Q4",
+          "FY2025-Q1",
+          "FY2025-Q2",
+          "FY2025-Q3",
+          "FY2025-Q4",
+          "FY2026-Q1"
+        ],
+        "window": [],
+        "window_missing": [],
+        "generic_inferred": {
+          "India": true,
+          "Prime India": false
+        },
+        "alias_snapshot": {
+          "India": [
+            "india"
+          ],
+          "Prime India": [
+            "prime india",
+            "primeindia"
+          ]
+        },
+        "notes": [
+          "no clock: tiers 0-2 skipped",
+          "tier 3 resolved with tier 0 rule",
+          "capped 41 hits to 20"
+        ],
+        "est_tokens": 2493,
+        "actual_tokens": null,
+        "usd": null,
+        "est_usd": 0.00988,
+        "triage": null
+      },
+      "book": "desk_ops_v2"
+    },
+    {
+      "ticker": "ADI",
+      "tree_id": "adi-vescent-lidar",
+      "kind": "promise",
+      "title": "Develop solid-state scanning LIDAR from Vescent",
+      "seed_fiscal": "FY2016-Q4",
+      "clock": null,
+      "objects": [
+        "LIDAR",
+        "Vescent"
+      ],
+      "anchors": [
+        "LIDAR",
+        "Vescent",
+        "solid-state LIDAR"
+      ],
+      "plan": true,
+      "proposed_edge": null,
+      "confidence": null,
+      "n_evidence_excerpts": 10,
+      "retrieval": {
+        "tier": 3,
+        "n_sentences": 10,
+        "n_hits_total": 10,
+        "quarters_searched": [
+          "FY2017-Q1",
+          "FY2017-Q2",
+          "FY2017-Q3",
+          "FY2017-Q4",
+          "FY2018-Q1",
+          "FY2018-Q2",
+          "FY2018-Q3",
+          "FY2018-Q4",
+          "FY2019-Q1",
+          "FY2019-Q2",
+          "FY2019-Q3",
+          "FY2019-Q4",
+          "FY2020-Q1",
+          "FY2020-Q2",
+          "FY2020-Q3",
+          "FY2020-Q4",
+          "FY2021-Q1",
+          "FY2021-Q2",
+          "FY2021-Q3",
+          "FY2021-Q4",
+          "FY2022-Q1",
+          "FY2022-Q2",
+          "FY2022-Q3",
+          "FY2022-Q4",
+          "FY2023-Q1",
+          "FY2023-Q2",
+          "FY2023-Q3",
+          "FY2023-Q4",
+          "FY2024-Q1",
+          "FY2024-Q2",
+          "FY2024-Q3",
+          "FY2024-Q4",
+          "FY2025-Q1",
+          "FY2025-Q2",
+          "FY2025-Q3",
+          "FY2025-Q4",
+          "FY2026-Q1",
+          "FY2026-Q2"
+        ],
+        "window": [],
+        "window_missing": [],
+        "generic_inferred": {
+          "LIDAR": false,
+          "Vescent": false,
+          "solid-state LIDAR": false
+        },
+        "alias_snapshot": {
+          "LIDAR": [
+            "lidar"
+          ],
+          "Vescent": [
+            "vescent"
+          ],
+          "solid-state LIDAR": [
+            "solidstate lidar",
+            "solidstatelidar"
+          ]
+        },
+        "notes": [
+          "no clock: tiers 0-2 skipped",
+          "tier 3 resolved with tier 0 rule"
+        ],
+        "est_tokens": 2194,
+        "actual_tokens": null,
+        "usd": null,
+        "est_usd": 0.00898,
+        "triage": null
+      },
+      "book": "desk_ops_v2"
+    },
+    {
+      "ticker": "ADI",
+      "tree_id": "adi-wireless-bms-deploy",
+      "kind": "goal",
+      "title": "Wireless BMS becomes a large share of BMS revenue",
+      "seed_fiscal": "FY2023-Q3",
+      "clock": "FY2026-Q4",
+      "objects": [
+        "wireless BMS",
+        "wireless platform",
+        "wireless solution"
+      ],
+      "anchors": [
+        "wireless BMS",
+        "wireless battery management",
+        "wireless platform",
+        "wireless solution"
+      ],
+      "plan": true,
+      "proposed_edge": null,
+      "confidence": null,
+      "n_evidence_excerpts": 6,
+      "retrieval": {
+        "tier": 0,
+        "n_sentences": 6,
+        "n_hits_total": 6,
+        "quarters_searched": [
+          "FY2023-Q4",
+          "FY2024-Q1",
+          "FY2024-Q2",
+          "FY2024-Q3",
+          "FY2024-Q4",
+          "FY2025-Q1"
+        ],
+        "window": [
+          "FY2023-Q4",
+          "FY2024-Q1",
+          "FY2024-Q2",
+          "FY2024-Q3",
+          "FY2024-Q4",
+          "FY2025-Q1"
+        ],
+        "window_missing": [],
+        "generic_inferred": {
+          "wireless BMS": false,
+          "wireless battery management": false,
+          "wireless platform": false,
+          "wireless solution": false
+        },
+        "alias_snapshot": {
+          "wireless BMS": [
+            "wireless bms",
+            "wirelessbms"
+          ],
+          "wireless battery management": [
+            "wireless battery management"
+          ],
+          "wireless platform": [
+            "wireless platform",
+            "wirelessplatform"
+          ],
+          "wireless solution": [
+            "wireless solution",
+            "wirelesssolution"
+          ]
+        },
+        "notes": [],
+        "est_tokens": 1670,
+        "actual_tokens": null,
+        "usd": null,
+        "est_usd": 0.00741,
+        "triage": null
+      },
+      "book": "desk_ops_v2"
+    },
+    {
+      "ticker": "AMAT",
+      "tree_id": "amat-double-packaging",
+      "kind": "promise",
+      "title": "Double packaging revenues over the next 12 months",
+      "seed_fiscal": "FY2016-Q4",
+      "clock": "FY2017-Q4",
+      "objects": [
+        "packaging",
+        "advanced packaging"
+      ],
+      "anchors": [
+        "advanced packaging",
+        "packaging"
+      ],
+      "plan": true,
+      "proposed_edge": null,
+      "confidence": null,
+      "n_evidence_excerpts": 20,
+      "retrieval": {
+        "tier": 3,
+        "n_sentences": 20,
+        "n_hits_total": 123,
+        "quarters_searched": [
+          "FY2017-Q1",
+          "FY2017-Q2",
+          "FY2017-Q3",
+          "FY2017-Q4",
+          "FY2018-Q1",
+          "FY2018-Q2",
+          "FY2018-Q3",
+          "FY2018-Q4",
+          "FY2019-Q1",
+          "FY2019-Q2",
+          "FY2019-Q3",
+          "FY2019-Q4",
+          "FY2020-Q1",
+          "FY2020-Q2",
+          "FY2020-Q3",
+          "FY2020-Q4",
+          "FY2021-Q1",
+          "FY2021-Q2",
+          "FY2021-Q3",
+          "FY2021-Q4",
+          "FY2022-Q1",
+          "FY2022-Q2",
+          "FY2022-Q3",
+          "FY2022-Q4",
+          "FY2023-Q1",
+          "FY2023-Q2",
+          "FY2023-Q3",
+          "FY2023-Q4",
+          "FY2024-Q1",
+          "FY2024-Q2",
+          "FY2024-Q3",
+          "FY2024-Q4",
+          "FY2025-Q1",
+          "FY2025-Q2",
+          "FY2025-Q3",
+          "FY2025-Q4",
+          "FY2026-Q1",
+          "FY2026-Q2"
+        ],
+        "window": [
+          "FY2017-Q1",
+          "FY2017-Q2",
+          "FY2017-Q3",
+          "FY2017-Q4",
+          "FY2018-Q1",
+          "FY2018-Q2"
+        ],
+        "window_missing": [],
+        "generic_inferred": {
+          "advanced packaging": true,
+          "packaging": true
+        },
+        "alias_snapshot": {
+          "advanced packaging": [
+            "advanced packaging",
+            "advancedpackaging"
+          ],
+          "packaging": [
+            "packaging"
+          ]
+        },
+        "notes": [
+          "tier 3 resolved with tier 0 rule",
+          "capped 123 hits to 20"
+        ],
+        "est_tokens": 3812,
+        "actual_tokens": null,
+        "usd": null,
+        "est_usd": 0.01384,
+        "triage": null
+      },
+      "book": "desk_ops_v2"
+    },
+    {
+      "ticker": "CTSH",
+      "tree_id": "ctsh-accelerate-acquisitions",
+      "kind": "promise",
+      "title": "Accelerate the acquisition pace in 2017",
+      "seed_fiscal": "FY2016-Q4",
+      "clock": "FY2017-Q4",
+      "objects": [
+        "acquire companies"
+      ],
+      "anchors": [
+        "acquisition",
+        "acquisitions",
+        "acquired",
+        "acquire"
+      ],
+      "plan": true,
+      "proposed_edge": null,
+      "confidence": null,
+      "n_evidence_excerpts": 20,
+      "retrieval": {
+        "tier": 0,
+        "n_sentences": 20,
+        "n_hits_total": 29,
+        "quarters_searched": [
+          "FY2017-Q1",
+          "FY2017-Q2",
+          "FY2017-Q3",
+          "FY2017-Q4",
+          "FY2018-Q1",
+          "FY2018-Q2"
+        ],
+        "window": [
+          "FY2017-Q1",
+          "FY2017-Q2",
+          "FY2017-Q3",
+          "FY2017-Q4",
+          "FY2018-Q1",
+          "FY2018-Q2"
+        ],
+        "window_missing": [],
+        "generic_inferred": {
+          "acquisition": true,
+          "acquisitions": true,
+          "acquired": true,
+          "acquire": true
+        },
+        "alias_snapshot": {
+          "acquisition": [
+            "acquisition"
+          ],
+          "acquisitions": [
+            "acquisition"
+          ],
+          "acquired": [
+            "acquired"
+          ],
+          "acquire": [
+            "acquire"
+          ]
+        },
+        "notes": [
+          "generic overridden by catalog: True",
+          "capped 29 hits to 20"
+        ],
+        "est_tokens": 3501,
+        "actual_tokens": null,
+        "usd": null,
+        "est_usd": 0.0129,
+        "triage": null
+      },
+      "book": "desk_ops_v2"
+    },
+    {
+      "ticker": "MU",
+      "tree_id": "mu-s600-seagate",
+      "kind": "promise",
+      "title": "Realize S600 Series revenue in Q3 volume production",
+      "seed_fiscal": "FY2016-Q2",
+      "clock": "FY2016-Q3",
+      "objects": [
+        "S600",
+        "Seagate"
+      ],
+      "anchors": [
+        "S600",
+        "Seagate",
+        "enterprise SSD",
+        "SAS SSD"
+      ],
+      "plan": true,
+      "proposed_edge": null,
+      "confidence": null,
+      "n_evidence_excerpts": 1,
+      "retrieval": {
+        "tier": 0,
+        "n_sentences": 1,
+        "n_hits_total": 1,
+        "quarters_searched": [
+          "FY2016-Q3",
+          "FY2016-Q4",
+          "FY2017-Q1"
+        ],
+        "window": [
+          "FY2016-Q3",
+          "FY2016-Q4",
+          "FY2017-Q1"
+        ],
+        "window_missing": [],
+        "generic_inferred": {
+          "S600": false,
+          "Seagate": false,
+          "enterprise SSD": false,
+          "SAS SSD": false
+        },
+        "alias_snapshot": {
+          "S600": [
+            "s600"
+          ],
+          "Seagate": [
+            "seagate"
+          ],
+          "enterprise SSD": [
+            "enterprise ssd",
+            "enterprisessd"
+          ],
+          "SAS SSD": [
+            "sas ssd",
+            "sasssd"
+          ]
+        },
+        "notes": [],
+        "est_tokens": 921,
+        "actual_tokens": null,
+        "usd": null,
+        "est_usd": 0.00516,
+        "triage": null
+      },
+      "book": "desk_ops_v2"
+    },
+    {
+      "ticker": "TEL",
+      "tree_id": "tel-medical-500m",
+      "kind": "promise",
+      "title": "Medical run-rate north of $500 million next year",
+      "seed_fiscal": "FY2016-Q4",
+      "clock": "FY2017-Q4",
+      "objects": [
+        "Creganna",
+        "AdvancedCath",
+        "medical"
+      ],
+      "anchors": [
+        "Creganna",
+        "AdvancedCath",
+        "medical"
+      ],
+      "plan": true,
+      "proposed_edge": null,
+      "confidence": null,
+      "n_evidence_excerpts": 17,
+      "retrieval": {
+        "tier": 0,
+        "n_sentences": 17,
+        "n_hits_total": 17,
+        "quarters_searched": [
+          "FY2017-Q1",
+          "FY2017-Q2",
+          "FY2017-Q3",
+          "FY2017-Q4",
+          "FY2018-Q1",
+          "FY2018-Q2"
+        ],
+        "window": [
+          "FY2017-Q1",
+          "FY2017-Q2",
+          "FY2017-Q3",
+          "FY2017-Q4",
+          "FY2018-Q1",
+          "FY2018-Q2"
+        ],
+        "window_missing": [],
+        "generic_inferred": {
+          "Creganna": false,
+          "AdvancedCath": false,
+          "medical": true
+        },
+        "alias_snapshot": {
+          "Creganna": [
+            "creganna"
+          ],
+          "AdvancedCath": [
+            "advancedcath"
+          ],
+          "medical": [
+            "medical"
+          ]
+        },
+        "notes": [],
+        "est_tokens": 3052,
+        "actual_tokens": null,
+        "usd": null,
+        "est_usd": 0.01156,
+        "triage": null
+      },
+      "book": "desk_ops_v2"
+    },
+    {
+      "ticker": "TXN",
+      "tree_id": "txn-capital-call-feb8",
+      "kind": "promise",
+      "title": "Hold a capital-management strategy call on February 8",
+      "seed_fiscal": "FY2016-Q4",
+      "clock": "FY2017-Q1",
+      "objects": [
+        "capital management"
+      ],
+      "anchors": [
+        "capital management",
+        "capital management strategy",
+        "capital management call"
+      ],
+      "plan": true,
+      "proposed_edge": null,
+      "confidence": null,
+      "n_evidence_excerpts": 2,
+      "retrieval": {
+        "tier": 0,
+        "n_sentences": 2,
+        "n_hits_total": 2,
+        "quarters_searched": [
+          "FY2017-Q1",
+          "FY2017-Q2",
+          "FY2017-Q3"
+        ],
+        "window": [
+          "FY2017-Q1",
+          "FY2017-Q2",
+          "FY2017-Q3"
+        ],
+        "window_missing": [],
+        "generic_inferred": {
+          "capital management": true,
+          "capital management strategy": false,
+          "capital management call": false
+        },
+        "alias_snapshot": {
+          "capital management": [
+            "capital management",
+            "capitalmanagement"
+          ],
+          "capital management strategy": [
+            "capital management strategy"
+          ],
+          "capital management call": [
+            "capital management call"
+          ]
+        },
+        "notes": [],
+        "est_tokens": 942,
+        "actual_tokens": null,
+        "usd": null,
+        "est_usd": 0.00523,
+        "triage": null
+      },
+      "book": "desk_ops_v2"
+    },
+    {
+      "ticker": "OPAL",
+      "tree_id": "opal-analyst-day-q3",
+      "kind": "promise",
+      "title": "Host an analyst day in the third quarter",
+      "seed_fiscal": "FY2024-Q4",
+      "clock": "FY2025-Q3",
+      "objects": [
+        "analyst day"
+      ],
+      "anchors": [
+        "analyst day",
+        "investor day",
+        "analyst meeting",
+        "investor meeting",
+        "investor event",
+        "analyst event"
+      ],
+      "plan": true,
+      "proposed_edge": null,
+      "confidence": null,
+      "n_evidence_excerpts": 1,
+      "retrieval": {
+        "tier": 0,
+        "n_sentences": 1,
+        "n_hits_total": 1,
+        "quarters_searched": [
+          "FY2025-Q1",
+          "FY2025-Q2",
+          "FY2025-Q3",
+          "FY2025-Q4",
+          "FY2026-Q1"
+        ],
+        "window": [
+          "FY2025-Q1",
+          "FY2025-Q2",
+          "FY2025-Q3",
+          "FY2025-Q4",
+          "FY2026-Q1"
+        ],
+        "window_missing": [],
+        "generic_inferred": {
+          "analyst day": false,
+          "investor day": false,
+          "analyst meeting": false,
+          "investor meeting": false,
+          "investor event": false,
+          "analyst event": false
+        },
+        "alias_snapshot": {
+          "analyst day": [
+            "analyst day",
+            "analystday"
+          ],
+          "investor day": [
+            "investor day",
+            "investorday"
+          ],
+          "analyst meeting": [
+            "analyst meeting",
+            "analystmeeting"
+          ],
+          "investor meeting": [
+            "investor meeting",
+            "investormeeting"
+          ],
+          "investor event": [
+            "investor event",
+            "investorevent"
+          ],
+          "analyst event": [
+            "analyst event",
+            "analystevent"
+          ]
+        },
+        "notes": [],
+        "est_tokens": 897,
+        "actual_tokens": null,
+        "usd": null,
+        "est_usd": 0.00509,
+        "triage": null
+      },
+      "book": "desk_ops_v2"
+    },
+    {
+      "ticker": "AVGO",
+      "tree_id": "avgo-day2-one-erp",
+      "kind": "promise",
+      "title": "Run one ERP after day-2 integration at the end of November",
+      "seed_fiscal": "FY2016-Q3",
+      "clock": "FY2017-Q1",
+      "objects": [
+        "day 2",
+        "ERP"
+      ],
+      "anchors": [
+        "day 2",
+        "ERP",
+        "one ERP",
+        "single ERP"
+      ],
+      "plan": true,
+      "proposed_edge": null,
+      "confidence": null,
+      "n_evidence_excerpts": 1,
+      "retrieval": {
+        "tier": 0,
+        "n_sentences": 1,
+        "n_hits_total": 1,
+        "quarters_searched": [
+          "FY2016-Q4",
+          "FY2017-Q1",
+          "FY2017-Q2",
+          "FY2017-Q3"
+        ],
+        "window": [
+          "FY2016-Q4",
+          "FY2017-Q1",
+          "FY2017-Q2",
+          "FY2017-Q3"
+        ],
+        "window_missing": [],
+        "generic_inferred": {
+          "day 2": false,
+          "ERP": false,
+          "one ERP": false,
+          "single ERP": false
+        },
+        "alias_snapshot": {
+          "day 2": [
+            "day 2"
+          ],
+          "ERP": [
+            "erp"
+          ],
+          "one ERP": [
+            "one erp",
+            "oneerp"
+          ],
+          "single ERP": [
+            "single erp",
+            "singleerp"
+          ]
+        },
+        "notes": [],
+        "est_tokens": 899,
+        "actual_tokens": null,
+        "usd": null,
+        "est_usd": 0.0051,
+        "triage": null
+      },
+      "book": "desk_ops_v2"
+    },
+    {
+      "ticker": "AVGO",
+      "tree_id": "avgo-45-op-margin",
+      "kind": "goal",
+      "title": "Long-term operating margin target of 45%",
+      "seed_fiscal": "FY2016-Q4",
+      "clock": null,
+      "objects": [
+        "45%",
+        "operating margin"
+      ],
+      "anchors": [
+        "45%",
+        "operating margin"
+      ],
+      "plan": true,
+      "proposed_edge": null,
+      "confidence": null,
+      "n_evidence_excerpts": 20,
+      "retrieval": {
+        "tier": 3,
+        "n_sentences": 20,
+        "n_hits_total": 127,
+        "quarters_searched": [
+          "FY2017-Q1",
+          "FY2017-Q2",
+          "FY2017-Q3",
+          "FY2017-Q4",
+          "FY2018-Q1",
+          "FY2018-Q2",
+          "FY2018-Q3",
+          "FY2018-Q4",
+          "FY2019-Q1",
+          "FY2019-Q2",
+          "FY2019-Q3",
+          "FY2019-Q4",
+          "FY2020-Q1",
+          "FY2020-Q2",
+          "FY2020-Q3",
+          "FY2020-Q4",
+          "FY2021-Q1",
+          "FY2021-Q2",
+          "FY2021-Q3",
+          "FY2021-Q4",
+          "FY2022-Q1",
+          "FY2022-Q2",
+          "FY2022-Q3",
+          "FY2022-Q4",
+          "FY2023-Q1",
+          "FY2023-Q2",
+          "FY2023-Q3",
+          "FY2023-Q4",
+          "FY2024-Q1",
+          "FY2024-Q2",
+          "FY2024-Q3",
+          "FY2024-Q4",
+          "FY2025-Q1",
+          "FY2025-Q2",
+          "FY2025-Q3",
+          "FY2025-Q4",
+          "FY2026-Q1",
+          "FY2026-Q2"
+        ],
+        "window": [],
+        "window_missing": [],
+        "generic_inferred": {
+          "45%": true,
+          "operating margin": true
+        },
+        "alias_snapshot": {
+          "45%": [
+            "45%"
+          ],
+          "operating margin": [
+            "operating margin",
+            "operatingmargin"
+          ]
+        },
+        "notes": [
+          "no clock: tiers 0-2 skipped",
+          "tier 3 resolved with tier 0 rule",
+          "capped 127 hits to 20"
+        ],
+        "est_tokens": 2792,
+        "actual_tokens": null,
+        "usd": null,
+        "est_usd": 0.01078,
+        "triage": null
+      },
+      "book": "desk_ops_v2"
+    },
+    {
+      "ticker": "LRCX",
+      "tree_id": "lrcx-klx-approvals-mid2016",
+      "kind": "promise",
+      "title": "Secure approvals to complete the transaction in mid-2016",
+      "seed_fiscal": "FY2016-Q2",
+      "clock": "FY2016-Q4",
+      "objects": [
+        "approvals",
+        "KLA"
+      ],
+      "anchors": [
+        "KLA",
+        "KLA-Tencor",
+        "approval",
+        "regulatory approval",
+        "merger"
+      ],
+      "plan": true,
+      "proposed_edge": null,
+      "confidence": null,
+      "n_evidence_excerpts": 17,
+      "retrieval": {
+        "tier": 0,
+        "n_sentences": 17,
+        "n_hits_total": 17,
+        "quarters_searched": [
+          "FY2016-Q3",
+          "FY2016-Q4",
+          "FY2017-Q1",
+          "FY2017-Q2"
+        ],
+        "window": [
+          "FY2016-Q3",
+          "FY2016-Q4",
+          "FY2017-Q1",
+          "FY2017-Q2"
+        ],
+        "window_missing": [],
+        "generic_inferred": {
+          "KLA": false,
+          "KLA-Tencor": false,
+          "approval": false,
+          "regulatory approval": false,
+          "merger": false
+        },
+        "alias_snapshot": {
+          "KLA": [
+            "kla"
+          ],
+          "KLA-Tencor": [
+            "klatencor"
+          ],
+          "approval": [
+            "approval"
+          ],
+          "regulatory approval": [
+            "regulatory approval",
+            "regulatoryapproval"
+          ],
+          "merger": [
+            "merger"
+          ]
+        },
+        "notes": [],
+        "est_tokens": 2914,
+        "actual_tokens": null,
+        "usd": null,
+        "est_usd": 0.01114,
+        "triage": null
+      },
+      "book": "desk_ops_v2"
+    },
+    {
+      "ticker": "STRW",
+      "tree_id": "strw-150-160-spend",
+      "kind": "goal",
+      "title": "Break a $150 to $160 million annual spend bogey",
+      "seed_fiscal": "FY2025-Q3",
+      "clock": null,
+      "objects": [
+        "$150 to $160 million"
+      ],
+      "anchors": [
+        "$150 to $160 million",
+        "$150 million",
+        "$160 million",
+        "150 million",
+        "160 million"
+      ],
+      "plan": true,
+      "proposed_edge": null,
+      "confidence": null,
+      "n_evidence_excerpts": 6,
+      "retrieval": {
+        "tier": 3,
+        "n_sentences": 6,
+        "n_hits_total": 6,
+        "quarters_searched": [
+          "FY2025-Q4",
+          "FY2026-Q1",
+          "FY2026-Q2"
+        ],
+        "window": [],
+        "window_missing": [],
+        "generic_inferred": {
+          "$150 to $160 million": true,
+          "$150 million": true,
+          "$160 million": true,
+          "150 million": true,
+          "160 million": true
+        },
+        "alias_snapshot": {
+          "$150 to $160 million": [
+            "$150 to $160 million"
+          ],
+          "$150 million": [
+            "$150 million"
+          ],
+          "$160 million": [
+            "$160 million"
+          ],
+          "150 million": [
+            "$150 million"
+          ],
+          "160 million": [
+            "$160 million"
+          ]
+        },
+        "notes": [
+          "no clock: tiers 0-2 skipped",
+          "tier 3 resolved with tier 0 rule"
+        ],
+        "est_tokens": 1246,
+        "actual_tokens": null,
+        "usd": null,
+        "est_usd": 0.00614,
+        "triage": null
+      },
+      "book": "desk_ops_v2"
+    },
+    {
+      "ticker": "LLY",
+      "tree_id": "lly-dividend-december",
+      "kind": "promise",
+      "title": "Return to annual dividend increases beginning in December",
+      "seed_fiscal": "FY2016-Q2",
+      "clock": "FY2016-Q4",
+      "objects": [
+        "dividend"
+      ],
+      "anchors": [
+        "dividend"
+      ],
+      "plan": true,
+      "proposed_edge": null,
+      "confidence": null,
+      "n_evidence_excerpts": 5,
+      "retrieval": {
+        "tier": 0,
+        "n_sentences": 5,
+        "n_hits_total": 5,
+        "quarters_searched": [
+          "FY2016-Q3",
+          "FY2016-Q4",
+          "FY2017-Q1",
+          "FY2017-Q2"
+        ],
+        "window": [
+          "FY2016-Q3",
+          "FY2016-Q4",
+          "FY2017-Q1",
+          "FY2017-Q2"
+        ],
+        "window_missing": [],
+        "generic_inferred": {
+          "dividend": true
+        },
+        "alias_snapshot": {
+          "dividend": [
+            "dividend"
+          ]
+        },
+        "notes": [
+          "generic overridden by catalog: True"
+        ],
+        "est_tokens": 1337,
+        "actual_tokens": null,
+        "usd": null,
+        "est_usd": 0.00641,
+        "triage": null
+      },
+      "book": "desk_hc_v2"
+    },
+    {
+      "ticker": "UNH",
+      "tree_id": "unh-medexpress-75",
+      "kind": "promise",
+      "title": "Ramp MedExpress startups to about 75 in 2017",
+      "seed_fiscal": "FY2016-Q2",
+      "clock": "FY2017-Q4",
+      "objects": [
+        "MedExpress"
+      ],
+      "anchors": [
+        "MedExpress"
+      ],
+      "plan": true,
+      "proposed_edge": null,
+      "confidence": null,
+      "n_evidence_excerpts": 8,
+      "retrieval": {
+        "tier": 0,
+        "n_sentences": 8,
+        "n_hits_total": 8,
+        "quarters_searched": [
+          "FY2016-Q3",
+          "FY2016-Q4",
+          "FY2017-Q1",
+          "FY2017-Q2",
+          "FY2017-Q3",
+          "FY2017-Q4"
+        ],
+        "window": [
+          "FY2016-Q3",
+          "FY2016-Q4",
+          "FY2017-Q1",
+          "FY2017-Q2",
+          "FY2017-Q3",
+          "FY2017-Q4"
+        ],
+        "window_missing": [],
+        "generic_inferred": {
+          "MedExpress": false
+        },
+        "alias_snapshot": {
+          "MedExpress": [
+            "medexpress"
+          ]
+        },
+        "notes": [],
+        "est_tokens": 1847,
+        "actual_tokens": null,
+        "usd": null,
+        "est_usd": 0.00794,
+        "triage": null
+      },
+      "book": "desk_hc_v2"
+    },
+    {
+      "ticker": "JNJ",
+      "tree_id": "jnj-guselkumab-file",
+      "kind": "promise",
+      "title": "File guselkumab for psoriasis this year",
+      "seed_fiscal": "FY2016-Q3",
+      "clock": "FY2016-Q4",
+      "objects": [
+        "guselkumab"
+      ],
+      "anchors": [
+        "guselkumab",
+        "Tremfya"
+      ],
+      "plan": true,
+      "proposed_edge": null,
+      "confidence": null,
+      "n_evidence_excerpts": 6,
+      "retrieval": {
+        "tier": 0,
+        "n_sentences": 6,
+        "n_hits_total": 6,
+        "quarters_searched": [
+          "FY2016-Q4",
+          "FY2017-Q1",
+          "FY2017-Q2"
+        ],
+        "window": [
+          "FY2016-Q4",
+          "FY2017-Q1",
+          "FY2017-Q2"
+        ],
+        "window_missing": [],
+        "generic_inferred": {
+          "guselkumab": false,
+          "Tremfya": true
+        },
+        "alias_snapshot": {
+          "guselkumab": [
+            "guselkumab"
+          ],
+          "Tremfya": [
+            "tremfya"
+          ]
+        },
+        "notes": [],
+        "est_tokens": 1643,
+        "actual_tokens": null,
+        "usd": null,
+        "est_usd": 0.00733,
+        "triage": null
+      },
+      "book": "desk_hc_v2"
+    },
+    {
+      "ticker": "ABBV",
+      "tree_id": "abbv-humira-ip-2022",
+      "kind": "goal",
+      "title": "HUMIRA U.S. IP protection until 2022",
+      "seed_fiscal": "FY2016-Q4",
+      "clock": "FY2022-Q4",
+      "objects": [
+        "HUMIRA",
+        "biosimilar"
+      ],
+      "anchors": [
+        "HUMIRA"
+      ],
+      "plan": true,
+      "proposed_edge": null,
+      "confidence": null,
+      "n_evidence_excerpts": 20,
+      "retrieval": {
+        "tier": 0,
+        "n_sentences": 20,
+        "n_hits_total": 26,
+        "quarters_searched": [
+          "FY2017-Q1",
+          "FY2017-Q2",
+          "FY2017-Q3",
+          "FY2017-Q4",
+          "FY2018-Q1",
+          "FY2018-Q2"
+        ],
+        "window": [
+          "FY2017-Q1",
+          "FY2017-Q2",
+          "FY2017-Q3",
+          "FY2017-Q4",
+          "FY2018-Q1",
+          "FY2018-Q2"
+        ],
+        "window_missing": [],
+        "generic_inferred": {
+          "HUMIRA": true
+        },
+        "alias_snapshot": {
+          "HUMIRA": [
+            "humira"
+          ]
+        },
+        "notes": [
+          "generic overridden by catalog: True",
+          "capped 26 hits to 20"
+        ],
+        "est_tokens": 3546,
+        "actual_tokens": null,
+        "usd": null,
+        "est_usd": 0.01304,
+        "triage": null
+      },
+      "book": "desk_hc_v2"
+    },
+    {
+      "ticker": "MRK",
+      "tree_id": "mrk-dividend-15",
+      "kind": "promise",
+      "title": "Raise the quarterly dividend 15% beginning in Q1 2019",
+      "seed_fiscal": "FY2018-Q3",
+      "clock": "FY2019-Q1",
+      "objects": [
+        "dividend",
+        "15%"
+      ],
+      "anchors": [
+        "dividend",
+        "$0.55"
+      ],
+      "plan": true,
+      "proposed_edge": null,
+      "confidence": null,
+      "n_evidence_excerpts": 1,
+      "retrieval": {
+        "tier": 0,
+        "n_sentences": 1,
+        "n_hits_total": 1,
+        "quarters_searched": [
+          "FY2018-Q4",
+          "FY2019-Q1",
+          "FY2019-Q2",
+          "FY2019-Q3"
+        ],
+        "window": [
+          "FY2018-Q4",
+          "FY2019-Q1",
+          "FY2019-Q2",
+          "FY2019-Q3"
+        ],
+        "window_missing": [],
+        "generic_inferred": {
+          "dividend": true,
+          "$0.55": true
+        },
+        "alias_snapshot": {
+          "dividend": [
+            "dividend"
+          ],
+          "$0.55": [
+            "$0.55"
+          ]
+        },
+        "notes": [
+          "generic overridden by catalog: True"
+        ],
+        "est_tokens": 860,
+        "actual_tokens": null,
+        "usd": null,
+        "est_usd": 0.00498,
+        "triage": null
+      },
+      "book": "desk_hc_v2"
+    },
+    {
+      "ticker": "TMO",
+      "tree_id": "tmo-2019-guidance-january",
+      "kind": "promise",
+      "title": "Give 2019 guidance in late January",
+      "seed_fiscal": "FY2018-Q2",
+      "clock": "FY2019-Q1",
+      "objects": [
+        "2019 guidance"
+      ],
+      "anchors": [
+        "2019 guidance",
+        "guidance for 2019",
+        "2019 outlook"
+      ],
+      "plan": true,
+      "proposed_edge": null,
+      "confidence": null,
+      "n_evidence_excerpts": 16,
+      "retrieval": {
+        "tier": 0,
+        "n_sentences": 16,
+        "n_hits_total": 16,
+        "quarters_searched": [
+          "FY2018-Q3",
+          "FY2018-Q4",
+          "FY2019-Q1",
+          "FY2019-Q2",
+          "FY2019-Q3"
+        ],
+        "window": [
+          "FY2018-Q3",
+          "FY2018-Q4",
+          "FY2019-Q1",
+          "FY2019-Q2",
+          "FY2019-Q3"
+        ],
+        "window_missing": [],
+        "generic_inferred": {
+          "2019 guidance": false,
+          "guidance for 2019": false,
+          "2019 outlook": false
+        },
+        "alias_snapshot": {
+          "2019 guidance": [
+            "2019 guidance"
+          ],
+          "guidance for 2019": [
+            "guidance for 2019"
+          ],
+          "2019 outlook": [
+            "2019 outlook"
+          ]
+        },
+        "notes": [],
+        "est_tokens": 2410,
+        "actual_tokens": null,
+        "usd": null,
+        "est_usd": 0.00963,
+        "triage": null
+      },
+      "book": "desk_hc_v2"
+    },
+    {
+      "ticker": "ABT",
+      "tree_id": "abt-libre-1m-patients",
+      "kind": "promise",
+      "title": "More than 1 million patients worldwide by year-end",
+      "seed_fiscal": "FY2018-Q2",
+      "clock": "FY2018-Q4",
+      "objects": [
+        "1 million patients"
+      ],
+      "anchors": [
+        "Libre",
+        "FreeStyle Libre",
+        "1 million patients",
+        "million patients",
+        "million users"
+      ],
+      "plan": true,
+      "proposed_edge": null,
+      "confidence": null,
+      "n_evidence_excerpts": 20,
+      "retrieval": {
+        "tier": 0,
+        "n_sentences": 20,
+        "n_hits_total": 25,
+        "quarters_searched": [
+          "FY2018-Q3",
+          "FY2018-Q4",
+          "FY2019-Q1",
+          "FY2019-Q2"
+        ],
+        "window": [
+          "FY2018-Q3",
+          "FY2018-Q4",
+          "FY2019-Q1",
+          "FY2019-Q2"
+        ],
+        "window_missing": [],
+        "generic_inferred": {
+          "Libre": true,
+          "FreeStyle Libre": false,
+          "1 million patients": false,
+          "million patients": false,
+          "million users": false
+        },
+        "alias_snapshot": {
+          "Libre": [
+            "libre"
+          ],
+          "FreeStyle Libre": [
+            "freestyle libre",
+            "freestylelibre"
+          ],
+          "1 million patients": [
+            "$1 million patient"
+          ],
+          "million patients": [
+            "million patient",
+            "millionpatient"
+          ],
+          "million users": [
+            "million user",
+            "millionuser"
+          ]
+        },
+        "notes": [
+          "capped 25 hits to 20"
+        ],
+        "est_tokens": 3168,
+        "actual_tokens": null,
+        "usd": null,
+        "est_usd": 0.0119,
+        "triage": null
+      },
+      "book": "desk_hc_v2"
+    },
+    {
+      "ticker": "DHR",
+      "tree_id": "dhr-phenomenex-return",
+      "kind": "promise",
+      "title": "Double-digit return on Phenomenex in less than five years",
+      "seed_fiscal": "FY2016-Q3",
+      "clock": "FY2021-Q3",
+      "objects": [
+        "Phenomenex"
+      ],
+      "anchors": [
+        "Phenomenex"
+      ],
+      "plan": true,
+      "proposed_edge": null,
+      "confidence": null,
+      "n_evidence_excerpts": 6,
+      "retrieval": {
+        "tier": 0,
+        "n_sentences": 6,
+        "n_hits_total": 6,
+        "quarters_searched": [
+          "FY2016-Q4",
+          "FY2017-Q1",
+          "FY2017-Q2",
+          "FY2017-Q3",
+          "FY2017-Q4",
+          "FY2018-Q1"
+        ],
+        "window": [
+          "FY2016-Q4",
+          "FY2017-Q1",
+          "FY2017-Q2",
+          "FY2017-Q3",
+          "FY2017-Q4",
+          "FY2018-Q1"
+        ],
+        "window_missing": [],
+        "generic_inferred": {
+          "Phenomenex": false
+        },
+        "alias_snapshot": {
+          "Phenomenex": [
+            "phenomenex"
+          ]
+        },
+        "notes": [],
+        "est_tokens": 1497,
+        "actual_tokens": null,
+        "usd": null,
+        "est_usd": 0.00689,
+        "triage": null
+      },
+      "book": "desk_hc_v2"
+    },
+    {
+      "ticker": "PFE",
+      "tree_id": "pfe-trazimera-launch",
+      "kind": "promise",
+      "title": "Launch Trazimera next month",
+      "seed_fiscal": "FY2019-Q4",
+      "clock": "FY2020-Q1",
+      "objects": [
+        "Trazimera"
+      ],
+      "anchors": [
+        "Trazimera",
+        "trastuzumab biosimilar"
+      ],
+      "plan": true,
+      "proposed_edge": null,
+      "confidence": null,
+      "n_evidence_excerpts": 1,
+      "retrieval": {
+        "tier": 0,
+        "n_sentences": 1,
+        "n_hits_total": 1,
+        "quarters_searched": [
+          "FY2020-Q1",
+          "FY2020-Q2",
+          "FY2020-Q3"
+        ],
+        "window": [
+          "FY2020-Q1",
+          "FY2020-Q2",
+          "FY2020-Q3"
+        ],
+        "window_missing": [],
+        "generic_inferred": {
+          "Trazimera": false,
+          "trastuzumab biosimilar": false
+        },
+        "alias_snapshot": {
+          "Trazimera": [
+            "trazimera"
+          ],
+          "trastuzumab biosimilar": [
+            "trastuzumab biosimilar",
+            "trastuzumabbiosimilar"
+          ]
+        },
+        "notes": [],
+        "est_tokens": 874,
+        "actual_tokens": null,
+        "usd": null,
+        "est_usd": 0.00502,
+        "triage": null
+      },
+      "book": "desk_hc_v2"
+    },
+    {
+      "ticker": "AMGN",
+      "tree_id": "amgn-wclc-lung",
+      "kind": "promise",
+      "title": "Update lung-cancer progress at WCLC in early September",
+      "seed_fiscal": "FY2019-Q2",
+      "clock": "FY2019-Q3",
+      "objects": [
+        "World Conference on Lung Cancer"
+      ],
+      "anchors": [
+        "World Conference on Lung Cancer",
+        "WCLC",
+        "lung cancer",
+        "AMG 510",
+        "sotorasib"
+      ],
+      "plan": true,
+      "proposed_edge": null,
+      "confidence": null,
+      "n_evidence_excerpts": 11,
+      "retrieval": {
+        "tier": 0,
+        "n_sentences": 11,
+        "n_hits_total": 11,
+        "quarters_searched": [
+          "FY2019-Q3",
+          "FY2019-Q4",
+          "FY2020-Q1"
+        ],
+        "window": [
+          "FY2019-Q3",
+          "FY2019-Q4",
+          "FY2020-Q1"
+        ],
+        "window_missing": [],
+        "generic_inferred": {
+          "World Conference on Lung Cancer": false,
+          "WCLC": false,
+          "lung cancer": true,
+          "AMG 510": false,
+          "sotorasib": false
+        },
+        "alias_snapshot": {
+          "World Conference on Lung Cancer": [
+            "world conference on lung cancer",
+            "wclc"
+          ],
+          "WCLC": [
+            "wclc"
+          ],
+          "lung cancer": [
+            "lung cancer",
+            "lungcancer"
+          ],
+          "AMG 510": [
+            "amg 510"
+          ],
+          "sotorasib": [
+            "sotorasib"
+          ]
+        },
+        "notes": [],
+        "est_tokens": 2283,
+        "actual_tokens": null,
+        "usd": null,
+        "est_usd": 0.00925,
+        "triage": null
+      },
+      "book": "desk_hc_v2"
+    },
+    {
+      "ticker": "SYK",
+      "tree_id": "syk-knee-aaos-2017",
+      "kind": "promise",
+      "title": "Full commercial launch of the total knee at 2017 AAOS",
+      "seed_fiscal": "FY2016-Q3",
+      "clock": "FY2017-Q1",
+      "objects": [
+        "AAOS",
+        "total knee"
+      ],
+      "anchors": [
+        "AAOS",
+        "total knee",
+        "Mako total knee",
+        "Mako knee"
+      ],
+      "plan": true,
+      "proposed_edge": null,
+      "confidence": null,
+      "n_evidence_excerpts": 19,
+      "retrieval": {
+        "tier": 0,
+        "n_sentences": 19,
+        "n_hits_total": 19,
+        "quarters_searched": [
+          "FY2016-Q4",
+          "FY2017-Q1",
+          "FY2017-Q2",
+          "FY2017-Q3"
+        ],
+        "window": [
+          "FY2016-Q4",
+          "FY2017-Q1",
+          "FY2017-Q2",
+          "FY2017-Q3"
+        ],
+        "window_missing": [],
+        "generic_inferred": {
+          "AAOS": false,
+          "total knee": true,
+          "Mako total knee": false,
+          "Mako knee": false
+        },
+        "alias_snapshot": {
+          "AAOS": [
+            "aaos"
+          ],
+          "total knee": [
+            "total knee",
+            "totalknee"
+          ],
+          "Mako total knee": [
+            "mako total knee"
+          ],
+          "Mako knee": [
+            "mako knee",
+            "makoknee"
+          ]
+        },
+        "notes": [],
+        "est_tokens": 3309,
+        "actual_tokens": null,
+        "usd": null,
+        "est_usd": 0.01233,
+        "triage": null
+      },
+      "book": "desk_hc_v2"
+    },
+    {
+      "ticker": "GILD",
+      "tree_id": "gild-zuma2-file",
+      "kind": "promise",
+      "title": "File KTE-X19 for mantle cell lymphoma by the end of 2019",
+      "seed_fiscal": "FY2019-Q1",
+      "clock": "FY2019-Q4",
+      "objects": [
+        "ZUMA-2",
+        "KTE-X19"
+      ],
+      "anchors": [
+        "ZUMA-2",
+        "KTE-X19",
+        "mantle cell lymphoma",
+        "Tecartus"
+      ],
+      "plan": true,
+      "proposed_edge": null,
+      "confidence": null,
+      "n_evidence_excerpts": 9,
+      "retrieval": {
+        "tier": 0,
+        "n_sentences": 9,
+        "n_hits_total": 9,
+        "quarters_searched": [
+          "FY2019-Q2",
+          "FY2019-Q3",
+          "FY2019-Q4",
+          "FY2020-Q1",
+          "FY2020-Q2"
+        ],
+        "window": [
+          "FY2019-Q2",
+          "FY2019-Q3",
+          "FY2019-Q4",
+          "FY2020-Q1",
+          "FY2020-Q2"
+        ],
+        "window_missing": [],
+        "generic_inferred": {
+          "ZUMA-2": false,
+          "KTE-X19": false,
+          "mantle cell lymphoma": false,
+          "Tecartus": false
+        },
+        "alias_snapshot": {
+          "ZUMA-2": [
+            "zuma2"
+          ],
+          "KTE-X19": [
+            "ktex19"
+          ],
+          "mantle cell lymphoma": [
+            "mantle cell lymphoma"
+          ],
+          "Tecartus": [
+            "tecartu"
+          ]
+        },
+        "notes": [],
+        "est_tokens": 1946,
+        "actual_tokens": null,
+        "usd": null,
+        "est_usd": 0.00824,
+        "triage": null
+      },
+      "book": "desk_hc_v2"
+    },
+    {
+      "ticker": "VRTX",
+      "tree_id": "vrtx-nda-mid-2019",
+      "kind": "promise",
+      "title": "Submit a new drug application no later than mid-2019",
+      "seed_fiscal": "FY2018-Q2",
+      "clock": "FY2019-Q2",
+      "objects": [
+        "new drug application",
+        "NDA"
+      ],
+      "anchors": [
+        "new drug application",
+        "NDA",
+        "submission",
+        "submitted",
+        "triple combination",
+        "VX-445"
+      ],
+      "plan": true,
+      "proposed_edge": null,
+      "confidence": null,
+      "n_evidence_excerpts": 20,
+      "retrieval": {
+        "tier": 0,
+        "n_sentences": 20,
+        "n_hits_total": 30,
+        "quarters_searched": [
+          "FY2018-Q3",
+          "FY2018-Q4",
+          "FY2019-Q1",
+          "FY2019-Q2",
+          "FY2019-Q3",
+          "FY2019-Q4"
+        ],
+        "window": [
+          "FY2018-Q3",
+          "FY2018-Q4",
+          "FY2019-Q1",
+          "FY2019-Q2",
+          "FY2019-Q3",
+          "FY2019-Q4"
+        ],
+        "window_missing": [],
+        "generic_inferred": {
+          "new drug application": false,
+          "NDA": false,
+          "submission": false,
+          "submitted": false,
+          "triple combination": true,
+          "VX-445": false
+        },
+        "alias_snapshot": {
+          "new drug application": [
+            "new drug application"
+          ],
+          "NDA": [
+            "nda"
+          ],
+          "submission": [
+            "submission"
+          ],
+          "submitted": [
+            "submitted"
+          ],
+          "triple combination": [
+            "triple combination",
+            "triplecombination"
+          ],
+          "VX-445": [
+            "vx445"
+          ]
+        },
+        "notes": [
+          "capped 30 hits to 20"
+        ],
+        "est_tokens": 3755,
+        "actual_tokens": null,
+        "usd": null,
+        "est_usd": 0.01367,
+        "triage": null
+      },
+      "book": "desk_hc_v2"
+    },
+    {
+      "ticker": "MDT",
+      "tree_id": "mdt-aspiration-25",
+      "kind": "goal",
+      "title": "Reach 25% of the aspiration market by fiscal year-end",
+      "seed_fiscal": "FY2019-Q4",
+      "clock": "FY2020-Q4",
+      "objects": [
+        "aspiration",
+        "25%"
+      ],
+      "anchors": [
+        "aspiration",
+        "25%"
+      ],
+      "plan": true,
+      "proposed_edge": null,
+      "confidence": null,
+      "n_evidence_excerpts": 6,
+      "retrieval": {
+        "tier": 0,
+        "n_sentences": 6,
+        "n_hits_total": 6,
+        "quarters_searched": [
+          "FY2020-Q1",
+          "FY2020-Q2",
+          "FY2020-Q3",
+          "FY2020-Q4",
+          "FY2021-Q1",
+          "FY2021-Q2"
+        ],
+        "window": [
+          "FY2020-Q1",
+          "FY2020-Q2",
+          "FY2020-Q3",
+          "FY2020-Q4",
+          "FY2021-Q1",
+          "FY2021-Q2"
+        ],
+        "window_missing": [],
+        "generic_inferred": {
+          "aspiration": false,
+          "25%": true
+        },
+        "alias_snapshot": {
+          "aspiration": [
+            "aspiration"
+          ],
+          "25%": [
+            "25%"
+          ]
+        },
+        "notes": [],
+        "est_tokens": 1521,
+        "actual_tokens": null,
+        "usd": null,
+        "est_usd": 0.00696,
+        "triage": null
+      },
+      "book": "desk_hc_v2"
+    },
+    {
+      "ticker": "BMY",
+      "tree_id": "bmy-cobenfy-seven-p3",
+      "kind": "promise",
+      "title": "Start seven COBENFY phase 3 studies by mid-year",
+      "seed_fiscal": "FY2025-Q1",
+      "clock": "FY2025-Q3",
+      "objects": [
+        "COBENFY"
+      ],
+      "anchors": [
+        "COBENFY",
+        "Cobenfy",
+        "KarXT"
+      ],
+      "plan": true,
+      "proposed_edge": null,
+      "confidence": null,
+      "n_evidence_excerpts": 20,
+      "retrieval": {
+        "tier": 0,
+        "n_sentences": 20,
+        "n_hits_total": 21,
+        "quarters_searched": [
+          "FY2025-Q2",
+          "FY2025-Q3",
+          "FY2025-Q4",
+          "FY2026-Q1"
+        ],
+        "window": [
+          "FY2025-Q2",
+          "FY2025-Q3",
+          "FY2025-Q4",
+          "FY2026-Q1"
+        ],
+        "window_missing": [],
+        "generic_inferred": {
+          "COBENFY": true,
+          "Cobenfy": true,
+          "KarXT": false
+        },
+        "alias_snapshot": {
+          "COBENFY": [
+            "cobenfy"
+          ],
+          "Cobenfy": [
+            "cobenfy"
+          ],
+          "KarXT": [
+            "karxt"
+          ]
+        },
+        "notes": [
+          "capped 21 hits to 20"
+        ],
+        "est_tokens": 3343,
+        "actual_tokens": null,
+        "usd": null,
+        "est_usd": 0.01243,
+        "triage": null
+      },
+      "book": "desk_hc_v2"
+    },
+    {
+      "ticker": "REGN",
+      "tree_id": "regn-aflibercept-8mg-bla",
+      "kind": "promise",
+      "title": "Submit aflibercept 8 mg pivotal data in a single BLA this year",
+      "seed_fiscal": "FY2022-Q3",
+      "clock": "FY2022-Q4",
+      "objects": [
+        "aflibercept 8-milligram",
+        "BLA"
+      ],
+      "anchors": [
+        "aflibercept 8-milligram",
+        "aflibercept 8 mg",
+        "8-milligram",
+        "8 mg",
+        "high-dose aflibercept",
+        "BLA",
+        "EYLEA HD"
+      ],
+      "plan": true,
+      "proposed_edge": null,
+      "confidence": null,
+      "n_evidence_excerpts": 20,
+      "retrieval": {
+        "tier": 0,
+        "n_sentences": 20,
+        "n_hits_total": 23,
+        "quarters_searched": [
+          "FY2022-Q4",
+          "FY2023-Q1",
+          "FY2023-Q2"
+        ],
+        "window": [
+          "FY2022-Q4",
+          "FY2023-Q1",
+          "FY2023-Q2"
+        ],
+        "window_missing": [],
+        "generic_inferred": {
+          "aflibercept 8-milligram": false,
+          "aflibercept 8 mg": false,
+          "8-milligram": false,
+          "8 mg": false,
+          "high-dose aflibercept": false,
+          "BLA": false,
+          "EYLEA HD": true
+        },
+        "alias_snapshot": {
+          "aflibercept 8-milligram": [
+            "aflibercept 8milligram"
+          ],
+          "aflibercept 8 mg": [
+            "aflibercept 8 mg"
+          ],
+          "8-milligram": [
+            "8milligram"
+          ],
+          "8 mg": [
+            "8 mg"
+          ],
+          "high-dose aflibercept": [
+            "highdose aflibercept",
+            "highdoseaflibercept"
+          ],
+          "BLA": [
+            "bla"
+          ],
+          "EYLEA HD": [
+            "eylea hd",
+            "eyleahd"
+          ]
+        },
+        "notes": [
+          "capped 23 hits to 20"
+        ],
+        "est_tokens": 3586,
+        "actual_tokens": null,
+        "usd": null,
+        "est_usd": 0.01316,
+        "triage": null
+      },
+      "book": "desk_hc_v2"
+    },
+    {
+      "ticker": "CI",
+      "tree_id": "ci-ma-growth-10",
+      "kind": "goal",
+      "title": "Medicare Advantage customer growth of at least 10% in 2020",
+      "seed_fiscal": "FY2019-Q3",
+      "clock": "FY2020-Q4",
+      "objects": [
+        "Medicare Advantage",
+        "10%"
+      ],
+      "anchors": [
+        "Medicare Advantage"
+      ],
+      "plan": true,
+      "proposed_edge": null,
+      "confidence": null,
+      "n_evidence_excerpts": 20,
+      "retrieval": {
+        "tier": 0,
+        "n_sentences": 20,
+        "n_hits_total": 22,
+        "quarters_searched": [
+          "FY2019-Q4",
+          "FY2020-Q1",
+          "FY2020-Q2",
+          "FY2020-Q3",
+          "FY2020-Q4",
+          "FY2021-Q1"
+        ],
+        "window": [
+          "FY2019-Q4",
+          "FY2020-Q1",
+          "FY2020-Q2",
+          "FY2020-Q3",
+          "FY2020-Q4",
+          "FY2021-Q1"
+        ],
+        "window_missing": [],
+        "generic_inferred": {
+          "Medicare Advantage": true
+        },
+        "alias_snapshot": {
+          "Medicare Advantage": [
+            "medicare advantage",
+            "medicareadvantage"
+          ]
+        },
+        "notes": [
+          "generic overridden by catalog: True",
+          "capped 22 hits to 20"
+        ],
+        "est_tokens": 4082,
+        "actual_tokens": null,
+        "usd": null,
+        "est_usd": 0.01465,
+        "triage": null
+      },
+      "book": "desk_hc_v2"
+    },
+    {
+      "ticker": "ELV",
+      "tree_id": "elv-pos-rebates-2020",
+      "kind": "promise",
+      "title": "Move commercial risk-based business to point-of-sale rebates in 2020",
+      "seed_fiscal": "FY2019-Q1",
+      "clock": "FY2020-Q1",
+      "objects": [
+        "point-of-sale rebates"
+      ],
+      "anchors": [
+        "point-of-sale rebates",
+        "point of sale",
+        "rebates"
+      ],
+      "plan": true,
+      "proposed_edge": null,
+      "confidence": null,
+      "n_evidence_excerpts": 5,
+      "retrieval": {
+        "tier": 0,
+        "n_sentences": 5,
+        "n_hits_total": 5,
+        "quarters_searched": [
+          "FY2019-Q2",
+          "FY2019-Q3",
+          "FY2019-Q4",
+          "FY2020-Q1",
+          "FY2020-Q2",
+          "FY2020-Q3"
+        ],
+        "window": [
+          "FY2019-Q2",
+          "FY2019-Q3",
+          "FY2019-Q4",
+          "FY2020-Q1",
+          "FY2020-Q2",
+          "FY2020-Q3"
+        ],
+        "window_missing": [],
+        "generic_inferred": {
+          "point-of-sale rebates": false,
+          "point of sale": false,
+          "rebates": false
+        },
+        "alias_snapshot": {
+          "point-of-sale rebates": [
+            "pointofsale rebate",
+            "pointofsalerebate"
+          ],
+          "point of sale": [
+            "point of sale"
+          ],
+          "rebates": [
+            "rebate"
+          ]
+        },
+        "notes": [],
+        "est_tokens": 1311,
+        "actual_tokens": null,
+        "usd": null,
+        "est_usd": 0.00633,
+        "triage": null
+      },
+      "book": "desk_hc_v2"
+    },
+    {
+      "ticker": "BSX",
+      "tree_id": "bsx-lotus-edge-launch",
+      "kind": "promise",
+      "title": "Limited Lotus Edge release in March Europe and U.S. early Q2",
+      "seed_fiscal": "FY2018-Q4",
+      "clock": "FY2019-Q2",
+      "objects": [
+        "Lotus Edge"
+      ],
+      "anchors": [
+        "Lotus Edge",
+        "Lotus",
+        "TAVR"
+      ],
+      "plan": true,
+      "proposed_edge": null,
+      "confidence": null,
+      "n_evidence_excerpts": 20,
+      "retrieval": {
+        "tier": 0,
+        "n_sentences": 20,
+        "n_hits_total": 27,
+        "quarters_searched": [
+          "FY2019-Q1",
+          "FY2019-Q2",
+          "FY2019-Q3",
+          "FY2019-Q4"
+        ],
+        "window": [
+          "FY2019-Q1",
+          "FY2019-Q2",
+          "FY2019-Q3",
+          "FY2019-Q4"
+        ],
+        "window_missing": [],
+        "generic_inferred": {
+          "Lotus Edge": false,
+          "Lotus": true,
+          "TAVR": true
+        },
+        "alias_snapshot": {
+          "Lotus Edge": [
+            "lotu edge",
+            "lotuedge"
+          ],
+          "Lotus": [
+            "lotu"
+          ],
+          "TAVR": [
+            "tavr"
+          ]
+        },
+        "notes": [
+          "capped 27 hits to 20"
+        ],
+        "est_tokens": 3366,
+        "actual_tokens": null,
+        "usd": null,
+        "est_usd": 0.0125,
+        "triage": null
+      },
+      "book": "desk_hc_v2"
+    }
+  ],
+  "paid_calls": []
+}

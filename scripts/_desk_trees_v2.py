@@ -198,6 +198,28 @@ def normalize_expire(value: object) -> str | None:
     return raw
 
 
+def normalize_match(value: object) -> dict[str, object] | None:
+    """Optional retrieval contract on a catalog tree.
+
+    {"anchors": (...), "context": (...), "exclude": (...), "generic": None|True|False}
+    Terms are kept verbatim (retrieval normalises them); `generic` None means "infer".
+    """
+    if not isinstance(value, Mapping):
+        return None
+    out: dict[str, object] = {}
+    for key in ("anchors", "context", "exclude"):
+        raw = value.get(key) or ()
+        if isinstance(raw, str):
+            raw = (raw,)
+        terms = [str(t).strip() for t in raw if str(t).strip()]
+        out[key] = terms
+    generic = value.get("generic")
+    if generic is not None and not isinstance(generic, bool):
+        raise SystemExit(f"match.generic must be None/True/False, got {generic!r}")
+    out["generic"] = generic
+    return out
+
+
 def normalize_quant(value: object) -> dict[str, object] | None:
     if not isinstance(value, Mapping):
         return None
@@ -658,6 +680,9 @@ def build_tree(item: Mapping[str, object]) -> dict[str, object]:
         "open": not is_terminal(kind, nodes),
         "expire": normalize_expire(item.get("expire")),
         "quant": normalize_quant(item.get("quant")),
+        # optional retrieval contract (anchors/context/exclude/generic); consumed by
+        # scripts/_desk_retrieval.py, which derives one from `objects` when absent.
+        "match": normalize_match(item.get("match")),
         "coverage_summary": next(
             (
                 str(node.get("coverage_summary") or "").strip()

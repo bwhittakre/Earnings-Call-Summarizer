@@ -1,0 +1,857 @@
+aapl-net-cash-neutral  (AAPL, goal; seed FY2018-Q1; clock -; indexed 42 q, post-seed 33 q, window 0/0 indexed)
+  match: context=['neutral', 'capital return', 'over time', 'optimal capital structure'] exclude=[] generic=None
+  'net cash neutral'                    25 hits    0.6/q  specific  norm='net cash neutral'
+      [FY2018-Q2 | Unknown Speaker | unknown | qa] As we said in February, our goal is to become approximately net cash neutral over time.
+      [FY2018-Q3 | Unknown Speaker | unknown | qa] As we explained in February, we plan to reach a net cash neutral position over time.
+      [FY2018-Q4 | Unknown Speaker | unknown | qa] As explained earlier this year, it is our plan to reach a net cash neutral position over time.
+      [FY2019-Q1 | Unknown Speaker | unknown | qa] As we explained in the past, it is our plan to reach a net cash neutral position over time.
+      [FY2019-Q2 | Unknown Speaker | unknown | qa] We also want to work towards a more optimal capital structure and as we said before, it is our plan to reach a net cash neutral position over time.
+  'net cash'                            60 hits    1.4/q  specific  norm='net cash'  aliases=['netcash']
+      [FY2018-Q2 | Unknown Speaker | unknown | qa] We ended the quarter with $267.2 billion in cash plus marketable securities, and we had $110 billion in term debt and $12 billion in commercial pap...
+      [FY2018-Q2 | Unknown Speaker | unknown | qa] As we said in February, our goal is to become approximately net cash neutral over time.
+      [FY2018-Q2 | Unknown Speaker | unknown | qa] Can you give us any timeframe of that $100 billion and how much debt do you think about in terms of net cash zero?
+      [FY2018-Q3 | Unknown Speaker | unknown | qa] We retired $6 billion of debt during the quarter, leaving us with $102.6 billion in term debt and $12 billion in commercial paper outstanding for a...
+      [FY2018-Q3 | Unknown Speaker | unknown | qa] As we explained in February, we plan to reach a net cash neutral position over time.
+  ladder: tier 3  20 excerpts (50 hits before cap; searched 33 q; no clock: tiers 0-2 skipped; tier 3 resolved with tier 0 rule; capped 50 hits to 20)
+      first: [FY2023-Q1 | Unknown Speaker | unknown | qa] matched=['net cash']  We repaid $1.4 billion in maturing debt and decreased commercial paper by $8.2 billion, leaving us with total debt of $111 billion. As a result, net cash was $5
+
+abbv-humira-ip-2022  (ABBV, goal; seed FY2016-Q4; clock FY2022-Q4; indexed 43 q, post-seed 38 q, window 6/6 indexed)
+  match: context=['biosimilar', 'biosimilars', '2022', '2023', 'patent', 'patents', 'IP', 'settlement', 'exclusivity', 'Amgen'] exclude=[] generic=True
+  'HUMIRA'                             724 hits   16.8/q  generic   norm='humira'
+      [FY2017-Q1 | Richard A. Gonzalez | management | prepared] Humira continues to deliver exceptional performance, with 15.8% global operational growth in the quarter.
+      [FY2017-Q1 | Richard A. Gonzalez | management | prepared] In the U.S., Humira grew 22.8%, driven by robust underlying demand, including prescription volume growth of 12%.
+      [FY2017-Q1 | Richard A. Gonzalez | management | prepared] Humira holds the number 1 market share position across all three categories.
+      [FY2017-Q1 | Bill Chase | management | prepared] Humira delivered another quarter of strong sales growth, with global sales of $4.1 billion, up 15.8% operationally.
+      [FY2017-Q1 | Bill Chase | management | prepared] In the U.S., Humira sales increased 22.8% compared to the prior year, driven by volume growth in excess of 12% plus price.
+  ladder: tier 0  20 excerpts (26 hits before cap; searched 6 q; generic overridden by catalog: True; capped 26 hits to 20)
+      first: [FY2017-Q2 | Richard Gonzalez | management | prepared] matched=['biosimilar', 'humira']  Our results included strong top-line performance, with global operational sales growth of 8.9%. HUMIRA continues to drive outstanding performance, with nearly 1
+
+abt-libre-1m-patients  (ABT, promise; seed FY2018-Q2; clock FY2018-Q4; indexed 34 q, post-seed 32 q, window 4/4 indexed)
+  match: context=['patients', 'users', 'million', 'sensor', 'worldwide', 'year-end', 'end of the year'] exclude=[] generic=None
+  'Libre'                              367 hits   10.8/q  generic   norm='libre'
+      [FY2018-Q3 | Miles White | management | prepared] Diabetes care is another area where our technologies are making a big impact, specifically FreeStyle Libre, a revolutionary glucose monitoring syst...
+      [FY2018-Q3 | Miles White | management | prepared] In the U.S., we received FDA approval for a 14-day sensor with a shorter one-hour warm-up, making Libre the longest-lasting wearable glucose sensor...
+      [FY2018-Q3 | Miles White | management | prepared] In Europe, we obtained CE mark for our FreeStyle Libre 2 system, our newest generation 14-day system with optional real-time alarms.
+      [FY2018-Q3 | Miles White | management | prepared] In a relatively short period of time, FreeStyle Libre now has more than one million users across the globe, a testament to the mass market appeal o...
+      [FY2018-Q3 | Miles White | management | prepared] In diabetes care, sales grew 40% in the quarter, led by FreeStyle Libre, which achieved sales of over $300 million in the quarter, an increase of m...
+  'FreeStyle Libre'                     59 hits    1.7/q  specific  norm='freestyle libre'  aliases=['freestylelibre']
+      [FY2018-Q3 | Miles White | management | prepared] Diabetes care is another area where our technologies are making a big impact, specifically FreeStyle Libre, a revolutionary glucose monitoring syst...
+      [FY2018-Q3 | Miles White | management | prepared] In Europe, we obtained CE mark for our FreeStyle Libre 2 system, our newest generation 14-day system with optional real-time alarms.
+      [FY2018-Q3 | Miles White | management | prepared] In a relatively short period of time, FreeStyle Libre now has more than one million users across the globe, a testament to the mass market appeal o...
+      [FY2018-Q3 | Miles White | management | prepared] In diabetes care, sales grew 40% in the quarter, led by FreeStyle Libre, which achieved sales of over $300 million in the quarter, an increase of m...
+      [FY2018-Q4 | Miles White | management | prepared] We also increased our investments and capabilities for the future, including expanding manufacturing capacity in two important areas that will driv...
+  '1 million patients'                   5 hits    0.1/q  generic  (numeric)  norm='$1 million patient'
+      [FY2018-Q1 | Miles White | management | qa] If I look at the acquisition rate of patients, we expect to obviously be over 1 million patients at year-end and trending in a pretty healthy fashion.
+      [FY2018-Q1 | Miles White | management | qa] I think we'll go out of the end of this year, $1 billion or more in run rate and 1 million patients or more.
+      [FY2018-Q1 | Miles White | management | qa] Frankly, I think we're going to have well over 1 million patients at that point because our patient acquisition rate right now is pretty steady and...
+      [FY2018-Q2 | Miles D. White | management | qa] We expect to go out of the year with over 1 million patients, which is unprecedented and unseen.
+      [FY2018-Q2 | Miles D. White | management | qa] As I indicated to you, we'll go out at the end of the year with more than 1 million patients worldwide, a significant number in the U.S. We are so ...
+  'million patients'                    10 hits    0.3/q  specific  norm='million patient'  aliases=['millionpatient']
+      [FY2018-Q4 | Miles White | management | qa] We got over 1.3 million patients now.
+      [FY2019-Q4 | Robert Ford | management | qa] We exited the year with well over half a million patients in the U.S. We set up some goals for 2019 as it relates to distribution, payer coverage i...
+      [FY2022-Q3 | Robert B. Ford | management | qa] You know, it's gonna expand CGM coverage by about 1.5 million patients on CMS.
+      [FY2022-Q3 | Robert B. Ford | management | qa] I'm looking at the opportunity of ultimately 4 million patients that, you know, will have potential to get some sort of coverage and benefit from t...
+      [FY2026-Q1 | Robert Ford | management | qa] That's going to open up about a million patients that we previously had very little access to on the pump side.
+  'million users'                       20 hits    0.6/q  specific  norm='million user'  aliases=['millionuser']
+      [FY2018-Q3 | Miles White | management | prepared] In a relatively short period of time, FreeStyle Libre now has more than one million users across the globe, a testament to the mass market appeal o...
+      [FY2019-Q1 | Miles White | management | qa] We've already got almost 1.5 million users of Libre, and to be honest, we haven't exactly let the floodgates go.
+      [FY2019-Q3 | Robert Ford | management | qa] We focus a lot on the sales side, but if you look at the user base where we're at the 1.5, close to 1.6 million users at the end of this quarter.
+      [FY2019-Q4 | Miles White | management | prepared] Its user base has roughly doubled each year to its current level of approximately 2 million users globally, including the highest user base among C...
+      [FY2020-Q3 | Robert Ford | management | qa] We now have over more than 2.5 million users.
+  ladder: tier 0  20 excerpts (25 hits before cap; searched 4 q; capped 25 hits to 20)
+      first: [FY2018-Q3 | Miles White | management | prepared] matched=['patient', 'user', 'million', 'sensor', 'libre', 'freestyle libre', 'million user']  These advancements will further enhance and strengthen our leadership position in this large and highly under-penetrated disease area and will bring new therapi
+
+acn-the-new-number-one  (ACN, goal; seed FY2017-Q2; clock -; indexed 42 q, post-seed 36 q, window 0/0 indexed)
+  match: context=['number one', 'leader', 'leadership', 'digital', 'cloud', 'security', 'rotation', 'billion'] exclude=['the new normal', 'the new year', 'the new fiscal'] generic=True
+  'The New'                            378 hits    9.0/q  generic   norm='the new'  aliases=['thenew']
+      [FY2017-Q3 | David P. Rowland | management | prepared] Net revenue growth of 7% in local currency in the third quarter continued to be highlighted by strong double-digit growth in all three areas of The...
+      [FY2017-Q3 | David P. Rowland | management | prepared] Both operations and application services growth was fueled by significant rotation to The New.
+      [FY2017-Q3 | David P. Rowland | management | prepared] Across those businesses, the dominant driver continues to be strong double-digit growth in The New with all three components digital, cloud, and se...
+      [FY2017-Q3 | Pierre Nanterme | management | prepared] We continue to rotate our business to The New, digital, cloud, and security related services which again grew at a very strong double-digit rate in...
+      [FY2017-Q3 | Pierre Nanterme | management | prepared] And we have expanded our collaboration with SAP to co-innovate, co-develop, and jointly go-to-market with new solutions that combine our industry e...
+  ladder: tier 3  20 excerpts (139 hits before cap; searched 36 q; generic overridden by catalog: True; no clock: tiers 0-2 skipped; tier 3 resolved with tier 0 rule; capped 139 hits to 20)
+      first: [FY2022-Q3 | Julie Sweet | management | prepared] matched=['digital', 'billion', 'the new']  We had revenue growth of 27% in local currency, continuing to take significant market share growing nearly three times the market while delivering margin expans
+
+adbe-device-co-op  (ADBE, promise; seed FY2016-Q2; clock -; indexed 42 q, post-seed 40 q, window 0/0 indexed)
+  match: context=['Marketing Cloud', 'brands', 'devices', 'identity', 'consumers'] exclude=[] generic=None
+  'Device Co-op'                         1 hits    0.0/q  specific  norm='device coop'  aliases=['devicecoop']
+      [FY2016-Q2 | Shantanu Narayen | management | prepared] We unveiled the next generation Adobe Marketing Cloud, shared our Adobe Cloud platform roadmap and announced the Adobe Marketing Cloud Device Co-op...
+  'Co-op'                                2 hits    0.0/q  specific  norm='coop'
+      [FY2017-Q3 | Unknown Speaker | unknown | qa] I think the third part of your question associated with are we then finding ways that enable our customers to monetize the insight associated with ...
+      [FY2016-Q2 | Shantanu Narayen | management | prepared] We unveiled the next generation Adobe Marketing Cloud, shared our Adobe Cloud platform roadmap and announced the Adobe Marketing Cloud Device Co-op...
+  'cooperative'                          0 hits    0.0/q  specific  norm='cooperative'
+  'device graph'                         0 hits    0.0/q  specific  norm='device graph'  aliases=['devicegraph']
+  ladder: tier 3  1 excerpts (1 hits before cap; searched 40 q; no clock: tiers 0-2 skipped; tier 3 resolved with tier 0 rule)
+      first: [FY2017-Q3 | Unknown Speaker | unknown | qa] matched=['coop']  I think the third part of your question associated with are we then finding ways that enable our customers to monetize the insight associated with that data, th
+
+adi-vescent-lidar  (ADI, promise; seed FY2016-Q4; clock -; indexed 42 q, post-seed 38 q, window 0/0 indexed)
+  match: context=['automotive', 'ADAS', 'solid-state', 'scanning', 'sampling', 'design win'] exclude=[] generic=None
+  'LIDAR'                               15 hits    0.4/q  specific  norm='lidar'
+      [FY2017-Q1 | Vincent Roche | management | prepared] And our investments in cost-effective, high-performing, silicon-based LIDAR solutions are turbocharging our efforts in this area.
+      [FY2017-Q1 | Vincent Celentano | management | qa] I had a question about your recently acquired LIDAR business.
+      [FY2017-Q1 | Vincent Roche | management | qa] But LIDAR is becoming a very important modality.
+      [FY2017-Q2 | Vincent Roche | management | qa] So I think we've talked before about ADI having great strength in emerging applications like, for example, 77 gigahertz radar -- LIDAR, infotainmen...
+      [FY2017-Q3 | Vincent Roche | management | qa] We're starting to trial a solid-state LIDAR solution that will start to -- hopefully, in that period of time, over the next 5 years, we'll start to...
+  'Vescent'                              3 hits    0.1/q  specific  norm='vescent'
+      [FY2017-Q1 | Vincent Roche | management | qa] Our approach is to -- so we acquired Vescent Photonics, which enables us to bring a more silicon-based technology to bear, which is fundamentally -...
+      [FY2018-Q2 | Vincent Roche | management | qa] And we got that new technology in terms of that more integrated system capability through the acquisition of Vescent sometime last year.
+      [FY2016-Q4 | Vincent Roche | management | prepared] And just recently, we announced the acquisition of some exciting LIDAR technology from Vescent Photonics that will enable ADI to develop a true, so...
+  'solid-state LIDAR'                    1 hits    0.0/q  specific  norm='solidstate lidar'  aliases=['solidstatelidar']
+      [FY2017-Q3 | Vincent Roche | management | qa] We're starting to trial a solid-state LIDAR solution that will start to -- hopefully, in that period of time, over the next 5 years, we'll start to...
+  ladder: tier 3  10 excerpts (10 hits before cap; searched 38 q; no clock: tiers 0-2 skipped; tier 3 resolved with tier 0 rule)
+      first: [FY2017-Q1 | Vincent Roche | management | prepared] matched=['lidar']  In automotive, our 77-gigahertz RF CMOS radar solution offers a robust platform for ADAS on the autonomous driving, giving customers the ability to capture obje
+
+adi-wireless-bms-deploy  (ADI, promise; seed FY2023-Q3; clock FY2026-Q4; indexed 42 q, post-seed 11 q, window 6/6 indexed)
+  match: context=['OEM', 'OEMs', 'design', 'designed in', 'adopt', 'production', 'electric vehicle', 'EV'] exclude=[] generic=None
+  'wireless BMS'                        15 hits    0.4/q  specific  norm='wireless bms'  aliases=['wirelessbms']
+      [FY2024-Q4 | Rich Puccio | management | qa] As for the other geos, we saw broad weakness but upside in the U.S., which returned to sequential growth, driven mainly by our BMS and wireless BMS...
+      [FY2019-Q3 | Vincent Roche | management | qa] We're changing the way the connectivity of the information is rendered in the car with our new wireless BMS architecture, which we've introduced to...
+      [FY2020-Q4 | Vincent Roche | management | prepared] And our new wireless BMS offers the same reliability and performance of our wired solution while enhancing robustness and configurability.
+      [FY2020-Q4 | Vincent Roche | management | prepared] General Motors recently announced that they will deploy our wireless BMS across their entire Ultium battery line.
+      [FY2020-Q4 | Vincent Roche | management | qa] So, we've brought wireless BMS quite recently, which we've announced a partnership with GM.
+  'wireless battery management'          3 hits    0.1/q  specific  norm='wireless battery management'
+      [FY2023-Q4 | Vincent Roche | management | prepared] In electrification, momentum continues for our wireless battery management system.
+      [FY2021-Q4 | Vincent Roche | management | prepared] In electric vehicles, our market leading wired and wireless battery management systems, or BMS, offer customers the highest levels of accuracy, rel...
+      [FY2022-Q1 | Prashanth Mahendra-Rajah | management | prepared] This includes showcasing our wireless battery management system for EVs and much more.
+  'wireless platform'                    2 hits    0.0/q  specific  norm='wireless platform'  aliases=['wirelessplatform']
+      [FY2022-Q4 | Vincent Roche | management | prepared] This year, eight new manufacturers designed in our BMS solutions, including two that plan to utilize our wireless platform.
+      [FY2023-Q3 | Vincent Roche | management | prepared] Given this momentum and the cutting-edge value proposition, we believe the wireless platform will represent a large portion of our BMS revenue by t...
+  'wireless solution'                    6 hits    0.1/q  specific  norm='wireless solution'  aliases=['wirelesssolution']
+      [FY2023-Q4 | Vincent Roche | management | prepared] Last quarter, we secured our fifth customer, a top 10 EV OEM, who will begin to deploy our wireless solution in their next-gen EVs in 2026.
+      [FY2024-Q2 | Vincent Roche | management | prepared] In electrification, we've expanded our battery management system share at leading Chinese OEMs and more than doubled our BMS share in upcoming Euro...
+      [FY2024-Q4 | Vincent Roche | management | prepared] These trends, combined with recent wins, give us confidence that our BMS revenues should return to growth in fiscal 2025 with meaningful contributi...
+      [FY2024-Q4 | Rich Puccio | management | qa] BMS also improved in the U.S., including growth for our higher content wireless solution, which is now 10% of total BMS.
+      [FY2025-Q1 | Vincent Roche | management | prepared] Part of this growth is coming from our higher content wireless solution wins, with key OEMs ramping in America and Europe.
+  ladder: tier 0  6 excerpts (6 hits before cap; searched 6 q)
+      first: [FY2023-Q4 | Vincent Roche | management | prepared] matched=['wireless battery management', 'wireless solution']  Looking now to automotive. In electrification, momentum continues for our wireless battery management system. This novel solution enables lower weight, greater 
+
+adsk-collections-launch  (ADSK, promise; seed FY2017-Q1; clock FY2017-Q3; indexed 45 q, post-seed 40 q, window 4/4 indexed)
+  match: context=['launch', 'launched', 'suites', 'subscription', 'August 1', 'selling', 'next generation'] exclude=['cash collections', 'collections of receivables', 'collection of receivables', 'collection efforts'] generic=True
+  'Collections'                        269 hits    6.0/q  generic   norm='collection'
+      [FY2017-Q2 | Carl Bass | management | prepared] Our newly introduced Collections are a great example of increasing lifetime customer value.
+      [FY2017-Q2 | Carl Bass | management | prepared] On August 1st, we launched Collections, which is our next generation of suites with the addition of our cloud services.
+      [FY2017-Q2 | Carl Bass | management | prepared] Suites were tremendously successful for Autodesk, but with Collections, we're significantly reducing complexity by offering just three Collections.
+      [FY2017-Q2 | Carl Bass | management | prepared] We've priced Collections so that the average customer value to Autodesk will increase as well.
+      [FY2017-Q2 | Carl Bass | management | prepared] We're only 25 days into selling Collections, but we're very happy with the start.
+  'industry collections'                46 hits    1.0/q  generic   norm='industry collection'  aliases=['industrycollection']
+      [FY2017-Q3 | Carl Bass | management | prepared] The launch of Industry Collections, the next generation of suites that include many of our cloud services, contributed to our strong growth this qu...
+      [FY2017-Q3 | Scott Herren | management | qa] I just had one follow-up on Industry Collections.
+      [FY2017-Q3 | Scott Herren | management | qa] I'm wondering, over time, do you expect Industry Collections to also end up representing 30% of total new model ARR?
+      [FY2017-Q3 | Carl Bass | management | qa] My best guess is that it will be less because of the additional offerings we'll have with the cloud offerings and the consumption services tied to ...
+      [FY2018-Q2 | Andrew Anagnost | management | prepared] Of those, that migrated nearly 10% upgraded from an individual product to higher value industry collections.
+  ladder: tier 0  20 excerpts (24 hits before cap; searched 4 q; generic overridden by catalog: True; capped 24 hits to 20)
+      first: [FY2017-Q2 | Carl Bass | management | prepared] matched=['launched', 'suite', 'next generation', 'collection']  Let's take a look at what's going on here in the current quarter, Q3. Our newly introduced Collections are a great example of increasing lifetime customer value
+
+amat-double-packaging  (AMAT, promise; seed FY2016-Q4; clock FY2017-Q4; indexed 42 q, post-seed 38 q, window 6/6 indexed)
+  match: context=['double', 'doubled', 'revenue', '12 months', 'record', 'growth'] exclude=['packaging materials'] generic=None
+  'advanced packaging'                 146 hits    3.5/q  generic   norm='advanced packaging'  aliases=['advancedpackaging']
+      [FY2018-Q2 | Gary Dickerson | management | prepared] With our R&D priorities aligned to our customers' evolving requirements, it is clear that advancing the industry roadmap is going to require a comb...
+      [FY2018-Q3 | Gary Dickerson | management | prepared] We believe that future improvements in chip performance, power, area and costs needed to enable the AI era will be driven by a combination of five ...
+      [FY2018-Q4 | Gary Dickerson | management | prepared] As a result, a new playbook is needed, which includes the development of entirely new chip architectures, new 3D structures within the chip, the in...
+      [FY2018-Q4 | Gary Dickerson | management | qa] So as we've communicated before, we're driving a new playbook that includes five different techniques that I've been talking about, including devel...
+      [FY2019-Q1 | Gary Dickerson | management | prepared] As I’ve said before, to unlock the full potential of AI and big data, we need a new playbook for semi conductor design and manufacturing, which wil...
+  'packaging'                          279 hits    6.6/q  generic   norm='packaging'
+      [FY2018-Q2 | Gary Dickerson | management | prepared] With our R&D priorities aligned to our customers' evolving requirements, it is clear that advancing the industry roadmap is going to require a comb...
+      [FY2018-Q3 | Gary Dickerson | management | prepared] We believe that future improvements in chip performance, power, area and costs needed to enable the AI era will be driven by a combination of five ...
+      [FY2018-Q3 | Gary Dickerson | management | qa] So at those conferences and you see many people talking about the future being about materials, new structures, 3D driving future innovation, enabl...
+      [FY2018-Q4 | Gary Dickerson | management | prepared] As a result, a new playbook is needed, which includes the development of entirely new chip architectures, new 3D structures within the chip, the in...
+      [FY2018-Q4 | Gary Dickerson | management | qa] So as we've communicated before, we're driving a new playbook that includes five different techniques that I've been talking about, including devel...
+  ladder: tier 3  20 excerpts (123 hits before cap; searched 38 q; tier 3 resolved with tier 0 rule; capped 123 hits to 20)
+      first: [FY2018-Q3 | Gary Dickerson | management | qa] matched=['12 month', 'packaging']  And also, if you look from a macro perspective, I was the speaker at the AI Design Forum and the DARPA conferences and some of the themes that came out of that 
+
+amd-radeon-pro-duo  (AMD, promise; seed FY2016-Q1; clock FY2016-Q1; indexed 5 q, post-seed 4 q, window 2/2 indexed)
+  match: context=['launch', 'launched', 'shipping', 'introduced', 'creation', 'platform'] exclude=[] generic=None
+  'Radeon Pro Duo'                       1 hits    0.2/q  specific  norm='radeon pro duo'  aliases=['rpd']
+      [FY2016-Q1 | Lisa Su | management | prepared] To capitalize on this trend, I am proud to share that we plan to launch the industry's most powerful platform for VR creation and consumption at th...
+  'Radeon Pro'                           6 hits    1.2/q  specific  norm='radeon pro'  aliases=['radeonpro']
+      [FY2016-Q3 | Lisa Su | management | prepared] Just last week, we announced a collaboration with Alibaba Cloud, China's largest cloud provider, to deploy Radeon Pro server GPUs across their data...
+      [FY2016-Q3 | Lisa Su | management | prepared] We now have material server GPU engagements with multiple cloud data center providers, demonstrating that our strategy to grow our presence in this...
+      [FY2016-Q3 | Lisa Su | management | qa] There's a lot of interest in the cloud space around what we're doing with Radeon Pro and on the server GPU side.
+      [FY2016-Q4 | Lisa Su | management | prepared] We also launched Radeon Pro 400 mobile GPUs in the quarter.
+      [FY2016-Q4 | Lisa Su | management | prepared] Traditional workstation GPU sales grew in the quarter as HP, Dell, and others began offering systems powered by our recently launched Radeon Pro WX...
+  'Pro Duo'                              1 hits    0.2/q  specific  norm='pro duo'  aliases=['produo']
+      [FY2016-Q1 | Lisa Su | management | prepared] To capitalize on this trend, I am proud to share that we plan to launch the industry's most powerful platform for VR creation and consumption at th...
+  'VR'                                  12 hits    2.4/q  generic   norm='vr'
+      [FY2016-Q2 | Lisa Su | management | prepared] Project Scorpio is designed to be fully compatible with existing Xbox One software while leveraging AMD's leadership gaming technologies to create ...
+      [FY2016-Q2 | Ruth Cotter | management | qa] I think it's going to be launched in 2017, and I think it has significantly higher performance and support 4K and VR.
+      [FY2016-Q3 | Lisa Su | management | prepared] Polaris GPUs continue to gain traction based on their leadership performance in VR and on the rapidly expanding number of software titles that feat...
+      [FY2016-Q3 | Lisa Su | management | prepared] This is a meaningful milestone for consumers, I am excited that AMD is enabling the ecosystem and driving broader adoption of VR by making premium ...
+      [FY2016-Q3 | Lisa Su | management | qa] We've leaned into VR and we've leaned into our work with DX 12, and I think you can see in some of the benchmarks that we're doing very well there.
+  ladder: tier 0  5 excerpts (5 hits before cap; searched 2 q)
+      first: [FY2016-Q2 | Lisa Su | management | prepared] matched=['platform', 'vr']  Microsoft also announced their next-generation game console, code-named Project Scorpio, for the 2017 holidays. Project Scorpio is designed to be fully compatib
+
+amgn-wclc-lung  (AMGN, promise; seed FY2019-Q2; clock FY2019-Q3; indexed 34 q, post-seed 28 q, window 3/3 indexed)
+  match: context=['data', 'update', 'presented', 'presentation', 'September', 'monotherapy', 'KRAS'] exclude=[] generic=None
+  'World Conference on Lung Cancer'      4 hits    0.1/q  specific  norm='world conference on lung cancer'  aliases=['wclc']
+      [FY2020-Q4 | Dave Reese | management | prepared] A few days ago, we presented the first pivotal data for a KRAS G12C inhibitor at the World Conference on Lung Cancer, where we reported on 126 pati...
+      [FY2022-Q2 | David Reese | management | prepared] In oncology, we will present data from two of our thoracic programs at the upcoming World Conference on Lung Cancer.
+      [FY2019-Q2 | Dave Reese | management | prepared] We will also begin enrollment of lung cancer patients in the coming days in the potentially registration-enabling phase II monotherapy portion of t...
+      [FY2019-Q2 | Dave Reese | management | qa] In terms of durability, as I mentioned, we will be presenting a clinical update at the World Conference on Lung Cancer in September.
+  'WCLC'                                 0 hits    0.0/q  specific  norm='wclc'
+  'lung cancer'                        167 hits    4.9/q  generic   norm='lung cancer'  aliases=['lungcancer']
+      [FY2019-Q3 | David Reese | management | prepared] In our monotherapy program, our phase II study in non-small cell lung cancer continues to enroll briskly since initiation in August.
+      [FY2019-Q3 | David Reese | management | qa] As I mentioned, we are enrolling very briskly in our phase II non-small cell lung cancer program.
+      [FY2019-Q4 | Dave Reese | management | prepared] We enrolled the potentially pivotal phase II monotherapy study in advanced non-small cell lung cancer in approximately three months and look forwar...
+      [FY2019-Q4 | Dave Reese | management | prepared] We also expect initial data from our phase I combination study with KEYTRUDA in advanced non-small cell lung cancer.
+      [FY2019-Q4 | Dave Reese | management | prepared] We're enrolling advanced colorectal and non-small cell lung cancer patients in our MEK inhibitor combination study, as well as treatment-naïve non-...
+  'AMG 510'                             21 hits    0.6/q  generic  (numeric)  norm='amg 510'
+      [FY2019-Q3 | David Reese | management | prepared] Turning to oncology, I'll begin with AMG 510, our first-in-class KRAS G12C inhibitor.
+      [FY2019-Q3 | David Reese | management | qa] To start, I would say that when we were developing AMG 510, we outlined a set of target parameters for the molecule that we wanted to achieve bioch...
+      [FY2019-Q4 | Bob Bradway | management | prepared] We expect data for AMG 510, our KRAS G12C inhibitor, for tezepelumab in allergic and non-allergic asthma, for omecamtiv in heart failure, and then ...
+      [FY2019-Q4 | Dave Reese | management | prepared] Turning to oncology and hematology, we continue to rapidly advance the development program for AMG 510, our first-in-class KRAS G12C inhibitor.
+      [FY2019-Q4 | Bob Bradway | management | qa] First, I would say our own data with AMG 510 suggests that at the appropriate doses and doses that we can achieve clinically, we can completely sup...
+  'sotorasib'                           34 hits    1.0/q  specific  norm='sotorasib'
+      [FY2020-Q1 | David Reese | management | prepared] This is also the case with our potentially pivotal phase II monotherapy study for AMG 510Now known as sotorasib in advanced non-small cell lung can...
+      [FY2020-Q1 | David Reese | management | prepared] In other studies, such as our sotorasib phase I combination study with Keytruda and the phase III confirmatory study, where we have paused enrollme...
+      [FY2020-Q1 | David Reese | management | prepared] There is ongoing interest from investigators to provide their patients access to investigational therapies with potential for significant benefit, ...
+      [FY2020-Q2 | Bob Bradway | management | prepared] We expect readouts in the second half of the year for sotorasib, which of course is our AMG 510 in non-small cell lung cancer, tezepelumab in sever...
+      [FY2020-Q2 | Dave Reese | management | prepared] Importantly, our pivotal studies for sotorasib, tezepelumab, and omecamtiv mecarbil remain on track, and we continue to expect high-quality data se...
+  ladder: tier 0  10 excerpts (10 hits before cap; searched 3 q)
+      first: [FY2019-Q3 | David Reese | management | prepared] matched=['data', 'monotherapy', 'kras', 'amg 510', 'update', 'lung cancer']  Working closely with the Ministry of Health, Labour, and Welfare, and the Pharmaceuticals and Medical Devices Agency in Japan, EVENITY's prescribing information
+
+amzn-prime-india  (AMZN, promise; seed FY2016-Q2; clock -; indexed 41 q, post-seed 39 q, window 0/0 indexed)
+  match: context=['Prime', 'Prime Video', 'launched', 'members', 'delivery', 'customers', 'Amazon.in'] exclude=[] generic=None
+  'India'                              108 hits    2.6/q  generic   norm='india'
+      [FY2016-Q3 | Unknown Speaker | unknown | qa] But by far the biggest individual thing is the investment in India that we continue to make and very excited about it, the initial reaction in Indi...
+      [FY2016-Q3 | Unknown Speaker | unknown | qa] So what you're seeing essentially in the second half of this year is a step-up investment primarily around digital content and also the fulfillment...
+      [FY2016-Q3 | Unknown Speaker | unknown | qa] And we have stated that we will be in India soon.
+      [FY2016-Q3 | Unknown Speaker | unknown | qa] Can you just provide a little more color into the investments that you're making in India?
+      [FY2016-Q3 | Unknown Speaker | unknown | qa] What's driving that growth and what stage is India in today relative to some of the other large international markets that you've launched in the p...
+  'Prime India'                          0 hits    0.0/q  specific  norm='prime india'  aliases=['primeindia']
+  ladder: tier 3  20 excerpts (41 hits before cap; searched 39 q; no clock: tiers 0-2 skipped; tier 3 resolved with tier 0 rule; capped 41 hits to 20)
+      first: [FY2016-Q3 | Unknown Speaker | unknown | qa] matched=['customer', 'india']  But by far the biggest individual thing is the investment in India that we continue to make and very excited about it, the initial reaction in India from both t
+
+avgo-day2-one-erp  (AVGO, promise; seed FY2016-Q3; clock FY2017-Q1; indexed 42 q, post-seed 39 q, window 4/4 indexed)
+  match: context=['integration', 'integrate', 'systems', 'database', 'headcount', 'November', 'Broadcom'] exclude=[] generic=None
+  'day 2'                                1 hits    0.0/q  generic  (numeric)  norm='day 2'
+      [FY2016-Q3 | Hock Tan | management | qa] As you know, classic Avago runs Oracle, classic Broadcom runs SAP after the end of November, which is our day 2, what we call day 2 where we integr...
+  'ERP'                                  3 hits    0.1/q  specific  norm='erp'
+      [FY2016-Q4 | Hock Tan | management | qa] We are not done with our synergies yet, especially on the operating synergies, OpEx synergies in below the line SG&A. We are now running on one ERP...
+      [FY2016-Q3 | Hock Tan | management | qa] No, that’s not our targeted operating margin necessary at all, because we do see that all operating spending and the current level is about 800 plu...
+      [FY2016-Q3 | Hock Tan | management | qa] As you know, classic Avago runs Oracle, classic Broadcom runs SAP after the end of November, which is our day 2, what we call day 2 where we integr...
+  'one ERP'                              2 hits    0.0/q  specific  norm='one erp'  aliases=['oneerp']
+      [FY2016-Q4 | Hock Tan | management | qa] We are not done with our synergies yet, especially on the operating synergies, OpEx synergies in below the line SG&A. We are now running on one ERP...
+      [FY2016-Q3 | Hock Tan | management | qa] As you know, classic Avago runs Oracle, classic Broadcom runs SAP after the end of November, which is our day 2, what we call day 2 where we integr...
+  'single ERP'                           0 hits    0.0/q  specific  norm='single erp'  aliases=['singleerp']
+  ladder: tier 0  1 excerpts (1 hits before cap; searched 4 q)
+      first: [FY2016-Q4 | Hock Tan | management | qa] matched=['erp', 'one erp']  We are not done with our synergies yet, especially on the operating synergies, OpEx synergies in below the line SG&A. We are now running on one ERP system, whic
+
+avgo-45-op-margin  (AVGO, goal; seed FY2016-Q4; clock -; indexed 42 q, post-seed 38 q, window 0/0 indexed)
+  match: context=['target', 'long-term', 'long term', 'model', 'operating margin', '45%'] exclude=[] generic=None
+  '45%'                                 23 hits    0.5/q  generic  (numeric)  norm='45%'
+      [FY2017-Q1 | Tom Krause | management | prepared] Let me first start out by saying that we are very pleased with the execution this quarter and specifically the progress we've made towards our long...
+      [FY2017-Q2 | Hock Tan | management | prepared] Second quarter Wireless revenue was $1.15 billion, declining by 2% sequentially, but growing 45% year-on-year.
+      [FY2017-Q2 | Tom Krause | management | prepared] We now have line of sight to achieving our long-term operating margin target of 45%.
+      [FY2017-Q2 | Hock Tan | management | qa] We think it will drive us to 45% as a fairly decent way to get there.
+      [FY2017-Q2 | Tom Krause | management | qa] We're very comfortable with 45%.
+  'operating margin'                   149 hits    3.5/q  generic   norm='operating margin'  aliases=['operatingmargin']
+      [FY2017-Q1 | Hock Tan | management | prepared] We remain focused on driving financial performance towards our long-term operating margin and free cash flow targets.
+      [FY2017-Q1 | Tom Krause | management | prepared] Let me first start out by saying that we are very pleased with the execution this quarter and specifically the progress we've made towards our long...
+      [FY2017-Q1 | Tom Krause | management | qa] I think that's sort of the point of the prepared remarks, is if you look at where we are from an operating margin perspective, you look at the fact...
+      [FY2017-Q1 | Tom Krause | management | qa] When you do look at the general seasonality of the business and where things are, I think you have to take a whole fiscal year approach to looking ...
+      [FY2017-Q2 | Tom Krause | management | prepared] We now have line of sight to achieving our long-term operating margin target of 45%.
+  ladder: tier 3  20 excerpts (127 hits before cap; searched 38 q; no clock: tiers 0-2 skipped; tier 3 resolved with tier 0 rule; capped 127 hits to 20)
+      first: [FY2025-Q3 | Kirsten Spears | management | prepared] matched=['operating margin']  Q3 operating income was a record $10.5 billion, up 32% from a year ago. On a sequential basis, even as gross margin was down 100 basis points on revenue mix, op
+
+bmy-cobenfy-seven-p3  (BMY, promise; seed FY2025-Q1; clock FY2025-Q3; indexed 29 q, post-seed 5 q, window 4/4 indexed)
+  match: context=['phase 3', 'pivotal', 'studies', 'trials', 'initiated', 'underway', 'Alzheimer', 'bipolar', 'seven'] exclude=[] generic=None
+  'COBENFY'                            134 hits    4.6/q  generic   norm='cobenfy'
+      [FY2025-Q2 | Chris Boerner | management | prepared] Our recent launches of COBENFY and Qvantig are progressing well.
+      [FY2025-Q2 | Chris Boerner | management | prepared] COBENFY has delivered strong performance since launch, and we have consistently received positive feedback from physicians.
+      [FY2025-Q2 | Chris Boerner | management | prepared] In terms of lifecycle management, we now have several ongoing registrational trials for COBENFY in Alzheimer's disease patients.
+      [FY2025-Q2 | David Elkins | management | prepared] Now moving to discuss COBENFY on slide 13.
+      [FY2025-Q2 | David Elkins | management | prepared] COBENFY sales were $35 million in the quarter and $62 million year- to- date.
+  'Cobenfy'                            134 hits    4.6/q  generic   norm='cobenfy'
+      [FY2025-Q2 | Chris Boerner | management | prepared] Our recent launches of COBENFY and Qvantig are progressing well.
+      [FY2025-Q2 | Chris Boerner | management | prepared] COBENFY has delivered strong performance since launch, and we have consistently received positive feedback from physicians.
+      [FY2025-Q2 | Chris Boerner | management | prepared] In terms of lifecycle management, we now have several ongoing registrational trials for COBENFY in Alzheimer's disease patients.
+      [FY2025-Q2 | David Elkins | management | prepared] Now moving to discuss COBENFY on slide 13.
+      [FY2025-Q2 | David Elkins | management | prepared] COBENFY sales were $35 million in the quarter and $62 million year- to- date.
+  'KarXT'                               16 hits    0.6/q  specific  norm='karxt'
+      [FY2025-Q2 | Samit Hirawat | management | qa] Of course, the fourth one, the 200 mg of COBENFY or KarXT with 20 of trospium, is an optionality, but of course, dependent on the tolerability.
+      [FY2023-Q4 | Chris Boerner | management | prepared] We announced the planned acquisition of Karuna Therapeutics, bringing KarXT, which we believe will be a transformational medicine for patients with...
+      [FY2023-Q4 | Chris Boerner | management | qa] Finally, we're ready for the launch of KarXT in September, which we're excited to launch this product, which will be the first new treatment in dec...
+      [FY2024-Q1 | Chris Boerner | management | prepared] And we are very excited about the potential of KarXT from Karuna, which I will review on Slide 6.
+      [FY2024-Q1 | Chris Boerner | management | prepared] First, launch preparations are underway and on track for KarXT.
+  ladder: tier 0  20 excerpts (21 hits before cap; searched 4 q; capped 21 hits to 20)
+      first: [FY2025-Q2 | Chris Boerner | management | prepared] matched=['pivotal', 'studie', 'trial', 'alzheimer', 'bipolar', 'cobenfy']  This could provide additional validation of our CELMoD platform as a next-generation potential standard of care in multiple myeloma. In terms of lifecycle manag
+
+bsx-lotus-edge-launch  (BSX, promise; seed FY2018-Q4; clock FY2019-Q2; indexed 34 q, post-seed 30 q, window 4/4 indexed)
+  match: context=['launch', 'launched', 'controlled launch', 'limited release', 'FDA approval', 'approved', 'Europe', 'U.S.'] exclude=[] generic=None
+  'Lotus Edge'                          43 hits    1.3/q  specific  norm='lotu edge'  aliases=['lotuedge']
+      [FY2019-Q1 | Mike Mahoney | management | prepared] We expect overall interventional cardiology growth to accelerate from first quarter on due to strong growth in complex coronary products, easing DE...
+      [FY2019-Q1 | Mike Mahoney | management | prepared] We also began a controlled commercial launch of LOTUS Edge in Europe late in the first quarter and also enrolling patients in the REPRISE IV interm...
+      [FY2019-Q1 | Mike Mahoney | management | prepared] We will begin a controlled U.S. launch immediately, and we believe LOTUS Edge is a differentiated valve that will be sought after by physicians and...
+      [FY2019-Q1 | Mike Mahoney | management | prepared] The combined strength of WATCHMAN, ACURATE, LOTUS Edge, and SENTINEL position us well to deliver on our guidance for $700 million-$725 million in s...
+      [FY2019-Q1 | Dan Brennan | management | prepared] There are several significant drivers of this acceleration, including multiple anticipated key product launches, such as LOTUS Edge, which we recei...
+  'Lotus'                              104 hits    3.1/q  generic   norm='lotu'
+      [FY2019-Q1 | Mike Mahoney | management | prepared] We expect overall interventional cardiology growth to accelerate from first quarter on due to strong growth in complex coronary products, easing DE...
+      [FY2019-Q1 | Mike Mahoney | management | prepared] We also began a controlled commercial launch of LOTUS Edge in Europe late in the first quarter and also enrolling patients in the REPRISE IV interm...
+      [FY2019-Q1 | Mike Mahoney | management | prepared] We will begin a controlled U.S. launch immediately, and we believe LOTUS Edge is a differentiated valve that will be sought after by physicians and...
+      [FY2019-Q1 | Mike Mahoney | management | prepared] The combined strength of WATCHMAN, ACURATE, LOTUS Edge, and SENTINEL position us well to deliver on our guidance for $700 million-$725 million in s...
+      [FY2019-Q1 | Dan Brennan | management | prepared] There are several significant drivers of this acceleration, including multiple anticipated key product launches, such as LOTUS Edge, which we recei...
+  'TAVR'                                74 hits    2.2/q  generic   norm='tavr'
+      [FY2019-Q1 | Mike Mahoney | management | prepared] Our ACURATE TAVR valve platform is the fastest-growing valve in Europe and delivered nearly 30% growth in the quarter.
+      [FY2019-Q1 | Mike Mahoney | management | prepared] We're now in more than 200 accounts with SENTINEL, where usage rates exceed 60%, and we believe that protected TAVR is an emerging standard of care.
+      [FY2019-Q1 | Mike Mahoney | management | qa] Those represent a significant slice of the TAVR market.
+      [FY2019-Q1 | Mike Mahoney | management | qa] As we've talked about in the past, we have to win with the clinical benefits of our TAVR as a standalone platform with the safety and efficacy of it.
+      [FY2019-Q2 | Mike Mahoney | management | prepared] ACURATE TAVR valve [momentum] continued the second quarter with 30% growth and is now available in over 40 countries.
+  ladder: tier 0  20 excerpts (27 hits before cap; searched 4 q; capped 27 hits to 20)
+      first: [FY2019-Q1 | Mike Mahoney | management | prepared] matched=['lotu edge', 'launch', 'u s', 'lotu']  Growth in Q1 was led by strong structural heart results and mid-teens growth in complex PCI products, offset by softness in drug-eluting stents. We expect overa
+
+ci-ma-growth-10  (CI, goal; seed FY2019-Q3; clock FY2020-Q4; indexed 33 q, post-seed 27 q, window 6/6 indexed)
+  match: context=['customer growth', 'growth', '10%', '2020', 'customers', 'membership', 'members'] exclude=[] generic=True
+  'Medicare Advantage'                 120 hits    3.6/q  generic   norm='medicare advantage'  aliases=['medicareadvantage']
+      [FY2019-Q4 | David Cordani | management | prepared] In our government business, CMS's most recent Stars ratings position us to have 87% of our Medicare Advantage customers in four-star or higher plan...
+      [FY2019-Q4 | David Cordani | management | prepared] In integrated medical, we are on track for continued medical customer growth, highlighted by our government business, where we expect 13%-16% custo...
+      [FY2019-Q4 | David Cordani | management | prepared] These deep partnerships drive our growth, particularly in Medicare Advantage, where we focus on geographies where our commercial business already h...
+      [FY2019-Q4 | David Cordani | management | prepared] Approximately 25% of medical-eligible seniors live in geographies where our commercial business has deep ties to delivery systems, but where we hav...
+      [FY2019-Q4 | David Cordani | management | prepared] That provides a meaningful growth opportunity for our Medicare Advantage business that we have begun to capitalize in 2020 by accelerating our geog...
+  ladder: tier 0  20 excerpts (22 hits before cap; searched 6 q; generic overridden by catalog: True; capped 22 hits to 20)
+      first: [FY2019-Q4 | David Cordani | management | prepared] matched=['customer growth', 'growth', '2020', 'customer', 'medicare advantage']  In health services, we expect adjusted script growth in a range of 20% - 23% over our year-end 2019 levels. In integrated medical, we are on track for continued
+
+crm-20b-next-goal  (CRM, goal; seed FY2017-Q3; clock -; indexed 43 q, post-seed 38 q, window 0/0 indexed)
+  '$20 billion'                         45 hits    1.0/q  generic  (numeric)  norm='$20 billion'
+      [FY2018-Q1 | Keith Block | management | prepared] It's a key part of our strategy and achieving our goal of $20 billion of revenue.
+      [FY2018-Q1 | Raimo Lenschow | management | qa] Now that your eyes are kind of moving on towards the $20 billion, can you talk a little bit about the changes you need to think about in terms of o...
+      [FY2018-Q1 | Marc Benioff | management | qa] Specifically, as we start to look at eclipsing $10 billion and moving into much higher numbers going forward, of course, it's exciting to have that...
+      [FY2018-Q1 | Mark Hawkins | management | qa] But I think the thing, Marc, that strikes me and some other really -- rather Raimo, I really appreciate when you teed up that question about going ...
+      [FY2018-Q1 | Marc Benioff | management | qa] I think you'll continue to see that be amplified as we head towards $20 billion.
+  '20 billion'                          45 hits    1.0/q  generic  (numeric)  norm='$20 billion'
+      [FY2018-Q1 | Keith Block | management | prepared] It's a key part of our strategy and achieving our goal of $20 billion of revenue.
+      [FY2018-Q1 | Raimo Lenschow | management | qa] Now that your eyes are kind of moving on towards the $20 billion, can you talk a little bit about the changes you need to think about in terms of o...
+      [FY2018-Q1 | Marc Benioff | management | qa] Specifically, as we start to look at eclipsing $10 billion and moving into much higher numbers going forward, of course, it's exciting to have that...
+      [FY2018-Q1 | Mark Hawkins | management | qa] But I think the thing, Marc, that strikes me and some other really -- rather Raimo, I really appreciate when you teed up that question about going ...
+      [FY2018-Q1 | Marc Benioff | management | qa] I think you'll continue to see that be amplified as we head towards $20 billion.
+  ladder: tier 3  20 excerpts (23 hits before cap; searched 38 q; no clock: tiers 0-2 skipped; tier 3 resolved with tier 2 rule; capped 23 hits to 20)
+      first: [FY2018-Q2 | Marc Benioff | management | prepared] matched=['revenue', 'sight', '$20 billion']  And this incredible achievement is now coupled with an incredible dream. We now set our sights on $20 billion and doubling the Company again. And you can see to
+
+csco-luxtera-optics  (CSCO, promise; seed FY2019-Q2; clock -; indexed 0 q, post-seed 0 q, window 0/0 indexed)
+  match: context=['acquisition', 'closed', 'integration', '400G', 'optical'] exclude=[] generic=None
+  'Luxtera'                              0 hits    0.0/q  specific  norm='luxtera'
+  'silicon photonics'                    0 hits    0.0/q  specific  norm='silicon photonic'  aliases=['siliconphotonic']
+  'optics'                               0 hits    0.0/q  specific  norm='optic'
+  ladder: none  (searched 0 q; no clock: tiers 0-2 skipped; no post-seed indexed quarters; no excerpt at any free tier)
+
+ctsh-accelerate-acquisitions  (CTSH, promise; seed FY2016-Q4; clock FY2017-Q4; indexed 42 q, post-seed 38 q, window 6/6 indexed)
+  match: context=['announced', 'completed', 'closed', 'agreement', 'tuck-in', 'digital', 'capabilities', 'companies'] exclude=[] generic=True
+  'acquisition'                        299 hits    7.1/q  generic   norm='acquisition'
+      [FY2017-Q1 | Francisco D'Souza | management | prepared] Building on our acquisition of companies such as Idea Couture, Mirabeau, and Adaptra, we acquired Brilliant Service in Q1 to strengthen our digital...
+      [FY2017-Q1 | Francisco D'Souza | management | prepared] We continue to pursue tuck-in acquisitions to expand our intellectual capital, domain expertise, global reach, and our platform and technology capa...
+      [FY2017-Q1 | Rajeev Mehta | management | prepared] To do so, we're deploying repeatable industry-tailored solutions faster across our three practice areas, and we're further developing offerings thr...
+      [FY2017-Q1 | Rajeev Mehta | management | prepared] Integrating multiservice solutions and our expansion through targeted acquisitions contributed to our success in Europe.
+      [FY2017-Q1 | Rajeev Mehta | management | prepared] For example, clients view our recent acquisition of Mirabeau, a specialist in developing digital marketing and engaging customer experiences, as an...
+  'acquisitions'                       299 hits    7.1/q  generic   norm='acquisition'
+      [FY2017-Q1 | Francisco D'Souza | management | prepared] Building on our acquisition of companies such as Idea Couture, Mirabeau, and Adaptra, we acquired Brilliant Service in Q1 to strengthen our digital...
+      [FY2017-Q1 | Francisco D'Souza | management | prepared] We continue to pursue tuck-in acquisitions to expand our intellectual capital, domain expertise, global reach, and our platform and technology capa...
+      [FY2017-Q1 | Rajeev Mehta | management | prepared] To do so, we're deploying repeatable industry-tailored solutions faster across our three practice areas, and we're further developing offerings thr...
+      [FY2017-Q1 | Rajeev Mehta | management | prepared] Integrating multiservice solutions and our expansion through targeted acquisitions contributed to our success in Europe.
+      [FY2017-Q1 | Rajeev Mehta | management | prepared] For example, clients view our recent acquisition of Mirabeau, a specialist in developing digital marketing and engaging customer experiences, as an...
+  'acquired'                            35 hits    0.8/q  generic   norm='acquired'
+      [FY2017-Q1 | Francisco D'Souza | management | prepared] Building on our acquisition of companies such as Idea Couture, Mirabeau, and Adaptra, we acquired Brilliant Service in Q1 to strengthen our digital...
+      [FY2017-Q3 | Raj Mehta | management | prepared] And to further enhance our healthcare consulting expertise, we acquired Top Tier Consulting, a California based healthcare management consulting fi...
+      [FY2018-Q1 | Rajeev Mehta | management | qa] We're excited about the opportunity because, not only are we working for the company that may get acquired, but the acquiree as well too.
+      [FY2018-Q2 | Karen McLoughlin | management | qa] Really the only inorganic revenue in healthcare was Bolder, which we acquired in April.
+      [FY2018-Q3 | Francisco D'Souza | management | prepared] We acquired Advanced Technology Group, which provides customer and revenue management consulting and implementation services that are focused on th...
+  'acquire'                             16 hits    0.4/q  generic   norm='acquire'
+      [FY2017-Q2 | Francisco D'Souza | management | prepared] As part of our extended strategic relationship with Health Care Services Corporation, we announced an agreement in June to acquire TMG Health, a su...
+      [FY2017-Q2 | Rajeev Mehta | management | prepared] In response, Cognizant has developed a next-gen sales platform that enables businesses to acquire and retain more customers and sell more product.
+      [FY2019-Q3 | Brian Humphries | management | prepared] A vast array of sensors and industrial IoT devices and solutions will proliferate across businesses, cities, and environments of all kinds, signifi...
+      [FY2019-Q3 | Brian Humphries | management | qa] That is a term to address how you think about sales segmentation in the purest form, how you tier customers, Tier 1, 2 and 3 based not just on what...
+      [FY2019-Q4 | Brian Humphries | management | prepared] This week, we announced two acquisitions focused on expanding our cloud capabilities.On Monday, we announced the acquisition of Code Zero Consultin...
+  ladder: tier 0  20 excerpts (29 hits before cap; searched 6 q; generic overridden by catalog: True; capped 29 hits to 20)
+      first: [FY2017-Q2 | Francisco D'Souza | management | prepared] matched=['announced', 'agreement', 'digital', 'acquisition', 'acquire']  Turning to Cognizant Digital Operations, our team is drawing on deep process and technology knowledge to help clients reengineer, digitize, manage, and operate 
+
+dhr-phenomenex-return  (DHR, promise; seed FY2016-Q3; clock FY2021-Q3; indexed 43 q, post-seed 39 q, window 6/6 indexed)
+  match: context=['return', 'returns', 'growth', 'consumables', 'SCIEX', 'acquisition', 'integration'] exclude=[] generic=None
+  'Phenomenex'                          18 hits    0.4/q  specific  norm='phenomenex'
+      [FY2016-Q4 | Tom Joyce | management | prepared] From an M&A perspective in 2016, we closed eight acquisitions across all five platforms for nearly $5 billion, including our two largest deals, Cep...
+      [FY2016-Q4 | Tom Joyce | management | prepared] During the fourth quarter, we successfully closed the acquisition of Phenomenex, a leading player in chromatography consumables that operates in an...
+      [FY2016-Q4 | Tom Joyce | management | prepared] Phenomenex is off to a great start.
+      [FY2016-Q4 | Tom Joyce | management | prepared] We also executed on a number of strategically significant acquisitions during the year, including Cepheid and Phenomenex.
+      [FY2017-Q3 | Thomas P. Joyce | management | prepared] Looking ahead, we're encouraged by a number of strong growth drivers across the businesses, and we'll benefit from recent acquisitions like Cepheid...
+  ladder: tier 0  6 excerpts (6 hits before cap; searched 6 q)
+      first: [FY2016-Q4 | Tom Joyce | management | prepared] matched=['phenomenex']  With the addition of our recent acquisitions and other portfolio moves, our total annual revenues are now nearly $17 billion. From an M&A perspective in 2016, w
+
+elv-pos-rebates-2020  (ELV, promise; seed FY2019-Q1; clock FY2020-Q1; indexed 34 q, post-seed 29 q, window 6/6 indexed)
+  match: context=['pharmacy', 'commercial', 'Medicare', 'pass through', '2020', 'members', 'IngenioRx'] exclude=[] generic=None
+  'point-of-sale rebates'                2 hits    0.1/q  specific  norm='pointofsale rebate'  aliases=['pointofsalerebate']
+      [FY2019-Q1 | Gail Boudreaux | management | prepared] In 2020, we will move to providing point-of-sale rebates in our commercial risk-based business, we are prepared to do the same in our Medicare busi...
+      [FY2019-Q1 | Gail Boudreaux | management | qa] We're fully prepared to offer point-of-sale rebates, but again, we want to be aligned to what customers want.
+  'point of sale'                        1 hits    0.0/q  specific  norm='point of sale'
+      [FY2020-Q4 | Felicia Norwood | management | qa] Care Guide provides our members with a new simplified orientation journey that begins at the point of sale and reduces member touch points to ensur...
+  'rebates'                             24 hits    0.7/q  specific  norm='rebate'
+      [FY2019-Q3 | John Gallina | management | qa] The way that the MLR rebate rules work is they're based on a three-year rolling average.
+      [FY2019-Q3 | John Gallina | management | qa] The 2017 and 2018 and 2019 rebates would have had the prior information in them with when we were much larger.
+      [FY2019-Q4 | John Gallina | management | qa] In the extent that we're close to an MLR rebate, we obviously would include it all into the pricing.
+      [FY2019-Q4 | John Gallina | management | qa] To answer your side question on individual normalization, given the way the MLR rebate rules work and the three-year averaging associated with the ...
+      [FY2020-Q1 | John Gallina | management | qa] First of all, in terms of some of the MLR rebates, as you know, in our individual line of business, we have earned above target margins in both 201...
+  ladder: tier 0  5 excerpts (5 hits before cap; searched 6 q)
+      first: [FY2019-Q3 | John Gallina | management | qa] matched=['rebate']  You get into 2020. The way that the MLR rebate rules work is they're based on a three-year rolling average. The 2017 and 2018 and 2019 rebates would have had th
+
+gild-zuma2-file  (GILD, promise; seed FY2019-Q1; clock FY2019-Q4; indexed 34 q, post-seed 29 q, window 5/5 indexed)
+  match: context=['top-line', 'topline', 'results', 'file', 'filing', 'submission', 'approval', 'BLA'] exclude=[] generic=None
+  'ZUMA-2'                               1 hits    0.0/q  generic  (numeric)  norm='zuma2'
+      [FY2019-Q1 | John McHutchison | management | prepared] I'm also pleased to share that we plan to announce top-line results of ZUMA-2, a registrational trial of KTE-X19 cell therapy in patients with rela...
+  'KTE-X19'                             12 hits    0.4/q  generic  (numeric)  norm='ktex19'
+      [FY2019-Q3 | Daniel O'Day | management | prepared] The teams down at Kite are busy preparing for the American Society of Hematology meeting, which will happen in early December, where in addition to...
+      [FY2019-Q3 | Daniel O'Day | management | qa] I would point out the ASH data coming up will have three key events there, the survival data at three years in relapsed/refractory DLBCL, early ste...
+      [FY2019-Q3 | Daniel O'Day | management | qa] The KTE-X19 is now a second product for MCL, and we look forward to presenting that data as well.
+      [FY2019-Q4 | Daniel O'Day | management | prepared] To that end, our second cell therapy treatment, KTE-X19, is now under review in the U.S. and Europe as a treatment for relapse-refractory mantle ce...
+      [FY2020-Q1 | Daniel O'Day | management | prepared] In cell therapy, the FDA accepted Kite BLA for KTE-X19 as a treatment for relapsed and refractory mantle cell lymphoma during the first quarter and...
+  'mantle cell lymphoma'                18 hits    0.5/q  specific  norm='mantle cell lymphoma'
+      [FY2019-Q3 | Daniel O'Day | management | prepared] The teams down at Kite are busy preparing for the American Society of Hematology meeting, which will happen in early December, where in addition to...
+      [FY2019-Q4 | Daniel O'Day | management | prepared] To that end, our second cell therapy treatment, KTE-X19, is now under review in the U.S. and Europe as a treatment for relapse-refractory mantle ce...
+      [FY2020-Q1 | Daniel O'Day | management | prepared] In cell therapy, the FDA accepted Kite BLA for KTE-X19 as a treatment for relapsed and refractory mantle cell lymphoma during the first quarter and...
+      [FY2020-Q1 | Daniel O'Day | management | prepared] Patients with relapsed refractory mantle cell lymphoma, a rare form of non-Hodgkin's lymphoma, are in need of new therapies.
+      [FY2020-Q2 | Christi Shaw | management | qa] We're so pleased about being the first company to be able to deliver for mantle cell lymphoma patients this Tecartus that has a curative intent.
+  'Tecartus'                            52 hits    1.5/q  specific  norm='tecartu'
+      [FY2020-Q2 | Merdad Parsey | management | prepared] In cell therapy, we all congratulate Christi and our colleagues at Kite for the recent approval of Tecartus for relapsed/refractory MCL.
+      [FY2020-Q2 | Christi Shaw | management | qa] We're so pleased about being the first company to be able to deliver for mantle cell lymphoma patients this Tecartus that has a curative intent.
+      [FY2020-Q3 | Daniel O'Day | management | prepared] In cell therapy, we're now the only company with two FDA-approved therapies, Yescarta and Tecartus from Kite.
+      [FY2020-Q4 | Daniel O'Day | management | prepared] This portfolio consists of both marketed therapies such as TRODELVY and TECARTUS and YESCARTA from Kite, and programs across various stages of the ...
+      [FY2020-Q4 | Andrew Dickinson | management | prepared] Cell therapy revenues were up 34% for the fourth quarter and 33% for the year, primarily due to the continued uptake of YESCARTA in Europe and the ...
+  ladder: tier 0  7 excerpts (7 hits before cap; searched 5 q)
+      first: [FY2019-Q3 | Daniel O'Day | management | prepared] matched=['result', 'ktex19', 'mantle cell lymphoma']  Turning to cell therapy, I would like to say a few words about Kite and our work in cell therapy. The teams down at Kite are busy preparing for the American Soc
+
+ibm-promontory-watson  (IBM, promise; seed FY2016-Q3; clock -; indexed 42 q, post-seed 39 q, window 0/0 indexed)
+  'Promontory'                          12 hits    0.3/q  specific  norm='promontory'
+      [FY2016-Q4 | Unknown Speaker | unknown | prepared] In the fourth quarter, we acquired Promontory, a leader in regulatory compliance and risk management consulting.
+      [FY2016-Q4 | Unknown Speaker | unknown | prepared] We acquired Promontory because you can’t help banks navigate regulatory environments by scraping the web or automating keystrokes.
+      [FY2016-Q4 | Unknown Speaker | unknown | prepared] The acquisitions added to our capabilities in cognitive and analytics, cloud and security, and significant transactions included The Weather Compan...
+      [FY2016-Q4 | Unknown Speaker | unknown | prepared] We’re amassing a unique set of assets to build our cognitive solutions and cloud platforms, like the digital assets of The Weather Company, healthc...
+      [FY2016-Q4 | Unknown Speaker | unknown | qa] And as we announced at the end of last year at Watson Financial Services, we will now embed the regulatory expertise of Promontory into Watson, so ...
+  'Watson'                             244 hits    5.8/q  generic   norm='watson'
+      [FY2016-Q4 | Unknown Speaker | unknown | prepared] Importantly, we’ve designed Watson on the IBM Cloud to allow our clients to retain control of their data and their insights, rather than using clie...
+      [FY2016-Q4 | Unknown Speaker | unknown | prepared] And we’re using our tremendous industry expertise to build vertical solutions and train Watson on specific industry domains.
+      [FY2016-Q4 | Unknown Speaker | unknown | prepared] So in this new phase, data and the business model around data matters, industry matters and time matters and that’s why Watson is the AI platform f...
+      [FY2016-Q4 | Unknown Speaker | unknown | prepared] Watson Health provides cognitive insights on our enterprise-grade Watson Health Cloud, and leverages broad datasets that we own, including 100 mill...
+      [FY2016-Q4 | Unknown Speaker | unknown | prepared] We now have 7,000 Watson Health employees, including doctors, nurses, health policy experts and 1,000 data scientists.
+  ladder: tier 3  7 excerpts (7 hits before cap; searched 39 q; no clock: tiers 0-2 skipped; tier 3 resolved with tier 0 rule)
+      first: [FY2016-Q4 | Unknown Speaker | unknown | prepared] matched=['promontory']  In the fourth quarter, we acquired Promontory, a leader in regulatory compliance and risk management consulting. We acquired Promontory because you can’t help b
+
+intu-turbotax-diy-growth  (INTU, goal; seed FY2018-Q4; clock -; indexed 43 q, post-seed 31 q, window 0/0 indexed)
+  match: context=['units', 'growth', 'DIY', 'category', 'share', 'tax season', 'customers'] exclude=[] generic=None
+  'TurboTax'                           851 hits   19.8/q  generic   norm='turbotax'
+      [FY2019-Q1 | Brad Smith | management | prepared] Our strategy remains focused on expanding our lead into do-it-yourself tax category while transforming the assisted tax segment with TurboTax Live.
+      [FY2019-Q1 | Brad Smith | management | prepared] TurboTax Live eliminates the traditional trade-off between the do it yourself solution or one-on-one advice from a pro.
+      [FY2019-Q1 | Brad Smith | management | prepared] Finally, we're providing additional ways for TurboTax users to access a TurboTax Live expert through their tax prep experience including the abilit...
+      [FY2019-Q1 | Brad Smith | management | prepared] Beyond these customer facing innovations, we've made several enhancements to the experience for the tax pros on the TurboTax Live platform as well.
+      [FY2019-Q1 | Brad Smith | management | prepared] While the new legislation increases the number of people who will qualify for the standard deduction which introduces some trade down risk down ris...
+  ladder: tier 3  20 excerpts (384 hits before cap; searched 31 q; no clock: tiers 0-2 skipped; tier 3 resolved with tier 0 rule; capped 384 hits to 20)
+      first: [FY2026-Q2 | Sasan Goodarzi | management | prepared] matched=['growth', 'turbotax']  Our strategy is to win as an all-in-one AI-driven expert platform in service of building credit to wealth year-round. While overall IRS returns were down more t
+
+isrg-davinci-x  (ISRG, promise; seed FY2017-Q1; clock FY2017-Q4; indexed 43 q, post-seed 37 q, window 5/5 indexed)
+  'da Vinci X'                          54 hits    1.3/q  specific  norm='da vinci x'
+      [FY2017-Q2 | Gary Guthart | management | prepared] System placements in Europe grew moderately, aided in part by the launch of da Vinci X. In Asia, the placements grew slightly over the prior year p...
+      [FY2017-Q2 | Gary Guthart | management | prepared] In the quarter, we received our CE mark and 510 clearance for da Vinci X, our system that brings core Xi technology into a highly capable, lower en...
+      [FY2017-Q2 | Gary Guthart | management | prepared] We're pleased with the early reception of da Vinci X by our customers and the choice it brings to those around the world who seek to build robot-as...
+      [FY2017-Q2 | Marshall Mohr | management | prepared] We launched the da Vinci X system during the second quarter in the U.S. and European countries covered by CE mark.
+      [FY2017-Q2 | Marshall Mohr | management | prepared] In conjunction with the launch, we offered certain customers who purchased systems in the first quarter the opportunity to upgrade or trade out the...
+  ladder: tier 0  20 excerpts (20 hits before cap; searched 5 q)
+      first: [FY2017-Q2 | Gary Guthart | management | prepared] matched=['da vinci x']  In the United States, placements rebounded from a softer Q1 to a strong Q2, anchored in repeat purchases by existing customers and multi-system placements. Syst
+
+jnj-guselkumab-file  (JNJ, promise; seed FY2016-Q3; clock FY2016-Q4; indexed 43 q, post-seed 39 q, window 3/3 indexed)
+  match: context=['filed', 'filing', 'submission', 'submitted', 'FDA', 'approval', 'psoriasis'] exclude=[] generic=None
+  'guselkumab'                          21 hits    0.5/q  specific  norm='guselkumab'
+      [FY2016-Q4 | Alex Gorsky | management | prepared] For 2017, we expect our key catalyst for growth will include continued strong performance of the in-line products, increasing penetration in market...
+      [FY2016-Q4 | Alex Gorsky | management | qa] If you think about the potential products that we have, guselkumab, sirukumab in the near term, you compound that with new information that we're c...
+      [FY2017-Q2 | Dominic Caruso | management | qa] Obviously, the entire immunology portfolio now is bolstered by the earlier launch of guselkumab or TREMFYA, and that's exciting and able to propel ...
+      [FY2022-Q2 | Joaquin Duato | management | qa] Guselkumab with golimumab that show best-in-class results and best-in-class data, and we are very pleased with that.
+      [FY2023-Q3 | Joaquin Duato | management | qa] And also we have the combination of guselkumab and golimumab in IBD, which has presented also groundbreaking results.
+  'Tremfya'                            272 hits    6.3/q  generic   norm='tremfya'
+      [FY2017-Q2 | Alex Gorsky | management | prepared] With the early approval of TREMFYA, as we've just announced last week, and the anticipated regulatory approval for sirukumab later this year, we lo...
+      [FY2017-Q2 | Dominic Caruso | management | prepared] We expect that the positive factors of the earlier launch of TREMFYA and a more moderate erosion of the U.S. REMICADE business versus original proj...
+      [FY2017-Q2 | Alex Gorsky | management | qa] Then when you really look at the strong data that we have, and by the way, we're really excited with the recent approval just last week of TREMFYA ...
+      [FY2017-Q2 | Alex Gorsky | management | qa] If we look at the data with TREMFYA, particularly competitively, what we have versus HUMIRA, we think that represents a very significant opportunit...
+      [FY2017-Q2 | Alex Gorsky | management | qa] When you compound that with the launch of TREMFYA in our immunology group, and the lapping of some of the earlier PPAs that we were talking about, ...
+  ladder: tier 0  6 excerpts (6 hits before cap; searched 3 q)
+      first: [FY2016-Q4 | Alex Gorsky | management | prepared] matched=['guselkumab']  We will do this by focusing on our five therapeutic areas of high unmet medical need, our robust innovation engine, and strong commercial capabilities. For 2017
+
+lly-dividend-december  (LLY, promise; seed FY2016-Q2; clock FY2016-Q4; indexed 43 q, post-seed 40 q, window 4/4 indexed)
+  match: context=['increase', 'increased', 'raise', 'raised', '15%', 'December', 'board', 'annual', 'quarterly'] exclude=[] generic=True
+  'dividend'                           110 hits    2.6/q  generic   norm='dividend'
+      [FY2016-Q3 | John Lechleiter | management | prepared] Finally, during the quarter, we returned over $500 million to shareholders through our dividend.
+      [FY2016-Q3 | John Lechleiter | management | prepared] We distributed over $500 million to shareholders via our dividend.
+      [FY2016-Q3 | John Lechleiter | management | prepared] As we announced on our second quarter earnings call, we do expect to provide annual increases in our dividend and will continue to balance share re...
+      [FY2016-Q3 | Derica Rice | management | prepared] Providing annual dividend increases to our shareholders.
+      [FY2016-Q4 | Dave Ricks | management | prepared] We announced an increase of 2% in our quarterly dividend, and we repurchased $300 million of stock.
+  ladder: tier 0  5 excerpts (5 hits before cap; searched 4 q; generic overridden by catalog: True)
+      first: [FY2016-Q3 | John Lechleiter | management | prepared] matched=['increase', 'annual', 'dividend']  As a reminder, the method of use patents expire in 2023, while the compound patent expires in April of 2017, and we are entitled to pediatric exclusivity until 
+
+lrcx-klx-approvals-mid2016  (LRCX, promise; seed FY2016-Q2; clock FY2016-Q4; indexed 44 q, post-seed 42 q, window 4/4 indexed)
+  match: context=['China', 'MOFCOM', 'close', 'closing', 'terminate', 'terminated', 'DOJ', 'regulators', 'transaction'] exclude=[] generic=None
+  'KLA'                                 28 hits    0.6/q  specific  norm='kla'
+      [FY2016-Q4 | Doug Bettinger | management | qa] As it pertains to funding the transaction, we have all the domestic cash that we need to complete the KLA 10-Q transaction.
+      [FY2016-Q4 | Martin Anstice | management | qa] We're not obviously in a position to speak to KLA's business.
+      [FY2016-Q4 | Martin Anstice | management | qa] From the seat that we have with limited knowledge of the details, the latest generation optical inspection capabilities that KLA has brought to the...
+      [FY2017-Q1 | Martin Anstice | management | qa] The long-term model also said there was a range of EPS targeted between $6 and $6.75 on, by the way, a lower share count, because when we put the m...
+      [FY2016-Q1 | Martin Anstice | management | prepared] On a pro forma basis, KLA shareholders will own approximately 32% of the combined company.
+  'KLA-Tencor'                          33 hits    0.8/q  specific  norm='klatencor'
+      [FY2016-Q3 | Martin Anstice | management | prepared] Prior to turning the call over to Doug, I will conclude my prepared remarks with a status update on our planned business combination with KLA-Tencor.
+      [FY2016-Q3 | Martin Anstice | management | prepared] Standalone and combined with KLA-Tencor, we model robust and predictable cash generation supplemented by growth outperformance and over time, more ...
+      [FY2016-Q3 | Martin Anstice | management | prepared] Certainly, that is our conviction and thinking, both as a standalone process company and combined with KLA-Tencor.
+      [FY2016-Q3 | Martin Anstice | management | prepared] Now, I will conclude with some comments on the planned combination of Lam Research with KLA-Tencor.
+      [FY2016-Q3 | Douglas Bettinger | management | prepared] We did not repurchase any shares in the open market in the March quarter, consistent with our stated plans ahead of closing the proposed KLA-Tencor...
+  'approval'                            11 hits    0.2/q  specific  norm='approval'
+      [FY2016-Q3 | Martin Anstice | management | prepared] In recent weeks, we received approval from both KT and Lam stockholders and have received regulatory approvals in Israel, Taiwan, and Ireland.
+      [FY2016-Q3 | Martin Anstice | management | qa] I think the important message is we're still confident of achieving approval for this transaction mid-year.
+      [FY2016-Q4 | Martin Anstice | management | prepared] We continue to work diligently to receive the necessary approvals, and now target completion of our merger in the coming few months.
+      [FY2021-Q1 | Doug Bettinger | management | qa] The status of the license approval is uncertain.
+      [FY2021-Q4 | Tim Archer | management | qa] We will say we've seen the approval of a few licenses for spares and upgrades for mature technology nodes.
+  'regulatory approval'                  2 hits    0.0/q  specific  norm='regulatory approval'  aliases=['regulatoryapproval']
+      [FY2016-Q3 | Martin Anstice | management | prepared] In recent weeks, we received approval from both KT and Lam stockholders and have received regulatory approvals in Israel, Taiwan, and Ireland.
+      [FY2016-Q1 | Douglas Bettinger | management | prepared] The transaction is subject to customary regulatory approvals and the approval of both Lam and KLA shareholders.
+  'merger'                              12 hits    0.3/q  specific  norm='merger'
+      [FY2016-Q4 | Martin Anstice | management | prepared] Now turning to a Lam and KLA-Tencor merger update.
+      [FY2016-Q4 | Martin Anstice | management | prepared] We continue to work diligently to receive the necessary approvals, and now target completion of our merger in the coming few months.
+      [FY2018-Q2 | Martin Anstice | management | prepared] In 2017, our reported shipments were approximately 21% of WFE versus 18.5% in the prior year and that compares with 14.2% in the first full-year af...
+      [FY2019-Q2 | Tim Archer | management | prepared] Most recently, I has been charged with driving company-wide business results as the CEO of Lam since the time of the merger with Novellus.
+      [FY2025-Q3 | Tim Archer | management | prepared] Gross margin percentage was also a record for the company since the Novellus merger, as the investments we have made over the past several years in...
+  ladder: tier 0  17 excerpts (17 hits before cap; searched 4 q)
+      first: [FY2016-Q3 | Martin Anstice | management | prepared] matched=['klatencor']  This afternoon I will share highlights from the March quarter, provide some perspective on how we're performing relative to our growth objectives, and share com
+
+mdt-aspiration-25  (MDT, goal; seed FY2019-Q4; clock FY2020-Q4; indexed 36 q, post-seed 28 q, window 6/6 indexed)
+  match: context=['share', 'market share', 'segment', 'stroke', 'React', 'fiscal year', 'penetration'] exclude=[] generic=None
+  'aspiration'                          14 hits    0.4/q  specific  norm='aspiration'
+      [FY2020-Q2 | Omar Ishrak | management | prepared] Our ischemic stroke business grew in the high 20s on strong adoption of our Solitaire X Stent Retriever, Riptide Aspiration System, and React cathe...
+      [FY2020-Q2 | Geoff Martha | management | qa] We recently launched the new Stentriever in the ischemic space, and then on top of the new aspiration system with our two catheters.
+      [FY2020-Q3 | Omar Ishrak | management | prepared] In Brain Therapies, our market-leading neurovascular business had another strong quarter, with mid-teens growth driven by mid-20s growth in ischemi...
+      [FY2021-Q2 | Geoff Martha | management | qa] In neurovascular, we had a good quarter in aspiration, coils, and access, resulting in overall growth for our neurovascular business.
+      [FY2021-Q3 | Geoff Martha | management | qa] In neurovascular, while we held share year-over-year with strong growth in aspirations and coils, we lost a bit of share sequentially.
+  '25%'                                 21 hits    0.6/q  generic  (numeric)  norm='25%'
+      [FY2020-Q2 | Omar Ishrak | management | prepared] Despite these areas of pressure on CVG growth, we're seeing strong performance in other CVG businesses, including pacing and TAVR, which combined r...
+      [FY2020-Q2 | Karen Parkhill | management | prepared] We now expect our third quarter adjusted nominal tax rate to be in the range of 15%-15.25%, and an annual range of 15%-15.5%.
+      [FY2020-Q3 | Karen Parkhill | management | prepared] By group, we expect CVG to grow 4.25%-4.5%, MITG, 6.25%-6.5%, RTG approximately 4% organic, and diabetes to be flat to down low single digits.
+      [FY2020-Q4 | Geoff Martha | management | prepared] Our revenue has declined 25%, both constant currency and organic.
+      [FY2020-Q4 | Karen Parkhill | management | prepared] As Geoff mentioned, our fourth quarter organic revenue declined 25% and adjusted EPS was $0.58, a decline of 62%.
+  ladder: tier 0  6 excerpts (6 hits before cap; searched 6 q)
+      first: [FY2020-Q2 | Omar Ishrak | management | prepared] matched=['aspiration']  In Brain Therapies, our market-leading neurovascular business also had a very strong quarter with high-teens growth reflecting strength in both ischemic and hem
+
+mrk-dividend-15  (MRK, promise; seed FY2018-Q3; clock FY2019-Q1; indexed 34 q, post-seed 31 q, window 4/4 indexed)
+  match: context=['increase', 'increased', '15%', '$0.55', 'quarterly', 'first quarter', 'raised'] exclude=[] generic=True
+  'dividend'                            52 hits    1.5/q  generic   norm='dividend'
+      [FY2018-Q4 | Rob Davis | management | prepared] We achieved meaningful top and bottom line growth, and we also executed important business development transactions, initiated an expanded capital ...
+      [FY2019-Q3 | Robert M. Davis | management | qa] Beyond that, we are still very committed to our dividend, but as you look at the excess cash flow beyond that, our goal continues to be to invest i...
+      [FY2019-Q4 | Ken Frazier | management | prepared] Our commitment to maintaining and growing the Merck dividend is evidence of the confidence we have in the long-term prospects for our business.
+      [FY2019-Q4 | Rob Davis | management | prepared] The transaction is expected to result in $8 billion-$9 billion of proceeds from a special tax-free dividend from NewCo.
+      [FY2019-Q4 | Rob Davis | management | prepared] Merck's dividend will be unaffected by this transaction, and we anticipate future dividend increases from the current 2020 dividend of $2.44 per sh...
+  '$0.55'                                1 hits    0.0/q  generic  (numeric)  norm='$0.55'
+      [FY2018-Q3 | Robert M. Davis | management | prepared] Today, we announce that we will increase our quarterly dividend by 15%, or by $0.07 to $0.55 per share, beginning in the first quarter of 2019.
+  ladder: tier 0  1 excerpts (1 hits before cap; searched 4 q; generic overridden by catalog: True)
+      first: [FY2018-Q4 | Rob Davis | management | prepared] matched=['increase', 'increased', 'dividend']  Our results in 2018 reflect strong execution across our key growth pillars, focused investment in our pipeline, and disciplined expense management. We achieved 
+
+msft-build-analyst-briefing  (MSFT, promise; seed FY2017-Q2; clock FY2017-Q4; indexed 44 q, post-seed 38 q, window 4/4 indexed)
+  match: context=['May', 'Seattle', 'investor community', 'developer conference', 'May 10th', 'hosted'] exclude=['build out', 'build on', 'build upon', 'building', 'built', 'not build'] generic=None
+  'BUILD'                              336 hits    7.6/q  generic   norm='build'
+      [FY2017-Q3 | Satya Nadella | management | prepared] We will share more about all these advances and more at our upcoming Build Developer Conference.
+      [FY2017-Q3 | Amy Hood | management | prepared] Our education event on May 2nd, our Dynamics 365 event on May 3rd, and the upcoming keynotes from Build to learn more about our ambitious plans lea...
+      [FY2017-Q3 | Satya Nadella | management | qa] When you look at what we're trying to get done between Azure, we don't really see these seams across Azure, O 365, Dynamics 365, and also the thing...
+      [FY2017-Q3 | Amy Hood | management | qa] All that does is build more confidence that both we've picked a good market and we're investing in the right type of people to make sure we land th...
+      [FY2017-Q4 | Satya Nadella | management | prepared] Every customer I talk to is looking for both innovative technology to drive new growth, as well as a strategic partner who can help build their own...
+  'Build conference'                     3 hits    0.1/q  specific  norm='build conference'  aliases=['buildconference']
+      [FY2019-Q3 | Unknown Speaker | unknown | prepared] And I’m excited to share more about how we are empowering developers at our Build conference in two weeks.
+      [FY2023-Q3 | Unknown Speaker | unknown | prepared] In a few weeks times, we'll hold our Build conference, and we will share how we are building the most powerful AI platform for developers and I enc...
+      [FY2025-Q3 | Satya Nadella | management | prepared] In just a few weeks, at our Build conference, we will share how we’re creating the most powerful AI platform for developers—and I encourage you to ...
+  'analyst briefing'                     5 hits    0.1/q  specific  norm='analyst briefing'  aliases=['analystbriefing']
+      [FY2017-Q3 | Amy Hood | management | prepared] We will also host our financial analyst briefing on May 10th.
+      [FY2017-Q3 | Amy Hood | management | qa] To your specific question, Heather, on FY 2018 and OpEx, I did not, because we're gonna see each other and have more time on May 10th, at the analy...
+      [FY2017-Q4 | Amy Hood | management | prepared] The key trends for FY 2018 from the financial analyst briefing remain largely unchanged.
+      [FY2021-Q1 | Unknown Speaker | unknown | qa] And if I go back to the financial analyst briefing back in 2017, that was 50%.
+      [FY2017-Q2 | Unknown Speaker | unknown | prepared] Before moving to Q&A, I'd like to announce that we will hold a financial analyst briefing for the investor community in conjunction with our BUILD ...
+  'financial analyst briefing'           4 hits    0.1/q  specific  norm='financial analyst briefing'
+      [FY2017-Q3 | Amy Hood | management | prepared] We will also host our financial analyst briefing on May 10th.
+      [FY2017-Q4 | Amy Hood | management | prepared] The key trends for FY 2018 from the financial analyst briefing remain largely unchanged.
+      [FY2021-Q1 | Unknown Speaker | unknown | qa] And if I go back to the financial analyst briefing back in 2017, that was 50%.
+      [FY2017-Q2 | Unknown Speaker | unknown | prepared] Before moving to Q&A, I'd like to announce that we will hold a financial analyst briefing for the investor community in conjunction with our BUILD ...
+  'analyst day'                          1 hits    0.0/q  specific  norm='analyst day'  aliases=['analystday']
+      [FY2018-Q3 | Unknown Speaker | unknown | qa] Amy, when I go back to the Analyst Day you had almost a year ago, I left thinking that your messaging was really that you were going to press on re...
+  'analyst meeting'                      0 hits    0.0/q  specific  norm='analyst meeting'  aliases=['analystmeeting']
+  'financial analyst meeting'            0 hits    0.0/q  specific  norm='financial analyst meeting'
+  'investor briefing'                    0 hits    0.0/q  specific  norm='investor briefing'  aliases=['investorbriefing']
+  ladder: tier 0  4 excerpts (4 hits before cap; searched 4 q)
+      first: [FY2017-Q3 | Satya Nadella | management | prepared] matched=['developer conference', 'build']  It runs on Windows and Linux, supports Docker container deployment, and popular programming languages such as R and Python for machine learning and data science
+
+mu-s600-seagate  (MU, promise; seed FY2016-Q2; clock FY2016-Q3; indexed 42 q, post-seed 40 q, window 3/3 indexed)
+  match: context=['ship', 'shipping', 'shipped', 'revenue', 'qualification', 'partnership', 'drive'] exclude=[] generic=None
+  'S600'                                 2 hits    0.0/q  generic  (numeric)  norm='s600'
+      [FY2016-Q1 | Mark Adams | management | prepared] We began sampling our new S600 Series of SaaS-based SSDs in fiscal Q1, having qualified these drives with OEM customers and engaging in qualificati...
+      [FY2016-Q2 | Ernie Maddock | management | prepared] In our Enterprise SSD segment, we’re starting to ship our S600 Series SaaS drive Micron’s first product produced through our strategic partnership ...
+  'Seagate'                              3 hits    0.1/q  specific  norm='seagate'
+      [FY2016-Q1 | Mark Adams | management | prepared] This SSD series is the first product family developed as part of Micron's strategic agreement with Seagate combining flash innovation and SaaS expe...
+      [FY2016-Q1 | Mark Durcan | management | qa] The 3 areas of investment we’re driving today are continued focus on enterprise-level controller and firmware, obviously driving the Seagate produc...
+      [FY2016-Q2 | Ernie Maddock | management | prepared] In our Enterprise SSD segment, we’re starting to ship our S600 Series SaaS drive Micron’s first product produced through our strategic partnership ...
+  'enterprise SSD'                      13 hits    0.3/q  specific  norm='enterprise ssd'  aliases=['enterprisessd']
+      [FY2016-Q4 | Ernie Maddock | management | prepared] In the enterprise SSD segments, consecutive quarter bits sold were up 45%, based on higher sales of our planar MLC-based cloud drive.
+      [FY2017-Q3 | Sanjay Mehrotra | management | prepared] Sales to cloud and enterprise SSD customers grew appreciably on a combined basis and exceeded revenue from client customers for the first time.
+      [FY2020-Q4 | Harlan Sur | management | qa] On your Enterprise SSD business, it’s been obviously a big contributor to the value-added mix shift.
+      [FY2020-Q4 | Sanjay Mehrotra | management | qa] So, certainly, our SATA leadership has helped us in the Enterprise Data Center market and SATA still is a meaningful portion of the Enterprise SSD ...
+      [FY2024-Q3 | Harlan Sur | management | qa] The team has driven significant share gains in enterprise SSD just over the past few quarters.
+  'SAS SSD'                              0 hits    0.0/q  specific  norm='sas ssd'  aliases=['sasssd']
+  ladder: tier 0  1 excerpts (1 hits before cap; searched 3 q)
+      first: [FY2016-Q4 | Ernie Maddock | management | prepared] matched=['enterprise ssd']  During the quarter, we entered production and OEM qualification of TLC 3D NAND-based SSDs in the client and consumer segments, providing customers with a refres
+
+opal-analyst-day-q3  (OPAL, promise; seed FY2024-Q4; clock FY2025-Q3; indexed 12 q, post-seed 5 q, window 5/5 indexed)
+  match: context=['host', 'hosted', 'third quarter', 'Q3', 'date', 'September', 'October'] exclude=[] generic=None
+  'analyst day'                          0 hits    0.0/q  specific  norm='analyst day'  aliases=['analystday']
+  'investor day'                         2 hits    0.2/q  specific  norm='investor day'  aliases=['investorday']
+      [FY2025-Q2 | Kazi Hasan | management | prepared] We are planning an investor day and engage with the investor community later this year.
+      [FY2024-Q4 | Kazi Hasan | management | prepared] We will be scheduling an Investor Day later in the year, and we'll reach out soon.
+  'analyst meeting'                      0 hits    0.0/q  specific  norm='analyst meeting'  aliases=['analystmeeting']
+  'investor meeting'                     0 hits    0.0/q  specific  norm='investor meeting'  aliases=['investormeeting']
+  'investor event'                       0 hits    0.0/q  specific  norm='investor event'  aliases=['investorevent']
+  'analyst event'                        0 hits    0.0/q  specific  norm='analyst event'  aliases=['analystevent']
+  ladder: tier 0  1 excerpts (1 hits before cap; searched 5 q)
+      first: [FY2025-Q2 | Kazi Hasan | management | prepared] matched=['investor day']  As Adam mentioned, in spite of lower RIN prices, we continue to expect adjusted EBITDA to be within the range of our guidance. We are planning an investor day a
+
+orcl-2b-cloud-sales  (ORCL, promise; seed FY2017-Q2; clock FY2017-Q4; indexed 44 q, post-seed 38 q, window 4/4 indexed)
+  match: context=['book', 'booked', 'salesforce', 'this year', 'fiscal year', 'cloud'] exclude=[] generic=None
+  'cloud sales'                          4 hits    0.1/q  specific  norm='cloud sale'  aliases=['cloudsale']
+      [FY2022-Q3 | Lawrence Ellison | management | prepared] Q3 was an exceptionally strong quarter for ERP cloud sales.
+      [FY2016-Q3 | Safra Catz | management | prepared] Now the non-cloud CapEx was dominated by real estate lead by the Austin, Texas campus, we are building to support our cloud sales organization as w...
+      [FY2017-Q1 | Mark Hurd | management | qa] So, as we have more balance between our international cloud sales and our U.S. cloud sales, the tax rate should drift back to where it normally is,...
+      [FY2017-Q2 | Larry Ellison | management | qa] We will book more than $2 billion in annual cloud sales this year, much more than salesforce.com.
+  'annual cloud sales'                   1 hits    0.0/q  specific  norm='annual cloud sale'
+      [FY2017-Q2 | Larry Ellison | management | qa] We will book more than $2 billion in annual cloud sales this year, much more than salesforce.com.
+  'cloud bookings'                      17 hits    0.4/q  specific  norm='cloud booking'  aliases=['cloudbooking']
+      [FY2017-Q4 | Mark Hurd | management | prepared] We tracked ahead of virtually every metric that I track, whether it was cloud bookings, cloud revenue, EPS, really everything on my KPI list was at...
+      [FY2017-Q4 | Mark Hurd | management | prepared] Starting with cloud bookings, $855 million.
+      [FY2017-Q4 | Mark Hurd | management | qa] How confident am I in more cloud bookings than this year?
+      [FY2018-Q1 | Mark Hurd | management | prepared] In cloud bookings, it was a strong quarter.
+      [FY2018-Q1 | Mark Hurd | management | prepared] I expect Q2 cloud booking growth to be strong or stronger than our Q1 growth rate.
+  '$2 billion'                         101 hits    2.3/q  generic  (numeric)  norm='$2 billion'
+      [FY2017-Q3 | Safra Catz | management | prepared] Total on-premise software revenues were $6.2 billion, with software updates and product support revenues at $4.8 billion, up 3% from last year.
+      [FY2017-Q3 | Mark Hurd | management | prepared] We will book at least $2 billion in ARR this year.
+      [FY2017-Q4 | Safra Catz | management | prepared] Q4, using our old format against my guidance, you can see that SaaS/PaaS revenues were $1.2 billion, up 75%, and above the high end of the guidance...
+      [FY2017-Q4 | Safra Catz | management | prepared] Hardware revenues were $4.2 billion, declining 10%, and services revenue were $3.4 billion, up 1%.
+      [FY2017-Q4 | Safra Catz | management | prepared] Total company revenues for the year grew 3% to $37.9 billion, and operating income was $16.2 billion, up 3%.
+  '2 billion'                          101 hits    2.3/q  generic  (numeric)  norm='$2 billion'
+      [FY2017-Q3 | Safra Catz | management | prepared] Total on-premise software revenues were $6.2 billion, with software updates and product support revenues at $4.8 billion, up 3% from last year.
+      [FY2017-Q3 | Mark Hurd | management | prepared] We will book at least $2 billion in ARR this year.
+      [FY2017-Q4 | Safra Catz | management | prepared] Q4, using our old format against my guidance, you can see that SaaS/PaaS revenues were $1.2 billion, up 75%, and above the high end of the guidance...
+      [FY2017-Q4 | Safra Catz | management | prepared] Hardware revenues were $4.2 billion, declining 10%, and services revenue were $3.4 billion, up 1%.
+      [FY2017-Q4 | Safra Catz | management | prepared] Total company revenues for the year grew 3% to $37.9 billion, and operating income was $16.2 billion, up 3%.
+  ladder: tier 0  14 excerpts (14 hits before cap; searched 4 q)
+      first: [FY2017-Q3 | Safra Catz | management | prepared] matched=['cloud', '$2 billion']  Total cloud revenue in the quarter was approximately $1.3 billion, with the growth modestly accelerating to 72% in constant currency from last year. Total on-pr
+
+pfe-trazimera-launch  (PFE, promise; seed FY2019-Q4; clock FY2020-Q1; indexed 31 q, post-seed 26 q, window 3/3 indexed)
+  match: context=['launch', 'launched', 'U.S.', 'biosimilar', 'Herceptin'] exclude=[] generic=None
+  'Trazimera'                            5 hits    0.2/q  specific  norm='trazimera'
+      [FY2020-Q2 | Albert Bourla | management | prepared] The international markets also contributed with 61% operational growth, led by growth from TRAZIMERA and our supportive care brands.
+      [FY2021-Q3 | Albert Bourla | management | prepared] In international developed markets, oncology biosimilars contributed 29% operational growth, driven by new launches of ZIRABEV and continued growth...
+      [FY2019-Q1 | Angela Hwang | management | qa] We look forward to the launch of TRAZIMERA in Japan in the third quarter. rituximab will also be launched in Japan, and that will be in the fourth ...
+      [FY2019-Q3 | Albert Bourla | management | prepared] RUXIENCE in January of 2020, TRAZIMERA on February 15th of 2020.
+      [FY2019-Q4 | Albert Bourla | management | prepared] Next month we expect to launch Trazimera.
+  'trastuzumab biosimilar'               0 hits    0.0/q  specific  norm='trastuzumab biosimilar'  aliases=['trastuzumabbiosimilar']
+  ladder: tier 0  1 excerpts (1 hits before cap; searched 3 q)
+      first: [FY2020-Q2 | Albert Bourla | management | prepared] matched=['trazimera']  In the U.S., revenues from our oncology biosimilars portfolio grew up by 181%, driven by continued strong demand for our supportive care brands, especially RETA
+
+regn-aflibercept-8mg-bla  (REGN, promise; seed FY2022-Q3; clock FY2022-Q4; indexed 34 q, post-seed 15 q, window 3/3 indexed)
+  match: context=['submitted', 'submission', 'FDA', 'priority review', 'PDUFA', 'accepted', 'approval'] exclude=[] generic=None
+  'aflibercept 8-milligram'              3 hits    0.1/q  generic  (numeric)  norm='aflibercept 8milligram'
+      [FY2021-Q4 | Marion McCourt | management | qa] We look forward to strong performance going forward on EYLEA, and we're very optimistic about what could be a next-generation product with our own ...
+      [FY2022-Q3 | Leonard Schleifer | management | prepared] We plan to submit the aflibercept 8-milligram pivotal data to the FDA under a single BLA at the end of this year and have decided to use a previous...
+      [FY2022-Q3 | Leonard Schleifer | management | prepared] In addition to the pivotal aflibercept 8-milligram data, Regeneron continued to make notable progress in our immunology and oncology pipelines.
+  'aflibercept 8 mg'                    37 hits    1.1/q  generic  (numeric)  norm='aflibercept 8 mg'
+      [FY2022-Q4 | Leonard Schleifer | management | prepared] We also made several important advances across our pipeline during the quarter, notably the submission of a biologic license application for aflibe...
+      [FY2022-Q4 | Leonard Schleifer | management | prepared] We are preparing for a potential U.S. launch for aflibercept 8 mg in late August, given prescribers' decade-plus experience with EYLEA.
+      [FY2022-Q4 | Leonard Schleifer | management | prepared] Now with the 48-week data for aflibercept 8 mg, which demonstrated comparable efficacy and safety to EYLEA, but with longer treatment intervals, we...
+      [FY2022-Q4 | George Yancopoulos | management | prepared] In ophthalmology, we presented positive pivotal results for aflibercept 8 mg in wet AMD and DME.
+      [FY2022-Q4 | George Yancopoulos | management | prepared] These trials show that aflibercept 8 mg extended dosing intervals to every 12 or even 16 weeks for the vast majority of patients through 48 weeks w...
+  '8-milligram'                          5 hits    0.1/q  generic  (numeric)  norm='8milligram'
+      [FY2023-Q2 | Leonard Schleifer | management | qa] Actually, the, the way you should think about it, we've submitted everything we need for pozelimab, except for the final remediation of the pre-app...
+      [FY2023-Q2 | Leonard Schleifer | management | qa] The FDA has clearly stated to us that the review of this remediation in the context of the pozelimab BLA will govern what happens to the 8-milligra...
+      [FY2021-Q4 | Marion McCourt | management | qa] We look forward to strong performance going forward on EYLEA, and we're very optimistic about what could be a next-generation product with our own ...
+      [FY2022-Q3 | Leonard Schleifer | management | prepared] We plan to submit the aflibercept 8-milligram pivotal data to the FDA under a single BLA at the end of this year and have decided to use a previous...
+      [FY2022-Q3 | Leonard Schleifer | management | prepared] In addition to the pivotal aflibercept 8-milligram data, Regeneron continued to make notable progress in our immunology and oncology pipelines.
+  '8 mg'                                47 hits    1.4/q  generic  (numeric)  norm='8 mg'
+      [FY2022-Q4 | Leonard Schleifer | management | prepared] We also made several important advances across our pipeline during the quarter, notably the submission of a biologic license application for aflibe...
+      [FY2022-Q4 | Leonard Schleifer | management | prepared] We are preparing for a potential U.S. launch for aflibercept 8 mg in late August, given prescribers' decade-plus experience with EYLEA.
+      [FY2022-Q4 | Leonard Schleifer | management | prepared] Now with the 48-week data for aflibercept 8 mg, which demonstrated comparable efficacy and safety to EYLEA, but with longer treatment intervals, we...
+      [FY2022-Q4 | George Yancopoulos | management | prepared] In ophthalmology, we presented positive pivotal results for aflibercept 8 mg in wet AMD and DME.
+      [FY2022-Q4 | George Yancopoulos | management | prepared] These trials show that aflibercept 8 mg extended dosing intervals to every 12 or even 16 weeks for the vast majority of patients through 48 weeks w...
+  'high-dose aflibercept'                3 hits    0.1/q  specific  norm='highdose aflibercept'  aliases=['highdoseaflibercept']
+      [FY2021-Q3 | George Yancopoulos | management | prepared] Moving to ophthalmology, we reported encouraging top-line data of high-dose aflibercept in the phase II CANDELA study in wet AMD.
+      [FY2021-Q3 | George Yancopoulos | management | prepared] Two large phase III trials in wet AMD and DME evaluating the high-dose aflibercept in dosing intervals of every 12 weeks and every 16 weeks are ful...
+      [FY2021-Q3 | George Yancopoulos | management | prepared] These phase III data will be crucial to understanding overall efficacy, safety, and convenience of high-dose aflibercept.
+  'BLA'                                 36 hits    1.1/q  specific  norm='bla'
+      [FY2022-Q4 | George Yancopoulos | management | prepared] In addition, we submitted a supplemental BLA for chronic spontaneous urticaria and shared positive phase III data in children with eosinophilic eso...
+      [FY2022-Q4 | George Yancopoulos | management | prepared] In 2023, we plan to initiate a confirmatory phase III study of linvoseltamab in second-line multiple myeloma and are on track for a BLA submission ...
+      [FY2023-Q1 | Leonard Schleifer | management | prepared] We remain on track to submit a BLA seeking accelerated approval in late-stage myeloma later this year.
+      [FY2023-Q1 | Leonard Schleifer | management | qa] Well, I think you're going to actually see an update on our pivotal phase II data, the actual data that with a little bit more maturing, with the f...
+      [FY2023-Q2 | Leonard Schleifer | management | prepared] The inspection was conducted as part of the FDA review process for both the aflibercept 8 milligram BLA and the pozelimab BLA.
+  'EYLEA HD'                           269 hits    7.9/q  generic   norm='eylea hd'  aliases=['eyleahd']
+      [FY2023-Q3 | Leonard Schleifer | management | prepared] Non-GAAP net income per share, diluted share increased by 4%, including an unfavorable $0.77 impact from acquired IPR&D. Today, I will briefly disc...
+      [FY2023-Q3 | Leonard Schleifer | management | prepared] Starting with EYLEA HD, which is off to a great start.
+      [FY2023-Q3 | Leonard Schleifer | management | prepared] In addition, samples for EYLEA HD were made available shortly after the launch, enabling prescribers and patients to try out the product.
+      [FY2023-Q3 | Leonard Schleifer | management | prepared] Early EYLEA HD utilization has come from across the spectrum of wet age-related macular degeneration and diabetic macular edema patients, and momen...
+      [FY2023-Q3 | Leonard Schleifer | management | prepared] We have also made significant progress establishing access and reimbursement, and we will continue to work on positioning EYLEA HD, the highest dos...
+  ladder: tier 0  17 excerpts (17 hits before cap; searched 3 q)
+      first: [FY2022-Q4 | Leonard Schleifer | management | prepared] matched=['submission', 'aflibercept 8 mg', '8 mg']  Fourth quarter 2022 revenue increased 14% compared to the prior year when excluding the impact of contributions from REGEN-COV and Ronapreve, underscoring the c
+
+strw-150-160-spend  (STRW, goal; seed FY2025-Q3; clock -; indexed 8 q, post-seed 3 q, window 0/0 indexed)
+  match: context=['spend', 'spent', 'deploy', 'deployed', 'acquisitions', 'deals', 'year', 'capital'] exclude=[] generic=None
+  '$150 to $160 million'                 1 hits    0.1/q  generic  (numeric)  norm='$150 to $160 million'
+      [FY2025-Q3 | Moishe Gubin | management | prepared] Again, our bogey that we're trying to break is $150 to $160 million spent a year.
+  '$150 million'                        10 hits    1.2/q  generic  (numeric)  norm='$150 million'
+      [FY2025-Q4 | Moishe Gubin | management | prepared] We're still anticipating guidance of being able to grow ILS 100 million to ILS 150 million a year.
+      [FY2025-Q4 | Moishe Gubin | management | prepared] God willing, we will be able to hit our targets of ILS 100 million to ILS 150 million this year.
+      [FY2026-Q1 | Moishe Gubin | management | prepared] I think this year we'll still meet our target of between $100 million-$150 million, maybe exceed it.
+      [FY2026-Q1 | Moishe Gubin | management | qa] Right now we're looking at everything's gonna get loaded into third quarter and fourth quarter, and we should hit easily the $100 million, and hope...
+      [FY2026-Q1 | Moishe Gubin | management | qa] We'll have availability between the line of credit, and without doing an ATM, without doing a fund raise, without taking on any other additional de...
+  '$160 million'                         2 hits    0.2/q  generic  (numeric)  norm='$160 million'
+      [FY2025-Q4 | Moishe Gubin | management | qa] It was like ILS 160 million or so or whatever the number is.
+      [FY2025-Q3 | Moishe Gubin | management | prepared] Again, our bogey that we're trying to break is $150 to $160 million spent a year.
+  '150 million'                         10 hits    1.2/q  generic  (numeric)  norm='$150 million'
+      [FY2025-Q4 | Moishe Gubin | management | prepared] We're still anticipating guidance of being able to grow ILS 100 million to ILS 150 million a year.
+      [FY2025-Q4 | Moishe Gubin | management | prepared] God willing, we will be able to hit our targets of ILS 100 million to ILS 150 million this year.
+      [FY2026-Q1 | Moishe Gubin | management | prepared] I think this year we'll still meet our target of between $100 million-$150 million, maybe exceed it.
+      [FY2026-Q1 | Moishe Gubin | management | qa] Right now we're looking at everything's gonna get loaded into third quarter and fourth quarter, and we should hit easily the $100 million, and hope...
+      [FY2026-Q1 | Moishe Gubin | management | qa] We'll have availability between the line of credit, and without doing an ATM, without doing a fund raise, without taking on any other additional de...
+  '160 million'                          2 hits    0.2/q  generic  (numeric)  norm='$160 million'
+      [FY2025-Q4 | Moishe Gubin | management | qa] It was like ILS 160 million or so or whatever the number is.
+      [FY2025-Q3 | Moishe Gubin | management | prepared] Again, our bogey that we're trying to break is $150 to $160 million spent a year.
+  ladder: tier 3  6 excerpts (6 hits before cap; searched 3 q; no clock: tiers 0-2 skipped; tier 3 resolved with tier 0 rule)
+      first: [FY2025-Q4 | Moishe Gubin | management | prepared] matched=['year', '$150 million']  Growing when we can. We're still anticipating guidance of being able to grow ILS 100 million to ILS 150 million a year. We hope to beat that.
+
+syk-knee-aaos-2017  (SYK, promise; seed FY2016-Q3; clock FY2017-Q1; indexed 43 q, post-seed 39 q, window 4/4 indexed)
+  match: context=['full commercial launch', 'full launch', 'launch', 'cases', 'March', 'meeting'] exclude=[] generic=None
+  'AAOS'                                26 hits    0.6/q  specific  norm='aaos'
+      [FY2016-Q4 | Katherine Owen | management | prepared] We completed 2016 achieving continued success with Mako as we installed a total of 32 robots globally, of which 24 were in the U.S. For the full ye...
+      [FY2016-Q4 | Katherine Owen | management | prepared] We look forward to the upcoming AAOS meeting where, as you can imagine, Mako will be the primary focus.
+      [FY2017-Q1 | Katherine Owen | management | prepared] As many of you on the call are aware, following a highly focused, limited launch, we initiated the full commercial release of the Total Knee at las...
+      [FY2017-Q1 | Katherine Owen | management | prepared] For those of you at the recent AAOS meeting, the excitement around the Mako TK application was apparent at our Mako surgeon event, which was attend...
+      [FY2017-Q1 | Katherine Owen | management | qa] I would say absolutely the double AAOS launch really probably exceeded our expectations, 1,600 healthcare professionals at our Mako event.
+  'total knee'                         113 hits    2.6/q  generic   norm='total knee'  aliases=['totalknee']
+      [FY2016-Q4 | Katherine Owen | management | prepared] It's also important to note that in addition to installing new robots during Q4, our Mako capital specialists also began upgrading existing robots ...
+      [FY2016-Q4 | Katherine Owen | management | qa] Again, we feel really well-positioned and think as we look towards exiting 2017, we'll start to see a clear indication that the total knee applicat...
+      [FY2016-Q4 | Katherine Owen | management | qa] As I mentioned, we've got a lot of robots out in the field, a significant portion of which we expect to upgrade to the total knee over a multi-quar...
+      [FY2016-Q4 | Katherine Owen | management | qa] We would expect to continue to build on that momentum in 2018 and think this is going to be a multi-year rollout and process of gaining market shar...
+      [FY2016-Q4 | Katherine Owen | management | qa] I would say we continue to anticipate as we launch the total knee that it will help drive meaningful market share gains starting as we exit 2017.
+  'Mako total knee'                     29 hits    0.7/q  specific  norm='mako total knee'
+      [FY2017-Q2 | Katherine Owen | management | prepared] Training on the Mako Total Knee continues at a solid pace with over 400 surgeons trained to date, helping to drive Mako Total Knee surgeries since ...
+      [FY2017-Q2 | Katherine Owen | management | prepared] We are particularly pleased as we look at utilization rates, which have increased meaningfully for the Mako Total Knee, as well as the total hip ap...
+      [FY2017-Q2 | Katherine Owen | management | prepared] On the clinical front, we are continuing to collect data comparing the Mako Total Knee to a traditional knee surgery, both utilizing Triathlon.
+      [FY2017-Q3 | Katherine Owen | management | prepared] We continue to upgrade robots in the field with the total knee application, which now exceeds 50% of the roughly 385 robots installed in the U.S. S...
+      [FY2017-Q3 | Katherine Owen | management | prepared] During Q3, we received 510 clearance for our cementless product offering to be used with the Mako Total Knee application.
+  'Mako knee'                            6 hits    0.1/q  specific  norm='mako knee'  aliases=['makoknee']
+      [FY2017-Q2 | Glenn Boehnlein | management | qa] We're probably looking right now, if you wanted a total Mako knee robot today, the issue isn't us being able to build and get you a robot.
+      [FY2017-Q4 | Katherine Owen | management | qa] In terms of the total Mako knee procedures for last year, it was just under 16,000, so 15,778 to be exact, and about just a tad over 7,000 in the f...
+      [FY2019-Q1 | Katherine Owen | management | prepared] These results indicate we are continuing to build on the momentum we saw in 2018, where total Mako knee procedures for the year topped 45,000.
+      [FY2019-Q4 | Katherine Owen | management | prepared] Total knee procedures posted a roughly 59% increase in Q4 to approximately 24,000, while full-year Mako knee procedures increased roughly 66%, topp...
+      [FY2020-Q4 | Preston Wells | management | prepared] Turning to U.S. knee procedures, in the fourth quarter, approximately 44% of our total knees were Mako knee procedures, a trend that continues to i...
+  ladder: tier 0  19 excerpts (19 hits before cap; searched 4 q)
+      first: [FY2016-Q4 | Katherine Owen | management | prepared] matched=['aaos', 'meeting', 'total knee']  My comments on today's call will include an update on Mako. We completed 2016 achieving continued success with Mako as we installed a total of 32 robots globall
+
+tel-medical-500m  (TEL, promise; seed FY2016-Q4; clock FY2017-Q4; indexed 42 q, post-seed 38 q, window 6/6 indexed)
+  match: context=['$500 million', '500 million', 'run rate', 'medical business', 'sales', 'revenue'] exclude=[] generic=None
+  'Creganna'                            45 hits    1.1/q  specific  norm='creganna'
+      [FY2017-Q1 | Terrence Curtin | management | prepared] Industrial orders grew 15% year-over-year due to the Creganna and Intercontec acquisitions, and organic orders grew 4%, with growth across each of ...
+      [FY2017-Q1 | Terrence Curtin | management | prepared] Industrial Solutions sales grew 12% on a reported basis, driven by the Creganna and Intercontec acquisitions, and generated 30 basis points of adju...
+      [FY2017-Q1 | Terrence Curtin | management | prepared] If we had owned Creganna and Intercontec in the year-ago period, our growth for these businesses would have been 16% year-over-year, demonstrating ...
+      [FY2017-Q1 | Terrence Curtin | management | prepared] In Industrial Solutions, we expect to grow mid-single digits overall due to the Creganna and Intercontec acquisitions, and will be up low single di...
+      [FY2017-Q1 | Heath Mitts | management | qa] Creganna is, they're well, both of those are well ahead of the deal model expectations, and are executing very well.
+  'AdvancedCath'                         1 hits    0.0/q  specific  norm='advancedcath'
+      [FY2016-Q4 | Terrence R. Curtin | management | qa] Next year, it will be about $500 million, both on our legacy business, as well as what we've done with both Creganna and AdvancedCath.
+  'medical'                            221 hits    5.3/q  generic   norm='medical'
+      [FY2017-Q1 | Terrence Curtin | management | prepared] Industrial equipment, we grew 1% organically, driven by a strengthening market and around the factory automation area, as well as growth in medical.
+      [FY2017-Q1 | Terrence Curtin | management | prepared] Industrial Solutions organic growth guidance is not changing from 90 days ago, and we continue to expect growth to be up low single digits organica...
+      [FY2017-Q1 | Heath Mitts | management | qa] We're also very pleased with the performance on the medical side.
+      [FY2017-Q1 | Heath Mitts | management | qa] That medical space has continued to have legs to it.
+      [FY2017-Q1 | Terrence Curtin | management | qa] They had much more of a fuller assembly and integration capability than we had, and that's one of the things we get excited about because our custo...
+  ladder: tier 0  17 excerpts (17 hits before cap; searched 6 q)
+      first: [FY2017-Q1 | Terrence Curtin | management | prepared] matched=['creganna']  In transportation, orders increased 12% year-over-year and were up 4% sequentially, as China OEM increased production ahead of the expected expiration of govern
+
+tmo-2019-guidance-january  (TMO, promise; seed FY2018-Q2; clock FY2019-Q1; indexed 42 q, post-seed 32 q, window 5/5 indexed)
+  match: context=['January', 'initial', 'revenue', 'EPS', 'growth', 'full year'] exclude=[] generic=None
+  '2019 guidance'                       14 hits    0.3/q  generic  (numeric)  norm='2019 guidance'
+      [FY2018-Q4 | Marc Casper | management | prepared] You saw our announcement on Monday regarding the sale of our anatomical pathology business, which is incorporated into our 2019 guidance.
+      [FY2018-Q4 | Stephen Williamson | management | prepared] I'll provide some color on our four segments and conclude with a detailed review of our 2019 guidance.
+      [FY2018-Q4 | Stephen Williamson | management | prepared] With that, I'd like to review the details about 2019 guidance.
+      [FY2018-Q4 | Stephen Williamson | management | prepared] Let me now cover the key assumptions that we factored into our full year 2019 guidance.
+      [FY2018-Q4 | Stephen Williamson | management | prepared] In summary, our 2019 guidance reflects a continuation of very strong financial performance.
+  'guidance for 2019'                    4 hits    0.1/q  generic  (numeric)  norm='guidance for 2019'
+      [FY2018-Q4 | Marc Casper | management | prepared] We're initiating adjusted EPS guidance for 2019 in the range of $12 to $12.20 per share.
+      [FY2019-Q1 | Marc Casper | management | prepared] Let me now turn to our guidance for 2019.
+      [FY2019-Q2 | Stephen Williamson | management | prepared] Our updated adjusted EPS guidance for 2019 is now a range of $12.16-$12.26, which would represent growth of 9%-10% versus 2018.
+      [FY2019-Q3 | Stephen Williamson | management | prepared] Our adjusted EPS guidance for 2019 is now a range of $12.28-$12.34, which would represent growth of 10%-11% versus 2018.
+  '2019 outlook'                         0 hits    0.0/q  generic  (numeric)  norm='2019 outlook'
+  ladder: tier 0  15 excerpts (15 hits before cap; searched 5 q)
+      first: [FY2018-Q4 | Marc Casper | management | prepared] matched=['revenue', 'eps', 'growth', 'guidance for 2019']  In terms of our revenue guidance, we expect to deliver between $24.88 billion and $25.28 billion in 2019, which would result in a reported revenue growth of 2% 
+
+txn-capital-call-feb8  (TXN, promise; seed FY2016-Q4; clock FY2017-Q1; indexed 42 q, post-seed 38 q, window 3/3 indexed)
+  match: context=['February', 'call', 'update', 'strategy', 'dividend', 'buyback'] exclude=[] generic=None
+  'capital management'                 170 hits    4.0/q  generic   norm='capital management'  aliases=['capitalmanagement']
+      [FY2017-Q1 | Rafael Lizardi | management | prepared] Let me now comment on our capital management results, starting with our cash generation.
+      [FY2017-Q1 | Rafael Lizardi | management | qa] As you probably recall from the capital management strategy, I walked through why 300 millimeter is such a competitive advantage.
+      [FY2017-Q1 | Rafael Lizardi | management | qa] We think of our strategy as stated in the capital management strategy for many years is that we want to add capacity well ahead of demand.
+      [FY2017-Q2 | Rafael Lizardi | management | prepared] Let me now comment on our capital management results, starting with our cash generation.
+      [FY2017-Q3 | Rafael Lizardi | management | prepared] Let me now comment on our capital management results, starting with our cash generation.
+  'capital management strategy'         20 hits    0.5/q  specific  norm='capital management strategy'
+      [FY2017-Q1 | Rafael Lizardi | management | qa] As you probably recall from the capital management strategy, I walked through why 300 millimeter is such a competitive advantage.
+      [FY2017-Q1 | Rafael Lizardi | management | qa] We think of our strategy as stated in the capital management strategy for many years is that we want to add capacity well ahead of demand.
+      [FY2017-Q4 | Rafael Lizardi | management | qa] We're going to continue investing to strengthen our competitive advantages as we have talked about before and now with more cash, we're going to do...
+      [FY2017-Q4 | Rafael Lizardi | management | qa] As far as the target, as we do every year, we look at our metrics for the capital management strategy and as you know, we have 10 or 12 metrics.
+      [FY2017-Q4 | Rafael Lizardi | management | qa] And finally, we continue to be disciplined in executing our capital management strategy.
+  'capital management call'             37 hits    0.9/q  specific  norm='capital management call'
+      [FY2018-Q1 | Rafael Lizardi | management | qa] But on inventory let me step back again and refer you to our long-term objective that we talked about at the capital management call.
+      [FY2018-Q1 | Rafael Lizardi | management | qa] I talked about this at the capital management call as well as 90 days ago when we closed the last quarter and this topic came up.
+      [FY2018-Q4 | Dave Pahl | management | qa] Again, please plan to join us for our Capital Management call on February 5 at 10 AM Central Time.
+      [FY2019-Q1 | Rafael Lizardi | management | prepared] We have not announced a specific construction timetable yet, but as we indicated during the February Capital Management call, we would expect to ge...
+      [FY2019-Q2 | Dave Pahl | management | qa] So just to clarify, we said back in our February capital management call and really have been saying since then, that we planned to begin building ...
+  ladder: tier 0  2 excerpts (2 hits before cap; searched 3 q)
+      first: [FY2017-Q1 | Rafael Lizardi | management | qa] matched=['strategy', 'capital management', 'capital management strategy']  Beyond revenue growth, we have 300-millimeter manufacturing, the efficiency of our manufacturing, particularly with 300 millimeter. As you probably recall from 
+
+unh-medexpress-75  (UNH, promise; seed FY2016-Q2; clock FY2017-Q4; indexed 43 q, post-seed 40 q, window 6/6 indexed)
+  match: context=['centers', 'urgent care', 'openings', 'opened', '75', 'startups', '2017'] exclude=[] generic=None
+  'MedExpress'                          27 hits    0.6/q  specific  norm='medexpress'
+      [FY2016-Q3 | Amir Rubin | management | qa] We also continue to grow our MedExpress centers.
+      [FY2016-Q3 | Amir Rubin | management | qa] We see great success in our consumerism approach there with MedExpress, and we'll continue to expand those assets.
+      [FY2016-Q3 | Amir Rubin | management | qa] Yeah, we're continuing to see a lot of growth on the Optum Care side, both on the local care delivery, our medical practices, as well as on MedExpr...
+      [FY2016-Q3 | Amir Rubin | management | qa] MedExpress, I think you asked specifically, we now have over 180 centers in 16 states, and we're planning to grow to over 200 by year-end, and we'r...
+      [FY2016-Q4 | Larry Renfro | management | qa] The second part of Optum Care was our urgent care with MedExpress and other centers that we have set up with urgent care.
+  ladder: tier 0  8 excerpts (8 hits before cap; searched 6 q)
+      first: [FY2016-Q3 | Amir Rubin | management | qa] matched=['medexpress']  We're also seeing growth across the continuum of care access. We also continue to grow our MedExpress centers. We see great success in our consumerism approach 
+
+vrtx-nda-mid-2019  (VRTX, promise; seed FY2018-Q2; clock FY2019-Q2; indexed 34 q, post-seed 32 q, window 6/6 indexed)
+  match: context=['FDA', 'submit', 'filing', 'approval', 'triple', 'cystic fibrosis'] exclude=['supplemental new drug application'] generic=None
+  'new drug application'                 1 hits    0.0/q  specific  norm='new drug application'
+      [FY2019-Q2 | Jeffrey Leiden | management | prepared] Just last week, we announced the submission of a new drug application for the triple combination of VX-445, tezacaftor and ivacaftor to the U.S. FD...
+  'NDA'                                 12 hits    0.4/q  specific  norm='nda'
+      [FY2018-Q4 | Reshma Kewalramani | management | qa] With regard to packaging that up, making sure that we have the CE we can keep in the NDA file, that's going to happen by middle of this year.
+      [FY2019-Q1 | Jeffrey Leiden | management | prepared] We remain on track to submit an NDA in the U.S. in the third quarter, followed by an MAA in Europe later this year.
+      [FY2019-Q2 | Jeffrey Leiden | management | prepared] We therefore moved quickly to complete our NDA for the VX-445 triple combination within just weeks of receiving the final data.
+      [FY2019-Q2 | Reshma Kewalramani | management | prepared] In CF, we recently submitted our NDA for the VX-445 triple combination regimen and remain on track to complete our application in Europe in the Q4 ...
+      [FY2019-Q2 | Reshma Kewalramani | management | prepared] Our NDA included a request for priority review, which if granted, would provide a PDUFA date sometime late in the Q1 of next year.
+  'submission'                          66 hits    1.9/q  specific  norm='submission'
+      [FY2019-Q2 | Jeffrey Leiden | management | prepared] Just last week, we announced the submission of a new drug application for the triple combination of VX-445, tezacaftor and ivacaftor to the U.S. FD...
+      [FY2019-Q4 | Stuart Arbuckle | management | qa] In terms of how that might play out for the triple combination, clearly we have that submission in with the regulatory authorities.
+      [FY2020-Q1 | Reshma Kewalramani | management | prepared] First, our regulatory and development teams have been working diligently to stay on track with our submissions to regulators and to adapt our ongoi...
+      [FY2020-Q1 | Reshma Kewalramani | management | prepared] For example, our CF regulatory team completed the submission of the sNDA in the U.S., as well as a type two variation to the EMA in Europe for KALY...
+      [FY2020-Q2 | Reshma Kewalramani | management | prepared] With our cell therapy for type 1 diabetes, we are tracking for an IND submission in late 2020 to support initiation of our first study to evaluate ...
+  'submitted'                           14 hits    0.4/q  specific  norm='submitted'
+      [FY2018-Q4 | Stuart Arbuckle | management | qa] We've reached an agreement with them about how they are going to assess our medicines, and we've submitted or are on the verge of submitting ORKAMB...
+      [FY2019-Q2 | Reshma Kewalramani | management | prepared] In CF, we recently submitted our NDA for the VX-445 triple combination regimen and remain on track to complete our application in Europe in the Q4 ...
+      [FY2020-Q1 | Stuart Arbuckle | management | prepared] We have also now submitted the elexacaftor triple combination for approval in Switzerland and Australia.
+      [FY2020-Q1 | Stuart Arbuckle | management | qa] We have submitted in the back end of last year in Europe for TRIKAFTA, or the triple combination, I should say, for the 12+ population.
+      [FY2020-Q1 | Stuart Arbuckle | management | qa] We have more recently also submitted in Australia and Switzerland, again, for 12+.
+  'triple combination'                 114 hits    3.4/q  generic   norm='triple combination'  aliases=['triplecombination']
+      [FY2018-Q3 | Michael Partridge | management | prepared] These statements, including without limitation those regarding Vertex's marketed CF medicines, the ongoing development and potential commercializat...
+      [FY2018-Q3 | Ian Smith | management | prepared] This increase was primarily due to the advancement of our portfolio of triple combination regimens for CF and the investment to support the treatme...
+      [FY2018-Q3 | Ian Smith | management | prepared] Beyond 2019, continued revenue growth will be driven largely by the potential approval and launch of a triple-combination medicine for the large gr...
+      [FY2018-Q3 | Ian Smith | management | prepared] The financial profile of our business is strong, the coming year will be important period to define our future growth as we obtain phase III data f...
+      [FY2018-Q3 | Stuart Arbuckle | management | qa] Mike, on the question of what do we think the triple combinations might do to the doublets.
+  'VX-445'                              22 hits    0.6/q  generic  (numeric)  norm='vx445'
+      [FY2018-Q4 | Reshma Kewalramani | management | qa] Regardless of whether the selection is for VX-659 or for VX-445, we're going to have all of the data that we need in Q1.
+      [FY2018-Q4 | Reshma Kewalramani | management | qa] The exact same package, the same amount of the data, the same kind of data we're going to get very shortly for VX-445.
+      [FY2018-Q4 | Reshma Kewalramani | management | qa] With regard to triple combinations, as you know, the primary endpoint in both the VX-445 and VX-659 programs for the FF study, which are ppFEV1 at ...
+      [FY2018-Q4 | Reshma Kewalramani | management | qa] The other interesting thing to note is, of course, in the F/MF study, both VX-659 and VX-445, we're going to have the 24-week ppFEV1, so we can sta...
+      [FY2019-Q1 | Reshma Kewalramani | management | qa] Really, if I break that down, what that means is that we are going to be looking at 24-week data for both FF and FMF for both assets, VX-659 and VX...
+  ladder: tier 0  20 excerpts (28 hits before cap; searched 6 q; capped 28 hits to 20)
+      first: [FY2018-Q4 | Michael Partridge | management | prepared] matched=['triple', 'cystic fibrosi', 'triple combination']  Following prepared remarks from Jeffrey, Stuart, and Paul, Dr. Reshma Kewalramani, Chief Medical Officer, will join us for Q&A. These statements, including with
+
+==============================================================================
+trees audited: 44
+resolved at  tier 0: 32  tier 1: 0  tier 2: 0  tier 3: 11  none: 1
+unresolved: csco-luxtera-optics
+generic anchors: abbv-humira-ip-2022:HUMIRA, abt-libre-1m-patients:Libre, abt-libre-1m-patients:1 million patients, acn-the-new-number-one:The New, adsk-collections-launch:Collections, adsk-collections-launch:industry collections, amat-double-packaging:advanced packaging, amat-double-packaging:packaging, amd-radeon-pro-duo:VR, amgn-wclc-lung:lung cancer, amgn-wclc-lung:AMG 510, amzn-prime-india:India, avgo-day2-one-erp:day 2, avgo-45-op-margin:45%, avgo-45-op-margin:operating margin, bmy-cobenfy-seven-p3:COBENFY, bmy-cobenfy-seven-p3:Cobenfy, bsx-lotus-edge-launch:Lotus, bsx-lotus-edge-launch:TAVR, ci-ma-growth-10:Medicare Advantage, crm-20b-next-goal:$20 billion, crm-20b-next-goal:20 billion, ctsh-accelerate-acquisitions:acquisition, ctsh-accelerate-acquisitions:acquisitions, ctsh-accelerate-acquisitions:acquired, ctsh-accelerate-acquisitions:acquire, gild-zuma2-file:ZUMA-2, gild-zuma2-file:KTE-X19, ibm-promontory-watson:Watson, intu-turbotax-diy-growth:TurboTax, jnj-guselkumab-file:Tremfya, lly-dividend-december:dividend, mdt-aspiration-25:25%, mrk-dividend-15:dividend, mrk-dividend-15:$0.55, msft-build-analyst-briefing:BUILD, mu-s600-seagate:S600, orcl-2b-cloud-sales:$2 billion, orcl-2b-cloud-sales:2 billion, regn-aflibercept-8mg-bla:aflibercept 8-milligram, regn-aflibercept-8mg-bla:aflibercept 8 mg, regn-aflibercept-8mg-bla:8-milligram, regn-aflibercept-8mg-bla:8 mg, regn-aflibercept-8mg-bla:EYLEA HD, strw-150-160-spend:$150 to $160 million, strw-150-160-spend:$150 million, strw-150-160-spend:$160 million, strw-150-160-spend:150 million, strw-150-160-spend:160 million, syk-knee-aaos-2017:total knee, tel-medical-500m:medical, tmo-2019-guidance-january:2019 guidance, tmo-2019-guidance-january:guidance for 2019, tmo-2019-guidance-january:2019 outlook, txn-capital-call-feb8:capital management, vrtx-nda-mid-2019:triple combination, vrtx-nda-mid-2019:VX-445

@@ -1,7 +1,9 @@
 """LLM-assisted bulk seed proposal for ops + HC claims desk.
 
 Reads all missed cue-queue rows for every ops/HC ticker and calls Claude
-once per ticker to propose 3–8 strong seed candidates.  Outputs
+once per ticker to propose 3–8 strong seed candidates.  Each candidate also
+carries a proposed retrieval ``match`` block (anchors / context / exclude),
+post-processed deterministically by ``propose_match_block``.  Outputs
 data/seed_batch_candidates.json for human review.
 
 Rules inherited from the desk:
@@ -77,6 +79,18 @@ SYSTEM_PROMPT = textwrap.dedent(
     - "verbatim" if the excerpt is a direct, unambiguous quote.
     - "composite" if the claim combines multiple sentences or needs interpretation.
 
+    For the match block (the retrieval contract used to find follow-ups in later
+    transcripts):
+    - "anchors": 1–4 SPECIFIC nouns copied from the excerpt — product names, event
+      names, program names, deal/partner names, or numeric targets ("$2 billion",
+      "45%", "1 million patients"). NOT dates and NOT clock words ("mid-2019",
+      "2022", "FY2020", "Q3", "September") — those belong in seed.clock.
+    - "context": 3–8 co-occurrence words that distinguish THIS claim from the
+      company's general use of the anchor (verbs like "launch"/"shipped", the
+      metric, the segment, the counterparty). These may include months or years.
+    - "exclude": phrases that would be false-positive anchor hits (e.g. anchor
+      "BUILD" → exclude "build out", "building"). May be an empty list.
+
     Respond with a JSON object:
     {
       "candidates": [
@@ -86,6 +100,11 @@ SYSTEM_PROMPT = textwrap.dedent(
           "kind": "promise|goal",
           "bucket": "one_of_8",
           "objects": ["primary object", "alt name"],
+          "match": {
+            "anchors": ["specific noun or numeric target from the excerpt"],
+            "context": ["co-occurrence word", "..."],
+            "exclude": ["false-positive phrase", "..."]
+          },
           "seed": {
             "fiscal_period": "FY20XX-QX",
             "claim_type": "forward_clock",
@@ -141,6 +160,112 @@ def excerpt_verified(excerpt: object, source_rows: list[dict]) -> bool:
     return False
 
 
+# ── match block post-processing ──────────────────────────────────────────────
+
+MAX_MATCH_ANCHORS = 6
+MAX_MATCH_CONTEXT = 10
+MAX_MATCH_EXCLUDE = 6
+
+_MONTHS = (
+    "january", "february", "march", "april", "may", "june", "july", "august",
+    "september", "october", "november", "december",
+    "jan", "feb", "mar", "apr", "jun", "jul", "aug", "sep", "sept", "oct", "nov", "dec",
+)
+# Tokens that, on their own, only ever describe *when* — never *what*.
+_DATE_TOKEN_RE = re.compile(
+    r"^(?:"
+    r"(?:fy|cy)?20\d\d(?:e|a)?"                       # 2019, FY2020, CY2021, 2022E
+    r"|(?:fy|cy)'?\d\d|'\d\d"                         # FY19, CY'22, '22 (bare "45" is a number, kept)
+    r"|(?:mid|early|late|end)-?(?:fy|cy)?20\d\d"      # mid-2019, late-FY2020
+    r"|q[1-4](?:-?(?:fy|cy)?20\d\d)?"                 # Q3, Q3-2019, Q1FY20
+    r"|(?:fy|cy)20\d\d-q[1-4]"                        # FY2020-Q2
+    r"|h[12](?:-?20\d\d)?"                            # H1, H2-2020
+    r"|" + "|".join(_MONTHS) +
+    r"|mid|early|late|end|of|the|by|in|first|second|third|fourth|half|quarter"
+    r"|fiscal|calendar|year|years|fy|cy|next|this|coming|later"
+    r")$"
+)
+
+
+def _is_date_like(term: str) -> bool:
+    """True when every token of `term` is a date/clock token ("mid-2019", "Q3 2019",
+    "second half of 2022", "September", "this year"). Terms that pair a date with a
+    real noun ("2019 guidance", "$2 billion") are kept — the noun is what gets retrieved."""
+    tokens = re.findall(r"[A-Za-z0-9']+", str(term).lower())
+    if not tokens:
+        return False
+    has_date_marker = False
+    for tok in tokens:
+        if not _DATE_TOKEN_RE.match(tok):
+            return False
+        if re.search(r"\d|^(?:" + "|".join(_MONTHS) + r"|year|years|quarter|half)$", tok):
+            has_date_marker = True
+    return has_date_marker
+
+
+def _clean_terms(raw: object, *, drop_dates: bool = False, cap: int) -> list[str]:
+    """Whitespace-normalise, drop empties/date-like (optional), de-dup case-insensitively
+    (keeping the first-seen spelling), cap."""
+    if raw is None:
+        return []
+    if isinstance(raw, str):
+        raw = [raw]
+    if not isinstance(raw, (list, tuple, set)):
+        return []
+    out: list[str] = []
+    seen: set[str] = set()
+    for item in raw:
+        term = re.sub(r"\s+", " ", str(item or "")).strip()
+        if not term:
+            continue
+        if drop_dates and _is_date_like(term):
+            continue
+        key = term.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(term)
+        if len(out) >= cap:
+            break
+    return out
+
+
+def propose_match_block(seed: dict, objects: list[str]) -> dict:
+    """Deterministic match block for a proposed seed (candidate dict from the LLM).
+
+    - anchors: the LLM's `match.anchors` if any survive cleaning, else `objects`
+      (mirrors `match_block_for` in _desk_retrieval, which falls back to objects);
+      date-like anchors are dropped, whitespace normalised, de-duplicated, capped at 6.
+    - context: cleaned/deduped, capped at 10 (dates are allowed here).
+    - exclude: cleaned/deduped, capped at 6.
+    - generic: always None (infer from corpus frequency; a human may force it).
+    """
+    raw_match = seed.get("match") if isinstance(seed, Mapping) else None
+    if not isinstance(raw_match, Mapping):
+        raw_match = {}
+
+    anchors = _clean_terms(raw_match.get("anchors"), drop_dates=True, cap=MAX_MATCH_ANCHORS)
+    if not anchors:
+        anchors = _clean_terms(objects, drop_dates=True, cap=MAX_MATCH_ANCHORS)
+    context = _clean_terms(raw_match.get("context"), cap=MAX_MATCH_CONTEXT)
+    exclude = _clean_terms(raw_match.get("exclude"), cap=MAX_MATCH_EXCLUDE)
+
+    return {"anchors": anchors, "context": context, "exclude": exclude, "generic": None}
+
+
+def _py_str(value: object) -> str:
+    return '"' + str(value).replace("\\", "\\\\").replace('"', '\\"') + '"'
+
+
+def _py_tuple(terms: list[str]) -> str:
+    """Catalog-style tuple literal: (), ("x",), ("a", "b")."""
+    if not terms:
+        return "()"
+    if len(terms) == 1:
+        return f"({_py_str(terms[0])},)"
+    return "(" + ", ".join(_py_str(t) for t in terms) + ")"
+
+
 def _build_user_content(ticker: str, missed: list[dict]) -> str:
     lines = [f"Company: {ticker}", f"Number of excerpts: {len(missed)}", ""]
     for i, row in enumerate(missed, 1):
@@ -159,6 +284,9 @@ def _proposed_seed_py(candidate: dict, ticker: str) -> str:
     seed = candidate.get("seed") or {}
     objects = candidate.get("objects") or []
     objects_repr = "(" + ", ".join(f'"{o}"' for o in objects) + ",)"
+    match = candidate.get("match")
+    if not isinstance(match, Mapping) or "generic" not in match:
+        match = propose_match_block(candidate, list(objects))
     clock = seed.get("clock")
     clock_repr = f'"{clock}"' if clock else "None"
     excerpt = str(seed.get("excerpt") or "").replace('"', '\\"')
@@ -171,6 +299,12 @@ def _proposed_seed_py(candidate: dict, ticker: str) -> str:
         f'        "bucket": "{candidate.get("bucket", "")}",',
         f'        "title": "{candidate.get("title", "")}",',
         f'        "objects": {objects_repr},',
+        '        "match": {',
+        f'            "anchors": {_py_tuple(list(match.get("anchors") or []))},',
+        f'            "context": {_py_tuple(list(match.get("context") or []))},',
+        f'            "exclude": {_py_tuple(list(match.get("exclude") or []))},',
+        "            \"generic\": None,",
+        "        },",
         "        \"seed\": {",
         f'            "fiscal_period": "{seed.get("fiscal_period", "")}",',
         '            "claim_type": "forward_clock",',
@@ -217,6 +351,10 @@ def _process_ticker(
         if not isinstance(cand, dict):
             continue
         cand["ticker"] = ticker
+        objects = cand.get("objects") or []
+        if isinstance(objects, str):
+            objects = [objects]
+        cand["match"] = propose_match_block(cand, [str(o) for o in objects])
         cand["excerpt_verified"] = excerpt_verified(
             (cand.get("seed") or {}).get("excerpt"), missed
         )

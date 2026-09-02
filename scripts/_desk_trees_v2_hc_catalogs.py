@@ -14,6 +14,12 @@ HC_TREES: tuple[dict[str, object], ...] = (
         "bucket": "capital_allocation",
         "title": "Return to annual dividend increases beginning in December",
         "objects": ("dividend",),
+        "match": {
+            "anchors": ("dividend",),
+            "context": ("increase", "increased", "raise", "raised", "15%", "December", "board", "annual", "quarterly"),
+            "exclude": (),
+            "generic": True,
+        },
         "seed": {
             "fiscal_period": "FY2016-Q2",
             "claim_type": "forward_clock",
@@ -52,6 +58,12 @@ HC_TREES: tuple[dict[str, object], ...] = (
         "bucket": "competitive_position",
         "title": "Ramp MedExpress startups to about 75 in 2017",
         "objects": ("MedExpress",),
+        "match": {
+            "anchors": ("MedExpress",),
+            "context": ("centers", "urgent care", "openings", "opened", "75", "startups", "2017"),
+            "exclude": (),
+            "generic": None,
+        },
         "seed": {
             "fiscal_period": "FY2016-Q2",
             "claim_type": "forward_clock",
@@ -74,6 +86,12 @@ HC_TREES: tuple[dict[str, object], ...] = (
         "bucket": "competitive_position",
         "title": "File guselkumab for psoriasis this year",
         "objects": ("guselkumab",),
+        "match": {
+            "anchors": ("guselkumab", "Tremfya"),
+            "context": ("filed", "filing", "submission", "submitted", "FDA", "approval", "psoriasis"),
+            "exclude": (),
+            "generic": None,
+        },
         "seed": {
             "fiscal_period": "FY2016-Q3",
             "claim_type": "forward_clock",
@@ -98,7 +116,13 @@ HC_TREES: tuple[dict[str, object], ...] = (
         "beat_id": "humira-ip",
         "bucket": "macro_regulatory_risk",
         "title": "HUMIRA U.S. IP protection until 2022",
-        "objects": ("HUMIRA", "2022"),
+        "objects": ("HUMIRA", "biosimilar"),  # 2022 is the clock, not a thing to find in text
+        "match": {
+            "anchors": ("HUMIRA",),
+            "context": ("biosimilar", "biosimilars", "2022", "2023", "patent", "patents", "IP", "settlement", "exclusivity", "Amgen"),
+            "exclude": (),
+            "generic": True,
+        },
         "seed": {
             "fiscal_period": "FY2016-Q4",
             "claim_type": "forward_clock",
@@ -121,6 +145,12 @@ HC_TREES: tuple[dict[str, object], ...] = (
         "bucket": "capital_allocation",
         "title": "Raise the quarterly dividend 15% beginning in Q1 2019",
         "objects": ("dividend", "15%"),
+        "match": {
+            "anchors": ("dividend", "$0.55"),
+            "context": ("increase", "increased", "15%", "$0.55", "quarterly", "first quarter", "raised"),
+            "exclude": (),
+            "generic": True,
+        },
         "seed": {
             "fiscal_period": "FY2018-Q3",
             "claim_type": "forward_clock",
@@ -143,6 +173,12 @@ HC_TREES: tuple[dict[str, object], ...] = (
         "bucket": "guidance",
         "title": "Give 2019 guidance in late January",
         "objects": ("2019 guidance",),
+        "match": {
+            "anchors": ("2019 guidance", "guidance for 2019", "2019 outlook"),
+            "context": ("January", "initial", "revenue", "EPS", "growth", "full year"),
+            "exclude": (),
+            "generic": None,
+        },
         "seed": {
             "fiscal_period": "FY2018-Q2",
             "claim_type": "forward_clock",
@@ -165,6 +201,12 @@ HC_TREES: tuple[dict[str, object], ...] = (
         "bucket": "demand",
         "title": "More than 1 million patients worldwide by year-end",
         "objects": ("1 million patients",),
+        "match": {
+            "anchors": ("Libre", "FreeStyle Libre", "1 million patients", "million patients", "million users"),
+            "context": ("patients", "users", "million", "sensor", "worldwide", "year-end", "end of the year"),
+            "exclude": (),
+            "generic": None,
+        },
         "seed": {
             "fiscal_period": "FY2018-Q2",
             "claim_type": "forward_clock",
@@ -188,6 +230,12 @@ HC_TREES: tuple[dict[str, object], ...] = (
         "bucket": "capital_allocation",
         "title": "Double-digit return on Phenomenex in less than five years",
         "objects": ("Phenomenex",),
+        "match": {
+            "anchors": ("Phenomenex",),
+            "context": ("return", "returns", "growth", "consumables", "SCIEX", "acquisition", "integration"),
+            "exclude": (),
+            "generic": None,
+        },
         "seed": {
             "fiscal_period": "FY2016-Q3",
             "claim_type": "forward_clock",
@@ -211,6 +259,12 @@ HC_TREES: tuple[dict[str, object], ...] = (
         "bucket": "competitive_position",
         "title": "Launch Trazimera next month",
         "objects": ("Trazimera",),
+        "match": {
+            "anchors": ("Trazimera", "trastuzumab biosimilar"),
+            "context": ("launch", "launched", "U.S.", "biosimilar", "Herceptin"),
+            "exclude": (),
+            "generic": None,
+        },
         "seed": {
             "fiscal_period": "FY2019-Q4",
             "claim_type": "forward_clock",
@@ -234,6 +288,12 @@ HC_TREES: tuple[dict[str, object], ...] = (
         "bucket": "competitive_position",
         "title": "Update lung-cancer progress at WCLC in early September",
         "objects": ("World Conference on Lung Cancer",),
+        "match": {
+            "anchors": ("World Conference on Lung Cancer", "WCLC", "lung cancer", "AMG 510", "sotorasib"),
+            "context": ("data", "update", "presented", "presentation", "September", "monotherapy", "KRAS"),
+            "exclude": (),
+            "generic": None,
+        },
         "seed": {
             "fiscal_period": "FY2019-Q2",
             "claim_type": "forward_clock",
@@ -305,6 +365,12 @@ HC_TREES: tuple[dict[str, object], ...] = (
         "bucket": "competitive_position",
         "title": "Full commercial launch of the total knee at 2017 AAOS",
         "objects": ("AAOS", "total knee"),
+        "match": {
+            "anchors": ("AAOS", "total knee", "Mako total knee", "Mako knee"),
+            "context": ("full commercial launch", "full launch", "launch", "cases", "March", "meeting"),
+            "exclude": (),
+            "generic": None,
+        },
         "seed": {
             "fiscal_period": "FY2016-Q3",
             "claim_type": "forward_clock",
@@ -328,6 +394,12 @@ HC_TREES: tuple[dict[str, object], ...] = (
         "bucket": "macro_regulatory_risk",
         "title": "File KTE-X19 for mantle cell lymphoma by the end of 2019",
         "objects": ("ZUMA-2", "KTE-X19"),
+        "match": {
+            "anchors": ("ZUMA-2", "KTE-X19", "mantle cell lymphoma", "Tecartus"),
+            "context": ("top-line", "topline", "results", "file", "filing", "submission", "approval", "BLA"),
+            "exclude": (),
+            "generic": None,
+        },
         "seed": {
             "fiscal_period": "FY2019-Q1",
             "claim_type": "forward_clock",
@@ -352,7 +424,13 @@ HC_TREES: tuple[dict[str, object], ...] = (
         "beat_id": "triple-nda",
         "bucket": "macro_regulatory_risk",
         "title": "Submit a new drug application no later than mid-2019",
-        "objects": ("new drug application", "mid-2019"),
+        "objects": ("new drug application", "NDA"),  # mid-2019 is the clock
+        "match": {
+            "anchors": ("new drug application", "NDA", "submission", "submitted", "triple combination", "VX-445"),
+            "context": ("FDA", "submit", "filing", "approval", "triple", "cystic fibrosis"),
+            "exclude": ("supplemental new drug application",),
+            "generic": None,
+        },
         "seed": {
             "fiscal_period": "FY2018-Q2",
             "claim_type": "forward_clock",
@@ -374,6 +452,12 @@ HC_TREES: tuple[dict[str, object], ...] = (
         "bucket": "competitive_position",
         "title": "Reach 25% of the aspiration market by fiscal year-end",
         "objects": ("aspiration", "25%"),
+        "match": {
+            "anchors": ("aspiration", "25%"),
+            "context": ("share", "market share", "segment", "stroke", "React", "fiscal year", "penetration"),
+            "exclude": (),
+            "generic": None,
+        },
         "seed": {
             "fiscal_period": "FY2019-Q4",
             "claim_type": "forward_clock",
@@ -398,6 +482,12 @@ HC_TREES: tuple[dict[str, object], ...] = (
         "bucket": "competitive_position",
         "title": "Start seven COBENFY phase 3 studies by mid-year",
         "objects": ("COBENFY",),
+        "match": {
+            "anchors": ("COBENFY", "Cobenfy", "KarXT"),
+            "context": ("phase 3", "pivotal", "studies", "trials", "initiated", "underway", "Alzheimer", "bipolar", "seven"),
+            "exclude": (),
+            "generic": None,
+        },
         "seed": {
             "fiscal_period": "FY2025-Q1",
             "claim_type": "forward_clock",
@@ -421,6 +511,12 @@ HC_TREES: tuple[dict[str, object], ...] = (
         "bucket": "macro_regulatory_risk",
         "title": "Submit aflibercept 8 mg pivotal data in a single BLA this year",
         "objects": ("aflibercept 8-milligram", "BLA"),
+        "match": {
+            "anchors": ("aflibercept 8-milligram", "aflibercept 8 mg", "8-milligram", "8 mg", "high-dose aflibercept", "BLA", "EYLEA HD"),
+            "context": ("submitted", "submission", "FDA", "priority review", "PDUFA", "accepted", "approval"),
+            "exclude": (),
+            "generic": None,
+        },
         "seed": {
             "fiscal_period": "FY2022-Q3",
             "claim_type": "forward_clock",
@@ -445,6 +541,12 @@ HC_TREES: tuple[dict[str, object], ...] = (
         "bucket": "demand",
         "title": "Medicare Advantage customer growth of at least 10% in 2020",
         "objects": ("Medicare Advantage", "10%"),
+        "match": {
+            "anchors": ("Medicare Advantage",),
+            "context": ("customer growth", "growth", "10%", "2020", "customers", "membership", "members"),
+            "exclude": (),
+            "generic": True,
+        },
         "seed": {
             "fiscal_period": "FY2019-Q3",
             "claim_type": "forward_clock",
@@ -467,6 +569,12 @@ HC_TREES: tuple[dict[str, object], ...] = (
         "bucket": "competitive_position",
         "title": "Move commercial risk-based business to point-of-sale rebates in 2020",
         "objects": ("point-of-sale rebates",),
+        "match": {
+            "anchors": ("point-of-sale rebates", "point of sale", "rebates"),
+            "context": ("pharmacy", "commercial", "Medicare", "pass through", "2020", "members", "IngenioRx"),
+            "exclude": (),
+            "generic": None,
+        },
         "seed": {
             "fiscal_period": "FY2019-Q1",
             "claim_type": "forward_clock",
@@ -489,6 +597,12 @@ HC_TREES: tuple[dict[str, object], ...] = (
         "bucket": "competitive_position",
         "title": "Limited Lotus Edge release in March Europe and U.S. early Q2",
         "objects": ("Lotus Edge",),
+        "match": {
+            "anchors": ("Lotus Edge", "Lotus", "TAVR"),
+            "context": ("launch", "launched", "controlled launch", "limited release", "FDA approval", "approved", "Europe", "U.S."),
+            "exclude": (),
+            "generic": None,
+        },
         "seed": {
             "fiscal_period": "FY2018-Q4",
             "claim_type": "forward_clock",

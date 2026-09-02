@@ -119,6 +119,18 @@ _TEMPLATE = r"""<!DOCTYPE html>
   .controls { display: flex; gap: 12px; flex-wrap: wrap; margin: 10px 0 16px; }
   svg.chart { width: 100%; height: 220px; background: #10131a; border-radius: 8px; }
   .empty { color: var(--muted); font-style: italic; }
+  .review-banner {
+    border: 1px solid var(--warn); border-left-width: 6px; border-radius: 8px;
+    padding: 10px 14px; margin: 14px 0; background: #1a1512;
+  }
+  .review-banner h2 { margin: 0 0 6px; color: var(--warn); }
+  .budget { display: flex; gap: 18px; flex-wrap: wrap; margin: 6px 0 10px; font-size: 13px; }
+  .budget span b { color: var(--accent); }
+  .tier { display: inline-block; min-width: 18px; text-align: center; padding: 0 5px; border-radius: 4px;
+          font-size: 11px; font-weight: 650; background: #24304a; color: #cfe0ff; }
+  .tier.t3 { background: #3a3220; color: #f0d9a0; }
+  .tier.t4, .tier.t5 { background: #4a2424; color: #ffd0d0; }
+  .reason { font-family: ui-monospace, monospace; font-size: 11px; color: var(--warn); }
 </style>
 </head>
 <body>
@@ -137,6 +149,7 @@ _TEMPLATE = r"""<!DOCTYPE html>
   <div id="quant"></div>
   <div id="management-regimes"></div>
   <div id="seed-candidates"></div>
+  <div id="needs-review"></div>
   <div id="terminal-candidates"></div>
   <div id="credibility"></div>
   <div id="clocks"></div>
@@ -800,16 +813,102 @@ function renderSeedCandidates() {
   host.innerHTML = html;
 }
 
+function tierBadge(t) {
+  if (t === null || t === undefined) return "<span class='tier' title='no retrieval'>—</span>";
+  const n = Number(t);
+  const cls = n >= 4 ? "t" + n : (n === 3 ? "t3" : "");
+  const label = {0: "T0 exact", 1: "T1 alias", 2: "T2 co-occur", 3: "T3 widened", 4: "T4 Haiku triage", 5: "T5 Haiku+Sonnet"}[n] || ("T" + n);
+  return "<span class='tier " + cls + "' title='" + esc(label) + "'>" + esc(String(n)) + "</span>";
+}
+
+function usd(x) {
+  if (x === null || x === undefined || x === "") return "—";
+  const n = Number(x);
+  return isNaN(n) ? "—" : "$" + n.toFixed(n < 0.1 ? 4 : 2);
+}
+
+function budgetHeader(data) {
+  const b = data.budget || {};
+  const cov = data.coverage || {};
+  const tiers = data.tier_counts || {};
+  const tierStr = Object.keys(tiers).length
+    ? Object.entries(tiers).map(([k, v]) => "T" + k + ":" + v).join(" · ") : "—";
+  let html = "<div class='budget'>";
+  html += "<span>Run: <b>" + (data.plan_mode ? "PLAN (no API calls)" : "live") + "</b></span>";
+  html += "<span>Evidence: <b>" + esc(data.evidence_source ? "transcripts_raw" : "novelty_view") + "</b></span>";
+  html += "<span>Sonnet spend: <b>" + usd(b.sonnet_spent_usd) + "</b></span>";
+  html += "<span>Fallback budget: <b>" + usd(b.fallback_spent_usd) + " / " + usd(b.fallback_allowed_usd) + "</b>" +
+    (b.fallback_trees ? " (" + esc(String(b.fallback_trees)) + " trees" + (b.refused_trees ? ", " + esc(String(b.refused_trees)) + " refused" : "") + ")" : "") + "</span>";
+  html += "<span>Paid calls: <b>" + esc(String(b.n_paid_calls || 0)) + "</b></span>";
+  html += "<span>Tiers: <b>" + esc(tierStr) + "</b></span>";
+  if (cov.window_quarters !== undefined) {
+    html += "<span>Clock-window transcripts: <b>" + esc(String(cov.window_present || 0)) + "/" + esc(String(cov.window_quarters || 0)) + "</b> present</span>";
+  }
+  html += "</div>";
+  return html;
+}
+
+const REASON_HELP = {
+  no_evidence_retrieved: "Tiers 0–3 searched every present clock-window transcript and found nothing. Widen anchors/context in the catalog match block, or re-run with --fallback-budget-usd.",
+  numeric_target_no_strict_match: "All anchors are numbers; strict numeric matching found nothing. Add a non-numeric anchor (product/program name) to the match block.",
+  transcript_missing: "A clock-window transcript is not in transcripts_raw. Back-fill it (scripts/_desk_transcript_backfill.py) before judging.",
+  fallback_budget_exhausted: "Paid triage was needed but the run budget could not cover it.",
+  no_clock_open_goal: "Open goal with no clock: Tier 3 searched all post-seed quarters with zero hits; nothing principled to buy.",
+  no_transcripts_indexed: "No indexed transcripts exist for this ticker.",
+  llm_low_confidence: "Sonnet proposed a terminal at low confidence or quoted text not verbatim in the evidence.",
+  llm_failed: "The LLM call errored or returned malformed JSON.",
+  expired_guard: "Sonnet proposed expired but the clock is still open or the window has gaps — downgraded to none.",
+};
+
+function renderNeedsReview() {
+  const host = document.getElementById("needs-review");
+  const data = DESK.terminal_candidates;
+  if (!data || !Array.isArray(data.needs_review)) { host.innerHTML = ""; return; }
+  const items = data.needs_review;
+  if (!items.length) {
+    host.innerHTML = "<div class='review-banner'><h2>Needs Review — 0</h2><p class='cap'>Every open tree either has retrieved evidence or a verdict. Nothing is parked.</p></div>";
+    return;
+  }
+  const reasons = data.needs_review_reasons || {};
+  let html = "<div class='review-banner'>";
+  html += "<h2>Needs Review — " + esc(String(items.length)) + " open tree" + (items.length === 1 ? "" : "s") + " could not be resolved automatically</h2>";
+  html += "<p class='cap'>These are parked, not closed. Each row says why and what would unblock it. " +
+    Object.entries(reasons).map(([k, v]) => "<span class='reason'>" + esc(k) + "</span>×" + esc(String(v))).join(" · ") + "</p>";
+  html += "<table><thead><tr><th>Reason</th><th>Company</th><th>Tree</th><th>Kind</th><th>Seed</th><th>Clock</th><th>Window present</th><th>Anchors tried</th><th>Detail</th><th>Unblock</th></tr></thead><tbody>";
+  for (const it of items) {
+    const missing = it.transcripts_missing || [];
+    const winN = (it.clock_window || []).length;
+    html += "<tr>";
+    html += "<td><span class='reason'>" + esc(it.reason || "") + "</span>" + (it.expired_eligible ? "<br><span class='cite'>expired-eligible</span>" : "") + "</td>";
+    html += "<td>" + esc(labelOf(it.ticker)) + "</td>";
+    html += "<td>" + esc(it.title || it.tree_id || "") + "<br><span class='cite'>" + esc(it.tree_id || "") + "</span></td>";
+    html += "<td>" + esc(it.kind || "") + "</td>";
+    html += "<td>" + esc(it.seed_fiscal || "") + "</td>";
+    html += "<td>" + esc(it.clock || "—") + "</td>";
+    html += "<td>" + (winN ? esc(String(it.transcripts_present || 0)) + "/" + esc(String(winN)) : "—") +
+      (missing.length ? "<br><span class='silent'>" + esc(missing.join(", ")) + "</span>" : "") + "</td>";
+    html += "<td style='max-width:200px'>" + esc((it.anchors_tried || []).join(", ")) + "</td>";
+    html += "<td style='max-width:260px'>" + esc(it.detail || "") + "</td>";
+    html += "<td style='max-width:280px' class='cite'>" + esc(REASON_HELP[it.reason] || "") + "</td>";
+    html += "</tr>";
+  }
+  html += "</tbody></table></div>";
+  host.innerHTML = html;
+}
+
 function renderTerminalCandidates() {
   const host = document.getElementById("terminal-candidates");
   const data = DESK.terminal_candidates;
   if (!data) { host.innerHTML = ""; return; }
   const candidates = data.candidates || [];
+  const retrievalFirst = !!data.evidence_source;
   let html = "<h2>Terminal Candidates</h2>";
-  html += "<p class='cap'>LLM-proposed terminal verdicts for " + esc(String(data.n_open_trees_scored || 0)) +
+  html += "<p class='cap'>" + (retrievalFirst ? "Retrieval-first terminal verdicts (raw-transcript evidence, Sonnet judgment) for " : "LLM-proposed terminal verdicts for ") +
+    esc(String(data.n_open_trees_scored || 0)) +
     " open trees. Do not auto-insert. Human review required before typing nodes into catalog files.</p>";
+  if (retrievalFirst) html += budgetHeader(data);
   html += "<p class='cap'><strong>" + esc(String(data.n_actionable || 0)) + "</strong> actionable (not none, ≥ medium confidence) · " +
-    esc(String(data.n_excerpt_unverified || 0)) + " scored verdicts quote text not found in novelty_view (✗) · " +
+    esc(String(data.n_excerpt_unverified || 0)) + " scored verdicts quote text not found in " + (retrievalFirst ? "the retrieved evidence" : "novelty_view") + " (✗) · " +
     "Generated " + esc((data.generated_at || "").slice(0, 10)) +
     (data.complete === false ? " · <span style='color:var(--warn)'>PARTIAL RUN</span>" : "") + "</p>";
   if (!candidates.length) {
@@ -827,19 +926,35 @@ function renderTerminalCandidates() {
   for (const [book, rows] of Object.entries(byBook)) {
     html += "<h3>" + esc(book) + "</h3>";
     html += "<table><thead><tr>";
-    html += "<th>Edge</th><th>Conf</th><th>Cite</th><th>Company</th><th>Title</th><th>Kind</th><th>Seed fiscal</th><th>Proposed fiscal</th><th>Evidence q</th><th>Reasoning</th><th>Node</th>";
+    html += "<th>Edge</th><th>Conf</th><th>Cite</th><th>Company</th><th>Title</th><th>Kind</th><th>Seed fiscal</th><th>Proposed fiscal</th>";
+    if (retrievalFirst) html += "<th>Tier</th><th>Paragraphs</th><th>Cost</th>";
+    else html += "<th>Evidence q</th>";
+    html += "<th>Reasoning</th><th>Node</th>";
     html += "</tr></thead><tbody>";
     for (const cand of rows) {
+      const r = cand.retrieval || {};
       html += "<tr>";
-      html += "<td>" + edgeBadge(cand.proposed_edge) + "</td>";
+      html += "<td>" + edgeBadge(cand.proposed_edge) + (cand.source === "retrieval" ? "<br><span class='cite'>no LLM</span>" : "") + "</td>";
       html += "<td>" + confidenceBadge(cand.confidence) + "</td>";
       html += "<td>" + citeBadge(cand.excerpt_verified) + "</td>";
       html += "<td>" + esc(labelOf(cand.ticker)) + "</td>";
-      html += "<td>" + esc(cand.title || "") + "</td>";
+      html += "<td>" + esc(cand.title || "") + (cand.guard ? "<br><span class='silent'>" + esc(cand.guard) + "</span>" : "") + "</td>";
       html += "<td>" + esc(cand.kind || "") + "</td>";
       html += "<td>" + esc(cand.seed_fiscal || "") + "</td>";
       html += "<td>" + esc(cand.proposed_fiscal || "—") + "</td>";
-      html += "<td>" + esc(String(cand.n_evidence_excerpts || 0)) + "</td>";
+      if (retrievalFirst) {
+        const missing = r.window_missing || [];
+        html += "<td>" + tierBadge(r.tier) + "</td>";
+        html += "<td title='" + esc("searched " + (r.quarters_searched || []).length + " quarters; " + (r.n_hits_total || 0) + " sentence hits before cap") + "'>" +
+          esc(String(cand.n_evidence_excerpts || 0)) + "<br><span class='cite'>" + esc((r.quarters_searched || []).length + " q") +
+          (missing.length ? " · <span class='silent'>" + esc(missing.length + " missing") + "</span>" : "") + "</span></td>";
+        const tri = r.triage || {};
+        html += "<td>" + usd(r.usd !== undefined && r.usd !== null ? r.usd : r.est_usd) +
+          (tri.usd || tri.est_usd ? "<br><span class='cite'>+triage " + usd(tri.usd || tri.est_usd) + "</span>" : "") +
+          (cand.plan ? "<br><span class='cite'>est.</span>" : "") + "</td>";
+      } else {
+        html += "<td>" + esc(String(cand.n_evidence_excerpts || 0)) + "</td>";
+      }
       html += "<td style='max-width:260px'>" + esc((cand.reasoning || "").slice(0, 220)) + "</td>";
       const py = esc(cand.proposed_node_py || "");
       html += "<td><details><summary style='cursor:pointer;color:var(--accent)'>node</summary><pre style='font-size:11px;margin:4px 0;white-space:pre-wrap;max-width:420px'>" + py + "</pre></details></td>";
@@ -855,6 +970,7 @@ function boot() {
     select("book", DESK.book_order, DESK.default_book, "Book");
   document.getElementById("book").onchange = render;
   renderSeedCandidates();
+  renderNeedsReview();
   renderTerminalCandidates();
   render();
 }
