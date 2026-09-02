@@ -215,6 +215,111 @@ def test_discovery_updates_times_idempotently_but_preserves_manual_override(tmp_
     assert state.get_event_for_period("AAPL", "FY2026-Q3").event.title == "Operator override"
 
 
+def _reschedule_monitor(tmp_path, current, feed):
+    class Provider:
+        def list_events(self, tickers, *, since, until):
+            return list(feed)
+
+        def get_transcript(self, requested):
+            return None
+
+    class Workflow:
+        def run(self, profile, requested, transcript=None):
+            return {}
+
+    state = OperationalState(tmp_path / "monitor.sqlite3")
+    state.initialize()
+    monitor = EarningsMonitor(
+        config=_config(tmp_path),
+        state=state,
+        event_provider=Provider(),
+        transcript_provider=Provider(),
+        freshness=AlwaysFreshProbe(),
+        workflow=Workflow(),
+        clock=lambda: current[0],
+    )
+    return monitor, state
+
+
+def test_reissued_event_id_moves_the_call_instead_of_being_dropped(tmp_path):
+    """A moved call arrives under a new provider ID and must still land.
+
+    Quartr mints a fresh event ID when a date changes, so the replacement looks
+    like an unrelated event for a quarter already tracked. It used to be
+    discarded with a warning, leaving the monitor armed for the old date.
+    """
+    now = datetime(2026, 7, 30, 21, 0, tzinfo=UTC)
+    current = [now]
+    feed = [
+        EarningsEvent(
+            "quartr:event-1",
+            "AAPL",
+            "FY2026-Q3",
+            report_at=now + timedelta(days=1),
+            call_at=now + timedelta(days=1, hours=1),
+            title="Apple call",
+        )
+    ]
+    monitor, state = _reschedule_monitor(tmp_path, current, feed)
+    window = {"since": now - timedelta(days=1), "until": now + timedelta(days=30)}
+    assert monitor.discover(**window) == 1
+
+    moved = EarningsEvent(
+        "quartr:event-2",
+        "AAPL",
+        "FY2026-Q3",
+        report_at=now + timedelta(days=8),
+        call_at=now + timedelta(days=8, hours=1),
+        title="Apple call (moved)",
+    )
+    feed[:] = [moved]
+    assert monitor.discover(**window) == 1
+
+    # One row per quarter: the original ID is kept so queued jobs and run
+    # history stay attached, and only the schedule moves.
+    tracked = state.get_event_for_period("AAPL", "FY2026-Q3")
+    assert tracked.event.provider_event_id == "quartr:event-1"
+    assert tracked.event.call_at == moved.call_at
+    assert tracked.event.title == "Apple call (moved)"
+    assert state.get_event("quartr:event-2") is None
+
+    assert monitor.discover(**window) == 0
+
+
+def test_reissued_event_id_after_the_call_is_not_absorbed(tmp_path):
+    now = datetime(2026, 7, 30, 21, 0, tzinfo=UTC)
+    current = [now]
+    original = EarningsEvent(
+        "quartr:event-1",
+        "AAPL",
+        "FY2026-Q3",
+        report_at=now - timedelta(hours=2),
+        call_at=now - timedelta(hours=1),
+    )
+    feed = [original]
+    monitor, state = _reschedule_monitor(tmp_path, current, feed)
+    window = {"since": now - timedelta(days=1), "until": now + timedelta(days=30)}
+    assert monitor.discover(**window) == 1
+
+    done = state.get_event("quartr:event-1")
+    done.state = EventState.COMPLETE
+    state.upsert_event(done)
+
+    feed[:] = [
+        EarningsEvent(
+            "quartr:event-2",
+            "AAPL",
+            "FY2026-Q3",
+            report_at=now + timedelta(days=7),
+            call_at=now + timedelta(days=7, hours=1),
+        )
+    ]
+    assert monitor.discover(**window) == 0
+    tracked = state.get_event_for_period("AAPL", "FY2026-Q3")
+    assert tracked.state == EventState.COMPLETE
+    assert tracked.event.call_at == original.call_at
+
+
 def test_bundle_live_to_final_naming_compatibility_and_malformed_safety(tmp_path, caplog):
     inbox = tmp_path / "inbox"
     now = datetime(2026, 7, 30, 22, 0, tzinfo=UTC)
@@ -464,3 +569,75 @@ def test_require_live_growth_wired_from_env(tmp_path):
     assert parsed.require_live_growth is False
     monitor = build_local_monitor(parsed)
     assert monitor.stabilizer.require_live_growth is False
+
+
+def test_same_id_schedule_change_after_the_call_is_ignored(tmp_path):
+    """A completed quarter must not have its recorded schedule rewritten.
+
+    ``_absorb_reschedule`` already refuses this when the provider reissues the
+    ID, but the same-ID update path had no state guard -- and the same ID with a
+    corrected time is the COMMON case, since Quartr firms up its estimates in
+    place. A late correction would then move the call time of a quarter Roz had
+    already scored, so the record no longer says when the call actually was.
+    """
+    now = datetime(2026, 7, 30, 21, 0, tzinfo=UTC)
+    current = [now]
+    original = EarningsEvent(
+        "quartr:event-1",
+        "AAPL",
+        "FY2026-Q3",
+        report_at=now - timedelta(hours=2),
+        call_at=now - timedelta(hours=1),
+    )
+    feed = [original]
+    monitor, state = _reschedule_monitor(tmp_path, current, feed)
+    window = {"since": now - timedelta(days=1), "until": now + timedelta(days=30)}
+    assert monitor.discover(**window) == 1
+
+    done = state.get_event("quartr:event-1")
+    done.state = EventState.COMPLETE
+    state.upsert_event(done)
+
+    # Same provider ID, corrected times -- exactly what a T-7 sweep sends.
+    feed[:] = [
+        EarningsEvent(
+            "quartr:event-1",
+            "AAPL",
+            "FY2026-Q3",
+            report_at=now + timedelta(days=7),
+            call_at=now + timedelta(days=7, hours=1),
+        )
+    ]
+    assert monitor.discover(**window) == 0
+    tracked = state.get_event_for_period("AAPL", "FY2026-Q3")
+    assert tracked.state == EventState.COMPLETE
+    assert tracked.event.call_at == original.call_at
+
+
+def test_same_id_schedule_change_before_the_call_is_applied(tmp_path):
+    """The T-7 correction path itself: a firmed-up time must still land."""
+    now = datetime(2026, 7, 30, 21, 0, tzinfo=UTC)
+    current = [now]
+    feed = [
+        EarningsEvent(
+            "quartr:event-1",
+            "AAPL",
+            "FY2026-Q3",
+            report_at=now + timedelta(days=10),
+            call_at=now + timedelta(days=10, hours=1),
+        )
+    ]
+    monitor, state = _reschedule_monitor(tmp_path, current, feed)
+    window = {"since": now - timedelta(days=1), "until": now + timedelta(days=30)}
+    assert monitor.discover(**window) == 1
+
+    corrected = EarningsEvent(
+        "quartr:event-1",
+        "AAPL",
+        "FY2026-Q3",
+        report_at=now + timedelta(days=9, hours=12),
+        call_at=now + timedelta(days=9, hours=13),
+    )
+    feed[:] = [corrected]
+    assert monitor.discover(**window) == 1
+    assert state.get_event("quartr:event-1").event.call_at == corrected.call_at

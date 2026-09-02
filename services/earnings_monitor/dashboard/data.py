@@ -311,6 +311,7 @@ class DashboardData:
         now: datetime | None = None,
         stuck_after_seconds: int | None = None,
         repeated_failure_threshold: int | None = None,
+        host_health_path: Path | str | None = None,
     ) -> list[dict[str, Any]]:
         current = now or datetime.now(timezone.utc)
         stuck_after = stuck_after_seconds or int(
@@ -387,7 +388,10 @@ class DashboardData:
                     }
                 )
 
-        health = load_host_health(resolve_host_health_path())
+        # Injectable so alerting does not depend on the process's cwd: the
+        # default resolver falls back to ./host_quartr, which means the same
+        # records classify differently once the host automation has ever run.
+        health = load_host_health(resolve_host_health_path(explicit=host_health_path))
         alerts.extend(host_health_alerts(health, now=current))
 
         try:

@@ -1,11 +1,50 @@
 # Host automation membership (calendar publish + live dispatch).
 # Empty entries = automate nothing (safe default).
-# ticker-only: all upcoming earnings quarters for that company (still overlay-gated).
-# ticker + period: only that fiscal quarter (e.g. FY2026-Q2).
-#
-# Manage via:
-#   python -m services.earnings_monitor.host_automation watchlist list
-#   python -m services.earnings_monitor.host_automation watchlist add --ticker OPAL
-#   python -m services.earnings_monitor.host_automation watchlist add --ticker STRW --period FY2026-Q2
-#   python -m services.earnings_monitor.host_automation watchlist remove --ticker OPAL
-entries: []
+# ticker-only: all upcoming earnings quarters for that company.
+# ticker + period: only that fiscal quarter.
+entries:
+- ticker: AAPL
+- ticker: ABBV
+- ticker: ABT
+- ticker: ACN
+- ticker: ADBE
+- ticker: ADI
+- ticker: ADSK
+- ticker: AMAT
+- ticker: AMD
+- ticker: AMGN
+- ticker: AMZN
+- ticker: APH
+- ticker: AVGO
+- ticker: BMY
+- ticker: BSX
+- ticker: CI
+- ticker: CRM
+- ticker: CSCO
+- ticker: CTSH
+- ticker: DHR
+- ticker: ELV
+- ticker: GILD
+- ticker: IBM
+- ticker: INTU
+- ticker: ISRG
+- ticker: JNJ
+- ticker: LLY
+- ticker: LRCX
+- ticker: MDT
+- ticker: MRK
+- ticker: MSFT
+- ticker: MU
+- ticker: NVDA
+- ticker: OPAL
+- ticker: ORCL
+- ticker: PFE
+- ticker: REGN
+- ticker: SPCX
+- ticker: STRW
+- ticker: SYK
+- ticker: TEL
+- ticker: TMO
+- ticker: TXN
+- ticker: UNH
+- ticker: VRTX

@@ -6,9 +6,9 @@ import argparse
 import json
 import logging
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Sequence
 
 from .automation_watchlist import (
     default_watchlist_path,
@@ -31,6 +31,16 @@ LOG = logging.getLogger(__name__)
 UTC = timezone.utc
 
 DEFAULT_HOST_ROOT = Path("host_quartr")
+
+
+def _parse_iso_utc(value: str | None) -> datetime | None:
+    if not value:
+        return None
+    try:
+        parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return parsed if parsed.tzinfo else parsed.replace(tzinfo=UTC)
 
 
 def _default_paths(repo_root: Path) -> dict[str, Path]:
@@ -59,6 +69,30 @@ def cmd_watchlist(args: argparse.Namespace) -> int:
     watchlist = load_watchlist(path)
     if args.watchlist_action == "list":
         print(json.dumps({"path": str(path), **watchlist.to_document()}, indent=2))
+        return 0
+    if args.watchlist_action == "sync":
+        from .automation_watchlist import sync_entries
+        from .config import MonitorConfig
+        from .eligibility import monitored_universe_tickers
+
+        config = MonitorConfig.from_env(repo_root=repo_root)
+        universe = monitored_universe_tickers(config)
+        added, removed = sync_entries(watchlist, universe)
+        if not args.dry_run:
+            save_watchlist_atomic(path, watchlist)
+        print(
+            json.dumps(
+                {
+                    "dry_run": args.dry_run,
+                    "path": str(path),
+                    "universe_size": len(universe),
+                    "added": added,
+                    "removed": removed,
+                    **watchlist.to_document(),
+                },
+                indent=2,
+            )
+        )
         return 0
     if args.watchlist_action == "add":
         changed = watchlist.add_entry(args.ticker, args.period)
@@ -94,6 +128,103 @@ def cmd_watchlist(args: argparse.Namespace) -> int:
     return 2
 
 
+def _quartr_gateway(repo_root: Path):
+    """Authenticated Quartr MCP gateway, or a clear instruction to sign in."""
+    from .quartr_mcp import QuartrMcpClient, QuartrMcpGateway
+    from .quartr_oauth import default_token_path, get_access_token
+
+    token = get_access_token(default_token_path(repo_root))
+    return QuartrMcpGateway(QuartrMcpClient(token))
+
+
+def _fetch_calendar_dumps(
+    tickers: Sequence[str], calendar_dir: Path, repo_root: Path
+) -> dict[str, int]:
+    """Write one dump per ticker. Only rewrites a file when rows came back.
+
+    A ticker that errors or returns nothing keeps its previous dump rather than
+    being truncated to an empty list: an empty dump is indistinguishable from
+    "this company has no upcoming call" and would silently retract a manifest
+    that had already been published.
+    """
+    gateway = _quartr_gateway(repo_root)
+    calendar_dir.mkdir(parents=True, exist_ok=True)
+    total = 0
+    written = 0
+    for ticker in tickers:
+        rows = list(gateway.list_events(ticker=ticker))
+        if not rows:
+            LOG.info("No Quartr rows for %s; keeping any existing dump", ticker)
+            continue
+        path = calendar_dir / f"{ticker.strip().upper()}.json"
+        path.write_text(json.dumps(rows, indent=2, default=str), encoding="utf-8")
+        total += len(rows)
+        written += 1
+    return {"rows": total, "tickers": written}
+
+
+def cmd_quartr(args: argparse.Namespace) -> int:
+    repo_root = (args.repo_root or Path.cwd()).resolve()
+    from .quartr_oauth import (
+        QuartrAuthError,
+        default_token_path,
+        get_access_token,
+        interactive_login,
+        load_tokens,
+    )
+
+    token_path = default_token_path(repo_root)
+    try:
+        if args.quartr_action == "login":
+            tokens = interactive_login(token_path, port=args.port)
+            print(
+                json.dumps(
+                    {
+                        "connected": True,
+                        "token_path": str(token_path),
+                        "has_refresh_token": bool(tokens.refresh_token),
+                    },
+                    indent=2,
+                )
+            )
+            return 0
+        if args.quartr_action == "status":
+            tokens = load_tokens(token_path)
+            print(
+                json.dumps(
+                    {
+                        "token_path": str(token_path),
+                        "connected": bool(tokens.refresh_token),
+                        "access_token_expired": tokens.expired,
+                        "expires_at": tokens.expires_at,
+                    },
+                    indent=2,
+                )
+            )
+            return 0 if tokens.refresh_token else 1
+        if args.quartr_action == "tools":
+            from .quartr_mcp import QuartrMcpClient, resolve_events_tool
+
+            client = QuartrMcpClient(get_access_token(token_path))
+            tools = client.list_tools()
+            names = sorted(str(t.get("name") or "") for t in tools)
+            try:
+                chosen = resolve_events_tool(tools)
+            except Exception as exc:  # noqa: BLE001
+                chosen = f"<unresolved: {exc}>"
+            print(
+                json.dumps(
+                    {"count": len(names), "events_tool": chosen, "tools": names},
+                    indent=2,
+                )
+            )
+            return 0
+    except QuartrAuthError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    return 2
+
+
 def cmd_calendar(args: argparse.Namespace) -> int:
     started = datetime.now(UTC)
     repo_root = (args.repo_root or Path.cwd()).resolve()
@@ -116,6 +247,29 @@ def cmd_calendar(args: argparse.Namespace) -> int:
         watchlist=watchlist,
     )
     failures: list[dict[str, Any]] = []
+    if args.source == "mcp":
+        # Land MCP rows as dumps first, then publish from disk exactly as the
+        # file-based path does. Publishing straight from a live gateway would
+        # bypass the code the tests cover and leave no audit trail of what
+        # Quartr actually said on the day an event was armed.
+        try:
+            fetched = _fetch_calendar_dumps(tickers, calendar_dir, repo_root)
+        except Exception as exc:  # noqa: BLE001 - reported via host health
+            print(f"error: Quartr fetch failed: {exc}", file=sys.stderr)
+            write_host_health(
+                defaults["health"],
+                job="calendar",
+                ok=False,
+                started_at=started,
+                finished_at=datetime.now(UTC),
+                counts={"tickers": len(tickers)},
+                failures=[{"error": "quartr_fetch_failed", "detail": str(exc)}],
+            )
+            return 2
+        print(
+            f"Fetched {fetched['rows']} rows for {fetched['tickers']} tickers "
+            f"into {calendar_dir}"
+        )
     if not calendar_dir.is_dir():
         print(f"error: calendar dump dir not found: {calendar_dir}", file=sys.stderr)
         write_host_health(
@@ -144,11 +298,48 @@ def cmd_calendar(args: argparse.Namespace) -> int:
         watchlist=watchlist,
     )
     wrote = write_due_worklist(worklist_out, due)
+    # Re-verification is only useful if a moved date is visible. Calls inside
+    # the attention window are separated out because a change there is the one
+    # an operator may need to act on today.
+    attention_by = datetime.now(UTC) + timedelta(days=args.verify_within_days)
+    moved = [item for item in published if item.rescheduled]
+    imminent = [
+        item
+        for item in moved
+        if _parse_iso_utc(item.call_at) is not None
+        and _parse_iso_utc(item.call_at) <= attention_by
+    ]
+    for item in moved:
+        print(
+            f"SCHEDULE CHANGED {item.ticker} {item.fiscal_period}: "
+            f"{item.previous_call_at} -> {item.call_at}"
+        )
+    if imminent:
+        failures.append(
+            {
+                "error": "schedule_changed_within_window",
+                "days": args.verify_within_days,
+                "events": [
+                    f"{i.ticker} {i.fiscal_period} {i.previous_call_at}->{i.call_at}"
+                    for i in imminent
+                ],
+            }
+        )
     if not tickers:
         failures.append({"error": "empty_publish_universe", "detail": "watchlist∩overlays empty"})
     payload: dict[str, Any] = {
         "tickers": list(tickers),
         "published": [item.__dict__ for item in published],
+        "schedule_changes": [
+            {
+                "ticker": i.ticker,
+                "fiscal_period": i.fiscal_period,
+                "from": i.previous_call_at,
+                "to": i.call_at,
+                "within_attention_window": i in imminent,
+            }
+            for i in moved
+        ],
         "due_sweep": [item.__dict__ for item in due],
         "worklist_out": str(wrote),
         "events_dir": str(events_dir),
@@ -290,6 +481,8 @@ def build_arg_parser() -> argparse.ArgumentParser:
     wl = sub.add_parser("watchlist", help="Add/remove/list automation membership")
     wl_sub = wl.add_subparsers(dest="watchlist_action", required=True)
     wl_sub.add_parser("list")
+    sync_p = wl_sub.add_parser("sync", help="Match membership to onboarded companies")
+    sync_p.add_argument("--dry-run", action="store_true")
     add_p = wl_sub.add_parser("add")
     add_p.add_argument("--ticker", required=True)
     add_p.add_argument("--period", default=None)
@@ -310,6 +503,25 @@ def build_arg_parser() -> argparse.ArgumentParser:
     cal.add_argument("--due-within-hours", type=float, default=6.0)
     cal.add_argument("--dry-run", action="store_true")
     cal.add_argument("--no-watchlist", action="store_true")
+    cal.add_argument(
+        "--source",
+        choices=("dumps", "mcp"),
+        default="dumps",
+        help="dumps = read existing JSON; mcp = fetch from Quartr first",
+    )
+    cal.add_argument(
+        "--verify-within-days",
+        type=int,
+        default=7,
+        help="flag a moved call this many days out as needing attention",
+    )
+
+    q = sub.add_parser("quartr", help="Connect/inspect the Quartr MCP connection")
+    q_sub = q.add_subparsers(dest="quartr_action", required=True)
+    login_p = q_sub.add_parser("login", help="One-time browser sign-in")
+    login_p.add_argument("--port", type=int, default=0)
+    q_sub.add_parser("status", help="Show whether Quartr is connected")
+    q_sub.add_parser("tools", help="List Quartr MCP tools and the events tool")
 
     live = sub.add_parser(
         "live",
@@ -363,6 +575,8 @@ def main(argv: list[str] | None = None) -> int:
     args = build_arg_parser().parse_args(argv)
     if args.command == "watchlist":
         return cmd_watchlist(args)
+    if args.command == "quartr":
+        return cmd_quartr(args)
     if args.command == "calendar":
         return cmd_calendar(args)
     if args.command == "live":

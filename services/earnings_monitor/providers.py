@@ -131,9 +131,17 @@ def _fiscal_period(row: Mapping[str, Any]) -> str:
         event_type = str(row.get("eventType") or "")
         match = re.fullmatch(r"q_?([1-4])", event_type, re.IGNORECASE)
         quarter = match.group(1) if match else None
+    title = str(row.get("title") or "")
     if not quarter:
-        match = re.search(r"\bQ([1-4])\b", str(row.get("title") or ""), re.IGNORECASE)
+        match = re.search(r"\bQ([1-4])\b", title, re.IGNORECASE)
         quarter = match.group(1) if match else None
+    if not year:
+        # Quartr leaves fiscalYear null on plenty of live rows (BMY, LLY, MRK
+        # and IBM all came back that way) while still labelling the title
+        # "Q3 2026". Without this the row yields no period and the event is
+        # dropped in silence -- the company simply never gets armed.
+        match = re.search(r"\bQ[1-4]\W{0,3}(\d{4})\b", title, re.IGNORECASE)
+        year = match.group(1) if match else None
     if year and quarter:
         return f"FY{year}-Q{str(quarter).upper().removeprefix('Q')}"
     return ""

@@ -248,7 +248,12 @@ def test_initialize_recovers_only_stale_artifact_publication_leases(
     assert retried is not None and retried["attempts"] == 2
 
 
-def test_dashboard_classifies_stuck_and_repeated_failures() -> None:
+def test_dashboard_classifies_stuck_and_repeated_failures(tmp_path) -> None:
+    # Point the host feed at a path that does not exist: this asserts pure
+    # classification of the records below. Without it the real repo's
+    # host_quartr/health/last_run.json leaks in and adds host_feed_stale
+    # as soon as anyone has actually run the host automation.
+    absent_host_health = tmp_path / "no-host-health.json"
     now = datetime(2026, 9, 24, 23, tzinfo=UTC)
     data = DashboardData.from_records(
         [],
@@ -281,7 +286,10 @@ def test_dashboard_classifies_stuck_and_repeated_failures() -> None:
     )
 
     alerts = data.operational_alerts(
-        now=now, stuck_after_seconds=7200, repeated_failure_threshold=2
+        now=now,
+        stuck_after_seconds=7200,
+        repeated_failure_threshold=2,
+        host_health_path=absent_host_health,
     )
     assert {alert["kind"] for alert in alerts} == {
         "stuck_event",

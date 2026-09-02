@@ -35,6 +35,8 @@ class MonitorConfig:
     history_source_path: Path | None = None
     tickers: tuple[str, ...] = PILOT_TICKERS
     provider: str = "manual"
+    monitor_universe_mode: str = "overlays"
+    monitor_excluded_tickers: tuple[str, ...] = ()
     poll_interval_seconds: int = 300
     stabilization_seconds: int = 300
     minimum_transcript_chars: int = 1_000
@@ -90,6 +92,22 @@ class MonitorConfig:
             raise ValueError(
                 f"Tickers must be non-empty valid exchange symbols; invalid={invalid}"
             )
+        universe_mode = (
+            values.get("EARNINGS_MONITOR_UNIVERSE_MODE", "overlays").strip().lower()
+        )
+        if universe_mode not in {"overlays", "book"}:
+            raise ValueError(
+                "EARNINGS_MONITOR_UNIVERSE_MODE must be overlays or book"
+            )
+        excluded_tickers = tuple(
+            dict.fromkeys(
+                ticker.strip().upper()
+                for ticker in values.get(
+                    "EARNINGS_MONITOR_EXCLUDE_TICKERS", ""
+                ).split(",")
+                if ticker.strip()
+            )
+        )
         recipients = tuple(
             address.strip()
             for address in values.get(
@@ -146,6 +164,8 @@ class MonitorConfig:
             ),
             tickers=tickers,
             provider=values.get("EARNINGS_MONITOR_PROVIDER", "manual").strip().lower(),
+            monitor_universe_mode=universe_mode,
+            monitor_excluded_tickers=excluded_tickers,
             poll_interval_seconds=_int(values.get("EARNINGS_MONITOR_POLL_SECONDS"), 300),
             stabilization_seconds=_int(values.get("EARNINGS_MONITOR_STABILIZATION_SECONDS"), 300, minimum=0),
             minimum_transcript_chars=_int(values.get("EARNINGS_MONITOR_MIN_CHARS"), 1_000),

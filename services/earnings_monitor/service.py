@@ -5,13 +5,20 @@ from __future__ import annotations
 import json
 import logging
 import re
+from dataclasses import replace
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Mapping, Protocol
 
 from .config import MonitorConfig
 from .freshness import FreshnessProbe
-from .models import EventState, MonitoredEvent, TranscriptStatus
+from .models import (
+    RESCHEDULABLE_STATES,
+    EarningsEvent,
+    EventState,
+    MonitoredEvent,
+    TranscriptStatus,
+)
 from .providers import EventProvider, TranscriptProvider
 from .state import OperationalState
 from .transcripts import TranscriptStabilizer
@@ -207,8 +214,8 @@ class EarningsMonitor:
     def discover(self, *, since: datetime, until: datetime) -> int:
         from .eligibility import eligible_discovery_tickers
 
-        # Book ∩ overlays so onboarded names stay discoverable after book sync
-        # without requiring a full env rewrite of EARNINGS_MONITOR_TICKERS.
+        # Everything onboarded, so a name kept off the research book is still
+        # watched. Events for anything outside this set are dropped silently.
         tickers = eligible_discovery_tickers(self.config, self.state)
         eligible = set(tickers)
         discovered = 0
@@ -223,25 +230,78 @@ class EarningsMonitor:
                     event.ticker, event.fiscal_period
                 )
                 if period_match is not None:
-                    if not period_match.manual_override:
-                        LOG.warning(
-                            "Ignoring provider event ID change for %s %s: %s -> %s",
-                            event.ticker,
-                            event.fiscal_period,
-                            period_match.event.provider_event_id,
-                            event.provider_event_id,
-                        )
+                    if self._absorb_reschedule(period_match, event):
+                        discovered += 1
                     continue
                 self.state.upsert_event(MonitoredEvent(event=event))
                 discovered += 1
             elif not existing.manual_override and existing.event != event:
                 # Provider schedule corrections update only event metadata. The
                 # lifecycle, transcript observation, and queued jobs remain intact.
+                #
+                # Gated on the same states as _absorb_reschedule: Quartr firms
+                # up its estimated times IN PLACE under the original ID, so
+                # without this a late correction would rewrite the call time of
+                # a quarter already scored and the record would no longer say
+                # when the call actually happened.
+                if EventState(existing.state) not in RESCHEDULABLE_STATES:
+                    LOG.info(
+                        "Ignoring schedule change for %s %s in state %s: "
+                        "call_at %s -> %s",
+                        event.ticker,
+                        event.fiscal_period,
+                        EventState(existing.state).value,
+                        existing.event.call_at.isoformat(),
+                        event.call_at.isoformat(),
+                    )
+                    continue
                 existing.event = event
                 existing.updated_at = self.clock()
                 self.state.upsert_event(existing)
                 discovered += 1
         return discovered
+
+    def _absorb_reschedule(
+        self, monitored: MonitoredEvent, event: EarningsEvent
+    ) -> bool:
+        """Take a new schedule for a quarter the provider reissued under a new ID.
+
+        Quartr mints a fresh event ID when a call moves, so the replacement
+        arrives looking like an unrelated event for a quarter already tracked.
+        Both cannot be stored: ``events`` is unique on (ticker, fiscal_period),
+        and three tables carry the old ID as a foreign key. So the row keeps its
+        original ``provider_event_id`` and takes only the new times -- lifecycle,
+        queued jobs and run history all stay attached.
+        """
+        old_id = monitored.event.provider_event_id
+        if monitored.manual_override:
+            return False
+        if EventState(monitored.state) not in RESCHEDULABLE_STATES:
+            LOG.warning(
+                "Ignoring reschedule of %s %s in state %s: %s -> %s",
+                event.ticker,
+                event.fiscal_period,
+                EventState(monitored.state).value,
+                old_id,
+                event.provider_event_id,
+            )
+            return False
+        rescheduled = replace(event, provider_event_id=old_id)
+        if rescheduled == monitored.event:
+            return False
+        LOG.info(
+            "Rescheduling %s %s (%s -> %s): call_at %s -> %s",
+            event.ticker,
+            event.fiscal_period,
+            old_id,
+            event.provider_event_id,
+            monitored.event.call_at.isoformat(),
+            event.call_at.isoformat(),
+        )
+        monitored.event = rescheduled
+        monitored.updated_at = self.clock()
+        self.state.upsert_event(monitored)
+        return True
 
     def _should_skip_pre_release(self, monitored: MonitoredEvent) -> tuple[bool, str]:
         """Return whether to skip prior baseline and a short reason."""

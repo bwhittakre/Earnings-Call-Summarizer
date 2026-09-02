@@ -95,6 +95,30 @@ class Watchlist:
         return {"entries": [entry.to_dict() for entry in self.entries]}
 
 
+def sync_entries(
+    watchlist: Watchlist, tickers: Iterable[str]
+) -> tuple[list[str], list[str]]:
+    """Make ticker-only membership match ``tickers``. Returns (added, removed).
+
+    Rows carrying an explicit period are left untouched: those are deliberate
+    single-quarter pins an operator added by hand, not managed membership.
+    """
+    desired = {str(t).strip().upper() for t in tickers if str(t).strip()}
+    pinned = {row.ticker for row in watchlist.entries if row.period is not None}
+    current = {row.ticker for row in watchlist.entries if row.period is None}
+    added = sorted(desired - current)
+    removed = sorted(current - desired - pinned)
+    for ticker in added:
+        watchlist.add_entry(ticker)
+    for ticker in removed:
+        watchlist.entries = [
+            row
+            for row in watchlist.entries
+            if not (row.ticker == ticker and row.period is None)
+        ]
+    return added, removed
+
+
 def default_watchlist_path(repo_root: Path | str | None = None) -> Path:
     root = Path(repo_root) if repo_root is not None else Path.cwd()
     return Path(root) / DEFAULT_WATCHLIST_REL
@@ -262,6 +286,10 @@ def build_arg_parser() -> argparse.ArgumentParser:
         default=None,
         help="Events dir for --prune-manifests",
     )
+    sync_p = sub.add_parser(
+        "sync", help="Match membership to every onboarded company"
+    )
+    sync_p.add_argument("--dry-run", action="store_true")
     return parser
 
 
@@ -285,6 +313,29 @@ def main(argv: list[str] | None = None) -> int:
                 {
                     "changed": changed,
                     "path": str(path),
+                    **watchlist.to_document(),
+                },
+                indent=2,
+            )
+        )
+        return 0
+    if args.action == "sync":
+        from .config import MonitorConfig
+        from .eligibility import monitored_universe_tickers
+
+        config = MonitorConfig.from_env(repo_root=repo_root)
+        universe = monitored_universe_tickers(config)
+        added, removed = sync_entries(watchlist, universe)
+        if not args.dry_run:
+            save_watchlist_atomic(path, watchlist)
+        print(
+            json.dumps(
+                {
+                    "dry_run": args.dry_run,
+                    "path": str(path),
+                    "universe_size": len(universe),
+                    "added": added,
+                    "removed": removed,
                     **watchlist.to_document(),
                 },
                 indent=2,

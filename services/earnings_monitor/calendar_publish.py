@@ -12,7 +12,7 @@ import json
 import logging
 import re
 import sys
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -23,7 +23,11 @@ from .automation_watchlist import (
     default_watchlist_path,
     load_watchlist,
 )
-from .eligibility import default_overlay_dir, list_overlay_tickers
+from .eligibility import (
+    default_overlay_dir,
+    list_overlay_tickers,
+    registry_tickers,
+)
 from .providers import (
     EVENT_MANIFEST_SUFFIX,
     _content_date,
@@ -204,6 +208,22 @@ def quartr_row_to_manifest(
         return None
     report_at = _parse_datetime(report_raw)
     call_at = _parse_datetime(call_raw)
+    if report_at > call_at:
+        # Quartr estimates the report and call timestamps independently, so for
+        # a quarter that is still months out they drift apart and the report can
+        # land days AFTER the call (GILD: call Oct 29, report Nov 6). Roz's model
+        # requires call_at >= report_at, and results are necessarily public by
+        # the time the call starts, so the call time is the latest defensible
+        # release time. The real values arrive via T-7 re-verification.
+        LOG.info(
+            "%s %s: Quartr report_at %s is after call_at %s (estimated dates); "
+            "clamping report_at to the call",
+            resolved_ticker,
+            period,
+            report_at.isoformat(),
+            call_at.isoformat(),
+        )
+        report_at = call_at
     title = str(row.get("title") or f"{resolved_ticker} {period} earnings call").strip()
     return {
         "schema_version": 1,
@@ -224,6 +244,19 @@ class PublishResult:
     fiscal_period: str
     path: str
     skipped_reason: str | None = None
+    #: Set only when this sweep MOVED an already-published call. Re-verifying a
+    #: date is worthless if the answer is invisible, so a change is reported
+    #: rather than silently overwritten.
+    call_at: str | None = None
+    previous_call_at: str | None = None
+
+    @property
+    def rescheduled(self) -> bool:
+        return bool(
+            self.previous_call_at
+            and self.call_at
+            and self.previous_call_at != self.call_at
+        )
 
 
 @dataclass(frozen=True)
@@ -236,6 +269,25 @@ class DueSweepTarget:
     call_at: str
     source_url: str | None = None
     is_live_hint: bool = False
+
+
+def published_call_at(path: Path) -> str | None:
+    """The call time already on disk for this quarter, if any.
+
+    Read before overwriting so a moved date can be reported. An unreadable or
+    malformed manifest reads as "nothing published" -- this is reporting, and it
+    must never be the reason a sweep fails.
+    """
+    try:
+        if not path.is_file():
+            return None
+        payload = json.loads(path.read_text(encoding="utf-8-sig"))
+    except (OSError, UnicodeError, json.JSONDecodeError):
+        return None
+    if not isinstance(payload, Mapping):
+        return None
+    value = payload.get("call_at")
+    return str(value) if value else None
 
 
 def manifest_path_for(events_dir: Path, ticker: str, fiscal_period: str) -> Path:
@@ -253,19 +305,58 @@ def resolve_publish_tickers(
     sector: str | None = None,
     watchlist: Watchlist | None = None,
 ) -> tuple[str, ...]:
-    overlays = list_overlay_tickers(overlay_dir)
+    # Onboarded = overlays plus the in-code registry, matching discovery
+    # eligibility. Gating publish on overlays alone would drop the original tech
+    # book, which predates overlay files and has none -- so their manifests
+    # would never be written even when watchlisted.
+    onboarded = list_overlay_tickers(overlay_dir) | registry_tickers(repo_root)
     if tickers:
         requested = [t.strip().upper() for t in tickers if t.strip()]
-        return tuple(t for t in dict.fromkeys(requested) if t in overlays)
+        return tuple(t for t in dict.fromkeys(requested) if t in onboarded)
     # Explicit watchlist mode: empty entries = automate nothing.
     if watchlist is not None:
-        return tuple(t for t in watchlist.iter_tickers() if t in overlays)
-    # --no-watchlist fallback: overlay ∩ sector book (if present), else overlays.
+        return tuple(t for t in watchlist.iter_tickers() if t in onboarded)
+    # --no-watchlist fallback: onboarded ∩ sector book (if present), else all.
     if sector:
         book = set(load_sector_tickers(sector_tickers_path(repo_root, sector)))
         if book:
-            return tuple(sorted(overlays & book))
-    return tuple(sorted(overlays))
+            return tuple(sorted(onboarded & book))
+    return tuple(sorted(onboarded))
+
+
+def dedupe_by_period(
+    manifests: Iterable[Mapping[str, Any]]
+) -> list[dict[str, Any]]:
+    """One manifest per (ticker, fiscal_period), earliest call time wins.
+
+    Quartr can list several events for one quarter -- MU's FY2026-Q4 comes back
+    as both the call at 20:30Z and a "Q4 2026 Post" follow-on at 22:00Z. Both
+    map to the same manifest filename and the same unique (ticker,
+    fiscal_period) row in the monitor, so without a rule the winner is whichever
+    happened to be written last, and Roz could end up armed against the
+    post-earnings session instead of the call.
+
+    Earliest wins because the results call always precedes the sessions that
+    discuss it, and it is a property of the schedule rather than of Quartr's
+    title wording.
+    """
+    best: dict[tuple[str, str], dict[str, Any]] = {}
+    for manifest in manifests:
+        key = (str(manifest["ticker"]), str(manifest["fiscal_period"]))
+        current = best.get(key)
+        if current is None:
+            best[key] = dict(manifest)
+            continue
+        if _parse_datetime(manifest["call_at"]) < _parse_datetime(current["call_at"]):
+            LOG.info(
+                "%s %s: preferring event %s over %s (earlier call time)",
+                key[0],
+                key[1],
+                manifest["provider_event_id"],
+                current["provider_event_id"],
+            )
+            best[key] = dict(manifest)
+    return list(best.values())
 
 
 def publish_calendar(
@@ -306,10 +397,11 @@ def publish_calendar(
                 )
             )
             continue
-        for row in rows:
-            manifest = quartr_row_to_manifest(row, ticker=key)
-            if manifest is None:
-                continue
+        for manifest in dedupe_by_period(
+            m
+            for m in (quartr_row_to_manifest(row, ticker=key) for row in rows)
+            if m is not None
+        ):
             if watchlist is not None and not watchlist.is_automated(
                 manifest["ticker"], manifest["fiscal_period"]
             ):
@@ -329,6 +421,15 @@ def publish_calendar(
             path = manifest_path_for(
                 events_dir, manifest["ticker"], manifest["fiscal_period"]
             )
+            previous = published_call_at(path)
+            if previous and previous != manifest["call_at"]:
+                LOG.warning(
+                    "SCHEDULE CHANGED %s %s: call_at %s -> %s",
+                    manifest["ticker"],
+                    manifest["fiscal_period"],
+                    previous,
+                    manifest["call_at"],
+                )
             if dry_run:
                 results.append(
                     PublishResult(
@@ -337,16 +438,41 @@ def publish_calendar(
                         fiscal_period=manifest["fiscal_period"],
                         path=str(path),
                         skipped_reason="dry_run",
+                        call_at=manifest["call_at"],
+                        previous_call_at=previous,
                     )
                 )
                 continue
-            wrote = write_event_manifest_atomic(path, manifest)
+            try:
+                wrote = write_event_manifest_atomic(path, manifest)
+            except Exception as exc:  # noqa: BLE001 - one row must not end the run
+                # A sweep covers the whole book, so aborting on a single
+                # malformed row leaves the inbox half-written and the remaining
+                # companies unarmed with no obvious sign anything went wrong.
+                LOG.warning(
+                    "skipping %s %s: %s",
+                    manifest["ticker"],
+                    manifest["fiscal_period"],
+                    exc,
+                )
+                results.append(
+                    PublishResult(
+                        ticker=manifest["ticker"],
+                        provider_event_id=manifest["provider_event_id"],
+                        fiscal_period=manifest["fiscal_period"],
+                        path="",
+                        skipped_reason=f"invalid_manifest:{exc}",
+                    )
+                )
+                continue
             results.append(
                 PublishResult(
                     ticker=manifest["ticker"],
                     provider_event_id=manifest["provider_event_id"],
                     fiscal_period=manifest["fiscal_period"],
                     path=str(wrote),
+                    call_at=manifest["call_at"],
+                    previous_call_at=previous,
                 )
             )
             LOG.info(

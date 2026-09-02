@@ -979,7 +979,8 @@ def run_onboard(
     # First-Print fallthrough and full Onboard both integrate the ticker into
     # the shared Roz book (sector file + optional env) so research-regen sees it.
     # New-sector case studies pass skip_book_sync=True so they do not append
-    # into the live xlk_tech / SQLite book.
+    # into the live xlk_tech / SQLite book. Monitoring is unaffected either way:
+    # discovery keys off the overlay this flow always writes, not the book.
     if skip_book_sync:
         result.steps.append(
             {

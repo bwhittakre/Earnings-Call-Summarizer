@@ -110,3 +110,21 @@ output_confidence/edgar_cache/
 # Claude Code local settings (not shared)
 .claude/settings.local.json
 # <<< angelo <<<
+
+# Host-side Quartr working area: regenerable calendar/transcript dumps, plus
+# .quartr_oauth.json, which holds the refresh token that lets the sweep run
+# unattended. That token is a live credential with no other copy.
+/host_quartr/
+
+# Scratch from interactive debugging/probing. Never meant to be committed;
+# ignored by pattern so a stray `git add -A` cannot sweep them in.
+_tmp_*
+**/_tmp_*
+debug-*.log
+
+# Regenerable transcript corpora, same policy as transcripts_raw/ above: the
+# bytes are licensed content and can be rebuilt by scripts/_desk_transcript_index.py
+# and _desk_transcript_backfill.py. transcripts_index/ alone is 187 MB / 1,578
+# files, which would be permanent once in history.
+/Structured Narrative/transcripts_index/
+/data/transcripts_backfill/

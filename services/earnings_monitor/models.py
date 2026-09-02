@@ -43,6 +43,22 @@ class TranscriptStatus(StrEnum):
 
 
 TERMINAL_STATES = frozenset({EventState.COMPLETE})
+
+# States where the call has not happened yet, so a provider schedule change can
+# still be absorbed. FAILED is deliberately excluded: a failed event should be
+# looked at rather than quietly revived by a calendar sweep.
+RESCHEDULABLE_STATES = frozenset(
+    {
+        EventState.SCHEDULED,
+        EventState.BASELINE_QUEUED,
+        EventState.BASELINE_RUNNING,
+        EventState.AWAITING_RELEASE,
+        EventState.AWAITING_QUANT_DATA,
+        EventState.QUANT_QUEUED,
+        EventState.QUANT_RUNNING,
+        EventState.AWAITING_CALL,
+    }
+)
 TRANSITIONS: dict[EventState, frozenset[EventState]] = {
     EventState.SCHEDULED: frozenset(
         {
