@@ -7,11 +7,11 @@ title: Angelo memory re-enabled on an isolated venv; the main repo is the memory
 node_label: Angelo memory enabled
 tags: angelo,memory,mcp,infrastructure,setup
 status: active
-open_threads: 0
+open_threads: 2
 success: 'null'
 files: ''
 created_at: '2026-08-17T20:05:00+00:00'
-updated_at: '2026-08-17T20:05:00+00:00'
+updated_at: '2026-09-02T19:54:52.351986+00:00'
 ---
 Angelo was installed on 8 July 2026 and then never ran once. This entry records why, and
 the configuration that fixed it.

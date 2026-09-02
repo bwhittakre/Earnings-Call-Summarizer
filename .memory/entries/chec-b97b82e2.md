@@ -9,10 +9,13 @@ tags: quartr,monitor,phase2,live
 status: discarded
 open_threads: 0
 success: 'null'
-files: ''
+files: services/earnings_monitor/quartr_mcp.py,services/earnings_monitor/quartr_oauth.py,services/earnings_monitor/calendar_publish.py,services/earnings_monitor/providers.py,services/earnings_monitor/host_automation.py
 session_id: sess-47f0193e
 created_at: '2026-09-02T17:02:21.743819+00:00'
-updated_at: '2026-09-02T17:55:53.515961+00:00'
+updated_at: '2026-09-02T19:52:34.356291+00:00'
+related_to: ''
+invalidated_by: ''
+invalidates: ''
 ---
 State: 'calendar --source mcp --horizon-days 100' publishes 47 manifests covering all 45 onboarded companies, zero skips, zero rate-limit failures. Suite 849 passed. Nothing committed.
 

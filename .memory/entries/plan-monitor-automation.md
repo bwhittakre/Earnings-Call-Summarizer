@@ -11,7 +11,7 @@ open_threads: 3
 success: 'null'
 files: ''
 created_at: '2026-09-02T13:50:00+00:00'
-updated_at: '2026-09-02T14:20:00+00:00'
+updated_at: '2026-09-02T19:53:02.334374+00:00'
 ---
 September 2026. Roz was not picking up earnings calls for companies that had been
 onboarded. This phase closes the loop so the only manual step is onboarding a new company.

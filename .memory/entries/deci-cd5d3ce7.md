@@ -5,14 +5,17 @@ project: earnings-call-summarizer
 parent_id: plan-c35843a9
 title: Quartr MCP OAuth refresh token closes the acquisition loop
 node_label: Quartr MCP OAuth refresh token closes the acquisit
-tags: quartr,oauth,monitor,phase2
+tags: quartr,oauth,monitor,phase2,automation
 status: active
-open_threads: 2
+open_threads: 1
 success: 'null'
-files: ''
+files: services/earnings_monitor/quartr_oauth.py,services/earnings_monitor/quartr_mcp.py,services/earnings_monitor/host_automation.py,services/earnings_monitor/calendar_publish.py,services/earnings_monitor/automation_watchlist.py
 session_id: sess-c2464faf
 created_at: '2026-09-02T16:05:26.307290+00:00'
-updated_at: '2026-09-02T17:55:53.515961+00:00'
+updated_at: '2026-09-02T19:52:34.688110+00:00'
+related_to: ''
+invalidated_by: ''
+invalidates: ''
 ---
 Phase 2 needs something to publish event manifests into inbox/events. Two routes are dead ends.
 
