@@ -7,11 +7,11 @@ title: Claims desk v1 — promise tracker and cite-first as one object
 node_label: Claims desk
 tags: plan,desk,claims,promise,cite-first,august-2026
 status: active
-open_threads: 1
+open_threads: 8
 success: 'null'
 files: ''
 created_at: '2026-08-27T13:16:00+00:00'
-updated_at: '2026-08-27T13:16:00+00:00'
+updated_at: '2026-09-01T17:05:39.219280+00:00'
 ---
 One product, not two stacks. A row is a typed claim with a clock,
 a state, a cite, and a follow-up cite. 6 without 5 is a library;
