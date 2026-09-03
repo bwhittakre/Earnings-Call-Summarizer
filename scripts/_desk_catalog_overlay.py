@@ -147,17 +147,27 @@ def append_node(
     """Append a verdict node under overlay.nodes[tree_id].
 
     - Skips if tree_id is tombstoned.
+    - Idempotent: skips if a node with the same (fiscal_period, edge) already exists.
     - Attaches provenance to the node.
     - Returns the mutated overlay (in-place).
     """
     if is_tombstoned(tree_id, overlay):
         return overlay
 
-    n = deepcopy(node)
-    n["provenance"] = deepcopy(provenance)
+    fp = node.get("fiscal_period", "")
+    edge = node.get("edge", "")
 
     nodes_dict = overlay.setdefault("nodes", {})
-    nodes_dict.setdefault(tree_id, []).append(n)
+    existing = nodes_dict.setdefault(tree_id, [])
+
+    # Idempotency: skip if (fiscal_period, edge) already present
+    for existing_node in existing:
+        if existing_node.get("fiscal_period") == fp and existing_node.get("edge") == edge:
+            return overlay
+
+    n = deepcopy(node)
+    n["provenance"] = deepcopy(provenance)
+    existing.append(n)
     return overlay
 
 

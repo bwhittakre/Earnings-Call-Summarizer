@@ -1,6 +1,6 @@
 {
   "schema_version": "1",
-  "updated_at": "2026-09-03T17:49:39.007501+00:00",
+  "updated_at": "2026-09-03T18:16:41.473895+00:00",
   "trees": [
     {
       "tree_id": "aapl-india-lte-rollout",
@@ -7917,6 +7917,175 @@
         "model": "claude-sonnet-4-5",
         "run_id": "14b4cd79-b16b-4104-87ae-066a632a37bf"
       }
+    },
+    {
+      "tree_id": "avgo-ai-networking-pct-decline-2026",
+      "title": "AI networking % of pool declines into 2026",
+      "kind": "promise",
+      "bucket": "competitive_position",
+      "objects": [
+        "AI networking",
+        "percentage",
+        "2026"
+      ],
+      "match": {
+        "anchors": [
+          "networking percentage",
+          "declining"
+        ],
+        "context": [
+          "2026",
+          "pool",
+          "AI",
+          "expect"
+        ],
+        "exclude": [
+          "40%",
+          "scale-up",
+          "scale-out"
+        ],
+        "generic": null
+      },
+      "seed": {
+        "fiscal_period": "FY2025-Q3",
+        "claim_type": "forward_clock",
+        "clock": "FY2026-Q4",
+        "excerpt": "I expect actually networking percentage of the pool to be a declining percentage going into 2026.",
+        "dimension": "competitive_position",
+        "status": "verbatim",
+        "materiality": "medium",
+        "materiality_rationale": "Product mix shift affects margin profile and competitive positioning within AI segment, but is an expected transition as custom silicon scales.",
+        "delivery_basis": "transcript"
+      },
+      "confidence": "medium",
+      "rationale": "Specific directional forecast on product mix (networking as % of AI revenue) with clear timeframe, though relative rather than absolute target.",
+      "materiality": "medium",
+      "materiality_rationale": "Product mix shift affects margin profile and competitive positioning within AI segment, but is an expected transition as custom silicon scales.",
+      "ticker": "AVGO",
+      "excerpt_verified": true,
+      "proposed_seed_py": "    {\n        \"tree_id\": \"avgo-ai-networking-pct-decline-2026\",\n        \"ticker\": \"AVGO\",\n        \"kind\": \"promise\",\n        \"beat_id\": \"ai-networking-pct-decline-2026\",\n        \"bucket\": \"competitive_position\",\n        \"title\": \"AI networking % of pool declines into 2026\",\n        \"objects\": (\"AI networking\", \"percentage\", \"2026\",),\n        \"match\": {\n            \"anchors\": (\"networking percentage\", \"declining\"),\n            \"context\": (\"2026\", \"pool\", \"AI\", \"expect\"),\n            \"exclude\": (\"40%\", \"scale-up\", \"scale-out\"),\n            \"generic\": None,\n        },\n        \"seed\": {\n            \"fiscal_period\": \"FY2025-Q3\",\n            \"claim_type\": \"forward_clock\",\n            \"clock\": \"FY2026-Q4\",\n            \"excerpt\": (\"I expect actually networking percentage of the pool to be a declining percentage going into 2026.\"),\n            \"dimension\": \"competitive_position\",\n            \"status\": \"verbatim\",\n        },\n        \"nodes\": (),\n    },",
+      "book": "desk_ops_v2",
+      "provenance": {
+        "source": "autopilot",
+        "status": "provisional",
+        "confidence": "medium",
+        "proposed_at": "2026-09-03T18:15:37.818890+00:00",
+        "model": "claude-sonnet-4-5",
+        "run_id": "3018b885-2b92-4411-9cc5-808cb6317f1b"
+      }
+    },
+    {
+      "tree_id": "avgo-segment-guidance-shift-ai-non-ai",
+      "title": "Shift semiconductor guidance to AI/non-AI segments",
+      "kind": "promise",
+      "bucket": "guidance",
+      "objects": [
+        "AI Semiconductor",
+        "non-AI Semiconductor",
+        "revenue segments"
+      ],
+      "match": {
+        "anchors": [
+          "AI Semiconductor",
+          "non-AI Semiconductor"
+        ],
+        "context": [
+          "guiding",
+          "revenue segments",
+          "shift",
+          "business"
+        ],
+        "exclude": [
+          "wireless",
+          "enterprise",
+          "infrastructure"
+        ],
+        "generic": null
+      },
+      "seed": {
+        "fiscal_period": "FY2024-Q4",
+        "claim_type": "forward_clock",
+        "clock": "FY2025-Q1",
+        "excerpt": "So the reality going forward for this company is that the AI Semiconductor business will rapidly outgrow the non-AI Semiconductor business. Recognizing this, we will now shift to guiding our Semiconductor business by AI and non-AI revenue segments.",
+        "dimension": "management_confidence",
+        "status": "verbatim",
+        "materiality": "medium",
+        "materiality_rationale": "Disclosure framework change signals management's view of AI as dominant growth driver and improves investor ability to track thesis-critical segment performance.",
+        "delivery_basis": "transcript"
+      },
+      "confidence": "high",
+      "rationale": "Explicit change in reporting structure starting immediately, creates new framework for tracking business performance and strategic priorities.",
+      "materiality": "medium",
+      "materiality_rationale": "Disclosure framework change signals management's view of AI as dominant growth driver and improves investor ability to track thesis-critical segment performance.",
+      "ticker": "AVGO",
+      "excerpt_verified": true,
+      "proposed_seed_py": "    {\n        \"tree_id\": \"avgo-segment-guidance-shift-ai-non-ai\",\n        \"ticker\": \"AVGO\",\n        \"kind\": \"promise\",\n        \"beat_id\": \"segment-guidance-shift-ai-non-ai\",\n        \"bucket\": \"guidance\",\n        \"title\": \"Shift semiconductor guidance to AI/non-AI segments\",\n        \"objects\": (\"AI Semiconductor\", \"non-AI Semiconductor\", \"revenue segments\",),\n        \"match\": {\n            \"anchors\": (\"AI Semiconductor\", \"non-AI Semiconductor\"),\n            \"context\": (\"guiding\", \"revenue segments\", \"shift\", \"business\"),\n            \"exclude\": (\"wireless\", \"enterprise\", \"infrastructure\"),\n            \"generic\": None,\n        },\n        \"seed\": {\n            \"fiscal_period\": \"FY2024-Q4\",\n            \"claim_type\": \"forward_clock\",\n            \"clock\": \"FY2025-Q1\",\n            \"excerpt\": (\"So the reality going forward for this company is that the AI Semiconductor business will rapidly outgrow the non-AI Semiconductor business. Recognizing this, we will now shift to guiding our Semiconductor business by AI and non-AI revenue segments.\"),\n            \"dimension\": \"management_confidence\",\n            \"status\": \"verbatim\",\n        },\n        \"nodes\": (),\n    },",
+      "book": "desk_ops_v2",
+      "provenance": {
+        "source": "autopilot",
+        "status": "confirmed",
+        "confidence": "high",
+        "proposed_at": "2026-09-03T18:15:37.818890+00:00",
+        "model": "claude-sonnet-4-5",
+        "run_id": "3018b885-2b92-4411-9cc5-808cb6317f1b"
+      }
+    },
+    {
+      "tree_id": "avgo-meta-mtia-3gw-by-2028",
+      "title": "Deploy 3 GW Meta MTIA XPUs through end of 2028",
+      "kind": "promise",
+      "bucket": "demand",
+      "objects": [
+        "MTIA XPUs",
+        "3 GW",
+        "Meta"
+      ],
+      "match": {
+        "anchors": [
+          "MTIA",
+          "3 GW",
+          "Meta"
+        ],
+        "context": [
+          "partnership",
+          "deploy",
+          "2028",
+          "XPUs",
+          "multiple generations"
+        ],
+        "exclude": [
+          "1 GW",
+          "initial order"
+        ],
+        "generic": null
+      },
+      "seed": {
+        "fiscal_period": "FY2026-Q1",
+        "claim_type": "forward_clock",
+        "clock": "FY2028-Q4",
+        "excerpt": "For Meta, in April, we announced a partnership to deliver multiple generations of MTIA XPUs. Under this agreement, we expect to deploy 3 GW through the end of 2028. The initial order for 1 GW, which includes XPUs and our networking, has been received and will start delivery in the second half of 202",
+        "dimension": "competitive_position",
+        "status": "verbatim",
+        "materiality": "high",
+        "materiality_rationale": "Multi-gigawatt hyperscaler design win for custom AI accelerators represents a major revenue stream and validates competitive positioning in AI infrastructure.",
+        "delivery_basis": "transcript"
+      },
+      "confidence": "high",
+      "rationale": "Specific customer (Meta), product (MTIA XPUs), capacity target (3 GW), and multi-year timeframe (through 2028). Initial 1 GW order provides near-term validation checkpoint.",
+      "materiality": "high",
+      "materiality_rationale": "Multi-gigawatt hyperscaler design win for custom AI accelerators represents a major revenue stream and validates competitive positioning in AI infrastructure.",
+      "ticker": "AVGO",
+      "excerpt_verified": true,
+      "proposed_seed_py": "    {\n        \"tree_id\": \"avgo-meta-mtia-3gw-by-2028\",\n        \"ticker\": \"AVGO\",\n        \"kind\": \"promise\",\n        \"beat_id\": \"meta-mtia-3gw-by-2028\",\n        \"bucket\": \"demand\",\n        \"title\": \"Deploy 3 GW Meta MTIA XPUs through end of 2028\",\n        \"objects\": (\"MTIA XPUs\", \"3 GW\", \"Meta\",),\n        \"match\": {\n            \"anchors\": (\"MTIA\", \"3 GW\", \"Meta\"),\n            \"context\": (\"partnership\", \"deploy\", \"2028\", \"XPUs\", \"multiple generations\"),\n            \"exclude\": (\"1 GW\", \"initial order\"),\n            \"generic\": None,\n        },\n        \"seed\": {\n            \"fiscal_period\": \"FY2026-Q1\",\n            \"claim_type\": \"forward_clock\",\n            \"clock\": \"FY2028-Q4\",\n            \"excerpt\": (\"For Meta, in April, we announced a partnership to deliver multiple generations of MTIA XPUs. Under this agreement, we expect to deploy 3 GW through the end of 2028. The initial order for 1 GW, which includes XPUs and our networking, has been received and will start delivery in the second half of 202\"),\n            \"dimension\": \"competitive_position\",\n            \"status\": \"verbatim\",\n        },\n        \"nodes\": (),\n    },",
+      "book": "desk_ops_v2",
+      "provenance": {
+        "source": "autopilot",
+        "status": "confirmed",
+        "confidence": "high",
+        "proposed_at": "2026-09-03T18:16:28.834255+00:00",
+        "model": "claude-sonnet-4-5",
+        "run_id": "04bf7d0a-0716-4240-870e-a7f64df9f7c3"
+      }
     }
   ],
   "nodes": {
@@ -8101,7 +8270,24 @@
         }
       }
     ],
-    "avgo-45-op-margin": [],
+    "avgo-45-op-margin": [
+      {
+        "edge": "hit",
+        "fiscal_period": "FY2025-Q3",
+        "excerpt": "Q3 operating income was a record $10.5 billion, up 32% from a year ago. On a sequential basis, even as gross margin was down 100 basis points on revenue mix, operating margin increased 20 basis points sequentially to 65.5% on operating leverage.",
+        "dimension": "terminal",
+        "status": "verbatim",
+        "delivery_basis": "transcript",
+        "provenance": {
+          "source": "autopilot",
+          "status": "provisional",
+          "confidence": "",
+          "proposed_at": "2026-09-03T18:11:33.529994+00:00",
+          "model": "claude-sonnet-4-5",
+          "run_id": "6091aa48-66a3-4c69-ade1-d4e9b8f00245"
+        }
+      }
+    ],
     "lrcx-klx-approvals-mid2016": [
       {
         "edge": "missed",
@@ -8138,136 +8324,6 @@
         }
       }
     ],
-    "aapl-mac-pro-us-production": [
-      {
-        "edge": "delivered",
-        "fiscal_period": "FY2019-Q4",
-        "excerpt": "And for our pro customers who push the limits of what Mac can do, we're very excited about the upcoming launch of our newly redesigned Mac Pro this fall, which we are proud to be manufacturing in Austin, Texas.",
-        "dimension": "terminal",
-        "status": "verbatim",
-        "delivery_basis": "transcript",
-        "provenance": {
-          "source": "autopilot",
-          "status": "provisional",
-          "confidence": "",
-          "proposed_at": "2026-09-03T17:29:53.464613+00:00",
-          "model": "claude-sonnet-4-5",
-          "run_id": "8571444a-d09d-4936-9140-6832b06be567"
-        }
-      },
-      {
-        "edge": "delivered",
-        "fiscal_period": "FY2019-Q4",
-        "excerpt": "And for our pro customers who push the limits of what Mac can do, we're very excited about the upcoming launch of our newly redesigned Mac Pro this fall, which we are proud to be manufacturing in Austin, Texas.",
-        "dimension": "terminal",
-        "status": "verbatim",
-        "delivery_basis": "transcript",
-        "provenance": {
-          "source": "autopilot",
-          "status": "provisional",
-          "confidence": "",
-          "proposed_at": "2026-09-03T17:30:55.498859+00:00",
-          "model": "claude-sonnet-4-5",
-          "run_id": "7cf2e937-92d2-4180-965a-9dae7089a2ce"
-        }
-      },
-      {
-        "edge": "delivered",
-        "fiscal_period": "FY2019-Q4",
-        "excerpt": "And for our pro customers who push the limits of what Mac can do, we're very excited about the upcoming launch of our newly redesigned Mac Pro this fall, which we are proud to be manufacturing in Austin, Texas.",
-        "dimension": "terminal",
-        "status": "verbatim",
-        "delivery_basis": "transcript",
-        "provenance": {
-          "source": "autopilot",
-          "status": "provisional",
-          "confidence": "",
-          "proposed_at": "2026-09-03T17:32:14.273909+00:00",
-          "model": "claude-sonnet-4-5",
-          "run_id": "ffe347b0-da2f-4a85-a890-95515110fdfe"
-        }
-      },
-      {
-        "edge": "delivered",
-        "fiscal_period": "FY2019-Q4",
-        "excerpt": "And for our pro customers who push the limits of what Mac can do, we're very excited about the upcoming launch of our newly redesigned Mac Pro this fall, which we are proud to be manufacturing in Austin, Texas.",
-        "dimension": "terminal",
-        "status": "verbatim",
-        "delivery_basis": "transcript",
-        "provenance": {
-          "source": "autopilot",
-          "status": "provisional",
-          "confidence": "",
-          "proposed_at": "2026-09-03T17:33:11.927321+00:00",
-          "model": "claude-sonnet-4-5",
-          "run_id": "02abc101-065f-40ce-902e-eb545317b3dd"
-        }
-      },
-      {
-        "edge": "delivered",
-        "fiscal_period": "FY2019-Q4",
-        "excerpt": "And for our pro customers who push the limits of what Mac can do, we're very excited about the upcoming launch of our newly redesigned Mac Pro this fall, which we are proud to be manufacturing in Austin, Texas.",
-        "dimension": "terminal",
-        "status": "verbatim",
-        "delivery_basis": "transcript",
-        "provenance": {
-          "source": "autopilot",
-          "status": "provisional",
-          "confidence": "",
-          "proposed_at": "2026-09-03T17:34:15.980330+00:00",
-          "model": "claude-sonnet-4-5",
-          "run_id": "c634fccf-5dc8-4b81-9dc2-2ff7eb60df7b"
-        }
-      },
-      {
-        "edge": "delivered",
-        "fiscal_period": "FY2019-Q4",
-        "excerpt": "And for our pro customers who push the limits of what Mac can do, we're very excited about the upcoming launch of our newly redesigned Mac Pro this fall, which we are proud to be manufacturing in Austin, Texas.",
-        "dimension": "terminal",
-        "status": "verbatim",
-        "delivery_basis": "transcript",
-        "provenance": {
-          "source": "autopilot",
-          "status": "provisional",
-          "confidence": "",
-          "proposed_at": "2026-09-03T17:39:23.415573+00:00",
-          "model": "claude-sonnet-4-5",
-          "run_id": "2f68e5e5-a42c-41fe-922f-e7c9d8defb54"
-        }
-      },
-      {
-        "edge": "delivered",
-        "fiscal_period": "FY2019-Q4",
-        "excerpt": "And for our pro customers who push the limits of what Mac can do, we're very excited about the upcoming launch of our newly redesigned Mac Pro this fall, which we are proud to be manufacturing in Austin, Texas.",
-        "dimension": "terminal",
-        "status": "verbatim",
-        "delivery_basis": "transcript",
-        "provenance": {
-          "source": "autopilot",
-          "status": "provisional",
-          "confidence": "",
-          "proposed_at": "2026-09-03T17:40:23.730714+00:00",
-          "model": "claude-sonnet-4-5",
-          "run_id": "88c9c447-906b-4c52-9825-9ce89f9e6241"
-        }
-      },
-      {
-        "edge": "delivered",
-        "fiscal_period": "FY2019-Q4",
-        "excerpt": "And for our pro customers who push the limits of what Mac can do, we're very excited about the upcoming launch of our newly redesigned Mac Pro this fall, which we are proud to be manufacturing in Austin, Texas.",
-        "dimension": "terminal",
-        "status": "verbatim",
-        "delivery_basis": "transcript",
-        "provenance": {
-          "source": "autopilot",
-          "status": "provisional",
-          "confidence": "",
-          "proposed_at": "2026-09-03T17:41:27.219759+00:00",
-          "model": "claude-sonnet-4-5",
-          "run_id": "a8dbce12-30e7-4e89-ac69-5f78b430b0a0"
-        }
-      }
-    ],
     "aapl-vision-pro-spatial-computing": [
       {
         "edge": "delivered",
@@ -8287,118 +8343,6 @@
       }
     ],
     "aapl-airpods-hearing-health": [
-      {
-        "edge": "hit",
-        "fiscal_period": "FY2025-Q1",
-        "excerpt": "We've introduced new hearing health features on AirPods Pro 2, and new sleep apnea notifications on Apple Watch are also helping users learn of a potentially serious condition that's thought to affect up to a billion people worldwide.",
-        "dimension": "terminal",
-        "status": "verbatim",
-        "delivery_basis": "transcript",
-        "provenance": {
-          "source": "autopilot",
-          "status": "provisional",
-          "confidence": "",
-          "proposed_at": "2026-09-03T17:29:53.464613+00:00",
-          "model": "claude-sonnet-4-5",
-          "run_id": "8571444a-d09d-4936-9140-6832b06be567"
-        }
-      },
-      {
-        "edge": "hit",
-        "fiscal_period": "FY2025-Q1",
-        "excerpt": "We've introduced new hearing health features on AirPods Pro 2, and new sleep apnea notifications on Apple Watch are also helping users learn of a potentially serious condition that's thought to affect up to a billion people worldwide.",
-        "dimension": "terminal",
-        "status": "verbatim",
-        "delivery_basis": "transcript",
-        "provenance": {
-          "source": "autopilot",
-          "status": "provisional",
-          "confidence": "",
-          "proposed_at": "2026-09-03T17:30:55.498859+00:00",
-          "model": "claude-sonnet-4-5",
-          "run_id": "7cf2e937-92d2-4180-965a-9dae7089a2ce"
-        }
-      },
-      {
-        "edge": "hit",
-        "fiscal_period": "FY2025-Q1",
-        "excerpt": "We've introduced new hearing health features on AirPods Pro 2, and new sleep apnea notifications on Apple Watch are also helping users learn of a potentially serious condition that's thought to affect up to a billion people worldwide.",
-        "dimension": "terminal",
-        "status": "verbatim",
-        "delivery_basis": "transcript",
-        "provenance": {
-          "source": "autopilot",
-          "status": "provisional",
-          "confidence": "",
-          "proposed_at": "2026-09-03T17:32:14.273909+00:00",
-          "model": "claude-sonnet-4-5",
-          "run_id": "ffe347b0-da2f-4a85-a890-95515110fdfe"
-        }
-      },
-      {
-        "edge": "hit",
-        "fiscal_period": "FY2025-Q1",
-        "excerpt": "We've introduced new hearing health features on AirPods Pro 2, and new sleep apnea notifications on Apple Watch are also helping users learn of a potentially serious condition that's thought to affect up to a billion people worldwide.",
-        "dimension": "terminal",
-        "status": "verbatim",
-        "delivery_basis": "transcript",
-        "provenance": {
-          "source": "autopilot",
-          "status": "provisional",
-          "confidence": "",
-          "proposed_at": "2026-09-03T17:33:11.927321+00:00",
-          "model": "claude-sonnet-4-5",
-          "run_id": "02abc101-065f-40ce-902e-eb545317b3dd"
-        }
-      },
-      {
-        "edge": "hit",
-        "fiscal_period": "FY2025-Q1",
-        "excerpt": "we've introduced new hearing health features on AirPods Pro 2",
-        "dimension": "terminal",
-        "status": "verbatim",
-        "delivery_basis": "transcript",
-        "provenance": {
-          "source": "autopilot",
-          "status": "provisional",
-          "confidence": "",
-          "proposed_at": "2026-09-03T17:34:15.980330+00:00",
-          "model": "claude-sonnet-4-5",
-          "run_id": "c634fccf-5dc8-4b81-9dc2-2ff7eb60df7b"
-        }
-      },
-      {
-        "edge": "hit",
-        "fiscal_period": "FY2025-Q1",
-        "excerpt": "We've introduced new hearing health features on AirPods Pro 2, and new sleep apnea notifications on Apple Watch are also helping users learn of a potentially serious condition that's thought to affect up to a billion people worldwide.",
-        "dimension": "terminal",
-        "status": "verbatim",
-        "delivery_basis": "transcript",
-        "provenance": {
-          "source": "autopilot",
-          "status": "provisional",
-          "confidence": "",
-          "proposed_at": "2026-09-03T17:39:23.415573+00:00",
-          "model": "claude-sonnet-4-5",
-          "run_id": "2f68e5e5-a42c-41fe-922f-e7c9d8defb54"
-        }
-      },
-      {
-        "edge": "hit",
-        "fiscal_period": "FY2025-Q1",
-        "excerpt": "We've introduced new hearing health features on AirPods Pro 2, and new sleep apnea notifications on Apple Watch are also helping users learn of a potentially serious condition that's thought to affect up to a billion people worldwide.",
-        "dimension": "terminal",
-        "status": "verbatim",
-        "delivery_basis": "transcript",
-        "provenance": {
-          "source": "autopilot",
-          "status": "provisional",
-          "confidence": "",
-          "proposed_at": "2026-09-03T17:40:23.730714+00:00",
-          "model": "claude-sonnet-4-5",
-          "run_id": "88c9c447-906b-4c52-9825-9ce89f9e6241"
-        }
-      },
       {
         "edge": "hit",
         "fiscal_period": "FY2025-Q1",
@@ -8833,7 +8777,24 @@
         }
       }
     ],
-    "avgo-gross-margins-beyond-60": [],
+    "avgo-gross-margins-beyond-60": [
+      {
+        "edge": "hit",
+        "fiscal_period": "FY2023-Q1",
+        "excerpt": "Consolidated revenue was $8.9 billion for the quarter, up 16% from a year ago. Gross margins were 74% of revenue in the quarter, about 10 basis points higher than we expected.",
+        "dimension": "terminal",
+        "status": "verbatim",
+        "delivery_basis": "transcript",
+        "provenance": {
+          "source": "autopilot",
+          "status": "provisional",
+          "confidence": "",
+          "proposed_at": "2026-09-03T18:11:33.529994+00:00",
+          "model": "claude-sonnet-4-5",
+          "run_id": "6091aa48-66a3-4c69-ade1-d4e9b8f00245"
+        }
+      }
+    ],
     "avgo-operating-margins-55-by-fy2022": [
       {
         "edge": "delivered",
@@ -9548,38 +9509,6 @@
           "source": "autopilot",
           "status": "provisional",
           "confidence": "",
-          "proposed_at": "2026-09-03T17:35:18.719232+00:00",
-          "model": "claude-sonnet-4-5",
-          "run_id": "e140a532-c847-4a88-9ebc-190d49ddc763"
-        }
-      },
-      {
-        "edge": "delivered",
-        "fiscal_period": "FY2019-Q1",
-        "excerpt": "And, launching the Hong Kong region gets us to a footprint of 19 cities in China. So it continues to be a really good story for us.",
-        "dimension": "terminal",
-        "status": "verbatim",
-        "delivery_basis": "transcript",
-        "provenance": {
-          "source": "autopilot",
-          "status": "provisional",
-          "confidence": "",
-          "proposed_at": "2026-09-03T17:36:17.109222+00:00",
-          "model": "claude-sonnet-4-5",
-          "run_id": "fb80b5a1-a854-4f18-82e4-92d1d36d03d8"
-        }
-      },
-      {
-        "edge": "delivered",
-        "fiscal_period": "FY2019-Q1",
-        "excerpt": "And, launching the Hong Kong region gets us to a footprint of 19 cities in China. So it continues to be a really good story for us.",
-        "dimension": "terminal",
-        "status": "verbatim",
-        "delivery_basis": "transcript",
-        "provenance": {
-          "source": "autopilot",
-          "status": "provisional",
-          "confidence": "",
           "proposed_at": "2026-09-03T17:37:09.148607+00:00",
           "model": "claude-sonnet-4-5",
           "run_id": "2f902835-a730-4db4-a106-50bcf272565e"
@@ -9619,6 +9548,60 @@
           "proposed_at": "2026-09-03T17:38:17.661299+00:00",
           "model": "claude-sonnet-4-5",
           "run_id": "6a29a101-6f15-4eda-9d84-c3a1cb3a8f63"
+        }
+      }
+    ],
+    "avgo-ca-acquisition-close-q4-2018": [
+      {
+        "edge": "missed",
+        "fiscal_period": "FY2019-Q1",
+        "excerpt": "We remain on track to close the transaction in the first quarter of fiscal 2020 subject to antitrust approvals in the European Union and Japan, as well as of course customary closing conditions.",
+        "dimension": "terminal",
+        "status": "verbatim",
+        "delivery_basis": "transcript",
+        "provenance": {
+          "source": "autopilot",
+          "status": "provisional",
+          "confidence": "",
+          "proposed_at": "2026-09-03T18:11:33.529994+00:00",
+          "model": "claude-sonnet-4-5",
+          "run_id": "6091aa48-66a3-4c69-ade1-d4e9b8f00245"
+        }
+      }
+    ],
+    "avgo-tomahawk-6-samples-q1-2025": [
+      {
+        "edge": "delivered",
+        "fiscal_period": "FY2025-Q2",
+        "excerpt": "Our networking portfolio of Tomahawk switches, Jericho routers, and NICs is what's driving our success within AI clusters in hyperscalers. The momentum continues with our breakthrough Tomahawk 6 switch just announced this week.",
+        "dimension": "terminal",
+        "status": "verbatim",
+        "delivery_basis": "transcript",
+        "provenance": {
+          "source": "autopilot",
+          "status": "provisional",
+          "confidence": "",
+          "proposed_at": "2026-09-03T18:11:33.529994+00:00",
+          "model": "claude-sonnet-4-5",
+          "run_id": "6091aa48-66a3-4c69-ade1-d4e9b8f00245"
+        }
+      }
+    ],
+    "avgo-segment-guidance-shift-ai-non-ai": [
+      {
+        "edge": "delivered",
+        "fiscal_period": "FY2025-Q1",
+        "excerpt": "In Q1, AI revenue was $4.1 billion, and we expect Q2 AI revenue to grow to $4.4 billion, which is up 44% year-on-year. Turning to non-AI semiconductors, revenue of $4.1 billion was down 9% sequentially on a seasonal decline in wireless.",
+        "dimension": "terminal",
+        "status": "verbatim",
+        "delivery_basis": "transcript",
+        "provenance": {
+          "source": "autopilot",
+          "status": "provisional",
+          "confidence": "",
+          "proposed_at": "2026-09-03T18:16:41.472897+00:00",
+          "model": "claude-sonnet-4-5",
+          "run_id": "04bf7d0a-0716-4240-870e-a7f64df9f7c3"
         }
       }
     ]
