@@ -44,26 +44,68 @@ from scripts._desk_trees_v2 import (
 _DEFAULT_CATALOG = (
     pathlib.Path(__file__).resolve().parent.parent / "config" / "management_regimes.json"
 )
+_OVERLAY_CATALOG = (
+    pathlib.Path(__file__).resolve().parent.parent / "config" / "management_regimes_overlay.json"
+)
 
 # ─────────────────────────────────────────────────────────────────────────────
 # I/O helpers
 # ─────────────────────────────────────────────────────────────────────────────
 
-def load_management_regimes(path: str | pathlib.Path | None = None) -> list[dict]:
-    """Load the regime catalog from disk.
+def load_management_regimes(
+    path: str | pathlib.Path | None = None,
+    overlay_path: str | pathlib.Path | None = None,
+) -> list[dict]:
+    """Load the regime catalog from disk, merging the overlay if it exists.
 
-    Returns an empty list if the file is missing (so callers can safely degrade).
+    The overlay adds provisional CEO stubs. Overlay entries with the same
+    (ticker, role, start_fiscal) as an existing entry are ignored (hand-typed wins).
+
+    Returns an empty list if the base file is missing (so callers can safely degrade).
     """
     p = pathlib.Path(path) if path else _DEFAULT_CATALOG
-    if not p.exists():
-        return []
-    try:
-        raw = json.loads(p.read_text(encoding="utf-8"))
-        if isinstance(raw, list):
-            return raw
-        return []
-    except Exception:
-        return []
+    op = pathlib.Path(overlay_path) if overlay_path else _OVERLAY_CATALOG
+
+    base: list[dict] = []
+    if p.exists():
+        try:
+            raw = json.loads(p.read_text(encoding="utf-8"))
+            if isinstance(raw, list):
+                base = raw
+        except Exception:
+            pass
+
+    overlay: list[dict] = []
+    if op.exists():
+        try:
+            raw_o = json.loads(op.read_text(encoding="utf-8"))
+            if isinstance(raw_o, list):
+                overlay = raw_o
+        except Exception:
+            pass
+
+    if not overlay:
+        return base
+
+    # Merge: hand-typed wins on (ticker, role, start_fiscal) collision
+    existing_keys = {
+        (
+            str(r.get("ticker") or "").upper(),
+            str(r.get("role") or ""),
+            str(r.get("start_fiscal") or ""),
+        )
+        for r in base
+    }
+    merged = list(base)
+    for oe in overlay:
+        key = (
+            str(oe.get("ticker") or "").upper(),
+            str(oe.get("role") or ""),
+            str(oe.get("start_fiscal") or ""),
+        )
+        if key not in existing_keys:
+            merged.append(oe)
+    return merged
 
 
 # ─────────────────────────────────────────────────────────────────────────────

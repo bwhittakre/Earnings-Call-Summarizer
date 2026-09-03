@@ -675,6 +675,23 @@ class EarningsMonitor:
                         monitored.event.fiscal_period,
                     )
                     result["desk_trees"] = {"status": "error"}
+            if stage == "post_call" and self.config.desk_autopilot_after_post_call:
+                try:
+                    from .desk_autopilot import run_autopilot_for_ticker
+
+                    result["desk_autopilot"] = run_autopilot_for_ticker(
+                        repo_root=self.config.repo_root,
+                        ticker=monitored.event.ticker,
+                        fiscal_period=monitored.event.fiscal_period,
+                        budget_usd=self.config.desk_autopilot_budget_usd,
+                    )
+                except Exception:
+                    LOG.exception(
+                        "desk autopilot failed for %s %s",
+                        monitored.event.ticker,
+                        monitored.event.fiscal_period,
+                    )
+                    result["desk_autopilot"] = {"status": "error"}
             if stage == "release_to_call" and job["payload"].get("freshness"):
                 result["freshness"] = job["payload"]["freshness"]
             history_refresh = self._refresh_history_dataset()

@@ -752,6 +752,17 @@ def workshop_horizon_events(trees: Sequence[Mapping[str, Any]]) -> list[dict[str
     return found
 
 
+def provisional_caption(book: dict) -> str:
+    """Human-readable note about provisional overlay trees.
+
+    Returns '' when n_provisional is 0 or missing.
+    """
+    n = int(book.get("n_provisional") or 0)
+    if n <= 0:
+        return ""
+    return f"{n} provisional tree(s) pending review"
+
+
 def workshop_book_entry(
     name: str,
     payload: Mapping[str, Any] | None,
@@ -760,6 +771,14 @@ def workshop_book_entry(
     if payload is None:
         return None
     trees = [dict(tree) for tree in (payload.get("trees") or []) if isinstance(tree, Mapping)]
+    n_provisional = int(payload.get("n_provisional") or 0)
+    n_confirmed_overlay = int(payload.get("n_confirmed_overlay") or 0)
+    deliver_rates = dict(payload.get("deliver_rates") or {})
+    hit_rates = dict(payload.get("hit_rates") or {})
+    # material_deliver_rate and weighted_deliver_rate flow through from the book JSON
+    # They live inside deliver_rates.book; surface them at the top level too for
+    # easy JS access on the workshop page.
+    book_deliver = dict(deliver_rates.get("book") or {})
     return {
         "book_id": name,
         "caption": payload.get("caption"),
@@ -767,8 +786,10 @@ def workshop_book_entry(
         "split": payload.get("split"),
         "calendar": payload.get("calendar"),
         "window": list(payload.get("window") or []),
-        "deliver_rates": payload.get("deliver_rates") or {},
-        "hit_rates": payload.get("hit_rates") or {},
+        "deliver_rates": deliver_rates,
+        "hit_rates": hit_rates,
+        "material_deliver_rate": book_deliver.get("material_deliver_rate"),
+        "weighted_deliver_rate": book_deliver.get("weighted_deliver_rate"),
         "conversion": payload.get("conversion") or conversion_from_trees(trees),
         "trees": trees,
         "queue": queue,
@@ -779,6 +800,9 @@ def workshop_book_entry(
         "known_delivered": known_delivered_counts(
             trees, latest_scored_fiscal(payload, queue)
         ),
+        "n_provisional": n_provisional,
+        "n_confirmed_overlay": n_confirmed_overlay,
+        "provisional_note": provisional_caption({"n_provisional": n_provisional}),
     }
 
 

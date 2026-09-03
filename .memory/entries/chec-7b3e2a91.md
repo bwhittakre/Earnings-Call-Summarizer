@@ -7,14 +7,14 @@ title: Claims Desk Growth Pipeline built, run, and hardened
 node_label: Growth pipeline — seed batch + terminal scoring
 tags: desk,claims,llm,seed-batch,terminal-scoring,workshop,september-2026
 status: active
-open_threads: 1
+open_threads: 4
 success: 'null'
 files: scripts/_desk_seed_batch.py, scripts/_desk_terminal_candidates.py, scripts/_desk_trees_workshop_html.py,
   services/earnings_monitor/dashboard/claims_trees.py, data/seed_batch_candidates.json,
   data/terminal_score_candidates.json
 session_id: sess-e602b524
 created_at: '2026-09-01T19:08:00+00:00'
-updated_at: '2026-09-01T20:30:54.897207+00:00'
+updated_at: '2026-09-03T17:13:53.399848+00:00'
 ---
 Follows the Management Regimes checkpoint (chec-9fb8d5c8). Regimes analytics were
 architecturally complete but starved: ops/HC books held 44 skeleton trees with

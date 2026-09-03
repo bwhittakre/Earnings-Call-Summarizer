@@ -91,6 +91,14 @@ SYSTEM_PROMPT = textwrap.dedent(
     - "exclude": phrases that would be false-positive anchor hits (e.g. anchor
       "BUILD" → exclude "build out", "building"). May be an empty list.
 
+    For the materiality field, classify each candidate:
+      high = thesis-level: revenue/EPS/margin/FCF/capital-return targets, M&A close, thesis-critical
+             launch/approval, full-year-or-longer guidance
+      medium = operational with financial consequence: cost programs, share gain, pipeline
+               milestones, segment targets, contract wins
+      low = process/tone: analyst days, reorgs, "remain committed", ESG statements,
+            qualitative language without a measurable target
+
     Respond with a JSON object:
     {
       "candidates": [
@@ -114,7 +122,9 @@ SYSTEM_PROMPT = textwrap.dedent(
             "status": "verbatim|composite"
           },
           "confidence": "high|medium",
-          "rationale": "1–2 sentences explaining why this is a strong seed"
+          "rationale": "1–2 sentences explaining why this is a strong seed",
+          "materiality": "high|medium|low",
+          "materiality_rationale": "1 sentence explaining the investor relevance"
         }
       ]
     }
@@ -319,14 +329,19 @@ def _proposed_seed_py(candidate: dict, ticker: str) -> str:
     return "\n".join(lines)
 
 
-def _process_ticker(
+def propose_seeds(
     ticker: str,
     missed: list[dict],
-    client: AnthropicClient,
+    client: "AnthropicClient",
 ) -> list[dict]:
-    """Call LLM once for this ticker; return list of enriched candidate dicts."""
+    """Propose seed candidates for one ticker from missed cue-queue rows.
+
+    Returns a list of enriched candidate dicts (same schema as _process_ticker).
+    Called by both the batch CLI and the autopilot.
+    """
+    if not missed:
+        return []
     user_content = _build_user_content(ticker, missed)
-    label = f"{ticker}_seed_batch"
     try:
         raw = client.client.messages.create(
             model=client.model,
@@ -335,9 +350,7 @@ def _process_ticker(
             messages=[{"role": "user", "content": user_content}],
         )
         client._accumulate_usage(client._usage_from_response(raw.usage))
-        raw_text = "".join(
-            block.text for block in raw.content if block.type == "text"
-        )
+        raw_text = "".join(block.text for block in raw.content if block.type == "text")
         payload = extract_json(raw_text)
         if isinstance(payload, list):
             payload = {"candidates": payload}
@@ -358,9 +371,24 @@ def _process_ticker(
         cand["excerpt_verified"] = excerpt_verified(
             (cand.get("seed") or {}).get("excerpt"), missed
         )
+        # Ensure materiality is valid; fallback to infer_materiality
+        from scripts._desk_trees_v2 import infer_materiality, MATERIALITY_LEVELS
+        if cand.get("materiality") not in MATERIALITY_LEVELS:
+            cand["materiality"] = infer_materiality(cand)
+        if not cand.get("materiality_rationale"):
+            cand["materiality_rationale"] = "inferred"
         cand["proposed_seed_py"] = _proposed_seed_py(cand, ticker)
         results.append(cand)
     return results
+
+
+def _process_ticker(
+    ticker: str,
+    missed: list[dict],
+    client: AnthropicClient,
+) -> list[dict]:
+    """Thin wrapper kept for batch CLI compatibility."""
+    return propose_seeds(ticker, missed, client)
 
 
 def _write_output(

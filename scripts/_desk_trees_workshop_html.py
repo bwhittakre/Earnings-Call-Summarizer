@@ -119,6 +119,7 @@ _TEMPLATE = r"""<!DOCTYPE html>
   .controls { display: flex; gap: 12px; flex-wrap: wrap; margin: 10px 0 16px; }
   svg.chart { width: 100%; height: 220px; background: #10131a; border-radius: 8px; }
   .empty { color: var(--muted); font-style: italic; }
+  .badge-provisional { font-size: 11px; font-weight: 500; background: #2d4a6e; color: #a8c4e8; border-radius: 4px; padding: 1px 6px; vertical-align: middle; }
   .review-banner {
     border: 1px solid var(--warn); border-left-width: 6px; border-radius: 8px;
     padding: 10px 14px; margin: 14px 0; background: #1a1512;
@@ -407,8 +408,12 @@ function render() {
     "Stamp " + (book.generated_at || "—") + " · " + (book.split || "") +
     " · calendar " + (book.calendar || "") + " · window " + windowText +
     ". Sector filter all does not retune xlk_tech.";
+  const nProvisional = book.n_provisional || 0;
+  const provisionalBadge = nProvisional > 0
+    ? ' <span class="badge-provisional">(+' + nProvisional + ' provisional)</span>'
+    : '';
   document.getElementById("rates").innerHTML =
-    '<div class="card"><h2>Deliver rate</h2><p class="cap">' + esc(scoredRateCaption(deliver.n_scoreable, "promises")) +
+    '<div class="card"><h2>Deliver rate' + provisionalBadge + '</h2><p class="cap">' + esc(scoredRateCaption(deliver.n_scoreable, "promises")) +
     '</p><div class="metric">' + esc(formatRate(deliver.deliver_rate)) + '</div><p class="cap">' +
     esc((deliver.delivered || 0) + " delivered / " + (deliver.n_scoreable || 0) + " scored") + "</p></div>" +
     '<div class="card"><h2>Hit rate</h2><p class="cap">' + esc(scoredRateCaption(hits.n_scoreable, "goals")) +

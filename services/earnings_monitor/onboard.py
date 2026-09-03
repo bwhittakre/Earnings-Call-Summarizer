@@ -683,6 +683,29 @@ def sync_book_after_onboard(
             }
         )
 
+    # Desk autopilot: propose seeds and score open trees for the newly-onboarded ticker.
+    # Guard with the same env var that MonitorConfig.desk_autopilot_after_post_call parses,
+    # so setting EARNINGS_MONITOR_DESK_AUTOPILOT=0 disables this path too.
+    import os as _os
+    _autopilot_enabled = _os.getenv("EARNINGS_MONITOR_DESK_AUTOPILOT", "1").strip().lower() \
+        not in {"0", "false", "no", "off"}
+    if not _autopilot_enabled:
+        steps.append({"step": "desk_autopilot", "status": "skipped",
+                      "reason": "disabled_by_config"})
+    else:
+        try:
+            from .desk_autopilot import run_autopilot_for_ticker
+
+            autopilot_result = run_autopilot_for_ticker(
+                repo_root=repo_root,
+                ticker=ticker_key,
+                fiscal_period=period,
+            )
+            steps.append({"step": "desk_autopilot", **autopilot_result})
+        except Exception as exc:  # noqa: BLE001
+            steps.append({"step": "desk_autopilot", "error": str(exc)})
+            LOG.warning("Post-onboard desk autopilot failed for %s: %s", ticker_key, exc)
+
     return steps
 
 

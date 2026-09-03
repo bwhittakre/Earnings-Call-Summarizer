@@ -73,6 +73,9 @@ BUCKET_LABELS = {
     "competitive_position": "Competitive position",
     "macro_regulatory_risk": "Macro / regulatory risk",
 }
+# Materiality weights: high = thesis-level, medium = operational, low = process
+MATERIALITY_WEIGHTS: dict[str, int] = {"high": 3, "medium": 2, "low": 1}
+MATERIALITY_LEVELS = ("high", "medium", "low")
 PROMISE_EDGES = (
     "restated",
     "evolved",
@@ -251,6 +254,51 @@ def normalize_quant(value: object) -> dict[str, object] | None:
     }
 
 
+def infer_materiality(item: Mapping[str, object]) -> str:
+    """Deterministic materiality fallback.
+
+    Used for hand-typed trees and NVDA gold (no LLM on gold).
+    Rule order (first match wins):
+    1. high: bucket in earnings_power, capital_allocation, guidance
+       OR any object/anchor contains a numeric target or $ amount
+    2. low: bucket in management_confidence, macro_regulatory_risk
+       OR title lower has keywords: "analyst day", "esg", "reorg", "committed"
+    3. medium: everything else
+    """
+    bucket = str(item.get("bucket") or "").strip()
+    if bucket in ("earnings_power", "capital_allocation", "guidance"):
+        return "high"
+    # Check for numeric targets in objects or match anchors
+    objects = [str(o) for o in (item.get("objects") or [])]
+    match = item.get("match") or {}
+    anchors = [str(a) for a in (match.get("anchors") if isinstance(match, dict) else []) or []]
+    all_terms = objects + anchors
+    has_numeric = any(
+        bool(
+            re.search(
+                r"\$\d|\d+\s*%|\b\d[\d,.]*\s*(?:billion|million|percent|basis points?|bps?)",
+                t,
+                re.I,
+            )
+        )
+        for t in all_terms
+    )
+    if has_numeric:
+        return "high"
+    if bucket in ("management_confidence", "macro_regulatory_risk"):
+        return "low"
+    title_lower = str(item.get("title") or "").lower()
+    seed_excerpt = (
+        str((item.get("seed") or {}).get("excerpt") or "").lower()
+        if isinstance(item.get("seed"), dict)
+        else ""
+    )
+    low_keywords = ("analyst day", "esg", "reorgani", "remain committed", "committed to")
+    if any(kw in title_lower or kw in seed_excerpt for kw in low_keywords):
+        return "low"
+    return "medium"
+
+
 def citation_for(
     ticker: str,
     fiscal_period: str,
@@ -379,11 +427,49 @@ def deliver_rate_counts(trees: Sequence[Mapping[str, object]]) -> dict[str, obje
     delivered = sum(1 for tree in trees if tree.get("delivery") == "delivered")
     missed = sum(1 for tree in trees if tree.get("delivery") == "missed")
     scoreable = delivered + missed
+
+    # Weighted variants (by materiality)
+    def _mat_weight(tree: Mapping[str, object]) -> int:
+        mat = (
+            str((tree.get("seed") or {}).get("materiality") or "")
+            if isinstance(tree.get("seed"), dict)
+            else ""
+        )
+        return MATERIALITY_WEIGHTS.get(mat, MATERIALITY_WEIGHTS["medium"])
+
+    w_delivered = sum(_mat_weight(t) for t in trees if t.get("delivery") == "delivered")
+    w_missed = sum(_mat_weight(t) for t in trees if t.get("delivery") == "missed")
+    w_scoreable = w_delivered + w_missed
+
+    # Material-only (high materiality trees only)
+    mat_trees = [
+        t
+        for t in trees
+        if (
+            (t.get("seed") or {}).get("materiality") == "high"
+            if isinstance(t.get("seed"), dict)
+            else False
+        )
+    ]
+    mat_delivered = sum(1 for t in mat_trees if t.get("delivery") == "delivered")
+    mat_missed = sum(1 for t in mat_trees if t.get("delivery") == "missed")
+    mat_scoreable = mat_delivered + mat_missed
+
     return {
         "delivered": delivered,
         "missed": missed,
         "n_scoreable": scoreable,
         "deliver_rate": (delivered / scoreable) if scoreable else None,
+        # weighted (by materiality)
+        "weighted_delivered": w_delivered,
+        "weighted_missed": w_missed,
+        "weighted_scoreable": w_scoreable,
+        "weighted_deliver_rate": (w_delivered / w_scoreable) if w_scoreable else None,
+        # material-only (high materiality only)
+        "material_delivered": mat_delivered,
+        "material_missed": mat_missed,
+        "material_scoreable": mat_scoreable,
+        "material_deliver_rate": (mat_delivered / mat_scoreable) if mat_scoreable else None,
     }
 
 
@@ -391,11 +477,45 @@ def hit_rate_counts(trees: Sequence[Mapping[str, object]]) -> dict[str, object]:
     hit = sum(1 for tree in trees if tree.get("goal_outcome") == "hit")
     missed = sum(1 for tree in trees if tree.get("goal_outcome") == "missed")
     scoreable = hit + missed
+
+    def _mat_weight(tree: Mapping[str, object]) -> int:
+        mat = (
+            str((tree.get("seed") or {}).get("materiality") or "")
+            if isinstance(tree.get("seed"), dict)
+            else ""
+        )
+        return MATERIALITY_WEIGHTS.get(mat, MATERIALITY_WEIGHTS["medium"])
+
+    w_hit = sum(_mat_weight(t) for t in trees if t.get("goal_outcome") == "hit")
+    w_missed = sum(_mat_weight(t) for t in trees if t.get("goal_outcome") == "missed")
+    w_scoreable = w_hit + w_missed
+
+    mat_trees = [
+        t
+        for t in trees
+        if (
+            (t.get("seed") or {}).get("materiality") == "high"
+            if isinstance(t.get("seed"), dict)
+            else False
+        )
+    ]
+    mat_hit = sum(1 for t in mat_trees if t.get("goal_outcome") == "hit")
+    mat_missed = sum(1 for t in mat_trees if t.get("goal_outcome") == "missed")
+    mat_scoreable = mat_hit + mat_missed
+
     return {
         "hit": hit,
         "missed": missed,
         "n_scoreable": scoreable,
         "hit_rate": (hit / scoreable) if scoreable else None,
+        "weighted_hit": w_hit,
+        "weighted_missed": w_missed,
+        "weighted_scoreable": w_scoreable,
+        "weighted_hit_rate": (w_hit / w_scoreable) if w_scoreable else None,
+        "material_hit": mat_hit,
+        "material_missed": mat_missed,
+        "material_scoreable": mat_scoreable,
+        "material_hit_rate": (mat_hit / mat_scoreable) if mat_scoreable else None,
     }
 
 
@@ -670,6 +790,19 @@ def build_tree(item: Mapping[str, object]) -> dict[str, object]:
             "dimension": seed_dimension,
             "status": seed_status,
             "citation": citation_for(ticker, seed_fiscal, seed_dimension, seed_status),
+            # Materiality: from catalog entry if valid, else inferred deterministically
+            "materiality": (
+                str(seed.get("materiality") or "").strip()
+                if str(seed.get("materiality") or "").strip() in MATERIALITY_LEVELS
+                else infer_materiality(item)
+            ),
+            "materiality_rationale": (
+                str(seed.get("materiality_rationale") or "").strip()
+                if str(seed.get("materiality_rationale") or "").strip()
+                else "inferred"
+            ),
+            # Preserved so verify_tree_against_novelty can skip transcript-sourced seeds
+            "delivery_basis": str(seed.get("delivery_basis") or "").strip() or None,
         },
         "nodes": nodes,
         "clock": clock,
@@ -691,6 +824,8 @@ def build_tree(item: Mapping[str, object]) -> dict[str, object]:
             ),
             str(item.get("coverage_summary") or "").strip() or None,
         ),
+        # Pass through overlay provenance if present (not set on hand-typed trees)
+        **( {"provenance": dict(item["provenance"])} if "provenance" in item else {} ),
     }
 
 
@@ -789,6 +924,9 @@ def verify_tree_against_novelty(
     novelty_view: Mapping[str, object] | None,
 ) -> None:
     seed = tree.get("seed") or {}
+    # Transcript-sourced seeds are verified by verify_transcript_nodes instead
+    if str(seed.get("delivery_basis") or "") == "transcript":
+        return
     fiscal = str(seed.get("fiscal_period") or "")
     excerpt = str(seed.get("excerpt") or "")
     quarter = quarter_for_fiscal(novelty_view, fiscal)
@@ -801,12 +939,57 @@ def verify_tree_against_novelty(
             continue
         if str(node.get("delivery_basis") or "") == "quant":
             continue
+        # Transcript-sourced nodes are verified by verify_transcript_nodes instead
+        if str(node.get("delivery_basis") or "") == "transcript":
+            continue
         node_fiscal = str(node.get("fiscal_period") or "")
         node_excerpt = str(node.get("excerpt") or "")
         node_quarter = quarter_for_fiscal(novelty_view, node_fiscal)
         if not evidence_has_excerpt(node_quarter, node_excerpt):
             raise SystemExit(
                 f"{tree.get('tree_id')} {node_fiscal} excerpt missing from novelty_view"
+            )
+
+
+def verify_transcript_nodes(
+    tree: Mapping[str, object],
+    ticker_indexes: Mapping[str, object],
+) -> None:
+    """Verify that transcript-sourced nodes' excerpts appear in the index.
+
+    Called in place of verify_tree_against_novelty for overlay trees
+    (delivery_basis == "transcript"). ticker_indexes is the LazyTickerIndexes
+    result for this tree's ticker.
+
+    Raises SystemExit if a transcript-sourced node excerpt cannot be found.
+    Silently skips nodes where delivery_basis != "transcript".
+    """
+    for node in tree.get("nodes") or []:
+        if not isinstance(node, Mapping):
+            continue
+        if str(node.get("delivery_basis") or "") != "transcript":
+            continue
+        excerpt = str(node.get("excerpt") or "").strip()
+        if not excerpt:
+            raise SystemExit(
+                f"{tree.get('tree_id')} transcript node missing excerpt"
+            )
+        # Look for the excerpt in the index paragraphs
+        found = False
+        for qtr_index in ticker_indexes.values():
+            if not isinstance(qtr_index, dict):
+                continue
+            for para in qtr_index.get("paragraphs") or []:
+                if not isinstance(para, dict):
+                    continue
+                if excerpt.lower() in str(para.get("text") or "").lower():
+                    found = True
+                    break
+            if found:
+                break
+        if not found:
+            raise SystemExit(
+                f"{tree.get('tree_id')} transcript node excerpt not found in index"
             )
 
 

@@ -705,6 +705,80 @@ def _usage(client: Any) -> dict:
     }
 
 
+# ── per-ticker public API ────────────────────────────────────────────────────
+
+def score_ticker(
+    ticker: str,
+    *,
+    budget_usd: float = 1.0,
+    fallback_budget_usd: float = 0.0,
+    client: "Any | None" = None,
+    plan_only: bool = False,
+    now_fiscal: str | None = None,
+    existing_candidates: "list[dict] | None" = None,
+    existing_needs_review: "list[dict] | None" = None,
+) -> "tuple[list[dict], list[dict]]":
+    """Score all open trees for `ticker` from both books.
+
+    Returns (candidates, needs_review). Does NOT write the output file;
+    the autopilot merges results across tickers and writes once.
+
+    existing_candidates / existing_needs_review: prior results to carry forward
+    (for incremental runs — pass them in so the function can deduplicate).
+    budget_usd: the Sonnet budget cap for THIS ticker (Budget class does not
+    enforce a per-ticker Sonnet cap; gate it in the caller's loop if needed).
+    """
+    manifest = load_manifest()
+    books = [
+        ("desk_ops_v2", load_desk_trees_ops_v2()),
+        ("desk_hc_v2", load_desk_trees_hc_v2()),
+    ]
+
+    todo: list[tuple[str, dict]] = []
+    ticker_upper = ticker.upper()
+    for book_name, book in books:
+        opens = _open_trees(book)
+        for tree in opens:
+            if str(tree.get("ticker") or "").upper() != ticker_upper:
+                continue
+            if str(tree.get("ticker") or "").upper() in GOLD_TICKERS:
+                continue
+            todo.append((book_name, tree))
+
+    if not todo:
+        return (list(existing_candidates or []), list(existing_needs_review or []))
+
+    lazy = LazyTickerIndexes([ticker], keep=1)
+    budget = Budget(fallback_allowed_usd=max(0.0, float(fallback_budget_usd)))
+
+    candidates: list[dict] = list(existing_candidates or [])
+    needs_review: list[dict] = list(existing_needs_review or [])
+
+    # Remove prior results for this ticker's trees to re-score
+    prior_tids = {t.get("tree_id") for _, t in todo}
+    candidates = [c for c in candidates if c.get("tree_id") not in prior_tids]
+    needs_review = [r for r in needs_review if r.get("tree_id") not in prior_tids]
+
+    try:
+        indexes = lazy[ticker_upper]
+    except KeyError:
+        indexes = {}
+
+    for book_name, tree in todo:
+        cand, review = score_tree(
+            tree, indexes, manifest, budget, client,
+            plan_only=plan_only, now_fiscal=now_fiscal,
+        )
+        if cand is not None:
+            cand["book"] = book_name
+            candidates.append(cand)
+        if review is not None:
+            review["book"] = book_name
+            needs_review.append(review)
+
+    return candidates, needs_review
+
+
 # ── main ─────────────────────────────────────────────────────────────────────
 
 def _open_trees(book: Mapping) -> list[dict]:
