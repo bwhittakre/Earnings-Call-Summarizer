@@ -15,9 +15,19 @@
     "role": "CEO",
     "named_person": "Tim Cook",
     "start_fiscal": "FY2018-Q1",
+    "end_fiscal": "FY2026-Q4",
+    "succession_type": "planned",
+    "notes": "CEO since 2011; departed Sep 2026 (FY2026-Q4) via planned succession to John Ternus. AAPL FYE Sep 30 — Q1=Oct-Dec"
+  },
+  {
+    "regime_id": "aapl-ternus-ceo",
+    "ticker": "AAPL",
+    "role": "CEO",
+    "named_person": "John Ternus",
+    "start_fiscal": "FY2026-Q4",
     "end_fiscal": null,
     "succession_type": null,
-    "notes": "CEO since 2011; single-regime in tracking window. AAPL FYE Sep 30 — Q1=Oct-Dec"
+    "notes": "Succeeded Tim Cook; took over Sep 2026 (FY2026-Q4). Previously SVP Hardware Engineering."
   },
   {
     "regime_id": "acn-nanterme-ceo",
