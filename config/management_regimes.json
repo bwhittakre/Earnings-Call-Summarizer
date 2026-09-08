@@ -1,5 +1,15 @@
 [
   {
+    "regime_id": "aph-norwitt-ceo",
+    "ticker": "APH",
+    "role": "CEO",
+    "named_person": "R. Adam Norwitt",
+    "start_fiscal": "FY2009-Q1",
+    "end_fiscal": null,
+    "succession_type": null,
+    "notes": "CEO since January 1, 2009. APH FYE Dec 31 — Q1=Jan-Mar."
+  },
+  {
     "regime_id": "nvda-huang-ceo",
     "ticker": "NVDA",
     "role": "CEO",
