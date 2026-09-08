@@ -65,6 +65,7 @@ from .sectors import (
     is_full_universe,
     pad_company_rows,
 )
+from .metric_keys import render_page_key
 
 _HEATMAP_MAX_COMPARE = 4
 _HTML_EMBED_HEIGHT = 1000
@@ -255,6 +256,7 @@ def render_overview(
     sector_choice: str | None = None,
 ) -> None:
     st.header("Roz overview")
+    render_page_key(st, "overview")
     universe = _universe(data, sector_tickers)
     summary = data.overview()
     companies, quarters, active, incomplete = st.columns(4)
@@ -342,6 +344,17 @@ def render_overview(
         st.subheader("Operational alerts")
         _table(st, with_company_labels(alerts))
 
+    # ── Call Scorecard (compact) ──────────────────────────────────────────────
+    with st.expander("Call Scorecard", expanded=False):
+        try:
+            from .claims_scorecard import render_scorecard
+            render_scorecard(
+                st,
+                sector_tickers=list(sector_tickers) if sector_tickers else None,
+            )
+        except Exception as _exc:
+            st.caption(f"Scorecard unavailable: {_exc}")
+
 
 def render_event_inbox(
     st: Any,
@@ -387,7 +400,7 @@ def render_claims_trees_view(
 ) -> None:
     from .claims_trees import render_claims_trees
 
-    st.header("Claims Trees")
+    st.header("Claims Desk")
     render_claims_trees(
         st,
         data,
@@ -422,6 +435,7 @@ def render_company_history(
     sector_choice: str | None = None,
 ) -> None:
     st.header("Company history")
+    render_page_key(st, "company_history")
     universe = _universe(data, sector_tickers) or list(data.tickers)
     if not universe:
         st.info("No companies are available.")
@@ -433,11 +447,30 @@ def render_company_history(
         f"{format_company_label(ticker)} · {len(history)} imported quarters"
         + (f"; {flagged} with quant quality flags" if flagged else "")
     )
+
+    # Build per-period delivery_score lookup from scorecard sidecar
+    _scorecard_lookup: dict[tuple[str, str], str] = {}
+    try:
+        from .claims_scorecard import load_desk_scorecard_sidecar
+        _sc = load_desk_scorecard_sidecar()
+        for _e in (_sc.get("entries") or []):
+            _t = str(_e.get("ticker") or "").upper()
+            _fp = str(_e.get("fiscal_period") or "")
+            _ds = _e.get("delivery_score")
+            if _t and _fp and _ds is not None:
+                _pct = f"{round(_ds * 100)}%" if isinstance(_ds, float) else str(_ds)
+                _scorecard_lookup[(_t, _fp)] = _pct
+    except Exception:
+        pass
+
     _table(
         st,
         [
             {
                 "fiscal_period": row["fiscal_period"],
+                "delivery_score": _scorecard_lookup.get(
+                    (str(ticker).upper(), str(row.get("fiscal_period") or "")), "—"
+                ),
                 "dimensions": row.get("dimensions"),
                 "narrative_level": row.get("narrative_level"),
                 "narrative_change": row.get("narrative_change"),
@@ -1084,6 +1117,7 @@ def render_consolidated_panel(
 ) -> None:
     universe = _universe(data, sector_tickers)
     st.header("Consolidated panel")
+    render_page_key(st, "overview")
     st.caption(
         "Embedded consolidated feature panel "
         "(``consolidated_feature_panel.html`` / ``cross_section_panel.html``). "
@@ -1102,6 +1136,51 @@ def render_consolidated_panel(
             f"Showing {len(universe)} of {len(data.tickers)} companies from the "
             f"Sector filter: {', '.join(universe)}."
         )
+    # ── Claims Desk deliver rates strip ──────────────────────────────────────
+    try:
+        from .claims_desk import format_deliver_rate
+        from .claims_trees import (
+            load_desk_trees_v2,
+            load_desk_trees_ops_v2,
+            load_desk_trees_hc_v2,
+        )
+        _universe_up = {str(t).upper() for t in (universe or [])} if universe else None
+        _all_ticker_rates: list[dict] = []
+        for _book_payload in [load_desk_trees_v2(), load_desk_trees_ops_v2(), load_desk_trees_hc_v2()]:
+            if not _book_payload:
+                continue
+            for _item in (_book_payload.get("deliver_rates") or {}).get("by_ticker") or []:
+                _t = str(_item.get("ticker") or "").upper()
+                if _universe_up is None or _t in _universe_up:
+                    _all_ticker_rates.append(_item)
+        # Deduplicate by ticker (keep first/best)
+        _seen: set[str] = set()
+        _deduped = []
+        for _r in _all_ticker_rates:
+            _tk = str(_r.get("ticker") or "").upper()
+            if _tk not in _seen:
+                _seen.add(_tk)
+                _deduped.append(_r)
+        with st.expander("Claims Desk — Deliver Rates", expanded=True):
+            if _deduped:
+                st.dataframe(
+                    [
+                        {
+                            "company": format_company_label(str(r.get("ticker") or "")),
+                            "deliver_rate": format_deliver_rate(r.get("deliver_rate")),
+                            "delivered": r.get("delivered"),
+                            "scored": r.get("n_scoreable"),
+                        }
+                        for r in _deduped
+                    ],
+                    hide_index=True,
+                    use_container_width=True,
+                )
+            else:
+                st.caption("No deliver-rate data in the current universe filter.")
+    except Exception:
+        pass
+
     path = resolve_consolidated_html()
     _render_html_report(
         st,
@@ -1226,13 +1305,9 @@ VIEWS = {
     "Overview": render_overview,
     "Event inbox": render_event_inbox,
     "Company history": render_company_history,
-    "Claims Desk": render_claims_desk_view,
-    "Claims Trees": render_claims_trees_view,
-    "Management Regimes": render_claims_regimes_view,
     "Dimension panel": render_dimension_heatmap,
     "Cross-company": render_cross_company,
     "Narrative vs quant": render_narrative_vs_quant,
-    "Book ranks": render_book_ranks,
     "Consolidated panel": render_consolidated_panel,
     "Operations": render_operations,
     "Audit": render_audit,

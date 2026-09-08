@@ -46,6 +46,27 @@ ALL_TERMINAL_EDGES = {
     "hit", "still-want", "harden-to-promise",
 }
 
+# Quarters a promise can stay open before counting as a soft miss in delivery rate
+HORIZON_QTRS = 8
+
+# Commitment-type hardness ranking — lower index = softer/weaker.
+# A tree whose current_kind is below its original kind has been walked back.
+KIND_HARDNESS: list[str] = [
+    "aspiration",
+    "soft_commitment",
+    "guidance",
+    "target",
+    "promise",
+    "hard_target",
+]
+
+
+def _kind_rank(k: str) -> int:
+    try:
+        return KIND_HARDNESS.index(k)
+    except ValueError:
+        return -1
+
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -127,31 +148,70 @@ def _score_ticker_at_quarter(
     q_key = fiscal_key(q)
 
     # ------------------------------------------------------------------ #
-    # Delivery score — rolling known_delivered_rate up to and incl. Q    #
+    # Delivery score — rolling rate up to and including Q               #
+    #                                                                    #
+    # Five failure paths contribute to the effective denominator:       #
+    #   1. Explicit terminal node: delivered/hit           → confirmed  #
+    #   2. Explicit terminal node: missed/dropped/…        → full miss  #
+    #   3. Root delivery=="expired" OR age > HORIZON_QTRS  → full miss  #
+    #   4. Open tree with ≥1 deferred node at or before Q  → 0.5 miss  #
+    #   5. current_kind softer than original kind           → 0.3 miss  #
     # ------------------------------------------------------------------ #
-    # A tree is "aged" (settled) as of Q if its terminal edge's fiscal_period <= Q
-    # confirmed = delivered/hit | failed = missed/dropped/abandoned | withdrawn = abandoned (subset)
     n_confirmed = 0
     n_failed = 0
     n_withdrawn = 0
+    n_failed_frac: float = 0.0   # accumulates fractional penalties
 
     for t in trees:
         terminal_edge = None
-        terminal_fp = None
         for n in (t.get("nodes") or []):
             if n["edge"] in ALL_TERMINAL_EDGES and fiscal_key(n["fiscal_period"]) <= q_key:
                 terminal_edge = n["edge"]
-                terminal_fp = n["fiscal_period"]
 
+        # Path 3a — hard expire from tree root
+        if terminal_edge is None and t.get("delivery") == "expired":
+            expire_key = fiscal_key(t.get("expire") or "")
+            if expire_key != (0, 0) and expire_key <= q_key:
+                terminal_edge = "expired"
+
+        # Settle explicit terminal edges
         if terminal_edge in {"delivered", "hit"}:
             n_confirmed += 1
-        elif terminal_edge in {"missed", "dropped", "abandoned", "expired"}:
+            continue
+        if terminal_edge in {"missed", "dropped", "abandoned", "expired"}:
             n_failed += 1
             if terminal_edge == "abandoned":
                 n_withdrawn += 1
+            continue
+
+        # From here: tree is still open at Q — apply fractional penalties
+        seed_key = fiscal_key(t["seed"]["fiscal_period"])
+        age = (q_key[0] - seed_key[0]) * 4 + (q_key[1] - seed_key[1])
+
+        # Path 3b — implicit horizon: open >8 quarters = full soft miss
+        if age > HORIZON_QTRS:
+            n_failed_frac += 1.0
+            continue
+
+        # Path 4 — deferred: any deferred node at or before Q → 0.5 miss
+        was_deferred = any(
+            n["edge"] == "deferred" and fiscal_key(n["fiscal_period"]) <= q_key
+            for n in (t.get("nodes") or [])
+        )
+        if was_deferred:
+            n_failed_frac += 0.5
+
+        # Path 5 — scope walk-back: current_kind softer than original kind → 0.3 miss
+        orig_rank = _kind_rank(t.get("kind", ""))
+        curr_rank = _kind_rank(t.get("current_kind", t.get("kind", "")))
+        if curr_rank >= 0 and orig_rank >= 0 and curr_rank < orig_rank:
+            n_failed_frac += 0.3
 
     n_aged = n_confirmed + n_failed
-    delivery_score: float | None = (n_confirmed / n_aged) if n_aged > 0 else None
+    n_aged_effective = n_confirmed + n_failed + n_failed_frac
+    delivery_score: float | None = (
+        n_confirmed / n_aged_effective if n_aged_effective > 0 else None
+    )
 
     # ------------------------------------------------------------------ #
     # Engagement score — signals from this specific quarter Q            #
@@ -230,16 +290,20 @@ def _score_ticker_at_quarter(
         if last_touch < stale_cutoff:
             n_open_stale += 1
 
-    # Signed engagement formula
-    denominator = max(1, len(open_trees_at_q) + n_new_seeds)
-    raw = (
-        n_restated
-        + n_new_seeds
-        - n_dropped_at_q
-        - n_deferred
-        - (n_silent * 0.5)
-    )
-    engagement_score = max(-1.0, min(1.0, raw / denominator))
+    # ------------------------------------------------------------------ #
+    # Transparency score [0, 1]                                          #
+    #                                                                    #
+    # "What fraction of management's stated open commitments did they   #
+    #  actually address this call?"                                      #
+    #                                                                    #
+    # coverage  = n_touched / open_trees  (primary driver)             #
+    # quality   = (new_seeds + restatements) / (open + new_seeds)       #
+    # transparency = coverage * 0.7 + quality * 0.3, clamped to [0,1]  #
+    # ------------------------------------------------------------------ #
+    n_touched = n_has_node_at_q           # trees with any node at Q
+    coverage = n_touched / max(1, len(open_trees_at_q))
+    quality = (n_new_seeds + n_restated) / max(1, len(open_trees_at_q) + n_new_seeds)
+    transparency_score = min(1.0, coverage * 0.7 + quality * 0.3)
 
     # Skip quarters with zero information (no open trees, no new seeds)
     if len(open_trees_at_q) == 0 and n_new_seeds == 0:
@@ -253,10 +317,11 @@ def _score_ticker_at_quarter(
         "delivery_score": round(delivery_score, 4) if delivery_score is not None else None,
         "n_confirmed": n_confirmed,
         "n_failed": n_failed,
+        "n_failed_frac": round(n_failed_frac, 4),
         "n_withdrawn": n_withdrawn,
         "n_aged": n_aged,
-        # Engagement
-        "engagement_score": round(engagement_score, 4),
+        # Transparency (replaces engagement)
+        "transparency_score": round(transparency_score, 4),
         "n_restated": n_restated,
         "n_new_seeds": n_new_seeds,
         "n_deferred": n_deferred,

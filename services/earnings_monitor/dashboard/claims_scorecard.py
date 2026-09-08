@@ -1,13 +1,13 @@
 """2-Axis Call Scorecard view for the Claims Desk page.
 
 Quadrant layout (fixed x-axis orientation):
-  X-axis: Delivery Score  (0 = never delivered → 1 = always delivered)
-  Y-axis: Engagement Score (negative = weakened goals → positive = strengthened)
+  X-axis: Delivery Score     (0 = never delivered → 1 = always delivered)
+  Y-axis: Transparency Score (0 = all goals silent → 1 = all goals discussed)
 
-  Top-left    → Aspirational        (lots of new goals, hasn't delivered yet)
-  Top-right   → Credible & Committed (delivering AND strengthening commitments)
-  Bottom-left → Retreating           (not delivering AND weakening commitments)
-  Bottom-right→ Quietly Delivering   (delivering without fanfare / restating)
+  Top-left    → Aspirational         (talking openly but hasn't delivered yet)
+  Top-right   → Credible & Committed (delivering AND discussing commitments)
+  Bottom-left → Retreating           (not delivering AND going silent on goals)
+  Bottom-right→ Quietly Delivering   (delivering without much public commitment)
 
 Two view modes (st.radio):
   A — Company Timeline  : one ticker, scatter of all periods, connected in time
@@ -46,6 +46,16 @@ _SIDECAR_HELP = (
 
 # ── data loading ──────────────────────────────────────────────────────────────
 
+def load_desk_scorecard_sidecar() -> dict:
+    """Return the full scorecard sidecar payload, or {} on miss/error."""
+    if not _SIDECAR.is_file():
+        return {}
+    try:
+        return json.loads(_SIDECAR.read_text(encoding="utf-8")) or {}
+    except Exception:
+        return {}
+
+
 def _load_entries(sidecar: Path | None = None) -> list[dict]:
     path = sidecar or _SIDECAR
     if not path.is_file():
@@ -57,16 +67,17 @@ def _load_entries(sidecar: Path | None = None) -> list[dict]:
         return []
 
 
-def _quadrant(delivery: float | None, engagement: float | None) -> str:
-    if delivery is None or engagement is None:
+def _quadrant(delivery: float | None, transparency: float | None) -> str:
+    if delivery is None or transparency is None:
         return "Insufficient data"
     high_d = delivery >= 0.5
-    high_e = engagement >= 0.0
-    if high_d and high_e:
+    # Transparency midpoint: 0.3 (most companies discuss ~30% of goals per quarter)
+    high_t = transparency >= 0.3
+    if high_d and high_t:
         return "Credible & Committed"
-    if not high_d and high_e:
+    if not high_d and high_t:
         return "Aspirational"
-    if high_d and not high_e:
+    if high_d and not high_t:
         return "Quietly Delivering"
     return "Retreating"
 
@@ -76,12 +87,12 @@ def _enrich(entries: list[dict]) -> list[dict]:
     out = []
     for e in entries:
         d = e.get("delivery_score")
-        eng = e.get("engagement_score")
+        tr = e.get("transparency_score")
         out.append({
             **e,
-            "quadrant": _quadrant(d, eng),
+            "quadrant": _quadrant(d, tr),
             "delivery_pct": round(d * 100, 1) if d is not None else None,
-            "engagement_fmt": round(eng, 2) if eng is not None else None,
+            "transparency_fmt": round(tr, 2) if tr is not None else None,
             "label": f"{e.get('ticker','')} {e.get('fiscal_period','')}",
         })
     return out
@@ -90,14 +101,16 @@ def _enrich(entries: list[dict]) -> list[dict]:
 # ── Altair chart helpers ──────────────────────────────────────────────────────
 
 def _quadrant_background() -> "alt.LayerChart":
-    """Four faint coloured rectangles behind the scatter."""
-    # Use ±20 as safe clipping bounds (engagement score never exceeds ±5 in practice).
-    # Explicit domain overrides on the data layers keep the visual scale sensible.
+    """Four faint coloured rectangles behind the scatter.
+
+    X: delivery [0, 1], Y: transparency [0, 1].
+    Midpoints: delivery=0.5, transparency=0.3.
+    """
     quads = [
-        {"x1": 0.5, "x2": 1.0, "y1": 0.0, "y2":  20.0, "fill": "#d5f5e3"},
-        {"x1": 0.0, "x2": 0.5, "y1": 0.0, "y2":  20.0, "fill": "#fef9e7"},
-        {"x1": 0.5, "x2": 1.0, "y1":-20.0, "y2":  0.0, "fill": "#eaf4fb"},
-        {"x1": 0.0, "x2": 0.5, "y1":-20.0, "y2":  0.0, "fill": "#fdedec"},
+        {"x1": 0.5, "x2": 1.0, "y1": 0.3, "y2": 1.0, "fill": "#d5f5e3"},  # top-right:  Credible & Committed
+        {"x1": 0.0, "x2": 0.5, "y1": 0.3, "y2": 1.0, "fill": "#fef9e7"},  # top-left:   Aspirational
+        {"x1": 0.5, "x2": 1.0, "y1": 0.0, "y2": 0.3, "fill": "#eaf4fb"},  # bottom-right: Quietly Delivering
+        {"x1": 0.0, "x2": 0.5, "y1": 0.0, "y2": 0.3, "fill": "#fdedec"},  # bottom-left: Retreating
     ]
     bg = (
         alt.Chart(alt.Data(values=quads))
@@ -112,10 +125,10 @@ def _quadrant_background() -> "alt.LayerChart":
     )
     labels = (
         alt.Chart(alt.Data(values=[
-            {"lx": 0.76, "ly":  0.85, "t": "Credible &\nCommitted"},
-            {"lx": 0.24, "ly":  0.85, "t": "Aspirational"},
-            {"lx": 0.76, "ly": -0.85, "t": "Quietly\nDelivering"},
-            {"lx": 0.24, "ly": -0.85, "t": "Retreating"},
+            {"lx": 0.76, "ly": 0.90, "t": "Credible &\nCommitted"},
+            {"lx": 0.24, "ly": 0.90, "t": "Aspirational"},
+            {"lx": 0.76, "ly": 0.05, "t": "Quietly\nDelivering"},
+            {"lx": 0.24, "ly": 0.05, "t": "Retreating"},
         ]))
         .mark_text(fontSize=11, fontStyle="italic", opacity=0.5, color="#555")
         .encode(
@@ -133,7 +146,7 @@ def _scatter_timeline(df_records: list[dict], ticker: str) -> "alt.LayerChart":
 
     data = [r for r in df_records if r.get("ticker") == ticker
             and r.get("delivery_score") is not None
-            and r.get("engagement_score") is not None]
+            and r.get("transparency_score") is not None]
     data.sort(key=lambda r: (r.get("fiscal_period") or ""))
 
     if not data:
@@ -147,9 +160,9 @@ def _scatter_timeline(df_records: list[dict], ticker: str) -> "alt.LayerChart":
             x=alt.X("delivery_score:Q",
                     scale=alt.Scale(domain=[0, 1]),
                     axis=alt.Axis(title="Delivery Score →", format=".0%")),
-            y=alt.Y("engagement_score:Q",
-                    scale=alt.Scale(zero=True),
-                    axis=alt.Axis(title="↑ Engagement Score")),
+            y=alt.Y("transparency_score:Q",
+                    scale=alt.Scale(domain=[0, 1]),
+                    axis=alt.Axis(title="↑ Transparency Score")),
             order=alt.Order("fiscal_period:N"),
         )
     )
@@ -159,7 +172,7 @@ def _scatter_timeline(df_records: list[dict], ticker: str) -> "alt.LayerChart":
         .mark_circle(size=80)
         .encode(
             x=alt.X("delivery_score:Q", scale=alt.Scale(domain=[0, 1])),
-            y=alt.Y("engagement_score:Q", scale=alt.Scale(zero=True)),
+            y=alt.Y("transparency_score:Q", scale=alt.Scale(domain=[0, 1])),
             color=alt.Color(
                 "quadrant:N",
                 scale=alt.Scale(
@@ -171,7 +184,7 @@ def _scatter_timeline(df_records: list[dict], ticker: str) -> "alt.LayerChart":
             tooltip=[
                 alt.Tooltip("fiscal_period:N", title="Period"),
                 alt.Tooltip("delivery_score:Q", title="Delivery", format=".1%"),
-                alt.Tooltip("engagement_score:Q", title="Engagement", format=".2f"),
+                alt.Tooltip("transparency_score:Q", title="Transparency", format=".2f"),
                 alt.Tooltip("n_confirmed:Q", title="Delivered"),
                 alt.Tooltip("n_failed:Q", title="Failed"),
                 alt.Tooltip("n_new_seeds:Q", title="New goals"),
@@ -186,14 +199,14 @@ def _scatter_timeline(df_records: list[dict], ticker: str) -> "alt.LayerChart":
         .mark_text(dx=6, dy=-8, fontSize=9, color="#333")
         .encode(
             x=alt.X("delivery_score:Q", scale=alt.Scale(domain=[0, 1])),
-            y=alt.Y("engagement_score:Q"),
+            y=alt.Y("transparency_score:Q", scale=alt.Scale(domain=[0, 1])),
             text=alt.Text("fiscal_period:N"),
         )
     )
 
     bg = _quadrant_background()
     return (bg + line + dots + text).properties(
-        title=f"{ticker} — Delivery vs Engagement over time",
+        title=f"{ticker} — Delivery vs Transparency over time",
         width=640, height=420,
     ).resolve_scale(color="independent")
 
@@ -204,7 +217,7 @@ def _scatter_snapshot(df_records: list[dict], fiscal_period: str) -> "alt.LayerC
 
     data = [r for r in df_records if r.get("fiscal_period") == fiscal_period
             and r.get("delivery_score") is not None
-            and r.get("engagement_score") is not None]
+            and r.get("transparency_score") is not None]
 
     if not data:
         return alt.Chart(alt.Data(values=[])).mark_point()
@@ -216,9 +229,9 @@ def _scatter_snapshot(df_records: list[dict], fiscal_period: str) -> "alt.LayerC
             x=alt.X("delivery_score:Q",
                     scale=alt.Scale(domain=[0, 1]),
                     axis=alt.Axis(title="Delivery Score →", format=".0%")),
-            y=alt.Y("engagement_score:Q",
-                    scale=alt.Scale(zero=True),
-                    axis=alt.Axis(title="↑ Engagement Score")),
+            y=alt.Y("transparency_score:Q",
+                    scale=alt.Scale(domain=[0, 1]),
+                    axis=alt.Axis(title="↑ Transparency Score")),
             color=alt.Color(
                 "quadrant:N",
                 scale=alt.Scale(
@@ -230,7 +243,7 @@ def _scatter_snapshot(df_records: list[dict], fiscal_period: str) -> "alt.LayerC
             tooltip=[
                 alt.Tooltip("ticker:N", title="Ticker"),
                 alt.Tooltip("delivery_score:Q", title="Delivery", format=".1%"),
-                alt.Tooltip("engagement_score:Q", title="Engagement", format=".2f"),
+                alt.Tooltip("transparency_score:Q", title="Transparency", format=".2f"),
                 alt.Tooltip("n_confirmed:Q", title="Delivered"),
                 alt.Tooltip("n_failed:Q", title="Failed"),
                 alt.Tooltip("n_new_seeds:Q", title="New goals"),
@@ -244,7 +257,7 @@ def _scatter_snapshot(df_records: list[dict], fiscal_period: str) -> "alt.LayerC
         .mark_text(dx=6, dy=-9, fontSize=10, fontWeight="bold")
         .encode(
             x=alt.X("delivery_score:Q", scale=alt.Scale(domain=[0, 1])),
-            y=alt.Y("engagement_score:Q", scale=alt.Scale(zero=True)),
+            y=alt.Y("transparency_score:Q", scale=alt.Scale(domain=[0, 1])),
             text=alt.Text("ticker:N"),
             color=alt.Color("quadrant:N", scale=alt.Scale(
                 domain=list(_QUAD_COLOUR),
@@ -284,8 +297,8 @@ def render_scorecard(st: Any, sector_tickers: list[str] | None = None) -> None:
     """Render the 2-axis call scorecard inside the Claims Desk page."""
     st.subheader("Call Scorecard — 2-Axis Accountability")
     st.caption(
-        "X-axis: rolling cumulative delivery rate (promises kept). "
-        "Y-axis: per-call engagement signal (new/restated goals minus dropped/deferred). "
+        "X-axis: rolling delivery rate (promises kept, including deferred/expired/aged misses). "
+        "Y-axis: transparency score (fraction of open goals management discussed this call). "
         "Bottom-left = Retreating · Bottom-right = Quietly Delivering · "
         "Top-left = Aspirational · Top-right = Credible & Committed."
     )
@@ -320,9 +333,20 @@ def render_scorecard(st: Any, sector_tickers: list[str] | None = None) -> None:
     all_periods = sorted({e["fiscal_period"] for e in sector_entries},
                          key=lambda p: (int(p[2:6]), int(p[8:])) if len(p) == 10 else (0,0))
 
+    # Tickers that have at least one period with a real delivery_score
+    scored_tickers = sorted({
+        e["ticker"] for e in sector_entries if e.get("delivery_score") is not None
+    })
+
     # ── View A: Company Timeline ──────────────────────────────────────────────
     if view == "Company Timeline":
-        ticker = st.selectbox("Ticker", all_tickers, key="scorecard_ticker")
+        # Default to the first ticker that has scored data; fall back to first ticker
+        default_ticker_idx = 0
+        if scored_tickers and all_tickers:
+            first_scored = scored_tickers[0]
+            if first_scored in all_tickers:
+                default_ticker_idx = all_tickers.index(first_scored)
+        ticker = st.selectbox("Ticker", all_tickers, index=default_ticker_idx, key="scorecard_ticker")
         ticker_entries = [e for e in sector_entries if e["ticker"] == ticker
                           and e.get("delivery_score") is not None]
 
@@ -348,7 +372,7 @@ def render_scorecard(st: Any, sector_tickers: list[str] | None = None) -> None:
                     {
                         "period": e["fiscal_period"],
                         "delivery": f"{e['delivery_score']:.1%}" if e.get("delivery_score") is not None else "—",
-                        "engagement": round(e["engagement_score"], 2) if e.get("engagement_score") is not None else "—",
+                        "transparency": f"{e['transparency_score']:.2f}" if e.get("transparency_score") is not None else "—",
                         "quadrant": e["quadrant"],
                         "delivered": e.get("n_confirmed", 0),
                         "failed": e.get("n_failed", 0),
@@ -400,7 +424,7 @@ def render_scorecard(st: Any, sector_tickers: list[str] | None = None) -> None:
                         {
                             "ticker": e["ticker"],
                             "delivery": f"{e['delivery_score']:.1%}" if e.get("delivery_score") is not None else "—",
-                            "engagement": round(e["engagement_score"], 2) if e.get("engagement_score") is not None else "—",
+                            "transparency": f"{e['transparency_score']:.2f}" if e.get("transparency_score") is not None else "—",
                             "quadrant": e["quadrant"],
                             "delivered": e.get("n_confirmed", 0),
                             "failed": e.get("n_failed", 0),

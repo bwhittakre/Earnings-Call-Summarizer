@@ -12,9 +12,12 @@ from __future__ import annotations
 from services.earnings_monitor.dashboard.claims_brief import (
     all_scored_periods,
     all_scored_tickers,
+    generate_brief_markdown,
     load_brief_data,
     render_brief,
 )
+from services.earnings_monitor.dashboard.claims_scorecard import render_scorecard
+from services.earnings_monitor.dashboard.metric_keys import render_page_key
 from services.earnings_monitor.dashboard.shell import (
     configure_page,
     get_streamlit,
@@ -36,7 +39,8 @@ def main() -> None:
     if ctx is None:
         return
 
-    render_research_status_sidebar(st, ctx)
+    render_research_status_sidebar(st, ctx.data)
+    render_page_key(st, "post_call_brief")
 
     # ── Ticker + period pickers ───────────────────────────────────────────────
     tickers = all_scored_tickers()
@@ -89,7 +93,6 @@ def main() -> None:
     render_brief(st, brief)
 
     # ── Download button ───────────────────────────────────────────────────────
-    from services.earnings_monitor.dashboard.claims_brief import generate_brief_markdown
     md_text = generate_brief_markdown(brief)
     st.download_button(
         label="Download brief (.md)",
@@ -98,9 +101,12 @@ def main() -> None:
         mime="text/markdown",
     )
 
-
-if __name__ == "__main__":
-    main()
+    # ── Call Scorecard ────────────────────────────────────────────────────────
+    with st.expander("Call Scorecard", expanded=False):
+        render_scorecard(
+            st,
+            sector_tickers=list(ctx.sector_tickers or []) or None,
+        )
 
 
 main()

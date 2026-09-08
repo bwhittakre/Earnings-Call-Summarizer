@@ -1,6 +1,6 @@
-"""Read-only Claims Trees page. NVIDIA gold book. No new LLM.
+"""Read-only Claims Desk page. NVIDIA gold book. No new LLM.
 
-Roz Claims Trees and the standalone workshop HTML are the same
+Roz Claims Desk and the standalone workshop HTML are the same
 desk. Change both unless the user says the surfaces may differ.
 Rebuild with ``python scripts/_desk_trees_workshop_html.py``.
 """
@@ -195,6 +195,54 @@ def node_edge_label(row: Mapping[str, Any]) -> str:
     return edge
 
 
+def _ensure_by_ticker_deliver_rates(payload: dict[str, Any]) -> dict[str, Any]:
+    """Compute deliver_rates.by_ticker from tree objects if the writer omitted it.
+
+    delivery field values: 'delivered' (scored+won), 'missed'/'expired' (scored+lost),
+    'unresolved' (open, not scored), 'not-a-promise' (ignored).
+    """
+    dr = payload.get("deliver_rates") or {}
+    if dr.get("by_ticker"):  # already populated — nothing to do
+        return payload
+
+    from collections import defaultdict
+
+    agg: dict[str, dict[str, int]] = defaultdict(
+        lambda: {"delivered": 0, "missed": 0, "n_scoreable": 0}
+    )
+    for tree in payload.get("trees") or []:
+        ticker = str(tree.get("ticker") or "").upper()
+        if not ticker:
+            continue
+        d = tree.get("delivery")
+        if d == "delivered":
+            agg[ticker]["delivered"] += 1
+            agg[ticker]["n_scoreable"] += 1
+        elif d in ("missed", "expired"):
+            agg[ticker]["missed"] += 1
+            agg[ticker]["n_scoreable"] += 1
+
+    by_ticker = [
+        {
+            "ticker": tk,
+            "delivered": v["delivered"],
+            "missed": v["missed"],
+            "n_scoreable": v["n_scoreable"],
+            "deliver_rate": (
+                v["delivered"] / v["n_scoreable"] if v["n_scoreable"] > 0 else None
+            ),
+        }
+        for tk, v in sorted(agg.items())
+    ]
+
+    # Patch into payload (shallow copy to avoid mutating cached data)
+    dr_copy = dict(dr)
+    dr_copy["by_ticker"] = by_ticker
+    patched = dict(payload)
+    patched["deliver_rates"] = dr_copy
+    return patched
+
+
 def load_desk_trees_v2(
     history_source: str | os.PathLike[str] | None = None,
 ) -> dict[str, Any] | None:
@@ -211,7 +259,7 @@ def load_desk_trees_v2(
     stamp = str(payload.get("generated_at") or "")
     if stamp == _V1_STAMP or stamp != _NVDA_STAMP:
         return None
-    return payload
+    return _ensure_by_ticker_deliver_rates(payload)
 
 
 def _cross_company_json(history_source: str | os.PathLike[str] | None) -> Path:
@@ -243,7 +291,7 @@ def load_desk_trees_ops_v2(
     stamp = str(payload.get("generated_at") or "")
     if stamp in {_V1_STAMP, _NVDA_STAMP, _HC_STAMP} or stamp != _OPS_STAMP:
         return None
-    return payload
+    return _ensure_by_ticker_deliver_rates(payload)
 
 
 def load_desk_trees_hc_v2(
@@ -262,7 +310,7 @@ def load_desk_trees_hc_v2(
     stamp = str(payload.get("generated_at") or "")
     if stamp in {_V1_STAMP, _NVDA_STAMP, _OPS_STAMP} or stamp != _HC_STAMP:
         return None
-    return payload
+    return _ensure_by_ticker_deliver_rates(payload)
 
 
 def load_desk_cue_queue_ops_v2(
@@ -848,7 +896,7 @@ def _load_terminal_candidates(
 def workshop_bundle(
     history_source: str | os.PathLike[str] | None = None,
 ) -> dict[str, Any]:
-    """Same books and helpers as Roz Claims Trees. No second scoring path."""
+    """Same books and helpers as Roz Claims Desk. No second scoring path."""
     gold = load_desk_trees_v2(history_source)
     ops = load_desk_trees_ops_v2(history_source)
     healthcare = load_desk_trees_hc_v2(history_source)
@@ -873,7 +921,7 @@ def workshop_bundle(
         "surface": "claims_trees",
         "title": "Claims Desk",
         "subtitle": (
-            "Workshop for the Roz Claims Trees desk. Same books, rates, "
+            "Workshop for the Roz Claims Desk. Same books, rates, "
             "buckets, and edges. Roz sector sidebar is omitted. "
             "Company-history backdrop is Roz-only."
         ),
@@ -1169,6 +1217,8 @@ def render_claims_trees(
         "The neglect ledger above scores later calls that did not take up a prior claim. "
         "Open trees with no clock are someday wants, not due."
     )
+    if not board["due"] and not board["slipped"]:
+        st.caption("No due or slipped trees in this book.")
     if board["due"] or board["slipped"]:
         from itertools import groupby as _groupby
         all_clock_rows = sorted(
@@ -1192,6 +1242,12 @@ def render_claims_trees(
                     hide_index=True,
                     use_container_width=True,
                 )
+    # ── Open claims (no clock) ────────────────────────────────────────────────
+    st.subheader("Open claims")
+    st.caption(
+        "Open trees with no dated clock — soft 'someday' wants. "
+        "These are not slipped; they have never had a due date."
+    )
     if board["open_no_clock"]:
         from itertools import groupby as _groupby
         open_sorted = sorted(
@@ -1199,8 +1255,7 @@ def render_claims_trees(
             key=lambda r: str(r.get("ticker") or ""),
         )
         st.caption(
-            f"{len(board['open_no_clock'])} open claims with no clock "
-            "(soft someday wants) — grouped by company."
+            f"{len(board['open_no_clock'])} open claim(s) with no clock — grouped by company."
         )
         for _ticker, _group in _groupby(open_sorted, key=lambda r: str(r.get("ticker") or "")):
             _rows = list(_group)
@@ -1218,6 +1273,8 @@ def render_claims_trees(
                     hide_index=True,
                     use_container_width=True,
                 )
+    else:
+        st.caption("No open undated claims in this book.")
 
     if trees:
         _render_horizon_panel(st, trees)
@@ -1250,18 +1307,26 @@ def render_claims_trees(
             use_container_width=True,
         )
 
-    # ── Seed candidates (collapsed) ──────────────────────────────────────────
+    # ── Seed candidates (always visible, collapsed) ───────────────────────────
     seed_data = _load_seed_candidates()
-    if seed_data is not None:
-        _sc_by_ticker = seed_data.get("candidates_by_ticker") or {}
-        _sc_total = seed_data.get("n_proposed_seeds") or sum(
-            len(v) for v in _sc_by_ticker.values()
-        )
-        _sc_partial = " · PARTIAL RUN" if seed_data.get("complete") is False else ""
-        with st.expander(
-            f"Seed candidates ({_sc_total}){_sc_partial} — expand to review",
-            expanded=False,
-        ):
+    _sc_by_ticker = (seed_data.get("candidates_by_ticker") or {}) if seed_data else {}
+    _sc_total = (
+        (seed_data.get("n_proposed_seeds") or sum(len(v) for v in _sc_by_ticker.values()))
+        if seed_data else 0
+    )
+    _sc_partial = (" · PARTIAL RUN" if (seed_data or {}).get("complete") is False else "")
+    _sc_label = (
+        f"Seed candidates ({_sc_total}){_sc_partial} — expand to review"
+        if seed_data
+        else "Seed candidates — file not found (run scripts/_desk_seed_batch.py)"
+    )
+    with st.expander(_sc_label, expanded=False):
+        if seed_data is None:
+            st.info(
+                "No seed candidate file found at `data/seed_batch_candidates.json`. "
+                "Run `python scripts/_desk_seed_batch.py` to generate LLM-proposed seeds."
+            )
+        else:
             st.caption(
                 f"LLM-proposed seeds from {seed_data.get('n_cue_rows_reviewed', 0)} "
                 f"uncovered cue rows across {seed_data.get('n_tickers_scanned', 0)} tickers. "
@@ -1269,7 +1334,7 @@ def render_claims_trees(
                 f"Generated {str(seed_data.get('generated_at', ''))[:10]}."
             )
             if not _sc_by_ticker:
-                st.caption("No candidate file found. Run scripts/_desk_seed_batch.py to generate.")
+                st.caption("File loaded but no candidates inside. Re-run the seed batch script.")
             else:
                 for _ticker_key, _cands in sorted(_sc_by_ticker.items()):
                     if not _cands:
@@ -1296,9 +1361,19 @@ def render_claims_trees(
                             use_container_width=True,
                         )
 
-    # ── Terminal candidates (collapsed) ──────────────────────────────────────
+    # ── Terminal candidates (always visible) ─────────────────────────────────
     term_data = _load_terminal_candidates()
-    if term_data is not None:
+    if term_data is None:
+        with st.expander(
+            "Terminal candidates — file not found (run scripts/_desk_terminal_candidates.py)",
+            expanded=False,
+        ):
+            st.info(
+                "No terminal candidate file found at `data/terminal_score_candidates.json`. "
+                "Run `python scripts/_desk_terminal_candidates.py` to generate LLM-proposed "
+                "terminal verdicts for open trees."
+            )
+    else:
         _nr = term_data.get("needs_review") or []
         _tc = term_data.get("candidates") or []
         _tc_total = len(_tc)
@@ -1392,26 +1467,39 @@ def render_claims_trees(
     if not listed:
         st.caption("No trees in this bucket.")
 
+    def _period_label(fp: str | None) -> str:
+        """Human-readable period label; conference seeds show [conf YYYY-MM-DD]."""
+        if fp and str(fp).startswith("CONF-"):
+            return f"[conf {fp[5:]}]"
+        return fp or "—"
+
     def _tree_expander_title(tree: dict) -> str:
         scoring_kind = str(tree.get("current_kind") or tree.get("kind") or "")
-        outcome = (
-            tree.get("delivery")
-            if scoring_kind == "promise"
-            else tree.get("goal_outcome")
+        _raw_outcome = (
+            tree.get("delivery") if scoring_kind == "promise" else tree.get("goal_outcome")
         )
+        outcome = str(_raw_outcome) if _raw_outcome is not None else "—"
         slipped_badge = " · SLIPPED" if tree.get("slipped") else ""
+        seed_fp = _period_label(str((tree.get("seed") or {}).get("fiscal_period") or ""))
+        conf_badge = f" · {seed_fp}" if seed_fp.startswith("[conf") else ""
         return (
             f"{format_company_label(str(tree.get('ticker') or ''))} "
             f"{tree.get('title')} · {tree_kind_label(tree)} · "
             f"{tree.get('state')} / {outcome}"
-            f"{slipped_badge}"
+            f"{slipped_badge}{conf_badge}"
         )
 
     def _render_tree_body(tree: dict) -> None:
         """Render the inside of a single tree expander (shared across all groupings)."""
+        seed_fp_raw = str((tree.get("seed") or {}).get("fiscal_period") or "")
+        source_badge = (
+            f"conf {seed_fp_raw[5:]}" if seed_fp_raw.startswith("CONF-")
+            else seed_fp_raw
+        )
         st.caption(
             f"{tree.get('tree_id')} · {tree.get('beat_id')} · "
             f"{bucket_label(tree_bucket(tree))} · "
+            f"seed: {source_badge} · "
             f"clock {tree.get('clock') or '—'} · "
             f"{'open' if tree.get('open') else 'closed'}"
         )
@@ -1478,14 +1566,47 @@ def render_claims_trees(
             )
 
     if _trees_group_by == "Company":
-        from itertools import groupby as _groupby
-        _sorted_by_co = sorted(listed, key=lambda t: str(t.get("ticker") or ""))
-        for _co_key, _co_group in _groupby(_sorted_by_co, key=lambda t: str(t.get("ticker") or "")):
-            _co_trees = list(_co_group)
-            st.markdown(f"**{format_company_label(_co_key)}** ({len(_co_trees)})")
-            for tree in _co_trees:
-                with st.expander(_tree_expander_title(tree), expanded=False):
-                    _render_tree_body(tree)
+        # Build company list from *all* trees in the book (not just the bucket-filtered set)
+        # so the picker is stable regardless of bucket choice.
+        _all_co_tickers = sorted(
+            {str(t.get("ticker") or "") for t in trees if t.get("ticker")}
+        )
+        if not _all_co_tickers:
+            st.caption("No trees available in this book — company selector unavailable.")
+        else:
+            _co_selected = st.sidebar.selectbox(
+                "Company (trees)",
+                _all_co_tickers,
+                format_func=format_company_label,
+                key="claims_trees_co_picker",
+            )
+            # Filter to the selected company (bucket filter already applied to `listed`)
+            _co_listed = [t for t in listed if str(t.get("ticker") or "") == _co_selected]
+            if not _co_listed:
+                st.caption(
+                    f"No trees for {format_company_label(_co_selected)} in the selected bucket."
+                )
+            else:
+                st.markdown(
+                    f"**{format_company_label(_co_selected)}** — "
+                    f"{len(_co_listed)} tree(s)"
+                )
+                for bucket_key, group in group_trees_by_bucket(_co_listed):
+                    st.markdown(f"**{bucket_label(bucket_key)}**")
+                    for tree in group:
+                        _co_outcome = (
+                            str(tree.get("delivery") or "—")
+                            if _scoring_kind_h2 == "promise"
+                            else str(tree.get("goal_outcome") or "—")
+                        )
+                        with st.expander(
+                            # Drop company prefix — we're already scoped to one company
+                            f"{tree.get('title')} · {tree_kind_label(tree)} · "
+                            f"{tree.get('state')} / {_co_outcome}"
+                            + (" · SLIPPED" if tree.get("slipped") else ""),
+                            expanded=False,
+                        ):
+                            _render_tree_body(tree)
     elif _trees_group_by == "Period":
         from itertools import groupby as _groupby
         _sorted_by_period = sorted(

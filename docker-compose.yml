@@ -197,6 +197,11 @@ services:
         source: ./services/earnings_monitor/dashboard
         target: /app/services/earnings_monitor/dashboard
         read_only: true
+      # Scorecard sidecar, post-call briefs, and other host-generated artefacts.
+      - type: bind
+        source: ./data
+        target: /app/data
+        read_only: true
       # Mount reports where Streamlit static serving expects them (no symlink).
       - type: bind
         source: ${STRUCTURED_NARRATIVE_OUTPUT_DIR:-./Structured Narrative/output}/cross_company/reports

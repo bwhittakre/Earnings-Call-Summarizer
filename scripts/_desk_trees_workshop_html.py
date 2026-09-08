@@ -694,16 +694,53 @@ function renderTrees(trees) {
   else {
     let html = "";
     if (groupBy === "company") {
-      // Group by ticker
-      const byTicker = {};
-      for (const tree of listed) {
-        const t = tree.ticker || "";
-        if (!byTicker[t]) byTicker[t] = [];
-        byTicker[t].push(tree);
+      // Build company list from ALL trees (not just bucket-filtered) so the picker is stable
+      const allTickers = [...new Set(trees.map(t => t.ticker || "").filter(Boolean))].sort();
+      const selCo = document.getElementById("list-company")?.value || allTickers[0] || "";
+      const coSelector = allTickers.length
+        ? select("list-company", allTickers, selCo, "Company")
+        : "<span class='cap'>No companies</span>";
+      // Inject company selector into controls div if not already there
+      let controlsEl = host.querySelector(".controls");
+      if (controlsEl && !document.getElementById("list-company")) {
+        controlsEl.insertAdjacentHTML("beforeend", "&nbsp;&nbsp;" + coSelector);
+        document.getElementById("list-company").onchange = () => renderTrees(trees);
       }
-      for (const [ticker, group] of Object.entries(byTicker).sort((a, b) => a[0].localeCompare(b[0]))) {
-        html += "<h3>" + esc(labelOf(ticker)) + " (" + esc(String(group.length)) + ")</h3>";
-        for (const tree of group) html += buildTreeDetailsHtml(tree);
+      // Filter to selected company (bucket filter already applied to `listed`)
+      const coListed = listed.filter(t => t.ticker === selCo);
+      if (!coListed.length) {
+        html += "<p class='empty'>" + esc("No trees for " + labelOf(selCo) + " in the selected bucket.") + "</p>";
+      } else {
+        html += "<h3>" + esc(labelOf(selCo)) + " — " + esc(String(coListed.length)) + " tree(s)</h3>";
+        for (const [key, group] of groupTreesByBucket(coListed)) {
+          html += "<h4 style='margin:8px 0 4px'>" + esc(bucketLabel(key)) + "</h4>";
+          for (const tree of group) {
+            // Drop company prefix in title since we're scoped to one company
+            const scoring = tree.current_kind || tree.kind || "";
+            const outcome = scoring === "promise" ? tree.delivery : tree.goal_outcome;
+            const slippedBadge = tree.slipped ? " <span style='color:var(--warn);font-weight:700'>[SLIPPED]</span>" : "";
+            const coTitle = esc((tree.title || "") + " · " + treeKindLabel(tree) + " · " +
+              (tree.state || "") + " / " + (outcome || "")) + slippedBadge;
+            let treeHtml = '<details class="tree"><summary>' + coTitle + "</summary>";
+            treeHtml += '<p class="cite">' + esc(tree.tree_id) + " · " + esc(tree.beat_id) + " · " +
+              esc(bucketLabel(treeBucket(tree))) + " · clock " + esc(tree.clock || "—") + " · " +
+              (tree.open ? "open" : "closed") + "</p>";
+            if (tree.parent_tree_id) treeHtml += '<p class="cite">Evolved from ' + esc(tree.parent_tree_id) + ". Parent seed cite is kept.</p>";
+            if (tree.goal_outcome === "became-promise") treeHtml += '<p class="cite">Became a promise. Same tree. Current label is promise (was goal) until the promise closes.</p>';
+            for (const row of treeNodeRows(tree)) {
+              let lab = (row.fiscal_period || "") + " · " + nodeEdgeLabel(row);
+              if (row.slipped) lab += " · slipped";
+              treeHtml += "<p><strong>" + esc(lab) + "</strong></p>";
+              if (row.citation) treeHtml += '<p class="cite">' + esc(row.citation) + "</p>";
+              if (row.excerpt) treeHtml += "<p>" + esc(row.excerpt) + "</p>";
+              else if (row.edge === "silent") treeHtml += '<p class="silent">Silent quarter. No cite on this object.</p>';
+              else if (row.edge === "expired") treeHtml += '<p class="silent">Expired. Completeness is unfeasible. Not a miss and not a withdrawal.</p>';
+            }
+            if (tree.coverage_summary) treeHtml += "<p><strong>Coverage.</strong> " + esc(tree.coverage_summary) + "</p>";
+            treeHtml += "</details>";
+            html += treeHtml;
+          }
+        }
       }
     } else if (groupBy === "period") {
       // Group by seed fiscal period, newest first
@@ -829,7 +866,10 @@ function citeBadge(verified) {
 function renderSeedCandidates() {
   const host = document.getElementById("seed-candidates");
   const data = DESK.seed_candidates;
-  if (!data) { host.innerHTML = ""; return; }
+  if (!data) {
+    host.innerHTML = "<h2>Seed Candidates</h2><p class='cap'>No seed candidate file found. Run <code>python scripts/_desk_seed_batch.py</code> to generate LLM-proposed seeds.</p>";
+    return;
+  }
   const byTicker = data.candidates_by_ticker || {};
   const priority = new Set(data.priority_tickers || []);
   // Tickers: priority first, then alphabetical

@@ -6,6 +6,7 @@ Shared Roz sector / custom-list filter.
 from __future__ import annotations
 
 from services.earnings_monitor.dashboard.claims_regimes import render_claims_regimes
+from services.earnings_monitor.dashboard.metric_keys import render_page_key
 from services.earnings_monitor.dashboard.shell import (
     configure_page,
     get_streamlit,
@@ -29,6 +30,7 @@ def main() -> None:
         return
 
     render_research_status_sidebar(st, ctx.data)
+    render_page_key(st, "regimes")
     render_claims_regimes(
         st,
         ctx.data,

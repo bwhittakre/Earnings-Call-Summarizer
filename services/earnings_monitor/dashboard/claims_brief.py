@@ -76,7 +76,7 @@ class BriefData:
 
     # Scorecard signals
     delivery_score: float | None
-    engagement_score: float | None
+    transparency_score: float | None
     n_confirmed: int
     n_failed: int
     n_new_seeds: int
@@ -111,14 +111,14 @@ class BriefData:
 
     @property
     def quadrant(self) -> str:
-        d, e = self.delivery_score, self.engagement_score
-        if d is None or e is None:
+        d, t = self.delivery_score, self.transparency_score
+        if d is None or t is None:
             return "Insufficient data"
-        if d >= 0.5 and e >= 0.0:
+        if d >= 0.5 and t >= 0.3:
             return "Credible & Committed"
-        if d < 0.5 and e >= 0.0:
+        if d < 0.5 and t >= 0.3:
             return "Aspirational"
-        if d >= 0.5 and e < 0.0:
+        if d >= 0.5 and t < 0.3:
             return "Quietly Delivering"
         return "Retreating"
 
@@ -294,7 +294,7 @@ def load_brief_data(
         ticker=ticker_up,
         fiscal_period=fiscal_period,
         delivery_score=this_entry.get("delivery_score"),
-        engagement_score=this_entry.get("engagement_score"),
+        transparency_score=this_entry.get("transparency_score"),
         n_confirmed=int(this_entry.get("n_confirmed") or 0),
         n_failed=int(this_entry.get("n_failed") or 0),
         n_new_seeds=int(this_entry.get("n_new_seeds") or 0),
@@ -350,14 +350,11 @@ def render_brief(st: Any, brief: "BriefData") -> None:
     # ── Header ────────────────────────────────────────────────────────────────
     quad = brief.quadrant
     quad_color = brief.quadrant_color
-    eng_arrow = "↑" if (brief.engagement_score or 0) >= 0 else "↓"
-    eng_sign = "+" if (brief.engagement_score or 0) >= 0 else ""
-
     col_title, col_badge = st.columns([3, 1])
     with col_title:
         st.subheader(f"{brief.ticker} — {brief.fiscal_period}")
         st.caption(
-            f"Engagement this call: {eng_arrow} {eng_sign}{_fmt_eng(brief.engagement_score)}  |  "
+            f"Transparency this call: {_fmt_rate(brief.transparency_score)}  |  "
             f"Delivery rate: {_fmt_rate(brief.delivery_score)}  |  "
             f"Open goals at call: {brief.open_trees_at_call}"
         )
@@ -386,8 +383,8 @@ def render_brief(st: Any, brief: "BriefData") -> None:
                 {
                     "period": h["fiscal_period"],
                     "delivery": f"{h['delivery_score']:.0%}",
-                    "engagement": _fmt_eng(h.get("engagement_score")),
-                    "quadrant": _quadrant_short(h.get("delivery_score"), h.get("engagement_score")),
+                    "transparency": f"{h['transparency_score']:.2f}" if h.get("transparency_score") is not None else "—",
+                    "quadrant": _quadrant_short(h.get("delivery_score"), h.get("transparency_score")),
                 }
                 for h in scored
             ]
@@ -416,8 +413,8 @@ def render_brief(st: Any, brief: "BriefData") -> None:
 
     st.divider()
 
-    # ── This Call: engagement breakdown ──────────────────────────────────────
-    st.markdown("**This Call — Engagement Breakdown**")
+    # ── This Call: transparency breakdown ────────────────────────────────────
+    st.markdown("**This Call — Transparency Breakdown**")
     eng_cols = st.columns(6)
     _metric(eng_cols[0], "New goals", brief.n_new_seeds)
     _metric(eng_cols[1], "Restated", brief.n_restated)
@@ -493,14 +490,14 @@ def render_brief(st: Any, brief: "BriefData") -> None:
 
 # ── helpers ───────────────────────────────────────────────────────────────────
 
-def _quadrant_short(d: float | None, e: float | None) -> str:
-    if d is None or e is None:
+def _quadrant_short(d: float | None, t: float | None) -> str:
+    if d is None or t is None:
         return "—"
-    if d >= 0.5 and e >= 0.0:
+    if d >= 0.5 and t >= 0.3:
         return "C&C"
-    if d < 0.5 and e >= 0.0:
+    if d < 0.5 and t >= 0.3:
         return "Asp"
-    if d >= 0.5 and e < 0.0:
+    if d >= 0.5 and t < 0.3:
         return "QD"
     return "Ret"
 
@@ -532,7 +529,7 @@ def generate_brief_markdown(brief: "BriefData") -> str:
         "",
         f"**Quadrant:** {brief.quadrant}  ",
         f"**Delivery rate:** {_fmt_rate(brief.delivery_score)}  ",
-        f"**Engagement score:** {_fmt_eng(brief.engagement_score)}  ",
+        f"**Transparency score:** {_fmt_rate(brief.transparency_score)}  ",
         f"**Open goals at call:** {brief.open_trees_at_call}",
         "",
         "---",
@@ -555,7 +552,7 @@ def generate_brief_markdown(brief: "BriefData") -> str:
 
     lines += [
         "",
-        "## This Call — Engagement",
+        "## This Call — Transparency",
         "",
         f"| Metric | Count |",
         f"|---|---|",
