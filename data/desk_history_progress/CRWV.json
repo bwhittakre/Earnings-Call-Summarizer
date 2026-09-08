@@ -1,0 +1,17 @@
+{
+  "ticker": "CRWV",
+  "run_id": "08924df6-774a-4fe6-ae7f-7fb8ce257744",
+  "seeds_proposed": 0,
+  "seeds_inserted_confirmed": 0,
+  "seeds_inserted_provisional": 0,
+  "seeds_recite_queue": 0,
+  "verdicts_proposed": 0,
+  "verdicts_inserted": 0,
+  "verdicts_recite_queue": 0,
+  "regime_stub": "ok",
+  "errors": [],
+  "seeding_done": true,
+  "scoring_done": true,
+  "completed_at": "2026-09-08T22:57:40.678799+00:00",
+  "updated_at": "2026-09-08T22:57:40.679800+00:00"
+}

@@ -1,5 +1,15 @@
 [
   {
+    "regime_id": "crwv-intrator-ceo",
+    "ticker": "CRWV",
+    "role": "CEO",
+    "named_person": "Michael Intrator",
+    "start_fiscal": "FY2025-Q1",
+    "end_fiscal": null,
+    "succession_type": null,
+    "notes": "Co-founder and CEO since CoreWeave founding in 2017. First tracked quarter FY2025-Q1 (IPO Mar 2025). CRWV FYE Dec 31 — Q1=Jan-Mar."
+  },
+  {
     "regime_id": "aph-norwitt-ceo",
     "ticker": "APH",
     "role": "CEO",

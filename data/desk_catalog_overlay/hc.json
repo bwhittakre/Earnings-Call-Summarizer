@@ -1,6 +1,6 @@
 {
   "schema_version": "1",
-  "updated_at": "2026-09-03T18:16:41.487817+00:00",
+  "updated_at": "2026-09-08T23:15:47.954903+00:00",
   "trees": [
     {
       "tree_id": "lly-alimta-uk-appeal",
@@ -7234,6 +7234,525 @@
         "proposed_at": "2026-09-03T16:51:54.357037+00:00",
         "model": "claude-sonnet-4-5",
         "run_id": "d3a46308-bd3b-4428-9623-c02b6068d4b6"
+      }
+    },
+    {
+      "tree_id": "crwv-lancaster-6b-investment",
+      "title": "Lancaster PA $6B greenfield datacenter",
+      "kind": "promise",
+      "bucket": "capital_allocation",
+      "objects": [
+        "Lancaster Pennsylvania",
+        "$6 billion investment"
+      ],
+      "match": {
+        "anchors": [
+          "Lancaster",
+          "$6 billion"
+        ],
+        "context": [
+          "greenfield",
+          "investment",
+          "Pennsylvania"
+        ],
+        "exclude": [],
+        "generic": null
+      },
+      "seed": {
+        "fiscal_period": "CONF-2025-08-27",
+        "claim_type": "forward_clock",
+        "clock": null,
+        "excerpt": "We're doing one in Lancaster, Pennsylvania. It's a $6 billion investment that we're making in that place.",
+        "dimension": "capex_investment",
+        "status": "verbatim",
+        "materiality": "high",
+        "materiality_rationale": "Thesis-level capital allocation; $6B represents a major deployment of shareholder capital into physical infrastructure.",
+        "delivery_basis": "transcript"
+      },
+      "confidence": "high",
+      "rationale": "Specific $6B capex commitment for a named greenfield site; trackable via 'Lancaster' + investment updates in future calls.",
+      "materiality": "high",
+      "materiality_rationale": "Thesis-level capital allocation; $6B represents a major deployment of shareholder capital into physical infrastructure.",
+      "ticker": "CRWV",
+      "excerpt_verified": true,
+      "proposed_seed_py": "    {\n        \"tree_id\": \"crwv-lancaster-6b-investment\",\n        \"ticker\": \"CRWV\",\n        \"kind\": \"promise\",\n        \"beat_id\": \"lancaster-6b-investment\",\n        \"bucket\": \"capital_allocation\",\n        \"title\": \"Lancaster PA $6B greenfield datacenter\",\n        \"objects\": (\"Lancaster Pennsylvania\", \"$6 billion investment\",),\n        \"match\": {\n            \"anchors\": (\"Lancaster\", \"$6 billion\"),\n            \"context\": (\"greenfield\", \"investment\", \"Pennsylvania\"),\n            \"exclude\": (),\n            \"generic\": None,\n        },\n        \"seed\": {\n            \"fiscal_period\": \"CONF-2025-08-27\",\n            \"claim_type\": \"forward_clock\",\n            \"clock\": None,\n            \"excerpt\": (\"We're doing one in Lancaster, Pennsylvania. It's a $6 billion investment that we're making in that place.\"),\n            \"dimension\": \"capex_investment\",\n            \"status\": \"verbatim\",\n        },\n        \"nodes\": (),\n    },",
+      "book": "desk_hc_v2",
+      "provenance": {
+        "source": "autopilot",
+        "status": "confirmed",
+        "confidence": "high",
+        "proposed_at": "2026-09-08T23:13:48.372648+00:00",
+        "model": "claude-sonnet-4-5",
+        "run_id": "44992ab0-9525-461b-b969-8e4575c56fea"
+      }
+    },
+    {
+      "tree_id": "crwv-900mw-active-power-2025",
+      "title": "900 MW active power by end of 2025",
+      "kind": "promise",
+      "bucket": "guidance",
+      "objects": [
+        "900 MW",
+        "active power"
+      ],
+      "match": {
+        "anchors": [
+          "900 MW",
+          "active power"
+        ],
+        "context": [
+          "end of year",
+          "projecting",
+          "greater than"
+        ],
+        "exclude": [],
+        "generic": null
+      },
+      "seed": {
+        "fiscal_period": "CONF-2025-08-27",
+        "claim_type": "forward_clock",
+        "clock": "FY2025-Q4",
+        "excerpt": "by the end of the year, we are projecting to be over 900 MW of active power.",
+        "dimension": "capex_investment",
+        "status": "verbatim",
+        "materiality": "high",
+        "materiality_rationale": "Directly impacts revenue-generating capacity; core operational guidance for the fiscal year.",
+        "delivery_basis": "transcript"
+      },
+      "confidence": "high",
+      "rationale": "Clear quantitative target with explicit end-of-2025 deadline; later revised to >850 MW in CONF-2025-11-18, making it highly trackable.",
+      "materiality": "high",
+      "materiality_rationale": "Directly impacts revenue-generating capacity; core operational guidance for the fiscal year.",
+      "ticker": "CRWV",
+      "excerpt_verified": true,
+      "proposed_seed_py": "    {\n        \"tree_id\": \"crwv-900mw-active-power-2025\",\n        \"ticker\": \"CRWV\",\n        \"kind\": \"promise\",\n        \"beat_id\": \"900mw-active-power-2025\",\n        \"bucket\": \"guidance\",\n        \"title\": \"900 MW active power by end of 2025\",\n        \"objects\": (\"900 MW\", \"active power\",),\n        \"match\": {\n            \"anchors\": (\"900 MW\", \"active power\"),\n            \"context\": (\"end of year\", \"projecting\", \"greater than\"),\n            \"exclude\": (),\n            \"generic\": None,\n        },\n        \"seed\": {\n            \"fiscal_period\": \"CONF-2025-08-27\",\n            \"claim_type\": \"forward_clock\",\n            \"clock\": \"FY2025-Q4\",\n            \"excerpt\": (\"by the end of the year, we are projecting to be over 900 MW of active power.\"),\n            \"dimension\": \"capex_investment\",\n            \"status\": \"verbatim\",\n        },\n        \"nodes\": (),\n    },",
+      "book": "desk_hc_v2",
+      "provenance": {
+        "source": "autopilot",
+        "status": "confirmed",
+        "confidence": "high",
+        "proposed_at": "2026-09-08T23:13:48.372648+00:00",
+        "model": "claude-sonnet-4-5",
+        "run_id": "44992ab0-9525-461b-b969-8e4575c56fea"
+      }
+    },
+    {
+      "tree_id": "crwv-core-scientific-500m-synergies",
+      "title": "Core Scientific $500M run-rate savings by end 2027",
+      "kind": "goal",
+      "bucket": "margins",
+      "objects": [
+        "Core Scientific",
+        "$500 million",
+        "annualized run rate savings"
+      ],
+      "match": {
+        "anchors": [
+          "Core Scientific",
+          "$500 million"
+        ],
+        "context": [
+          "annualized",
+          "run rate savings",
+          "acquisition",
+          "2027"
+        ],
+        "exclude": [],
+        "generic": null
+      },
+      "seed": {
+        "fiscal_period": "CONF-2025-08-27",
+        "claim_type": "forward_clock",
+        "clock": "FY2027-Q4",
+        "excerpt": "We've talked about this publicly that we expect to generate about $500 million of annualized run rate savings by the end of 2027 in terms of this acquisition.",
+        "dimension": "cost_reduction",
+        "status": "verbatim",
+        "materiality": "high",
+        "materiality_rationale": "$500M cost synergy materially impacts margins and earnings power from a major acquisition.",
+        "delivery_basis": "transcript"
+      },
+      "confidence": "high",
+      "rationale": "Specific synergy target tied to named M&A; reiterated in CONF-2025-09-25 (#14), establishing strong retrieval signal.",
+      "materiality": "high",
+      "materiality_rationale": "$500M cost synergy materially impacts margins and earnings power from a major acquisition.",
+      "ticker": "CRWV",
+      "excerpt_verified": true,
+      "proposed_seed_py": "    {\n        \"tree_id\": \"crwv-core-scientific-500m-synergies\",\n        \"ticker\": \"CRWV\",\n        \"kind\": \"goal\",\n        \"beat_id\": \"core-scientific-500m-synergies\",\n        \"bucket\": \"margins\",\n        \"title\": \"Core Scientific $500M run-rate savings by end 2027\",\n        \"objects\": (\"Core Scientific\", \"$500 million\", \"annualized run rate savings\",),\n        \"match\": {\n            \"anchors\": (\"Core Scientific\", \"$500 million\"),\n            \"context\": (\"annualized\", \"run rate savings\", \"acquisition\", \"2027\"),\n            \"exclude\": (),\n            \"generic\": None,\n        },\n        \"seed\": {\n            \"fiscal_period\": \"CONF-2025-08-27\",\n            \"claim_type\": \"forward_clock\",\n            \"clock\": \"FY2027-Q4\",\n            \"excerpt\": (\"We've talked about this publicly that we expect to generate about $500 million of annualized run rate savings by the end of 2027 in terms of this acquisition.\"),\n            \"dimension\": \"cost_reduction\",\n            \"status\": \"verbatim\",\n        },\n        \"nodes\": (),\n    },",
+      "book": "desk_hc_v2",
+      "provenance": {
+        "source": "autopilot",
+        "status": "confirmed",
+        "confidence": "high",
+        "proposed_at": "2026-09-08T23:13:48.372648+00:00",
+        "model": "claude-sonnet-4-5",
+        "run_id": "44992ab0-9525-461b-b969-8e4575c56fea"
+      }
+    },
+    {
+      "tree_id": "crwv-investment-grade-rating",
+      "title": "Achieve investment-grade credit rating",
+      "kind": "goal",
+      "bucket": "capital_allocation",
+      "objects": [
+        "investment-grade",
+        "credit rating"
+      ],
+      "match": {
+        "anchors": [
+          "investment-grade",
+          "investment grade"
+        ],
+        "context": [
+          "company",
+          "scale",
+          "become"
+        ],
+        "exclude": [
+          "investment-grade customers",
+          "investment-grade offtake"
+        ],
+        "generic": null
+      },
+      "seed": {
+        "fiscal_period": "CONF-2025-08-27",
+        "claim_type": "forward_clock",
+        "clock": null,
+        "excerpt": "We are well on way of path to become an investment-grade company as we continue to scale our business.",
+        "dimension": "regulatory",
+        "status": "verbatim",
+        "materiality": "high",
+        "materiality_rationale": "IG rating would significantly lower cost of capital (management cites 900bp reduction already in #11) and alter capital structure.",
+        "delivery_basis": "transcript"
+      },
+      "confidence": "medium",
+      "rationale": "Repeated theme across excerpts (#5, #8, #57 milestone on DDTL 4); 'investment-grade' is a clear, binary outcome. However, no explicit deadline given.",
+      "materiality": "high",
+      "materiality_rationale": "IG rating would significantly lower cost of capital (management cites 900bp reduction already in #11) and alter capital structure.",
+      "ticker": "CRWV",
+      "excerpt_verified": true,
+      "proposed_seed_py": "    {\n        \"tree_id\": \"crwv-investment-grade-rating\",\n        \"ticker\": \"CRWV\",\n        \"kind\": \"goal\",\n        \"beat_id\": \"investment-grade-rating\",\n        \"bucket\": \"capital_allocation\",\n        \"title\": \"Achieve investment-grade credit rating\",\n        \"objects\": (\"investment-grade\", \"credit rating\",),\n        \"match\": {\n            \"anchors\": (\"investment-grade\", \"investment grade\"),\n            \"context\": (\"company\", \"scale\", \"become\"),\n            \"exclude\": (\"investment-grade customers\", \"investment-grade offtake\"),\n            \"generic\": None,\n        },\n        \"seed\": {\n            \"fiscal_period\": \"CONF-2025-08-27\",\n            \"claim_type\": \"forward_clock\",\n            \"clock\": None,\n            \"excerpt\": (\"We are well on way of path to become an investment-grade company as we continue to scale our business.\"),\n            \"dimension\": \"regulatory\",\n            \"status\": \"verbatim\",\n        },\n        \"nodes\": (),\n    },",
+      "book": "desk_hc_v2",
+      "provenance": {
+        "source": "autopilot",
+        "status": "provisional",
+        "confidence": "medium",
+        "proposed_at": "2026-09-08T23:13:48.372648+00:00",
+        "model": "claude-sonnet-4-5",
+        "run_id": "44992ab0-9525-461b-b969-8e4575c56fea"
+      }
+    },
+    {
+      "tree_id": "crwv-exit-2026-arrmid-18b",
+      "title": "Exit 2026 at $17B-$19B ARR",
+      "kind": "goal",
+      "bucket": "guidance",
+      "objects": [
+        "$17 billion",
+        "$19 billion",
+        "ARR"
+      ],
+      "match": {
+        "anchors": [
+          "$17 billion",
+          "$19 billion",
+          "ARR"
+        ],
+        "context": [
+          "exiting",
+          "2026",
+          "guidance"
+        ],
+        "exclude": [],
+        "generic": null
+      },
+      "seed": {
+        "fiscal_period": "CONF-2026-03-04",
+        "claim_type": "forward_clock",
+        "clock": "FY2026-Q4",
+        "excerpt": "Within our guidance, we offered color of exiting 2026 at $17 billion-$19 billion in ARR, exiting 2027 at over $30 billion in ARR.",
+        "dimension": "revenue_growth",
+        "status": "verbatim",
+        "materiality": "high",
+        "materiality_rationale": "Full-year revenue guidance; central to investor model and valuation.",
+        "delivery_basis": "transcript"
+      },
+      "confidence": "high",
+      "rationale": "Explicit revenue guidance with a clear clock; reiterated in #63 as '$18 billion-$19 billion ARR'. ARR is core metric for the business.",
+      "materiality": "high",
+      "materiality_rationale": "Full-year revenue guidance; central to investor model and valuation.",
+      "ticker": "CRWV",
+      "excerpt_verified": true,
+      "proposed_seed_py": "    {\n        \"tree_id\": \"crwv-exit-2026-arrmid-18b\",\n        \"ticker\": \"CRWV\",\n        \"kind\": \"goal\",\n        \"beat_id\": \"exit-2026-arrmid-18b\",\n        \"bucket\": \"guidance\",\n        \"title\": \"Exit 2026 at $17B-$19B ARR\",\n        \"objects\": (\"$17 billion\", \"$19 billion\", \"ARR\",),\n        \"match\": {\n            \"anchors\": (\"$17 billion\", \"$19 billion\", \"ARR\"),\n            \"context\": (\"exiting\", \"2026\", \"guidance\"),\n            \"exclude\": (),\n            \"generic\": None,\n        },\n        \"seed\": {\n            \"fiscal_period\": \"CONF-2026-03-04\",\n            \"claim_type\": \"forward_clock\",\n            \"clock\": \"FY2026-Q4\",\n            \"excerpt\": (\"Within our guidance, we offered color of exiting 2026 at $17 billion-$19 billion in ARR, exiting 2027 at over $30 billion in ARR.\"),\n            \"dimension\": \"revenue_growth\",\n            \"status\": \"verbatim\",\n        },\n        \"nodes\": (),\n    },",
+      "book": "desk_hc_v2",
+      "provenance": {
+        "source": "autopilot",
+        "status": "confirmed",
+        "confidence": "high",
+        "proposed_at": "2026-09-08T23:13:48.372648+00:00",
+        "model": "claude-sonnet-4-5",
+        "run_id": "44992ab0-9525-461b-b969-8e4575c56fea"
+      }
+    },
+    {
+      "tree_id": "crwv-exit-2027-arr-30b",
+      "title": "Exit 2027 at >$30B ARR",
+      "kind": "goal",
+      "bucket": "guidance",
+      "objects": [
+        "$30 billion",
+        "ARR"
+      ],
+      "match": {
+        "anchors": [
+          "$30 billion",
+          "ARR"
+        ],
+        "context": [
+          "exiting",
+          "2027",
+          "north of"
+        ],
+        "exclude": [],
+        "generic": null
+      },
+      "seed": {
+        "fiscal_period": "CONF-2026-03-04",
+        "claim_type": "forward_clock",
+        "clock": "FY2027-Q4",
+        "excerpt": "Within our guidance, we offered color of exiting 2026 at $17 billion-$19 billion in ARR, exiting 2027 at over $30 billion in ARR.",
+        "dimension": "revenue_growth",
+        "status": "verbatim",
+        "materiality": "high",
+        "materiality_rationale": "Two-year revenue trajectory; central to growth story and long-term earnings power.",
+        "delivery_basis": "transcript"
+      },
+      "confidence": "high",
+      "rationale": "Multi-year ARR target; reiterated in #63 ('next year north of $30 billion ARR'). Clear numeric anchor.",
+      "materiality": "high",
+      "materiality_rationale": "Two-year revenue trajectory; central to growth story and long-term earnings power.",
+      "ticker": "CRWV",
+      "excerpt_verified": true,
+      "proposed_seed_py": "    {\n        \"tree_id\": \"crwv-exit-2027-arr-30b\",\n        \"ticker\": \"CRWV\",\n        \"kind\": \"goal\",\n        \"beat_id\": \"exit-2027-arr-30b\",\n        \"bucket\": \"guidance\",\n        \"title\": \"Exit 2027 at >$30B ARR\",\n        \"objects\": (\"$30 billion\", \"ARR\",),\n        \"match\": {\n            \"anchors\": (\"$30 billion\", \"ARR\"),\n            \"context\": (\"exiting\", \"2027\", \"north of\"),\n            \"exclude\": (),\n            \"generic\": None,\n        },\n        \"seed\": {\n            \"fiscal_period\": \"CONF-2026-03-04\",\n            \"claim_type\": \"forward_clock\",\n            \"clock\": \"FY2027-Q4\",\n            \"excerpt\": (\"Within our guidance, we offered color of exiting 2026 at $17 billion-$19 billion in ARR, exiting 2027 at over $30 billion in ARR.\"),\n            \"dimension\": \"revenue_growth\",\n            \"status\": \"verbatim\",\n        },\n        \"nodes\": (),\n    },",
+      "book": "desk_hc_v2",
+      "provenance": {
+        "source": "autopilot",
+        "status": "confirmed",
+        "confidence": "high",
+        "proposed_at": "2026-09-08T23:13:48.372648+00:00",
+        "model": "claude-sonnet-4-5",
+        "run_id": "44992ab0-9525-461b-b969-8e4575c56fea"
+      }
+    },
+    {
+      "tree_id": "crwv-low-double-digit-opmargin-exit2026",
+      "title": "Exit 2026 at low double-digit operating margin",
+      "kind": "promise",
+      "bucket": "margins",
+      "objects": [
+        "low double digit",
+        "operating margin"
+      ],
+      "match": {
+        "anchors": [
+          "low double digit",
+          "operating margin"
+        ],
+        "context": [
+          "exit",
+          "2026",
+          "pro forma",
+          "reaffirmed"
+        ],
+        "exclude": [],
+        "generic": null
+      },
+      "seed": {
+        "fiscal_period": "CONF-2026-05-19",
+        "claim_type": "forward_clock",
+        "clock": "FY2026-Q4",
+        "excerpt": "You've reaffirmed that you're gonna exit the year at, like, a low double digit pro forma operating margin.",
+        "dimension": "margin_expansion",
+        "status": "composite",
+        "materiality": "high",
+        "materiality_rationale": "Operating margin inflection is critical to demonstrating path to profitability and thesis validation.",
+        "delivery_basis": "transcript"
+      },
+      "confidence": "high",
+      "rationale": "Explicit margin guidance for year-end 2026, reiterated in #59; 'low double digit' is a clear range (10-12%).",
+      "materiality": "high",
+      "materiality_rationale": "Operating margin inflection is critical to demonstrating path to profitability and thesis validation.",
+      "ticker": "CRWV",
+      "excerpt_verified": true,
+      "proposed_seed_py": "    {\n        \"tree_id\": \"crwv-low-double-digit-opmargin-exit2026\",\n        \"ticker\": \"CRWV\",\n        \"kind\": \"promise\",\n        \"beat_id\": \"low-double-digit-opmargin-exit2026\",\n        \"bucket\": \"margins\",\n        \"title\": \"Exit 2026 at low double-digit operating margin\",\n        \"objects\": (\"low double digit\", \"operating margin\",),\n        \"match\": {\n            \"anchors\": (\"low double digit\", \"operating margin\"),\n            \"context\": (\"exit\", \"2026\", \"pro forma\", \"reaffirmed\"),\n            \"exclude\": (),\n            \"generic\": None,\n        },\n        \"seed\": {\n            \"fiscal_period\": \"CONF-2026-05-19\",\n            \"claim_type\": \"forward_clock\",\n            \"clock\": \"FY2026-Q4\",\n            \"excerpt\": (\"You've reaffirmed that you're gonna exit the year at, like, a low double digit pro forma operating margin.\"),\n            \"dimension\": \"margin_expansion\",\n            \"status\": \"composite\",\n        },\n        \"nodes\": (),\n    },",
+      "book": "desk_hc_v2",
+      "provenance": {
+        "source": "autopilot",
+        "status": "confirmed",
+        "confidence": "high",
+        "proposed_at": "2026-09-08T23:13:48.372648+00:00",
+        "model": "claude-sonnet-4-5",
+        "run_id": "44992ab0-9525-461b-b969-8e4575c56fea"
+      }
+    },
+    {
+      "tree_id": "crwv-8gw-active-power-2030",
+      "title": "8 GW active power by 2030",
+      "kind": "goal",
+      "bucket": "guidance",
+      "objects": [
+        "8 GW",
+        "active power",
+        "2030"
+      ],
+      "match": {
+        "anchors": [
+          "8 GW",
+          "active power"
+        ],
+        "context": [
+          "2030",
+          "objective",
+          "long-term"
+        ],
+        "exclude": [
+          "gigawatts"
+        ],
+        "generic": null
+      },
+      "seed": {
+        "fiscal_period": "CONF-2026-06-08",
+        "claim_type": "forward_clock",
+        "clock": "FY2030-Q4",
+        "excerpt": "We are on track toward our long-term objective of more than eight gigawatts of active power by 2030, expanding capacity to meet that demand.",
+        "dimension": "capex_investment",
+        "status": "verbatim",
+        "materiality": "high",
+        "materiality_rationale": "Long-term capacity target underpins revenue and market-share aspirations; central to capital deployment story.",
+        "delivery_basis": "transcript"
+      },
+      "confidence": "medium",
+      "rationale": "Multi-year capacity target; mentioned in #37 as '5 gigawatts' incremental, and #62 as '8 GW' total. Clear numeric goal but long horizon.",
+      "materiality": "high",
+      "materiality_rationale": "Long-term capacity target underpins revenue and market-share aspirations; central to capital deployment story.",
+      "ticker": "CRWV",
+      "excerpt_verified": true,
+      "proposed_seed_py": "    {\n        \"tree_id\": \"crwv-8gw-active-power-2030\",\n        \"ticker\": \"CRWV\",\n        \"kind\": \"goal\",\n        \"beat_id\": \"8gw-active-power-2030\",\n        \"bucket\": \"guidance\",\n        \"title\": \"8 GW active power by 2030\",\n        \"objects\": (\"8 GW\", \"active power\", \"2030\",),\n        \"match\": {\n            \"anchors\": (\"8 GW\", \"active power\"),\n            \"context\": (\"2030\", \"objective\", \"long-term\"),\n            \"exclude\": (\"gigawatts\",),\n            \"generic\": None,\n        },\n        \"seed\": {\n            \"fiscal_period\": \"CONF-2026-06-08\",\n            \"claim_type\": \"forward_clock\",\n            \"clock\": \"FY2030-Q4\",\n            \"excerpt\": (\"We are on track toward our long-term objective of more than eight gigawatts of active power by 2030, expanding capacity to meet that demand.\"),\n            \"dimension\": \"capex_investment\",\n            \"status\": \"verbatim\",\n        },\n        \"nodes\": (),\n    },",
+      "book": "desk_hc_v2",
+      "provenance": {
+        "source": "autopilot",
+        "status": "provisional",
+        "confidence": "medium",
+        "proposed_at": "2026-09-08T23:13:48.372648+00:00",
+        "model": "claude-sonnet-4-5",
+        "run_id": "44992ab0-9525-461b-b969-8e4575c56fea"
+      }
+    },
+    {
+      "tree_id": "crwv-5gw-power-by-2030",
+      "title": "5+ GW additional power capacity by 2030",
+      "kind": "goal",
+      "bucket": "earnings_power",
+      "objects": [
+        "5 gigawatts",
+        "power",
+        "2030"
+      ],
+      "match": {
+        "anchors": [
+          "5 gigawatts",
+          "5 GW",
+          "power"
+        ],
+        "context": [
+          "2030",
+          "additional",
+          "incremental",
+          "build",
+          "add"
+        ],
+        "exclude": [],
+        "generic": null
+      },
+      "seed": {
+        "fiscal_period": "CONF-2026-03-04",
+        "claim_type": "forward_clock",
+        "clock": "FY2030-Q4",
+        "excerpt": "On the most recent conference call, you guys talked about a goal of getting incremental, like, 5 gigawatts of power by 2030.",
+        "dimension": "geographic_expansion",
+        "status": "composite",
+        "materiality": "high",
+        "materiality_rationale": "Long-term capacity roadmap directly tied to revenue scaling and competitive positioning in AI infrastructure race.",
+        "delivery_basis": "transcript"
+      },
+      "confidence": "high",
+      "rationale": "Specific multi-year capacity expansion target (5 GW incremental) with 2030 timeframe; revised to 8 GW total in later excerpts confirming trackable metric.",
+      "materiality": "high",
+      "materiality_rationale": "Long-term capacity roadmap directly tied to revenue scaling and competitive positioning in AI infrastructure race.",
+      "ticker": "CRWV",
+      "excerpt_verified": true,
+      "proposed_seed_py": "    {\n        \"tree_id\": \"crwv-5gw-power-by-2030\",\n        \"ticker\": \"CRWV\",\n        \"kind\": \"goal\",\n        \"beat_id\": \"5gw-power-by-2030\",\n        \"bucket\": \"earnings_power\",\n        \"title\": \"5+ GW additional power capacity by 2030\",\n        \"objects\": (\"5 gigawatts\", \"power\", \"2030\",),\n        \"match\": {\n            \"anchors\": (\"5 gigawatts\", \"5 GW\", \"power\"),\n            \"context\": (\"2030\", \"additional\", \"incremental\", \"build\", \"add\"),\n            \"exclude\": (),\n            \"generic\": None,\n        },\n        \"seed\": {\n            \"fiscal_period\": \"CONF-2026-03-04\",\n            \"claim_type\": \"forward_clock\",\n            \"clock\": \"FY2030-Q4\",\n            \"excerpt\": (\"On the most recent conference call, you guys talked about a goal of getting incremental, like, 5 gigawatts of power by 2030.\"),\n            \"dimension\": \"geographic_expansion\",\n            \"status\": \"composite\",\n        },\n        \"nodes\": (),\n    },",
+      "book": "desk_hc_v2",
+      "provenance": {
+        "source": "autopilot",
+        "status": "confirmed",
+        "confidence": "high",
+        "proposed_at": "2026-09-08T23:15:47.954903+00:00",
+        "model": "claude-sonnet-4-5",
+        "run_id": "2dd1d8d4-d4c5-460e-98c2-4085c71b9bac"
+      }
+    },
+    {
+      "tree_id": "crwv-kenilworth-self-build-online",
+      "title": "Kenilworth self-build site online 1-2 years",
+      "kind": "promise",
+      "bucket": "capital_allocation",
+      "objects": [
+        "Kenilworth",
+        "New Jersey",
+        "self-build"
+      ],
+      "match": {
+        "anchors": [
+          "Kenilworth",
+          "New Jersey",
+          "self-build"
+        ],
+        "context": [
+          "first",
+          "online",
+          "Manhattan",
+          "data center",
+          "building"
+        ],
+        "exclude": [],
+        "generic": null
+      },
+      "seed": {
+        "fiscal_period": "CONF-2026-03-10",
+        "claim_type": "forward_clock",
+        "clock": null,
+        "excerpt": "the Kenilworth, yes. It will come online in, yeah, in that timeframe. Yeah, I don't think we've given specific guidance, but I think it's safe to say it'll be in the next, you know, one to two years. That'll be our first self-build online.",
+        "dimension": "geographic_expansion",
+        "status": "composite",
+        "materiality": "medium",
+        "materiality_rationale": "Operational milestone demonstrating execution on self-build strategy with financial impact through reduced third-party reliance.",
+        "delivery_basis": "transcript"
+      },
+      "confidence": "medium",
+      "rationale": "First self-developed site with geographic specificity (20 mi from Manhattan) and 1-2 year window; trackable milestone for vertical integration strategy.",
+      "materiality": "medium",
+      "materiality_rationale": "Operational milestone demonstrating execution on self-build strategy with financial impact through reduced third-party reliance.",
+      "ticker": "CRWV",
+      "excerpt_verified": true,
+      "proposed_seed_py": "    {\n        \"tree_id\": \"crwv-kenilworth-self-build-online\",\n        \"ticker\": \"CRWV\",\n        \"kind\": \"promise\",\n        \"beat_id\": \"kenilworth-self-build-online\",\n        \"bucket\": \"capital_allocation\",\n        \"title\": \"Kenilworth self-build site online 1-2 years\",\n        \"objects\": (\"Kenilworth\", \"New Jersey\", \"self-build\",),\n        \"match\": {\n            \"anchors\": (\"Kenilworth\", \"New Jersey\", \"self-build\"),\n            \"context\": (\"first\", \"online\", \"Manhattan\", \"data center\", \"building\"),\n            \"exclude\": (),\n            \"generic\": None,\n        },\n        \"seed\": {\n            \"fiscal_period\": \"CONF-2026-03-10\",\n            \"claim_type\": \"forward_clock\",\n            \"clock\": None,\n            \"excerpt\": (\"the Kenilworth, yes. It will come online in, yeah, in that timeframe. Yeah, I don't think we've given specific guidance, but I think it's safe to say it'll be in the next, you know, one to two years. That'll be our first self-build online.\"),\n            \"dimension\": \"geographic_expansion\",\n            \"status\": \"composite\",\n        },\n        \"nodes\": (),\n    },",
+      "book": "desk_hc_v2",
+      "provenance": {
+        "source": "autopilot",
+        "status": "provisional",
+        "confidence": "medium",
+        "proposed_at": "2026-09-08T23:15:47.954903+00:00",
+        "model": "claude-sonnet-4-5",
+        "run_id": "2dd1d8d4-d4c5-460e-98c2-4085c71b9bac"
       }
     }
   ],

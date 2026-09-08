@@ -1,0 +1,508 @@
+{
+  "ticker": "CRWV",
+  "source": "conference",
+  "events": [
+    {
+      "event_id": 376104,
+      "date": "2025-08-27",
+      "name": "Deutsche Bank 2025",
+      "ingested_at": "2026-09-08T23:11:10.030534+00:00",
+      "ticker": "CRWV",
+      "excerpts": [
+        {
+          "class": "promise",
+          "dimension": "capex_investment",
+          "excerpt": "You've seen some of our announcements more recently on some of the greenfield projects that we're doing. We're doing one in Lancaster, Pennsylvania. It's a $6 billion investment that we're making in that place."
+        },
+        {
+          "class": "promise",
+          "dimension": "capex_investment",
+          "excerpt": "by the end of the year, we are projecting to be over 900 MW of active power."
+        },
+        {
+          "class": "promise",
+          "dimension": "partnerships",
+          "excerpt": "We've recently announced our intent to acquire Core Scientific, which is a great portfolio addition for us, where not only we get access to 1.3 GW of gross power they have, but also a gigawatt of expansion power that they have in their portfolio."
+        },
+        {
+          "class": "goal",
+          "dimension": "cost_reduction",
+          "excerpt": "We've talked about this publicly that we expect to generate about $500 million of annualized run rate savings by the end of 2027 in terms of this acquisition."
+        },
+        {
+          "class": "goal",
+          "dimension": "regulatory",
+          "excerpt": "We are well on way of path to become an investment-grade company as we continue to scale our business."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "We've launched three new products. We did the Fully Connected seminar for Developer Conference for Weights & Biases. In that, we launched three new products, which included the Mission Control Integration in the Weights & Biases stack for CoreWeave, which gives their customers visibility into what's happening in their infrastructure there. We've introduced Weights & Biases Inference product, which allows customers to manage their inference workloads better across the board on the CoreWeave platform."
+        }
+      ]
+    },
+    {
+      "event_id": 380945,
+      "date": "2025-09-09",
+      "name": "Goldman Sachs 2025",
+      "ingested_at": "2026-09-08T23:11:14.968115+00:00",
+      "ticker": "CRWV",
+      "excerpts": [
+        {
+          "class": "goal",
+          "dimension": "capex_investment",
+          "excerpt": "Today, we've assembled a portfolio of about 2.2 GW of capacity that's coming online. By the end of this year, we'll have 900 MW in operation."
+        },
+        {
+          "class": "goal",
+          "dimension": "capital_return",
+          "excerpt": "Our focus is investment grade, right? That is our guiding North Star on how we are managing our balance sheet and our risk exposure is how do we go achieve that?"
+        },
+        {
+          "class": "promise",
+          "dimension": "r_and_d",
+          "excerpt": "We're continuously innovating and driving our product forward. I think there'll be a lot of opportunities for us to continue bringing that technology advantage to our clients through our proprietary software solution."
+        },
+        {
+          "class": "promise",
+          "dimension": "partnerships",
+          "excerpt": "We finished up a deal with OpenPipe. We purchased Weights & Biases. Great examples of us extending up the stack, providing wonderful software solutions to be able to make our clients stickier, decommoditize the compute that we're delivering."
+        },
+        {
+          "class": "goal",
+          "dimension": "cost_reduction",
+          "excerpt": "In the last 12 months, we dropped our non-IG cost of capital by over 900 basis points. We're going to continue collapsing it so that we have as close to parity as possible within our peer group, some of the largest companies on the planet."
+        }
+      ]
+    },
+    {
+      "event_id": 421721,
+      "date": "2025-09-25",
+      "name": "Jefferies Virtual AI Summit 2025",
+      "ingested_at": "2026-09-08T23:11:19.681960+00:00",
+      "ticker": "CRWV",
+      "excerpts": [
+        {
+          "class": "promise",
+          "dimension": "capex_investment",
+          "excerpt": "As of the end of Q2, we had a contracted portfolio of 2.2 GW of power. That is going to come online from now through sometime in 2027."
+        },
+        {
+          "class": "promise",
+          "dimension": "capex_investment",
+          "excerpt": "We talked about by the end of the year, we are going to be north of 900 MW of active power."
+        },
+        {
+          "class": "promise",
+          "dimension": "cost_reduction",
+          "excerpt": "We have talked about about $500 million of run rate cost savings as a part of this acquisition by the end of 2027."
+        },
+        {
+          "class": "promise",
+          "dimension": "geographic_expansion",
+          "excerpt": "This recent U.K. commitment is a clear example of us continuing down that path on strategy and bringing our total investment in the country to about GBP 2.5 billion."
+        },
+        {
+          "class": "promise",
+          "dimension": "technology_platform",
+          "excerpt": "Since the integration of Weights & Biases, we've launched three new products, which we announced in our last earnings call as well. We integrated Weights & Biases into Mission Control for CoreWeave for observability."
+        }
+      ]
+    },
+    {
+      "event_id": 418642,
+      "date": "2025-11-18",
+      "name": "Wells Fargo TMT 2025",
+      "ingested_at": "2026-09-08T23:11:25.557054+00:00",
+      "ticker": "CRWV",
+      "excerpts": [
+        {
+          "class": "promise",
+          "dimension": "capex_investment",
+          "excerpt": "most of this delay is gonna be caught up by the end of Q1."
+        },
+        {
+          "class": "promise",
+          "dimension": "capex_investment",
+          "excerpt": "By the end of the year, we are gonna be greater than 850 MW of active power."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "we have announced two of our self-builds, one in Kenilworth, one in Lancaster, that we are undertaking and building that infrastructure muscle for ourselves"
+        },
+        {
+          "class": "goal",
+          "dimension": "market_share",
+          "excerpt": "Give it a couple of quarters, we'll make it 10 out of 10. The reason why that happens is customers join our platform and they identify that the performance of the same GPU is fundamentally different on the CoreWeave platform"
+        },
+        {
+          "class": "goal",
+          "dimension": "customer_retention",
+          "excerpt": "That's a high strategic focus for CoreWeave in terms of continuously able to modify and, you know, diversify our customer base."
+        },
+        {
+          "class": "promise",
+          "dimension": "technology_platform",
+          "excerpt": "we have a, you know, more than a gigawatt of capacity available to be sold to customers, you know, which is gonna come online in the next 24 months, 12 to 24 months."
+        }
+      ]
+    },
+    {
+      "event_id": 483890,
+      "date": "2025-12-02",
+      "name": "BofA Leveraged Finance 2025",
+      "ingested_at": "2026-09-08T23:11:34.083489+00:00",
+      "ticker": "CRWV",
+      "excerpts": [
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "And similarly, I'm sure we're going to touch on this later on the SPV debt. That's how we design funding plans for them, right? Our contracts must ensure repayment of not only the infrastructure itself, but also the debt as well."
+        },
+        {
+          "class": "promise",
+          "dimension": "capex_investment",
+          "excerpt": "We are building one of our data centers right now, right, in Kenilworth, New Jersey, which is 20 mi outside of Manhattan. It's going to be one of the biggest high-performance compute-enabled sites within an acceptable zone of Manhattan."
+        },
+        {
+          "class": "goal",
+          "dimension": "geographic_expansion",
+          "excerpt": "I think there are probably a set of trophy assets we care deeply about that we would like to build and own, but it's not something that impacts us today in a way that is forcing us to go build ourselves."
+        },
+        {
+          "class": "promise",
+          "dimension": "partnerships",
+          "excerpt": "We are doing that. We have a joint venture partnership with Blue Owl, and we're excited about it."
+        },
+        {
+          "class": "goal",
+          "dimension": "customer_retention",
+          "excerpt": "Our IG exposure is also greater than 60% already. However, there's not a big enough sales organization tackling the next layer of customers that exists out there, and it's enterprises like CrowdStrike, which we just announced a big partnership with, I think, a week ago or maybe two weeks ago."
+        },
+        {
+          "class": "goal",
+          "dimension": "capital_return",
+          "excerpt": "Going forward, I think one of our future ambitions is basically raising these, especially for our investment-grade offtake customers, on a non-recourse basis without a parent guarantee."
+        },
+        {
+          "class": "goal",
+          "dimension": "regulatory",
+          "excerpt": "I think this is a great point to spend some time on. We actually like to think of our debt, and I know a lot of folks in the audience know this too... I don't know the exact time frame, and we're obviously an interesting company just given our growth profile and how much we spend, but so long as that expenditure is being locked away in a vehicle that's away from the parent and what comes out of that SPV is an investment-grade stream of dividends, I think we're going to be able to chart a fairly good narrative on how do you understand the business evolution from where we are today to what we would like to look like in three years."
+        }
+      ]
+    },
+    {
+      "event_id": 483891,
+      "date": "2025-12-03",
+      "name": "UBS Global Tech 2025",
+      "ingested_at": "2026-09-08T23:11:40.945750+00:00",
+      "ticker": "CRWV",
+      "excerpts": [
+        {
+          "class": "promise",
+          "dimension": "capex_investment",
+          "excerpt": "We are signing longer-dated take-or-pay contracts for capacity that comes online in the next nine-12 months that they are committing to use for the next five years."
+        },
+        {
+          "class": "promise",
+          "dimension": "capex_investment",
+          "excerpt": "We are tracking very nicely versus what we said a few weeks ago on our earnings call. But I would say, how do we keep working through it? I would say self-build helps a bit. We've talked about our first couple self-build projects in Kenilworth, New Jersey, and Lancaster, Pennsylvania."
+        },
+        {
+          "class": "promise",
+          "dimension": "talent_hiring",
+          "excerpt": "An externality of that has very much been that we've been investing this year in meaningfully growing our data center teams, data center technicians, project managers, et cetera, and that enables us to not only have more of a self-build capability, which is a small minority of what we do today, but it also allows us to have more boots on the ground in more places."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "We are going to keep building those types of products and services such that you look five years from now and you say, wow, there's a corollary to what the hyperscalers did with the CPU cloud, but they did it specifically for this technology and this world."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "We are developing new products and services that fit within GPU or AI cloud that are not germane to general compute but are purpose-built for these types of workloads and what customers will increasingly need in the future."
+        },
+        {
+          "class": "promise",
+          "dimension": "market_share",
+          "excerpt": "I would expect that to continue based on the customer conversations we have. We think that the demand is pretty rampant across generations. I would expect that to continue based on the customer conversations we have about being the first to market with seemingly almost every generation of NVIDIA GPU technology over the last couple of years."
+        }
+      ]
+    },
+    {
+      "event_id": 578086,
+      "date": "2026-03-04",
+      "name": "Morgan Stanley TMT 2026",
+      "ingested_at": "2026-09-08T23:11:47.699178+00:00",
+      "ticker": "CRWV",
+      "excerpts": [
+        {
+          "class": "goal",
+          "dimension": "revenue_growth",
+          "excerpt": "Within our guidance, we offered color of exiting 2026 at $17 billion-$19 billion in ARR, exiting 2027 at over $30 billion in ARR."
+        },
+        {
+          "class": "goal",
+          "dimension": "geographic_expansion",
+          "excerpt": "On the most recent conference call, you guys talked about a goal of getting incremental, like, 5 gigawatts of power by 2030."
+        },
+        {
+          "class": "promise",
+          "dimension": "partnerships",
+          "excerpt": "That announcement in January, that more comprehensive relationship was all about accelerating growth, right? Accelerating our ability to grow at the pace of AI adoption. I think the software side of it is you're obviously correct to highlight, and it's this acknowledgement that the CoreWeave software stack is the best way to run this infrastructure. You know, for us, when we discussed it in our earnings was this can lead to an opportunity for us to sell that software solution to other entities."
+        },
+        {
+          "class": "promise",
+          "dimension": "capex_investment",
+          "excerpt": "That $30 billion-$35 billion guide on CapEx, let's call it $32.5 billion midpoint, that all sits at asset co."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "I think we'll likely be bringing online some more self-development in there, especially in the context of 5 gigawatts."
+        }
+      ]
+    },
+    {
+      "event_id": 578090,
+      "date": "2026-03-10",
+      "name": "Cantor Fitzgerald 2026",
+      "ingested_at": "2026-09-08T23:11:59.762280+00:00",
+      "ticker": "CRWV",
+      "excerpts": [
+        {
+          "class": "promise",
+          "dimension": "revenue_growth",
+          "excerpt": "revenue's gone from, you know, $200 million to $5 billion in a couple of years, expecting to double that again this year and double it again in 2027."
+        },
+        {
+          "class": "promise",
+          "dimension": "capex_investment",
+          "excerpt": "When you issue guidance for the year, as you did this year, and say, 'We're gonna raise or spend $30 billion on CapEx,' you know, to what extent do you have confidence in you being able to access the necessary amount of capital to fund that? Yeah. Absolutely. Again, primarily, right, through these DDTLs, and then we'll use some customer prepayments and then opportunistic financings at the topco across high-yield convertibles, etc. to do so."
+        },
+        {
+          "class": "promise",
+          "dimension": "geographic_expansion",
+          "excerpt": "I would say with regard to international expansion, you will see that play a role and also kind of the monetization of our cloud stack or licensing of our cloud stack to internationally play a role, the asset-light version of CoreWeave."
+        },
+        {
+          "class": "goal",
+          "dimension": "capex_investment",
+          "excerpt": "we expect to, you know, build and add an additional 5 GW of AI cloud by 2030"
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "NVIDIA's intention to take our reference architecture and software to validate those with the intention of ultimately making them available to other NVIDIA Cloud enterprise and sovereign customers, right? That's the asset-light monetization of CoreWeave cloud infrastructure in other people's data centers where we can make money on other people's GPUs."
+        },
+        {
+          "class": "promise",
+          "dimension": "geographic_expansion",
+          "excerpt": "the Kenilworth, yes. It will come online in, yeah, in that timeframe. Yeah, I don't think we've given specific guidance, but I think it's safe to say it'll be in the next, you know, one to two years. That'll be our first self-build online."
+        },
+        {
+          "class": "promise",
+          "dimension": "cost_reduction",
+          "excerpt": "You are gonna see us continue to over time, and it won't be every deal, but right in the weighted average way, drive down that cost of capital further because of the comfort, right, that the capital markets have with the quality of contracts we deliver, who we serve, and the quality of our business and execution."
+        },
+        {
+          "class": "promise",
+          "dimension": "technology_platform",
+          "excerpt": "what I think you'll see as agentic workloads get rolled out over the coming quarters and year or so, right? A CPU being close to the GPU, right, is an important part of that, right? Like, it's even NVIDIA, right, is talking about Vera CPU, right? As another step forward in enabling AI for exactly that reason."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "I think whether it's storage or CPU or software and development tools, you will see all of those increasingly become a part of the kind of contribution, right, of what makes up our P&L."
+        }
+      ]
+    },
+    {
+      "event_id": 671041,
+      "date": "2026-05-19",
+      "name": "J.P. Morgan TMT 2026",
+      "ingested_at": "2026-09-08T23:12:07.430146+00:00",
+      "ticker": "CRWV",
+      "excerpts": [
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "Blackstone did our first DDTLs. I think they participated in every single transaction that we've done. I was speaking with one of the partners this morning, they're gonna be participating on our upcoming transactions."
+        },
+        {
+          "class": "goal",
+          "dimension": "market_share",
+          "excerpt": "nine of the top 10 global non-China AI labs are on our platform today, which is incredibly exciting from a diversification perspective"
+        },
+        {
+          "class": "promise",
+          "dimension": "talent_hiring",
+          "excerpt": "We recently brought in Jon Jones to lead our revenue organization. He's building that and has delivered a very enterprise forward sales mechanism that's out there."
+        },
+        {
+          "class": "goal",
+          "dimension": "margin_expansion",
+          "excerpt": "we target a 25% contribution margin of operating these clusters at the SPV level back up to the parent. We target that regardless of what the underlying SKU is, right?"
+        },
+        {
+          "class": "goal",
+          "dimension": "margin_expansion",
+          "excerpt": "Long-term target, I think still is 25%-30%."
+        },
+        {
+          "class": "promise",
+          "dimension": "margin_expansion",
+          "excerpt": "Q1 is supposed to be a trough for you guys. You've reaffirmed that you're gonna exit the year at, like, a low double digit pro forma operating margin."
+        },
+        {
+          "class": "goal",
+          "dimension": "capital_return",
+          "excerpt": "asset co is kicking off net proceeds to parent. Parent will get a larger and larger stream of these, like, kinda clean net proceeds from asset co that it just turns around and sends back down into asset co."
+        },
+        {
+          "class": "promise",
+          "dimension": "regulatory",
+          "excerpt": "The DDTL 4 was our first investment grade rated instrument. That's a massive milestone, right?"
+        },
+        {
+          "class": "promise",
+          "dimension": "capex_investment",
+          "excerpt": "The bulk of our capacity is ramping today in Q2 and in Q3. You're seeing that show up in our numbers as well from an OpEx, CapEx perspective."
+        }
+      ]
+    },
+    {
+      "event_id": 679766,
+      "date": "2026-05-27",
+      "name": "Jefferies Software AI 2026",
+      "ingested_at": "2026-09-08T23:12:11.920813+00:00",
+      "ticker": "CRWV",
+      "excerpts": [
+        {
+          "class": "goal",
+          "dimension": "margin_expansion",
+          "excerpt": "our margins are going to inflect, with them reaching low double digits as we exit the year"
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "Networking, CPU, and software, all three crossing $100 million of ARR by the end of this year"
+        },
+        {
+          "class": "promise",
+          "dimension": "capex_investment",
+          "excerpt": "We're excited to bring our first self-built site online in the next few quarters this year, and we're excited about the next following site coming online in 2027"
+        },
+        {
+          "class": "goal",
+          "dimension": "capex_investment",
+          "excerpt": "You have 3.5 GW Under contracted power, and your goal is to get to 8 GW of active power by 2030"
+        },
+        {
+          "class": "promise",
+          "dimension": "revenue_growth",
+          "excerpt": "We talked about exiting this year at $18 billion-$19 billion ARR, next year north of $30 billion ARR"
+        },
+        {
+          "class": "goal",
+          "dimension": "margin_expansion",
+          "excerpt": "we feel incredibly comfortable in the long-term margin trajectory of our business"
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "we are going to inflect in the second half of this year based on our projections in terms of how we can see the power coming online"
+        }
+      ]
+    },
+    {
+      "event_id": 682572,
+      "date": "2026-06-03",
+      "name": "BofA Global Tech 2026",
+      "ingested_at": "2026-09-08T23:12:18.013648+00:00",
+      "ticker": "CRWV",
+      "excerpts": [
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "We actually have been building that solution. We plan to launch it next week at a user conference, and there'll be millions and millions of user, or agents, and they need to be secured."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "Securing AI infrastructure and applications and models. We have been building that solution. We did an acquisition, and in January, we launched our integrated solution."
+        },
+        {
+          "class": "goal",
+          "dimension": "revenue_growth",
+          "excerpt": "Zero Trust Everywhere is expanding from what we have. It's very, very natural. When customers go from Zero Trust on users to Zero Trust Everywhere, the ARR either becomes two X or three X."
+        },
+        {
+          "class": "promise",
+          "dimension": "go-to-market",
+          "excerpt": "As we add new salespeople, when company is growing, you need to add salespeople. We are more being added between 2,000 to 10,000 space. We're adding new reps for new logo focus. We are making sales comp plan more attractive for new logos, and we're also going to be more targeted with VARs."
+        },
+        {
+          "class": "goal",
+          "dimension": "revenue_growth",
+          "excerpt": "We want to do better. I'm an ambitious person. I have big aspirations. Really need to keep on moving in that direction."
+        }
+      ]
+    },
+    {
+      "event_id": 687670,
+      "date": "2026-06-08",
+      "name": "AGM 2026",
+      "ingested_at": "2026-09-08T23:12:19.568828+00:00",
+      "ticker": "CRWV",
+      "excerpts": [
+        {
+          "class": "goal",
+          "dimension": "capex_investment",
+          "excerpt": "We are on track toward our long-term objective of more than eight gigawatts of active power by 2030, expanding capacity to meet that demand."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "We have and will continue to introduce new products and services that unlock the potential of inference while positioning CoreWeave to benefit substantially from its acceleration."
+        }
+      ]
+    },
+    {
+      "event_id": 746055,
+      "date": "2026-09-08",
+      "name": "Goldman Sachs 2026",
+      "ingested_at": "2026-09-08T23:15:03.121035+00:00",
+      "ticker": "CRWV",
+      "excerpts": [
+        {
+          "class": "promise",
+          "dimension": "capex_investment",
+          "excerpt": "I talked about this a little bit on my earnings call because it's such an incredibly high-profile issue. I talked about the idea that we have over 1 GW of power contracted outside of the U.S. as you look to build a portfolio of infrastructure to be able to support your clients with."
+        },
+        {
+          "class": "promise",
+          "dimension": "capex_investment",
+          "excerpt": "Data centers take time to build, so you are starting to see the first two to three of our self-builds spin up, which we are incredibly excited about. But you will see a continued effort on our part to control the physical infrastructure both up and down the stack."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "There's a whole bunch coming down the pipe that really look like that for various reasons why we would use that model instead."
+        },
+        {
+          "class": "goal",
+          "dimension": "market_share",
+          "excerpt": "We really think that you've got to build a suite of software services, whether it's storage or memory or networking and all the different things that people are going to consume, then go ahead and put it in front of them and say, 'Look, we can help you build your company. We can help you deliver your service. We can help you be successful because of the infrastructure that you are going to be able to run your products on.'"
+        },
+        {
+          "class": "goal",
+          "dimension": "geographic_expansion",
+          "excerpt": "The way that our roadmap has led us internationally, right, to ensure that we are both resilient from a capacity factor, but also able to serve different markets with low latency infrastructure."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "ticker": "ABBV",
+  "run_id": "1a8bdc1f-e837-49a1-90fd-e6bc2ee1bd71",
+  "seeds_proposed": 11,
+  "seeds_inserted_confirmed": 2,
+  "seeds_inserted_provisional": 1,
+  "seeds_recite_queue": 8,
+  "verdicts_proposed": 8,
+  "verdicts_inserted": 0,
+  "verdicts_recite_queue": 8,
+  "regime_stub": "ok",
+  "errors": [],
+  "seeding_done": true,
+  "scoring_done": true,
+  "completed_at": "2026-09-08T16:22:23.588368+00:00",
+  "updated_at": "2026-09-08T16:22:23.589363+00:00"
+}

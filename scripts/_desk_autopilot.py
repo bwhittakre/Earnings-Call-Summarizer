@@ -439,6 +439,60 @@ def _prov(
 
 # ── per-ticker live run ───────────────────────────────────────────────────────
 
+def load_supplemental_cues(
+    ticker: str,
+    supplemental_cue_file: str | None = None,
+) -> list[dict]:
+    """Load conference/supplemental cue rows for a ticker.
+
+    Rows come from one of two sources (both merged together if both exist):
+      1. data/desk_conf_cue_{TICKER}.json — the persisted conference cue file
+         written by _desk_conf_ingest.py.  All events in that file are flattened
+         to missed-row dicts with fiscal_period = "CONF-YYYY-MM-DD".
+      2. An explicit JSON file path passed via --supplemental-cue-file (the
+         ephemeral file that _desk_conf_ingest writes just for this run).
+
+    Returns a list of missed-row dicts ready to be appended to _load_missed().
+    """
+    from scripts._desk_conf_ingest import _load_conf_cue, _event_to_cue_rows  # noqa: E402
+
+    rows: list[dict] = []
+
+    # Source 1: persisted conference cue file
+    payload = _load_conf_cue(ticker)
+    for event in (payload.get("events") or []):
+        event_with_ticker = dict(event)
+        event_with_ticker.setdefault("ticker", ticker.upper())
+        rows.extend(_event_to_cue_rows(event_with_ticker))
+
+    # Source 2: one-shot supplemental cue file (from CLI flag)
+    if supplemental_cue_file:
+        path = Path(supplemental_cue_file)
+        if path.is_file():
+            extra: Any = json.loads(path.read_text(encoding="utf-8"))
+            if isinstance(extra, list):
+                rows.extend(extra)
+            elif isinstance(extra, dict):
+                # Same format as desk_conf_cue: {"ticker":..., "events":[...]}
+                for event in (extra.get("events") or []):
+                    event.setdefault("ticker", ticker.upper())
+                    rows.extend(_event_to_cue_rows(event))
+
+    # Deduplicate by excerpt normalisation (keep first occurrence)
+    seen_norms: set[str] = set()
+    deduped: list[dict] = []
+    for r in rows:
+        key = _norm(str(r.get("excerpt") or ""))
+        if key not in seen_norms:
+            seen_norms.add(key)
+            deduped.append(r)
+
+    if deduped:
+        print(f"  {ticker.upper()}: {len(deduped)} supplemental cue rows "
+              f"loaded (sources: conf_cue + {supplemental_cue_file or 'none'})")
+    return deduped
+
+
 def run_for_ticker(
     ticker: str,
     *,
@@ -450,6 +504,7 @@ def run_for_ticker(
     hand_typed_by_book: dict[str, list[dict]],
     run_id: str,
     api_key: str | None = None,
+    supplemental_cue_file: str | None = None,
 ) -> dict:
     """Run full live pipeline for one ticker. Returns per-ticker stats dict."""
     stats: dict = {
@@ -473,6 +528,16 @@ def run_for_ticker(
     # 2. Load missed cue-queue rows
     missed = _load_missed(ticker)
     print(f"  {ticker}: {len(missed)} missed cue-queue rows")
+
+    # 2b. Merge in supplemental (conference / AGM) cue rows
+    try:
+        supp_rows = load_supplemental_cues(ticker, supplemental_cue_file)
+        if supp_rows:
+            missed = list(missed) + supp_rows
+            print(f"  {ticker}: {len(supp_rows)} supplemental rows merged "
+                  f"→ {len(missed)} total")
+    except Exception as exc:
+        stats["errors"].append(f"supplemental_cues: {exc}")
 
     # 3. Propose seeds
     proposals: list[dict] = []
@@ -585,6 +650,10 @@ def main(argv: list[str] | None = None) -> int:
                          "terminal_score_candidates.json (no new LLM calls)")
     ap.add_argument("--plan", action="store_true",
                     help="pass plan_only=True to score_ticker (no LLM calls)")
+    ap.add_argument("--supplemental-cue-file", metavar="PATH",
+                    help="path to a JSON file of supplemental cue rows to merge "
+                         "(written by _desk_conf_ingest.py; rows are appended to "
+                         "the earnings missed list before propose_seeds)")
     args = ap.parse_args(argv)
 
     from_existing = args.from_existing_candidates
@@ -757,6 +826,7 @@ def main(argv: list[str] | None = None) -> int:
                     hand_typed_by_book=hand_typed_by_book,
                     run_id=run_id,
                     api_key=api_key,
+                    supplemental_cue_file=getattr(args, "supplemental_cue_file", None),
                 )
             except Exception as exc:
                 msg = f"{ticker}: unhandled error: {exc}"
