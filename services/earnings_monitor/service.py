@@ -692,6 +692,21 @@ class EarningsMonitor:
                         monitored.event.fiscal_period,
                     )
                     result["desk_autopilot"] = {"status": "error"}
+            if stage == "post_call" and self.config.scorecard_after_post_call:
+                try:
+                    from .scorecard import rebuild_scorecard
+
+                    result["call_scorecard"] = rebuild_scorecard(
+                        repo_root=self.config.repo_root,
+                        rebuild_canvas=True,
+                    )
+                except Exception:
+                    LOG.exception(
+                        "scorecard rebuild failed for %s %s",
+                        monitored.event.ticker,
+                        monitored.event.fiscal_period,
+                    )
+                    result["call_scorecard"] = {"status": "error"}
             if stage == "release_to_call" and job["payload"].get("freshness"):
                 result["freshness"] = job["payload"]["freshness"]
             history_refresh = self._refresh_history_dataset()

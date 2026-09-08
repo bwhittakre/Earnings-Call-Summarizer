@@ -52,6 +52,7 @@ class MonitorConfig:
     desk_trees_after_post_call: bool = True
     desk_autopilot_after_post_call: bool = True
     desk_autopilot_budget_usd: float = 1.0
+    scorecard_after_post_call: bool = True
     research_regen_debounce_seconds: int = 60
     research_regen_idle_seconds: int = 30
     research_min_calendar_quarter: str = "2016-Q2"
@@ -209,6 +210,9 @@ class MonitorConfig:
             ),
             desk_autopilot_budget_usd=float(
                 values.get("EARNINGS_MONITOR_DESK_AUTOPILOT_BUDGET_USD") or "1.0"
+            ),
+            scorecard_after_post_call=_bool(
+                values.get("EARNINGS_MONITOR_SCORECARD"), True
             ),
             research_regen_debounce_seconds=_int(
                 values.get("EARNINGS_MONITOR_RESEARCH_REGEN_DEBOUNCE_SECONDS"),
