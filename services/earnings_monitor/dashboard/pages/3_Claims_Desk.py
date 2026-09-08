@@ -6,6 +6,7 @@ Not a Lab sandbox. production_v1 is never written.
 from __future__ import annotations
 
 from services.earnings_monitor.dashboard.claims_desk import render_claims_desk
+from services.earnings_monitor.dashboard.claims_scorecard import render_scorecard
 from services.earnings_monitor.dashboard.shell import (
     configure_page,
     get_streamlit,
@@ -34,6 +35,9 @@ def main() -> None:
         sector_tickers=ctx.sector_tickers,
         sector_choice=ctx.sector_choice,
     )
+
+    st.divider()
+    render_scorecard(st, sector_tickers=ctx.sector_tickers)
 
 
 main()

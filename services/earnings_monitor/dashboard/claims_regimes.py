@@ -30,7 +30,9 @@ REGIMES_FILENAME = "desk_regimes_v1.json"
 
 _TRANSFER_KIND_LABELS: dict[str, str] = {
     "single_regime":               "Single regime",
-    "prior_closed":                "Closed before transition",
+    # "prior_closed" is intentionally excluded from display — these trees were
+    # already closed before the regime transition and carry no accountability
+    # relevance. The key is kept here so the filter dropdown excludes it cleanly.
     "inherited_adopted":           "Adopted by new regime",
     "inherited_closed_by_successor": "Closed by successor",
     "inherited_overdue":           "Inherited — overdue",
@@ -319,18 +321,24 @@ def _render_mode_b(st: Any, ticker: str, regimes: list[dict], book_block: dict |
 
 _TRANSFER_FILTER_ALL = "all"
 _TRANSFER_FILTER_CHOICES = [_TRANSFER_FILTER_ALL] + [
-    k for k in _TRANSFER_KIND_LABELS if k != "single_regime"
+    k for k in _TRANSFER_KIND_LABELS if k not in {"single_regime", "prior_closed"}
 ]
 
 
 def _render_mode_c(st: Any, ticker: str, book_block: dict | None) -> None:
-    """Mode C: transfer ledger for a ticker."""
+    """Mode C: transfer ledger for a ticker.
+
+    Only shows inherited trees (open at the regime transition). Trees that were
+    already closed before the transition (prior_closed) are excluded — they carry
+    no accountability relevance for the incoming regime.
+    """
     if book_block is None:
         st.info("Regimes sidecar not loaded.")
         return
     ledger: list[dict] = [
         e for e in (book_block.get("transfer_ledger") or [])
         if (str(e.get("ticker") or "")).upper() == ticker.upper()
+        and e.get("transfer_kind") != "prior_closed"
     ]
     if not ledger:
         st.info(f"No regime-crossing trees found for {ticker}.")
@@ -387,8 +395,8 @@ def _render_mode_c(st: Any, ticker: str, book_block: dict | None) -> None:
         "Transfer taxonomy: **inherited_adopted** = new regime actively restated/continued the tree. "
         "**inherited_overdue** = open at transition with a past-due clock. "
         "**inherited_ignored** = open at transition, clock not yet due. "
-        "**prior_closed** = closed before the transition. "
-        "**inherited_closed_by_successor** = new regime provided the terminal node."
+        "**inherited_closed_by_successor** = new regime provided the terminal node. "
+        "Trees closed before the transition are excluded."
     )
 
 

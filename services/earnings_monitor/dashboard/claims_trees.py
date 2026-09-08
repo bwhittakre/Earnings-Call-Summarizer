@@ -1160,6 +1160,8 @@ def render_claims_trees(
             )
 
     board = clock_board(trees, latest)
+
+    # ── Due and slipped — grouped by company ─────────────────────────────────
     st.subheader("Due and slipped")
     st.caption(
         f"As of {latest or '—'}. Open clocks on typed trees. "
@@ -1168,37 +1170,54 @@ def render_claims_trees(
         "Open trees with no clock are someday wants, not due."
     )
     if board["due"] or board["slipped"]:
-        st.dataframe(
-            [
-                {
-                    "bucket": "slipped" if row.get("slipped") else "due",
-                    "company": format_company_label(str(row.get("ticker") or "")),
-                    "claim": row.get("title"),
-                    "kind": row.get("kind"),
-                    "clock": row.get("clock") or "—",
-                }
-                for row in [*board["slipped"], *board["due"]]
-            ],
-            hide_index=True,
-            use_container_width=True,
+        from itertools import groupby as _groupby
+        all_clock_rows = sorted(
+            [*board["slipped"], *board["due"]],
+            key=lambda r: str(r.get("ticker") or ""),
         )
+        for _ticker, _group in _groupby(all_clock_rows, key=lambda r: str(r.get("ticker") or "")):
+            _rows = list(_group)
+            _label = f"{format_company_label(_ticker)} — {len(_rows)} clock(s)"
+            with st.expander(_label, expanded=False):
+                st.dataframe(
+                    [
+                        {
+                            "bucket": "slipped" if row.get("slipped") else "due",
+                            "claim": row.get("title"),
+                            "kind": row.get("kind"),
+                            "clock": row.get("clock") or "—",
+                        }
+                        for row in _rows
+                    ],
+                    hide_index=True,
+                    use_container_width=True,
+                )
     if board["open_no_clock"]:
+        from itertools import groupby as _groupby
+        open_sorted = sorted(
+            board["open_no_clock"],
+            key=lambda r: str(r.get("ticker") or ""),
+        )
         st.caption(
-            f"{len(board['open_no_clock'])} open trees have no clock "
-            "(soft someday wants)."
+            f"{len(board['open_no_clock'])} open claims with no clock "
+            "(soft someday wants) — grouped by company."
         )
-        st.dataframe(
-            [
-                {
-                    "claim": row.get("title"),
-                    "kind": row.get("kind"),
-                    "state": row.get("state"),
-                }
-                for row in board["open_no_clock"]
-            ],
-            hide_index=True,
-            use_container_width=True,
-        )
+        for _ticker, _group in _groupby(open_sorted, key=lambda r: str(r.get("ticker") or "")):
+            _rows = list(_group)
+            _label = f"{format_company_label(_ticker)} — {len(_rows)} open"
+            with st.expander(_label, expanded=False):
+                st.dataframe(
+                    [
+                        {
+                            "claim": row.get("title"),
+                            "kind": row.get("kind"),
+                            "state": row.get("state"),
+                        }
+                        for row in _rows
+                    ],
+                    hide_index=True,
+                    use_container_width=True,
+                )
 
     if trees:
         _render_horizon_panel(st, trees)
@@ -1231,10 +1250,135 @@ def render_claims_trees(
             use_container_width=True,
         )
 
+    # ── Seed candidates (collapsed) ──────────────────────────────────────────
+    seed_data = _load_seed_candidates()
+    if seed_data is not None:
+        _sc_by_ticker = seed_data.get("candidates_by_ticker") or {}
+        _sc_total = seed_data.get("n_proposed_seeds") or sum(
+            len(v) for v in _sc_by_ticker.values()
+        )
+        _sc_partial = " · PARTIAL RUN" if seed_data.get("complete") is False else ""
+        with st.expander(
+            f"Seed candidates ({_sc_total}){_sc_partial} — expand to review",
+            expanded=False,
+        ):
+            st.caption(
+                f"LLM-proposed seeds from {seed_data.get('n_cue_rows_reviewed', 0)} "
+                f"uncovered cue rows across {seed_data.get('n_tickers_scanned', 0)} tickers. "
+                f"Do not auto-insert. Human review required before typing into catalog files. "
+                f"Generated {str(seed_data.get('generated_at', ''))[:10]}."
+            )
+            if not _sc_by_ticker:
+                st.caption("No candidate file found. Run scripts/_desk_seed_batch.py to generate.")
+            else:
+                for _ticker_key, _cands in sorted(_sc_by_ticker.items()):
+                    if not _cands:
+                        continue
+                    with st.expander(
+                        f"{format_company_label(_ticker_key)} — {len(_cands)} candidate(s)",
+                        expanded=False,
+                    ):
+                        st.dataframe(
+                            [
+                                {
+                                    "confidence": (c.get("confidence") or ""),
+                                    "cite_ok": str(c.get("excerpt_verified") or ""),
+                                    "kind": c.get("kind") or "",
+                                    "bucket": c.get("bucket") or "",
+                                    "title": c.get("title") or "",
+                                    "fiscal": (c.get("seed") or {}).get("fiscal_period") or "",
+                                    "clock": (c.get("seed") or {}).get("clock") or "—",
+                                    "rationale": c.get("rationale") or "",
+                                }
+                                for c in _cands
+                            ],
+                            hide_index=True,
+                            use_container_width=True,
+                        )
+
+    # ── Terminal candidates (collapsed) ──────────────────────────────────────
+    term_data = _load_terminal_candidates()
+    if term_data is not None:
+        _nr = term_data.get("needs_review") or []
+        _tc = term_data.get("candidates") or []
+        _tc_total = len(_tc)
+        _nr_total = len(_nr)
+
+        # Needs review — start open (requires action)
+        if _nr:
+            with st.expander(
+                f"Needs review — {_nr_total} open tree(s) could not be resolved automatically",
+                expanded=True,
+            ):
+                _nr_reasons = term_data.get("needs_review_reasons") or {}
+                st.caption(
+                    "These are parked, not closed. Each row says why and what would unblock it. "
+                    + " · ".join(f"{k} ×{v}" for k, v in _nr_reasons.items())
+                )
+                st.dataframe(
+                    [
+                        {
+                            "reason": it.get("reason") or "",
+                            "company": format_company_label(str(it.get("ticker") or "")),
+                            "tree": it.get("title") or it.get("tree_id") or "",
+                            "kind": it.get("kind") or "",
+                            "seed": it.get("seed_fiscal") or "",
+                            "clock": it.get("clock") or "—",
+                            "detail": it.get("detail") or "",
+                        }
+                        for it in _nr
+                    ],
+                    hide_index=True,
+                    use_container_width=True,
+                )
+
+        # Terminal candidates — collapsed by default
+        _tc_partial = " · PARTIAL RUN" if term_data.get("complete") is False else ""
+        with st.expander(
+            f"Terminal candidates ({_tc_total}){_tc_partial} — expand to review",
+            expanded=False,
+        ):
+            st.caption(
+                f"LLM-proposed terminal verdicts for {term_data.get('n_open_trees_scored', 0)} open trees. "
+                f"Do not auto-insert. Human review required before typing nodes into catalog files. "
+                f"Generated {str(term_data.get('generated_at', ''))[:10]}."
+            )
+            if not _tc:
+                st.caption(
+                    "No candidate file found. Run scripts/_desk_terminal_candidates.py to generate."
+                )
+            else:
+                st.dataframe(
+                    [
+                        {
+                            "edge": c.get("proposed_edge") or "",
+                            "confidence": c.get("confidence") or "",
+                            "cite_ok": str(c.get("excerpt_verified") or ""),
+                            "company": format_company_label(str(c.get("ticker") or "")),
+                            "title": c.get("title") or "",
+                            "kind": c.get("kind") or "",
+                            "seed_fiscal": c.get("seed_fiscal") or "",
+                            "proposed_fiscal": c.get("proposed_fiscal") or "—",
+                            "book": c.get("book") or "",
+                            "reasoning": str(c.get("reasoning") or "")[:200],
+                        }
+                        for c in _tc
+                    ],
+                    hide_index=True,
+                    use_container_width=True,
+                )
+
+    # ── Trees — grouping selector + always collapsed ──────────────────────────
     st.subheader("Trees")
     st.caption(
         "Bucket is the claim theme. Seed dimension is the novelty label "
         "of that sentence."
+    )
+    _trees_group_by = st.radio(
+        "Group by",
+        ["Bucket", "Company", "Period"],
+        horizontal=True,
+        key="claims_trees_group_by",
     )
     list_bucket = st.selectbox(
         "Bucket",
@@ -1247,85 +1391,121 @@ def render_claims_trees(
     st.caption(EXPIRE_CAPTION)
     if not listed:
         st.caption("No trees in this bucket.")
-    for bucket_key, group in group_trees_by_bucket(listed):
-        st.markdown(f"**{bucket_label(bucket_key)}**")
-        for tree in group:
-            scoring_kind = str(tree.get("current_kind") or tree.get("kind") or "")
-            outcome = (
-                tree.get("delivery")
-                if scoring_kind == "promise"
-                else tree.get("goal_outcome")
+
+    def _tree_expander_title(tree: dict) -> str:
+        scoring_kind = str(tree.get("current_kind") or tree.get("kind") or "")
+        outcome = (
+            tree.get("delivery")
+            if scoring_kind == "promise"
+            else tree.get("goal_outcome")
+        )
+        slipped_badge = " · SLIPPED" if tree.get("slipped") else ""
+        return (
+            f"{format_company_label(str(tree.get('ticker') or ''))} "
+            f"{tree.get('title')} · {tree_kind_label(tree)} · "
+            f"{tree.get('state')} / {outcome}"
+            f"{slipped_badge}"
+        )
+
+    def _render_tree_body(tree: dict) -> None:
+        """Render the inside of a single tree expander (shared across all groupings)."""
+        st.caption(
+            f"{tree.get('tree_id')} · {tree.get('beat_id')} · "
+            f"{bucket_label(tree_bucket(tree))} · "
+            f"clock {tree.get('clock') or '—'} · "
+            f"{'open' if tree.get('open') else 'closed'}"
+        )
+        if tree.get("parent_tree_id"):
+            st.caption(
+                f"Evolved from {tree.get('parent_tree_id')}. "
+                "Parent seed cite is kept."
             )
-            title = (
-                f"{format_company_label(str(tree.get('ticker') or ''))} "
-                f"{tree.get('title')} · {tree_kind_label(tree)} · "
-                f"{tree.get('state')} / {outcome}"
+        if str(tree.get("goal_outcome") or "") == "became-promise":
+            st.caption(
+                "Became a promise. Same tree. Current label is "
+                "promise (was goal) until the promise closes."
             )
-            with st.expander(title, expanded=bool(tree.get("slipped"))):
-                st.caption(
-                    f"{tree.get('tree_id')} · {tree.get('beat_id')} · "
-                    f"{bucket_label(tree_bucket(tree))} · "
-                    f"clock {tree.get('clock') or '—'} · "
-                    f"{'open' if tree.get('open') else 'closed'}"
+        for row in tree_node_rows(tree):
+            label = f"{row['fiscal_period']} · {node_edge_label(row)}"
+            if row.get("slipped"):
+                label = f"{label} · slipped"
+            st.markdown(f"**{label}**")
+            if row.get("citation"):
+                st.caption(str(row["citation"]))
+            if row.get("excerpt"):
+                st.write(row["excerpt"])
+            elif row.get("edge") == "silent":
+                st.info("Silent quarter. No cite on this object.")
+            elif row.get("edge") == "expired":
+                st.info(
+                    "Expired. Completeness is unfeasible. "
+                    "Not a miss and not a withdrawal."
                 )
-                if tree.get("parent_tree_id"):
-                    st.caption(
-                        f"Evolved from {tree.get('parent_tree_id')}. "
-                        "Parent seed cite is kept."
-                    )
-                if str(tree.get("goal_outcome") or "") == "became-promise":
-                    st.caption(
-                        "Became a promise. Same tree. Current label is "
-                        "promise (was goal) until the promise closes."
-                    )
-                for row in tree_node_rows(tree):
-                    label = f"{row['fiscal_period']} · {node_edge_label(row)}"
-                    if row.get("slipped"):
-                        label = f"{label} · slipped"
-                    st.markdown(f"**{label}**")
-                    if row.get("citation"):
-                        st.caption(str(row["citation"]))
-                    if row.get("excerpt"):
-                        st.write(row["excerpt"])
-                    elif row.get("edge") == "silent":
-                        st.info("Silent quarter. No cite on this object.")
-                    elif row.get("edge") == "expired":
-                        st.info(
-                            "Expired. Completeness is unfeasible. "
-                            "Not a miss and not a withdrawal."
-                        )
-                if tree.get("coverage_summary"):
-                    st.markdown(f"**Coverage.** {tree.get('coverage_summary')}")
-                backdrop = attach_metrics_to_backdrop(
-                    history_backdrop_window(
-                        data.company_history(str(tree.get("ticker") or "")),
-                        str((tree.get("seed") or {}).get("fiscal_period") or ""),
-                        last_cited_fiscal(tree),
-                    ),
-                    metrics_by_period(metrics_payload, str(tree.get("ticker") or "")),
-                )
-                if backdrop:
-                    st.caption("Historical backdrop — Roz company history around this tree.")
-                    st.dataframe(
-                        [
-                            {
-                                "fiscal_period": item["fiscal_period"],
-                                "role": item["role"] or "—",
-                                "narrative_level": item["narrative_level"],
-                                "narrative_change": item["narrative_change"],
-                                "quant_z": item["quant_z"],
-                                "surprise_quant_gap": item["surprise_quant_gap"],
-                                "trust": format_rate(item.get("desk_trust")),
-                                "trust_n": item.get("desk_trust_n")
-                                if item.get("desk_trust_n")
-                                else "—",
-                                "ambition": format_rate(item.get("desk_ambition")),
-                                "ambition_n": item.get("desk_ambition_n")
-                                if item.get("desk_ambition_n")
-                                else "—",
-                            }
-                            for item in backdrop
-                        ],
-                        hide_index=True,
-                        use_container_width=True,
-                    )
+        if tree.get("coverage_summary"):
+            st.markdown(f"**Coverage.** {tree.get('coverage_summary')}")
+        backdrop = attach_metrics_to_backdrop(
+            history_backdrop_window(
+                data.company_history(str(tree.get("ticker") or "")),
+                str((tree.get("seed") or {}).get("fiscal_period") or ""),
+                last_cited_fiscal(tree),
+            ),
+            metrics_by_period(metrics_payload, str(tree.get("ticker") or "")),
+        )
+        if backdrop:
+            st.caption("Historical backdrop — Roz company history around this tree.")
+            st.dataframe(
+                [
+                    {
+                        "fiscal_period": item["fiscal_period"],
+                        "role": item["role"] or "—",
+                        "narrative_level": item["narrative_level"],
+                        "narrative_change": item["narrative_change"],
+                        "quant_z": item["quant_z"],
+                        "surprise_quant_gap": item["surprise_quant_gap"],
+                        "trust": format_rate(item.get("desk_trust")),
+                        "trust_n": item.get("desk_trust_n")
+                        if item.get("desk_trust_n")
+                        else "—",
+                        "ambition": format_rate(item.get("desk_ambition")),
+                        "ambition_n": item.get("desk_ambition_n")
+                        if item.get("desk_ambition_n")
+                        else "—",
+                    }
+                    for item in backdrop
+                ],
+                hide_index=True,
+                use_container_width=True,
+            )
+
+    if _trees_group_by == "Company":
+        from itertools import groupby as _groupby
+        _sorted_by_co = sorted(listed, key=lambda t: str(t.get("ticker") or ""))
+        for _co_key, _co_group in _groupby(_sorted_by_co, key=lambda t: str(t.get("ticker") or "")):
+            _co_trees = list(_co_group)
+            st.markdown(f"**{format_company_label(_co_key)}** ({len(_co_trees)})")
+            for tree in _co_trees:
+                with st.expander(_tree_expander_title(tree), expanded=False):
+                    _render_tree_body(tree)
+    elif _trees_group_by == "Period":
+        from itertools import groupby as _groupby
+        _sorted_by_period = sorted(
+            listed,
+            key=lambda t: str((t.get("seed") or {}).get("fiscal_period") or ""),
+            reverse=True,
+        )
+        for _per_key, _per_group in _groupby(
+            _sorted_by_period,
+            key=lambda t: str((t.get("seed") or {}).get("fiscal_period") or ""),
+        ):
+            _per_trees = list(_per_group)
+            st.markdown(f"**Seeded {_per_key or '—'}** ({len(_per_trees)})")
+            for tree in _per_trees:
+                with st.expander(_tree_expander_title(tree), expanded=False):
+                    _render_tree_body(tree)
+    else:
+        # Default: group by bucket
+        for bucket_key, group in group_trees_by_bucket(listed):
+            st.markdown(f"**{bucket_label(bucket_key)}**")
+            for tree in group:
+                with st.expander(_tree_expander_title(tree), expanded=False):
+                    _render_tree_body(tree)

@@ -206,6 +206,23 @@ def main(argv: list[str] | None = None) -> int:
         help="Sector file stem for book integration (default xlk_tech)",
     )
     onboard_parser.add_argument(
+        "--quartr-company-id",
+        type=int,
+        default=None,
+        help="Quartr company_id override (written to overlay; skips MCP resolution)",
+    )
+    onboard_parser.add_argument(
+        "--skip-history-onboard",
+        action="store_true",
+        help="Skip the automatic full-history claims desk onboard after this run",
+    )
+    onboard_parser.add_argument(
+        "--history-budget-usd",
+        type=float,
+        default=5.0,
+        help="Sonnet budget cap for the history onboard scoring step (default $5.00)",
+    )
+    onboard_parser.add_argument(
         "--arm",
         action="store_true",
         help="After Onboard, arm the event (requires ticker on allowlist)",
@@ -330,12 +347,36 @@ def main(argv: list[str] | None = None) -> int:
             isin=args.isin,
             estpermid=args.estpermid,
             barra_id=args.barra_id,
+            quartr_company_id=args.quartr_company_id,
             refresh_ids=bool(args.refresh_ids),
             configured_tickers=config.tickers,
             skip_book_sync=bool(args.skip_book_sync),
             research_sector=str(args.research_sector or "xlk_tech"),
         )
         payload = result.to_dict()
+
+        # ── Full-history claims desk onboard ────────────────────────────────────
+        # Runs automatically for every new company unless --skip-history-onboard is set.
+        # Uses Haiku for seeding (cost-efficient) and Sonnet for terminal scoring.
+        if not args.skip_history_onboard and not args.dry_run and result.status not in ("failed", "blocked"):
+            print(f"\n[history onboard] Starting full-history desk onboard for {ticker}...")
+            try:
+                from .desk_autopilot import run_history_onboard_for_ticker
+
+                ho_result = run_history_onboard_for_ticker(
+                    repo_root=config.repo_root,
+                    ticker=ticker,
+                    budget_usd=float(getattr(args, "history_budget_usd", 5.0)),
+                )
+                payload["desk_history_onboard"] = ho_result
+                print(f"[history onboard] {ticker}: {ho_result.get('status', 'unknown')}")
+            except Exception as _ho_exc:
+                import logging as _log
+                _log.getLogger(__name__).warning(
+                    "history onboard failed for %s: %s", ticker, _ho_exc
+                )
+                payload["desk_history_onboard"] = {"status": "error", "reason": str(_ho_exc)}
+
         if args.arm:
             monitor = build_local_monitor(config)
             from .ticker_book import ensure_ticker_in_book, resolve_book_tickers
@@ -500,6 +541,7 @@ def main(argv: list[str] | None = None) -> int:
                 isin=args.isin,
                 estpermid=args.estpermid,
                 barra_id=args.barra_id,
+                quartr_company_id=args.quartr_company_id,
                 refresh_ids=bool(args.refresh_ids),
                 configured_tickers=config.tickers,
             )

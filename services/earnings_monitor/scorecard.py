@@ -2,6 +2,10 @@
 
 Called automatically by ``service.py`` after the desk autopilot completes.
 Never raises — failures are caught, logged, and returned as ``{"status": "error"}``.
+
+Also writes a markdown Post-Call Brief to ``data/briefs/{TICKER}_{PERIOD}.md``
+for each ticker/period that has a scorecard entry, so SAM can read it without
+opening the dashboard.
 """
 from __future__ import annotations
 
@@ -63,7 +67,63 @@ def rebuild_scorecard(
             LOG.warning("scorecard canvas rebuild failed: %s", exc)
             result["canvas"] = f"error: {exc}"
 
+    # ── Post-Call Briefs (best-effort, per ticker with a scored entry) ────────
+    try:
+        briefs_written = _write_briefs(root)
+        result["briefs_written"] = briefs_written
+    except Exception as exc:
+        LOG.warning("brief auto-write failed: %s", exc)
+        result["briefs_written"] = f"error: {exc}"
+
     return result
+
+
+def _write_briefs(root: Path) -> int:
+    """Write (or refresh) markdown briefs for every (ticker, period) in the scorecard.
+
+    Writes to ``data/briefs/{TICKER}_{PERIOD}.md``.  Returns the number of files written.
+    Does NOT raise — caller already handles exceptions.
+    """
+    import json
+
+    sc_path = root / "data" / "desk_call_scorecard_v1.json"
+    if not sc_path.is_file():
+        return 0
+
+    # Import here so the heavy module is only loaded when scorecard is being rebuilt.
+    # Adjust sys.path so the import works regardless of cwd.
+    if str(root) not in sys.path:
+        sys.path.insert(0, str(root))
+
+    from services.earnings_monitor.dashboard.claims_brief import (  # type: ignore[import]
+        generate_brief_markdown,
+        load_brief_data,
+    )
+
+    entries = json.loads(sc_path.read_text(encoding="utf-8")).get("entries") or []
+    briefs_dir = root / "data" / "briefs"
+    briefs_dir.mkdir(parents=True, exist_ok=True)
+
+    written = 0
+    for entry in entries:
+        ticker = str(entry.get("ticker") or "").upper()
+        period = str(entry.get("fiscal_period") or "")
+        if not ticker or not period:
+            continue
+        try:
+            brief = load_brief_data(ticker, period)
+            if brief is None:
+                continue
+            md = generate_brief_markdown(brief)
+            safe_period = period.replace("-", "")
+            out = briefs_dir / f"{ticker}_{safe_period}_brief.md"
+            out.write_text(md, encoding="utf-8")
+            written += 1
+        except Exception as exc:
+            LOG.debug("brief write skipped %s %s: %s", ticker, period, exc)
+
+    LOG.info("scorecard: wrote %d briefs to %s", written, briefs_dir)
+    return written
 
 
 def _rebuild_canvas(root: Path) -> None:

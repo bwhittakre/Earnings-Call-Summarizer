@@ -453,16 +453,39 @@ function render() {
   let clockHtml = "<h2>Due and slipped</h2><p class='cap'>As of " + esc(latest || "—") +
     ". Open clocks on typed trees. Slipped here is a typed silent plus a due clock, not missed. " +
     "The neglect ledger above scores later calls that did not take up a prior claim. " +
-    "Open trees with no clock are someday wants, not due.</p>";
+    "Open trees with no clock are someday wants, not due. Grouped by company — expand to see details.</p>";
   const clockRows = [...board.slipped, ...board.due];
   if (clockRows.length) {
-    clockHtml += table(["bucket", "company", "claim", "kind", "clock"],
-      clockRows.map(r => [esc(r.slipped ? "slipped" : "due"), esc(labelOf(r.ticker)), esc(r.title), esc(r.kind), esc(r.clock || "—")]));
+    // Group by ticker
+    const clockByTicker = {};
+    for (const r of clockRows) {
+      const t = r.ticker || "";
+      if (!clockByTicker[t]) clockByTicker[t] = [];
+      clockByTicker[t].push(r);
+    }
+    for (const [ticker, rows] of Object.entries(clockByTicker).sort((a, b) => a[0].localeCompare(b[0]))) {
+      clockHtml += "<details style='margin-bottom:4px'><summary style='cursor:pointer;font-weight:600;padding:3px 0'>" +
+        esc(labelOf(ticker)) + " — " + esc(String(rows.length)) + " clock" + (rows.length === 1 ? "" : "s") + "</summary>";
+      clockHtml += table(["bucket", "claim", "kind", "clock"],
+        rows.map(r => [esc(r.slipped ? "slipped" : "due"), esc(r.title), esc(r.kind), esc(r.clock || "—")]));
+      clockHtml += "</details>";
+    }
   }
   if (board.open_no_clock.length) {
-    clockHtml += "<p class='cap'>" + board.open_no_clock.length + " open trees have no clock (soft someday wants).</p>";
-    clockHtml += table(["claim", "kind", "state"],
-      board.open_no_clock.map(r => [esc(r.title), esc(r.kind), esc(r.state)]));
+    clockHtml += "<p class='cap'>" + board.open_no_clock.length + " open claims with no clock (soft someday wants) — grouped by company.</p>";
+    const openByTicker = {};
+    for (const r of board.open_no_clock) {
+      const t = r.ticker || "";
+      if (!openByTicker[t]) openByTicker[t] = [];
+      openByTicker[t].push(r);
+    }
+    for (const [ticker, rows] of Object.entries(openByTicker).sort((a, b) => a[0].localeCompare(b[0]))) {
+      clockHtml += "<details style='margin-bottom:4px'><summary style='cursor:pointer;font-weight:600;padding:3px 0'>" +
+        esc(labelOf(ticker)) + " — " + esc(String(rows.length)) + " open</summary>";
+      clockHtml += table(["claim", "kind", "state"],
+        rows.map(r => [esc(r.title), esc(r.kind), esc(r.state)]));
+      clockHtml += "</details>";
+    }
   }
   document.getElementById("clocks").innerHTML = clockHtml;
 
@@ -629,46 +652,84 @@ function renderUncovered(book) {
     table(["company", "fiscal_period", "class", "dimension", "excerpt"],
       missed.map(r => [esc(labelOf(r.ticker)), esc(r.fiscal_period), esc(r.class), esc(r.dimension), esc(r.excerpt)]));
 }
+function buildTreeDetailsHtml(tree) {
+  const scoring = tree.current_kind || tree.kind || "";
+  const outcome = scoring === "promise" ? tree.delivery : tree.goal_outcome;
+  const slippedBadge = tree.slipped ? " <span style='color:var(--warn);font-weight:700'>[SLIPPED]</span>" : "";
+  const title = esc(labelOf(tree.ticker) + " " + (tree.title || "") + " · " + treeKindLabel(tree) + " · " +
+    (tree.state || "") + " / " + (outcome || "")) + slippedBadge;
+  // Always collapsed — slipped trees get a visual badge instead of auto-open
+  let html = '<details class="tree"><summary>' + title + "</summary>";
+  html += '<p class="cite">' + esc(tree.tree_id) + " · " + esc(tree.beat_id) + " · " +
+    esc(bucketLabel(treeBucket(tree))) + " · clock " + esc(tree.clock || "—") + " · " +
+    (tree.open ? "open" : "closed") + "</p>";
+  if (tree.parent_tree_id) html += '<p class="cite">Evolved from ' + esc(tree.parent_tree_id) + ". Parent seed cite is kept.</p>";
+  if (tree.goal_outcome === "became-promise") html += '<p class="cite">Became a promise. Same tree. Current label is promise (was goal) until the promise closes.</p>';
+  for (const row of treeNodeRows(tree)) {
+    let lab = (row.fiscal_period || "") + " · " + nodeEdgeLabel(row);
+    if (row.slipped) lab += " · slipped";
+    html += "<p><strong>" + esc(lab) + "</strong></p>";
+    if (row.citation) html += '<p class="cite">' + esc(row.citation) + "</p>";
+    if (row.excerpt) html += "<p>" + esc(row.excerpt) + "</p>";
+    else if (row.edge === "silent") html += '<p class="silent">Silent quarter. No cite on this object.</p>';
+    else if (row.edge === "expired") html += '<p class="silent">Expired. Completeness is unfeasible. Not a miss and not a withdrawal.</p>';
+  }
+  if (tree.coverage_summary) html += "<p><strong>Coverage.</strong> " + esc(tree.coverage_summary) + "</p>";
+  html += "</details>";
+  return html;
+}
+
 function renderTrees(trees) {
   const host = document.getElementById("trees");
   const bucket = document.getElementById("list-bucket")?.value || ALL;
-  host.innerHTML = "<h2>Trees</h2><p class='cap'>Bucket is the claim theme. Seed dimension is the novelty label of that sentence.</p>" +
+  const groupBy = document.getElementById("list-group")?.value || "bucket";
+  const groupSel = select("list-group", ["bucket", "company", "period"], groupBy, "Group by");
+  host.innerHTML = "<h2>Trees</h2><p class='cap'>Bucket is the claim theme. Seed dimension is the novelty label of that sentence. All trees start collapsed; SLIPPED trees are flagged in the title.</p>" +
     "<p class='cap'>" + esc(EXPIRE_CAPTION) + "</p>" +
-    '<div class="controls">' + select("list-bucket", DESK.bucket_filter_choices, bucket, "Bucket") + "</div><div id='tree-list'></div>";
+    '<div class="controls">' + select("list-bucket", DESK.bucket_filter_choices, bucket, "Bucket") +
+    "&nbsp;&nbsp;" + groupSel + "</div><div id='tree-list'></div>";
   const listed = filterTreesToBucket(trees, bucket);
   const list = document.getElementById("tree-list");
   if (!listed.length) { list.innerHTML = '<p class="empty">No trees in this bucket.</p>'; }
   else {
     let html = "";
-    for (const [key, group] of groupTreesByBucket(listed)) {
-      html += "<h3>" + esc(bucketLabel(key)) + "</h3>";
-      for (const tree of group) {
-        const scoring = tree.current_kind || tree.kind || "";
-        const outcome = scoring === "promise" ? tree.delivery : tree.goal_outcome;
-        const title = labelOf(tree.ticker) + " " + (tree.title || "") + " · " + treeKindLabel(tree) + " · " +
-          (tree.state || "") + " / " + (outcome || "");
-        html += '<details class="tree"' + (tree.slipped ? " open" : "") + "><summary>" + esc(title) + "</summary>";
-        html += '<p class="cite">' + esc(tree.tree_id) + " · " + esc(tree.beat_id) + " · " +
-          esc(bucketLabel(treeBucket(tree))) + " · clock " + esc(tree.clock || "—") + " · " +
-          (tree.open ? "open" : "closed") + "</p>";
-        if (tree.parent_tree_id) html += '<p class="cite">Evolved from ' + esc(tree.parent_tree_id) + ". Parent seed cite is kept.</p>";
-        if (tree.goal_outcome === "became-promise") html += '<p class="cite">Became a promise. Same tree. Current label is promise (was goal) until the promise closes.</p>';
-        for (const row of treeNodeRows(tree)) {
-          let lab = (row.fiscal_period || "") + " · " + nodeEdgeLabel(row);
-          if (row.slipped) lab += " · slipped";
-          html += "<p><strong>" + esc(lab) + "</strong></p>";
-          if (row.citation) html += '<p class="cite">' + esc(row.citation) + "</p>";
-          if (row.excerpt) html += "<p>" + esc(row.excerpt) + "</p>";
-          else if (row.edge === "silent") html += '<p class="silent">Silent quarter. No cite on this object.</p>';
-          else if (row.edge === "expired") html += '<p class="silent">Expired. Completeness is unfeasible. Not a miss and not a withdrawal.</p>';
-        }
-        if (tree.coverage_summary) html += "<p><strong>Coverage.</strong> " + esc(tree.coverage_summary) + "</p>";
-        html += "</details>";
+    if (groupBy === "company") {
+      // Group by ticker
+      const byTicker = {};
+      for (const tree of listed) {
+        const t = tree.ticker || "";
+        if (!byTicker[t]) byTicker[t] = [];
+        byTicker[t].push(tree);
+      }
+      for (const [ticker, group] of Object.entries(byTicker).sort((a, b) => a[0].localeCompare(b[0]))) {
+        html += "<h3>" + esc(labelOf(ticker)) + " (" + esc(String(group.length)) + ")</h3>";
+        for (const tree of group) html += buildTreeDetailsHtml(tree);
+      }
+    } else if (groupBy === "period") {
+      // Group by seed fiscal period, newest first
+      const byPeriod = {};
+      for (const tree of listed) {
+        const p = (tree.seed || {}).fiscal_period || "";
+        if (!byPeriod[p]) byPeriod[p] = [];
+        byPeriod[p].push(tree);
+      }
+      const sortedPeriods = Object.keys(byPeriod).sort((a, b) => b.localeCompare(a));
+      for (const period of sortedPeriods) {
+        html += "<h3>Seeded " + esc(period || "—") + " (" + esc(String(byPeriod[period].length)) + ")</h3>";
+        for (const tree of byPeriod[period]) html += buildTreeDetailsHtml(tree);
+      }
+    } else {
+      // Default: group by bucket
+      for (const [key, group] of groupTreesByBucket(listed)) {
+        html += "<h3>" + esc(bucketLabel(key)) + "</h3>";
+        for (const tree of group) html += buildTreeDetailsHtml(tree);
       }
     }
     list.innerHTML = html;
   }
   document.getElementById("list-bucket").onchange = () => renderTrees(trees);
+  const groupEl = document.getElementById("list-group");
+  if (groupEl) groupEl.onchange = () => renderTrees(trees);
 }
 function renderManagementRegimes(book) {
   const host = document.getElementById("management-regimes");
@@ -709,22 +770,23 @@ function renderManagementRegimes(book) {
     );
   }
 
-  // Transfer ledger
-  if (transferLedger.length) {
+  // Transfer ledger — exclude prior_closed (already closed before the transition)
+  const filteredLedger = transferLedger.filter(e => e.transfer_kind !== "prior_closed");
+  if (filteredLedger.length) {
     const kindLabels = {
-      "prior_closed": "Closed before transition",
       "inherited_adopted": "Adopted by new regime",
       "inherited_closed_by_successor": "Closed by successor",
       "inherited_overdue": "Inherited — overdue",
       "inherited_ignored": "Inherited — ignored",
     };
     html += "<h3>Cite-transfer ledger</h3>";
-    html += "<p class='cap'>Trees that were seeded under one CEO and outlived a regime transition. ";
+    html += "<p class='cap'>Trees that were seeded under one CEO and were open at a regime transition. ";
     html += "<em>Inherited — overdue</em>: open at transition with a past-due clock. ";
     html += "<em>Inherited — ignored</em>: open, clock not yet due. ";
     html += "<em>Adopted</em>: new regime posted a non-silent cite. ";
-    html += "<em>Closed by successor</em>: new regime provided the terminal node.</p>";
-    const ledgerRows = transferLedger.map(e => [
+    html += "<em>Closed by successor</em>: new regime provided the terminal node. ";
+    html += "Trees closed before the transition are excluded.</p>";
+    const ledgerRows = filteredLedger.map(e => [
       esc(e.ticker || ""),
       esc(e.title || ""),
       esc(kindLabels[e.transfer_kind] || e.transfer_kind || ""),
@@ -739,7 +801,7 @@ function renderManagementRegimes(book) {
       ledgerRows
     );
   } else {
-    html += "<p class='cap'>No regime-crossing trees in this book.</p>";
+    html += "<p class='cap'>No inherited (open-at-transition) trees in this book.</p>";
   }
 
   host.innerHTML = html;
@@ -793,7 +855,9 @@ function renderSeedCandidates() {
     const cands = byTicker[ticker] || [];
     if (!cands.length) continue;
     const isPriority = priority.has(ticker);
-    html += "<h3>" + esc(labelOf(ticker)) + (isPriority ? " <span style='color:#c4b48a;font-size:11px'>[regime-transition]</span>" : "") + "</h3>";
+    const summaryLabel = esc(labelOf(ticker)) + (isPriority ? " <span style='color:#c4b48a;font-size:11px'>[regime-transition]</span>" : "") +
+      " — " + esc(String(cands.length)) + " candidate" + (cands.length === 1 ? "" : "s");
+    html += "<details style='margin-bottom:6px'><summary style='cursor:pointer;font-weight:600;padding:4px 0'>" + summaryLabel + "</summary>";
     html += "<table><thead><tr>";
     html += "<th>Conf</th><th>Cite</th><th>Kind</th><th>Bucket</th><th>Title</th><th>Fiscal</th><th>Clock</th><th>Excerpt</th><th>Rationale</th><th>Seed</th>";
     html += "</tr></thead><tbody>";
@@ -813,7 +877,7 @@ function renderSeedCandidates() {
       html += "<td><details><summary style='cursor:pointer;color:var(--accent)'>dict</summary><pre style='font-size:11px;margin:4px 0;white-space:pre-wrap;max-width:420px'>" + py + "</pre></details></td>";
       html += "</tr>";
     }
-    html += "</tbody></table>";
+    html += "</tbody></table></details>";
   }
   host.innerHTML = html;
 }
@@ -871,34 +935,36 @@ function renderNeedsReview() {
   if (!data || !Array.isArray(data.needs_review)) { host.innerHTML = ""; return; }
   const items = data.needs_review;
   if (!items.length) {
-    host.innerHTML = "<div class='review-banner'><h2>Needs Review — 0</h2><p class='cap'>Every open tree either has retrieved evidence or a verdict. Nothing is parked.</p></div>";
+    host.innerHTML = "<details open><summary style='cursor:pointer;font-weight:600'><span class='review-badge'>Needs Review — 0</span></summary><p class='cap'>Every open tree either has retrieved evidence or a verdict. Nothing is parked.</p></details>";
     return;
   }
   const reasons = data.needs_review_reasons || {};
-  let html = "<div class='review-banner'>";
-  html += "<h2>Needs Review — " + esc(String(items.length)) + " open tree" + (items.length === 1 ? "" : "s") + " could not be resolved automatically</h2>";
-  html += "<p class='cap'>These are parked, not closed. Each row says why and what would unblock it. " +
+  let innerHtml = "<div class='review-banner'>";
+  innerHtml += "<p class='cap'>These are parked, not closed. Each row says why and what would unblock it. " +
     Object.entries(reasons).map(([k, v]) => "<span class='reason'>" + esc(k) + "</span>×" + esc(String(v))).join(" · ") + "</p>";
-  html += "<table><thead><tr><th>Reason</th><th>Company</th><th>Tree</th><th>Kind</th><th>Seed</th><th>Clock</th><th>Window present</th><th>Anchors tried</th><th>Detail</th><th>Unblock</th></tr></thead><tbody>";
+  innerHtml += "<table><thead><tr><th>Reason</th><th>Company</th><th>Tree</th><th>Kind</th><th>Seed</th><th>Clock</th><th>Window present</th><th>Anchors tried</th><th>Detail</th><th>Unblock</th></tr></thead><tbody>";
   for (const it of items) {
     const missing = it.transcripts_missing || [];
     const winN = (it.clock_window || []).length;
-    html += "<tr>";
-    html += "<td><span class='reason'>" + esc(it.reason || "") + "</span>" + (it.expired_eligible ? "<br><span class='cite'>expired-eligible</span>" : "") + "</td>";
-    html += "<td>" + esc(labelOf(it.ticker)) + "</td>";
-    html += "<td>" + esc(it.title || it.tree_id || "") + "<br><span class='cite'>" + esc(it.tree_id || "") + "</span></td>";
-    html += "<td>" + esc(it.kind || "") + "</td>";
-    html += "<td>" + esc(it.seed_fiscal || "") + "</td>";
-    html += "<td>" + esc(it.clock || "—") + "</td>";
-    html += "<td>" + (winN ? esc(String(it.transcripts_present || 0)) + "/" + esc(String(winN)) : "—") +
+    innerHtml += "<tr>";
+    innerHtml += "<td><span class='reason'>" + esc(it.reason || "") + "</span>" + (it.expired_eligible ? "<br><span class='cite'>expired-eligible</span>" : "") + "</td>";
+    innerHtml += "<td>" + esc(labelOf(it.ticker)) + "</td>";
+    innerHtml += "<td>" + esc(it.title || it.tree_id || "") + "<br><span class='cite'>" + esc(it.tree_id || "") + "</span></td>";
+    innerHtml += "<td>" + esc(it.kind || "") + "</td>";
+    innerHtml += "<td>" + esc(it.seed_fiscal || "") + "</td>";
+    innerHtml += "<td>" + esc(it.clock || "—") + "</td>";
+    innerHtml += "<td>" + (winN ? esc(String(it.transcripts_present || 0)) + "/" + esc(String(winN)) : "—") +
       (missing.length ? "<br><span class='silent'>" + esc(missing.join(", ")) + "</span>" : "") + "</td>";
-    html += "<td style='max-width:200px'>" + esc((it.anchors_tried || []).join(", ")) + "</td>";
-    html += "<td style='max-width:260px'>" + esc(it.detail || "") + "</td>";
-    html += "<td style='max-width:280px' class='cite'>" + esc(REASON_HELP[it.reason] || "") + "</td>";
-    html += "</tr>";
+    innerHtml += "<td style='max-width:200px'>" + esc((it.anchors_tried || []).join(", ")) + "</td>";
+    innerHtml += "<td style='max-width:260px'>" + esc(it.detail || "") + "</td>";
+    innerHtml += "<td style='max-width:280px' class='cite'>" + esc(REASON_HELP[it.reason] || "") + "</td>";
+    innerHtml += "</tr>";
   }
-  html += "</tbody></table></div>";
-  host.innerHTML = html;
+  innerHtml += "</tbody></table></div>";
+  // Start open — needs action
+  host.innerHTML = "<details open><summary style='cursor:pointer;font-weight:600;padding:4px 0'>" +
+    "<span class='review-badge'>Needs Review — " + esc(String(items.length)) + " open tree" + (items.length === 1 ? "" : "s") + " could not be resolved automatically</span>" +
+    "</summary>" + innerHtml + "</details>";
 }
 
 function renderTerminalCandidates() {
@@ -907,17 +973,20 @@ function renderTerminalCandidates() {
   if (!data) { host.innerHTML = ""; return; }
   const candidates = data.candidates || [];
   const retrievalFirst = !!data.evidence_source;
-  let html = "<h2>Terminal Candidates</h2>";
-  html += "<p class='cap'>" + (retrievalFirst ? "Retrieval-first terminal verdicts (raw-transcript evidence, Sonnet judgment) for " : "LLM-proposed terminal verdicts for ") +
+  const tcCount = candidates.length;
+  const partial = data.complete === false ? " · <span style='color:var(--warn)'>PARTIAL RUN</span>" : "";
+  let innerHtml = "<p class='cap'>" + (retrievalFirst ? "Retrieval-first terminal verdicts (raw-transcript evidence, Sonnet judgment) for " : "LLM-proposed terminal verdicts for ") +
     esc(String(data.n_open_trees_scored || 0)) +
     " open trees. Do not auto-insert. Human review required before typing nodes into catalog files.</p>";
-  if (retrievalFirst) html += budgetHeader(data);
-  html += "<p class='cap'><strong>" + esc(String(data.n_actionable || 0)) + "</strong> actionable (not none, ≥ medium confidence) · " +
-    esc(String(data.n_excerpt_unverified || 0)) + " scored verdicts quote text not found in " + (retrievalFirst ? "the retrieved evidence" : "novelty_view") + " (✗) · " +
+  if (retrievalFirst) innerHtml += budgetHeader(data);
+  innerHtml += "<p class='cap'><strong>" + esc(String(data.n_actionable || 0)) + "</strong> actionable (not none, &ge; medium confidence) · " +
+    esc(String(data.n_excerpt_unverified || 0)) + " scored verdicts quote text not found in " + (retrievalFirst ? "the retrieved evidence" : "novelty_view") + " (&#10007;) · " +
     "Generated " + esc((data.generated_at || "").slice(0, 10)) +
     (data.complete === false ? " · <span style='color:var(--warn)'>PARTIAL RUN</span>" : "") + "</p>";
+  let html;
   if (!candidates.length) {
-    html += "<p class='empty'>No candidate file found. Run scripts/_desk_terminal_candidates.py to generate.</p>";
+    innerHtml += "<p class='empty'>No candidate file found. Run scripts/_desk_terminal_candidates.py to generate.</p>";
+    html = "<details><summary style='cursor:pointer;font-weight:600;padding:4px 0'>Terminal Candidates (0)</summary>" + innerHtml + "</details>";
     host.innerHTML = html;
     return;
   }
@@ -929,45 +998,47 @@ function renderTerminalCandidates() {
     byBook[bk].push(c);
   }
   for (const [book, rows] of Object.entries(byBook)) {
-    html += "<h3>" + esc(book) + "</h3>";
-    html += "<table><thead><tr>";
-    html += "<th>Edge</th><th>Conf</th><th>Cite</th><th>Company</th><th>Title</th><th>Kind</th><th>Seed fiscal</th><th>Proposed fiscal</th>";
-    if (retrievalFirst) html += "<th>Tier</th><th>Paragraphs</th><th>Cost</th>";
-    else html += "<th>Evidence q</th>";
-    html += "<th>Reasoning</th><th>Node</th>";
-    html += "</tr></thead><tbody>";
+    innerHtml += "<h3>" + esc(book) + "</h3>";
+    innerHtml += "<table><thead><tr>";
+    innerHtml += "<th>Edge</th><th>Conf</th><th>Cite</th><th>Company</th><th>Title</th><th>Kind</th><th>Seed fiscal</th><th>Proposed fiscal</th>";
+    if (retrievalFirst) innerHtml += "<th>Tier</th><th>Paragraphs</th><th>Cost</th>";
+    else innerHtml += "<th>Evidence q</th>";
+    innerHtml += "<th>Reasoning</th><th>Node</th>";
+    innerHtml += "</tr></thead><tbody>";
     for (const cand of rows) {
       const r = cand.retrieval || {};
-      html += "<tr>";
-      html += "<td>" + edgeBadge(cand.proposed_edge) + (cand.source === "retrieval" ? "<br><span class='cite'>no LLM</span>" : "") + "</td>";
-      html += "<td>" + confidenceBadge(cand.confidence) + "</td>";
-      html += "<td>" + citeBadge(cand.excerpt_verified) + "</td>";
-      html += "<td>" + esc(labelOf(cand.ticker)) + "</td>";
-      html += "<td>" + esc(cand.title || "") + (cand.guard ? "<br><span class='silent'>" + esc(cand.guard) + "</span>" : "") + "</td>";
-      html += "<td>" + esc(cand.kind || "") + "</td>";
-      html += "<td>" + esc(cand.seed_fiscal || "") + "</td>";
-      html += "<td>" + esc(cand.proposed_fiscal || "—") + "</td>";
+      innerHtml += "<tr>";
+      innerHtml += "<td>" + edgeBadge(cand.proposed_edge) + (cand.source === "retrieval" ? "<br><span class='cite'>no LLM</span>" : "") + "</td>";
+      innerHtml += "<td>" + confidenceBadge(cand.confidence) + "</td>";
+      innerHtml += "<td>" + citeBadge(cand.excerpt_verified) + "</td>";
+      innerHtml += "<td>" + esc(labelOf(cand.ticker)) + "</td>";
+      innerHtml += "<td>" + esc(cand.title || "") + (cand.guard ? "<br><span class='silent'>" + esc(cand.guard) + "</span>" : "") + "</td>";
+      innerHtml += "<td>" + esc(cand.kind || "") + "</td>";
+      innerHtml += "<td>" + esc(cand.seed_fiscal || "") + "</td>";
+      innerHtml += "<td>" + esc(cand.proposed_fiscal || "—") + "</td>";
       if (retrievalFirst) {
         const missing = r.window_missing || [];
-        html += "<td>" + tierBadge(r.tier) + "</td>";
-        html += "<td title='" + esc("searched " + (r.quarters_searched || []).length + " quarters; " + (r.n_hits_total || 0) + " sentence hits before cap") + "'>" +
+        innerHtml += "<td>" + tierBadge(r.tier) + "</td>";
+        innerHtml += "<td title='" + esc("searched " + (r.quarters_searched || []).length + " quarters; " + (r.n_hits_total || 0) + " sentence hits before cap") + "'>" +
           esc(String(cand.n_evidence_excerpts || 0)) + "<br><span class='cite'>" + esc((r.quarters_searched || []).length + " q") +
           (missing.length ? " · <span class='silent'>" + esc(missing.length + " missing") + "</span>" : "") + "</span></td>";
         const tri = r.triage || {};
-        html += "<td>" + usd(r.usd !== undefined && r.usd !== null ? r.usd : r.est_usd) +
+        innerHtml += "<td>" + usd(r.usd !== undefined && r.usd !== null ? r.usd : r.est_usd) +
           (tri.usd || tri.est_usd ? "<br><span class='cite'>+triage " + usd(tri.usd || tri.est_usd) + "</span>" : "") +
           (cand.plan ? "<br><span class='cite'>est.</span>" : "") + "</td>";
       } else {
-        html += "<td>" + esc(String(cand.n_evidence_excerpts || 0)) + "</td>";
+        innerHtml += "<td>" + esc(String(cand.n_evidence_excerpts || 0)) + "</td>";
       }
-      html += "<td style='max-width:260px'>" + esc((cand.reasoning || "").slice(0, 220)) + "</td>";
+      innerHtml += "<td style='max-width:260px'>" + esc((cand.reasoning || "").slice(0, 220)) + "</td>";
       const py = esc(cand.proposed_node_py || "");
-      html += "<td><details><summary style='cursor:pointer;color:var(--accent)'>node</summary><pre style='font-size:11px;margin:4px 0;white-space:pre-wrap;max-width:420px'>" + py + "</pre></details></td>";
-      html += "</tr>";
+      innerHtml += "<td><details><summary style='cursor:pointer;color:var(--accent)'>node</summary><pre style='font-size:11px;margin:4px 0;white-space:pre-wrap;max-width:420px'>" + py + "</pre></details></td>";
+      innerHtml += "</tr>";
     }
-    html += "</tbody></table>";
+    innerHtml += "</tbody></table>";
   }
-  host.innerHTML = html;
+  // Collapsed by default — requires deliberate review before typing nodes
+  host.innerHTML = "<details><summary style='cursor:pointer;font-weight:600;padding:4px 0'>Terminal Candidates (" +
+    esc(String(tcCount)) + ")" + partial + " — expand to review</summary>" + innerHtml + "</details>";
 }
 
 function boot() {

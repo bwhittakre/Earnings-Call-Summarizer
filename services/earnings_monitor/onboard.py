@@ -252,6 +252,7 @@ def write_company_overlay(
     estpermid: int | None,
     isin: str | None,
     barra_id: str | None,
+    company_id: int | None = None,
 ) -> Path:
     path = _overlay_path(repo_root, ticker)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -261,12 +262,42 @@ def write_company_overlay(
         "estpermid": estpermid,
         "isin": isin,
         "barra_id": barra_id,
+        "company_id": company_id,
         "prior_quarters": list(prior_quarters),
         "output_quarters": list(output_quarters),
         "updated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
     }
     path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return path
+
+
+def _try_resolve_quartr_company_id(repo_root: Path, ticker: str) -> int | None:
+    """Best-effort Quartr company_id lookup via MCP OAuth. Silent on any failure."""
+    try:
+        from .quartr_mcp import QuartrMcpGateway, QuartrMcpClient
+        from .quartr_oauth import default_token_path, get_access_token
+
+        token = get_access_token(default_token_path(repo_root))
+        if not token:
+            return None
+        client = QuartrMcpClient(token)
+        gw = QuartrMcpGateway(client)
+        return gw.company_id(ticker)
+    except Exception:  # noqa: BLE001 — best-effort, never block onboard
+        return None
+
+
+def _read_overlay_company_id(repo_root: Path, ticker: str) -> int | None:
+    """Return the company_id already persisted in the overlay file, if any."""
+    path = _overlay_path(repo_root, ticker)
+    if not path.is_file():
+        return None
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        raw = data.get("company_id")
+        return int(raw) if raw is not None else None
+    except Exception:  # noqa: BLE001
+        return None
 
 
 def register_overlay_profile(repo_root: Path, ticker: str) -> Any:
@@ -860,6 +891,7 @@ def run_onboard(
     isin: str | None = None,
     estpermid: int | None = None,
     barra_id: str | None = None,
+    quartr_company_id: int | None = None,
     refresh_ids: bool = False,
     connect: Callable[[], Any] | None = None,
     configured_tickers: Sequence[str] = (),
@@ -1179,6 +1211,28 @@ def run_onboard(
         if not dry_run and not skip_ids and not resolved_est:
             raise OnboardError(f"estpermid missing for {ticker_key}")
 
+        # ---- Quartr company_id resolution ----
+        # Priority: caller-supplied > existing overlay > MCP auto-resolve (best-effort)
+        resolved_cid: int | None = quartr_company_id
+        if resolved_cid is None:
+            resolved_cid = _read_overlay_company_id(repo_root, ticker_key)
+        if resolved_cid is None and not dry_run:
+            resolved_cid = _try_resolve_quartr_company_id(repo_root, ticker_key)
+            if resolved_cid is not None:
+                LOG.info("Quartr company_id resolved for %s: %d", ticker_key, resolved_cid)
+        result.steps.append(
+            {
+                "step": "resolve_quartr_company_id",
+                "company_id": resolved_cid,
+                "source": (
+                    "arg" if quartr_company_id is not None
+                    else "overlay" if (_read_overlay_company_id(repo_root, ticker_key) is not None and resolved_cid is not None and quartr_company_id is None)
+                    else "mcp" if resolved_cid is not None
+                    else "unresolved"
+                ),
+            }
+        )
+
         overlay = write_company_overlay(
             repo_root,
             ticker=ticker_key,
@@ -1188,6 +1242,7 @@ def run_onboard(
             estpermid=None if dry_run and not resolved_est else resolved_est,
             isin=resolved_isin,
             barra_id=resolved_barra,
+            company_id=resolved_cid,
         )
         if not dry_run:
             register_overlay_profile(repo_root, ticker_key)

@@ -97,3 +97,83 @@ def run_autopilot_for_ticker(
     except Exception as exc:
         LOG.exception("desk autopilot failed for %s %s", want, fiscal_period)
         return {"status": "error", "reason": str(exc), "ticker": want}
+
+
+def run_history_onboard_for_ticker(
+    *,
+    repo_root: Path | str,
+    ticker: str,
+    budget_usd: float = 5.0,
+    api_key: str | None = None,
+) -> dict:
+    """Run full-history claims desk onboard for a newly introduced ticker.
+
+    Called automatically by the Roz onboard hook after the SN pipeline
+    completes.  Iterates all historical cue rows (FY2016-Q1 → present),
+    proposes seeds via Haiku, scores open trees via Sonnet, and writes
+    everything to the overlay catalog.
+
+    Never raises — failures are caught, logged, and returned as
+    ``{"status": "error"}``.
+    """
+    want = str(ticker).strip().upper()
+
+    if os.getenv("DESK_AUTOPILOT", "1") == "0":
+        return {"status": "skipped", "reason": "kill_switch", "ticker": want}
+
+    root = Path(repo_root)
+    if str(root) not in sys.path:
+        sys.path.insert(0, str(root))
+
+    try:
+        from scripts._desk_catalog_overlay import load_overlay  # type: ignore[import]
+        from scripts._desk_history_onboard import run_history_onboard  # type: ignore[import]
+        from scripts._desk_retrieval import GOLD_TICKERS  # type: ignore[import]
+        from scripts._desk_trees_v2_catalogs import OPS_TREES  # type: ignore[import]
+        from scripts._desk_trees_v2_hc_catalogs import HC_TREES  # type: ignore[import]
+        from src.llm.anthropic_client import AnthropicClient  # type: ignore[import]
+        from scripts._desk_history_onboard import SEED_MODEL, SCORE_MODEL  # type: ignore[import]
+    except ImportError as exc:
+        LOG.warning("history onboard import failed for %s: %s", want, exc)
+        return {"status": "error", "reason": "import_error", "detail": str(exc)}
+
+    if want in GOLD_TICKERS:
+        return {"status": "skipped", "reason": "gold_ticker", "ticker": want}
+
+    effective_api_key = api_key or os.getenv("ANTHROPIC_API_KEY")
+    if not effective_api_key:
+        LOG.warning("history onboard: no ANTHROPIC_API_KEY for %s — skipping LLM", want)
+        return {"status": "skipped", "reason": "no_api_key", "ticker": want}
+
+    overlays = {
+        "ops": load_overlay("ops"),
+        "hc": load_overlay("hc"),
+    }
+    hand_typed_by_book = {
+        "ops": list(OPS_TREES),
+        "hc": list(HC_TREES),
+    }
+
+    import uuid
+    run_id = str(uuid.uuid4())
+
+    try:
+        seed_client = AnthropicClient(api_key=effective_api_key, model=SEED_MODEL, max_retries=2)
+        score_client = AnthropicClient(api_key=effective_api_key, model=SCORE_MODEL, max_retries=1)
+
+        stats = run_history_onboard(
+            want,
+            seed_client=seed_client,
+            score_client=score_client,
+            overlays=overlays,
+            hand_typed_by_book=hand_typed_by_book,
+            budget_usd=budget_usd,
+            dry_run=False,
+            resume=True,  # always resume so a restart doesn't re-run completed stages
+            run_id=run_id,
+        )
+        stats["status"] = "ok"
+        return stats
+    except Exception as exc:
+        LOG.exception("history onboard failed for %s", want)
+        return {"status": "error", "reason": str(exc), "ticker": want}
