@@ -2,7 +2,7 @@
 
 **Quadrant:** Insufficient data  
 **Delivery rate:** —  
-**Engagement score:** +0.25  
+**Transparency score:** 15%  
 **Open goals at call:** 1
 
 ---
@@ -11,7 +11,7 @@
 - **Mark Hurd / Safra Catz** (CEO), since FY2017-Q2
 - Regime deliver rate: **25%** on 5 promises
 
-## This Call — Engagement
+## This Call — Transparency
 
 | Metric | Count |
 |---|---|

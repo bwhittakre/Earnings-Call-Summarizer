@@ -1,9 +1,9 @@
 # Post-Call Brief: CTSH — FY2018-Q3
 
-**Quadrant:** Credible & Committed  
+**Quadrant:** Quietly Delivering  
 **Delivery rate:** 100%  
-**Engagement score:** +1.00  
-**Open goals at call:** 0
+**Transparency score:** 15%  
+**Open goals at call:** 1
 
 ---
 
@@ -11,20 +11,21 @@
 - **Francisco D'Souza** (CEO), since FY2016-Q4
 - Regime deliver rate: **100%** on 4 promises
 
-## This Call — Engagement
+## This Call — Transparency
 
 | Metric | Count |
 |---|---|
 | New goals | 1 |
 | Restated | 0 |
-| Delivered | 2 |
+| Delivered | 1 |
 | Failed | 0 |
 | Deferred | 0 |
 | Dropped | 0 |
-| Silent (not mentioned) | 0 |
+| Silent (not mentioned) | 1 |
 
 ## Resolved This Period
 - No follow-up cites recorded for this specific period.
 
 ## Watch List
-- Watch list clear.
+
+**Stale goals (no cite > 4 quarters):** 1

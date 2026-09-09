@@ -1,8 +1,8 @@
 # Post-Call Brief: DHR — FY2021-Q2
 
-**Quadrant:** Insufficient data  
-**Delivery rate:** —  
-**Engagement score:** +0.10  
+**Quadrant:** Retreating  
+**Delivery rate:** 0%  
+**Transparency score:** 12%  
 **Open goals at call:** 3
 
 ---
@@ -12,7 +12,7 @@
 - Regime deliver rate: **25%** on 5 promises
 - Prior regime (Thomas Joyce): 0% on 1 promises
 
-## This Call — Engagement
+## This Call — Transparency
 
 | Metric | Count |
 |---|---|

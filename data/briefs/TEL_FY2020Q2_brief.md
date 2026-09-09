@@ -1,8 +1,8 @@
 # Post-Call Brief: TEL — FY2020-Q2
 
-**Quadrant:** Quietly Delivering  
-**Delivery rate:** 100%  
-**Engagement score:** -0.12  
+**Quadrant:** Retreating  
+**Delivery rate:** 33%  
+**Transparency score:** 8%  
 **Open goals at call:** 3
 
 ---
@@ -12,7 +12,7 @@
 - Regime deliver rate: **67%** on 7 promises
 - Prior regime (Tom Lynch): — on 0 promises
 
-## This Call — Engagement
+## This Call — Transparency
 
 | Metric | Count |
 |---|---|
@@ -29,4 +29,4 @@
 
 ## Watch List
 
-**Stale goals (no cite > 4 quarters):** 2
+**Stale goals (no cite > 4 quarters):** 3

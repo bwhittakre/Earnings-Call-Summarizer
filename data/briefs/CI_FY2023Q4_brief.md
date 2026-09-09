@@ -1,8 +1,8 @@
 # Post-Call Brief: CI — FY2023-Q4
 
-**Quadrant:** Insufficient data  
-**Delivery rate:** —  
-**Engagement score:** -0.25  
+**Quadrant:** Retreating  
+**Delivery rate:** 0%  
+**Transparency score:** 5%  
 **Open goals at call:** 5
 
 ---
@@ -11,7 +11,7 @@
 - **David Cordani** (CEO), since FY2019-Q3
 - Regime deliver rate: **40%** on 9 promises
 
-## This Call — Engagement
+## This Call — Transparency
 
 | Metric | Count |
 |---|---|
@@ -28,4 +28,4 @@
 
 ## Watch List
 
-**Stale goals (no cite > 4 quarters):** 4
+**Stale goals (no cite > 4 quarters):** 5

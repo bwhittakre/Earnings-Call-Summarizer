@@ -2,7 +2,7 @@
 
 **Quadrant:** Insufficient data  
 **Delivery rate:** —  
-**Engagement score:** 0.00  
+**Transparency score:** 10%  
 **Open goals at call:** 2
 
 ---
@@ -11,7 +11,7 @@
 - **John Lechleiter** (CEO), since FY2016-Q2
 - Regime deliver rate: **50%** on 2 promises
 
-## This Call — Engagement
+## This Call — Transparency
 
 | Metric | Count |
 |---|---|

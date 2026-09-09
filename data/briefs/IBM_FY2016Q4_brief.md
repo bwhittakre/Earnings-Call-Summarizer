@@ -2,7 +2,7 @@
 
 **Quadrant:** Insufficient data  
 **Delivery rate:** —  
-**Engagement score:** 0.00  
+**Transparency score:** 10%  
 **Open goals at call:** 2
 
 ---
@@ -11,7 +11,7 @@
 - **Ginni Rometty** (CEO), since FY2016-Q3
 - Regime deliver rate: **25%** on 5 promises
 
-## This Call — Engagement
+## This Call — Transparency
 
 | Metric | Count |
 |---|---|

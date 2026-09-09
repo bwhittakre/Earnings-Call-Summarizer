@@ -1,8 +1,8 @@
 # Post-Call Brief: ADI — FY2020-Q3
 
-**Quadrant:** Insufficient data  
-**Delivery rate:** —  
-**Engagement score:** -0.29  
+**Quadrant:** Retreating  
+**Delivery rate:** 0%  
+**Transparency score:** 4%  
 **Open goals at call:** 6
 
 ---
@@ -11,7 +11,7 @@
 - **Vincent Roche** (CEO), since FY2016-Q4
 - Regime deliver rate: **67%** on 9 promises
 
-## This Call — Engagement
+## This Call — Transparency
 
 | Metric | Count |
 |---|---|

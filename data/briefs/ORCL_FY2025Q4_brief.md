@@ -1,9 +1,9 @@
 # Post-Call Brief: ORCL — FY2025-Q4
 
-**Quadrant:** Quietly Delivering  
-**Delivery rate:** 80%  
-**Engagement score:** -0.21  
-**Open goals at call:** 6
+**Quadrant:** Retreating  
+**Delivery rate:** 12%  
+**Transparency score:** 3%  
+**Open goals at call:** 9
 
 ---
 
@@ -12,17 +12,17 @@
 - Regime deliver rate: **67%** on 5 promises
 - Prior regime (Mark Hurd / Safra Catz): 25% on 5 promises
 
-## This Call — Engagement
+## This Call — Transparency
 
 | Metric | Count |
 |---|---|
 | New goals | 1 |
 | Restated | 0 |
-| Delivered | 4 |
-| Failed | 1 |
+| Delivered | 1 |
+| Failed | 0 |
 | Deferred | 0 |
 | Dropped | 0 |
-| Silent (not mentioned) | 5 |
+| Silent (not mentioned) | 9 |
 
 ## Resolved This Period
 
@@ -31,4 +31,4 @@
 
 ## Watch List
 
-**Stale goals (no cite > 4 quarters):** 5
+**Stale goals (no cite > 4 quarters):** 9

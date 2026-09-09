@@ -1,9 +1,9 @@
 # Post-Call Brief: LLY — FY2017-Q1
 
-**Quadrant:** Credible & Committed  
-**Delivery rate:** 100%  
-**Engagement score:** +0.25  
-**Open goals at call:** 2
+**Quadrant:** Insufficient data  
+**Delivery rate:** —  
+**Transparency score:** 12%  
+**Open goals at call:** 3
 
 ---
 
@@ -12,17 +12,17 @@
 - Regime deliver rate: **60%** on 8 promises
 - Prior regime (John Lechleiter): 50% on 2 promises
 
-## This Call — Engagement
+## This Call — Transparency
 
 | Metric | Count |
 |---|---|
 | New goals | 2 |
 | Restated | 0 |
-| Delivered | 1 |
+| Delivered | 0 |
 | Failed | 0 |
 | Deferred | 0 |
 | Dropped | 0 |
-| Silent (not mentioned) | 2 |
+| Silent (not mentioned) | 3 |
 
 ## Resolved This Period
 - No follow-up cites recorded for this specific period.

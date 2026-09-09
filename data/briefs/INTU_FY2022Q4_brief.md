@@ -1,8 +1,8 @@
 # Post-Call Brief: INTU — FY2022-Q4
 
-**Quadrant:** Insufficient data  
-**Delivery rate:** —  
-**Engagement score:** -0.12  
+**Quadrant:** Retreating  
+**Delivery rate:** 0%  
+**Transparency score:** 8%  
 **Open goals at call:** 3
 
 ---
@@ -12,7 +12,7 @@
 - Regime deliver rate: **80%** on 10 promises
 - Prior regime (Brad Smith): — on 1 promises
 
-## This Call — Engagement
+## This Call — Transparency
 
 | Metric | Count |
 |---|---|

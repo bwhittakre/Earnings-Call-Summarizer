@@ -1,9 +1,9 @@
 # Post-Call Brief: ACN — FY2024-Q2
 
-**Quadrant:** Quietly Delivering  
-**Delivery rate:** 100%  
-**Engagement score:** -0.25  
-**Open goals at call:** 5
+**Quadrant:** Retreating  
+**Delivery rate:** 0%  
+**Transparency score:** 4%  
+**Open goals at call:** 7
 
 ---
 
@@ -12,21 +12,21 @@
 - Regime deliver rate: **40%** on 7 promises
 - Prior regime (Pierre Nanterme): — on 1 promises
 
-## This Call — Engagement
+## This Call — Transparency
 
 | Metric | Count |
 |---|---|
 | New goals | 1 |
 | Restated | 0 |
-| Delivered | 2 |
+| Delivered | 0 |
 | Failed | 0 |
 | Deferred | 0 |
 | Dropped | 0 |
-| Silent (not mentioned) | 5 |
+| Silent (not mentioned) | 7 |
 
 ## Resolved This Period
 - No follow-up cites recorded for this specific period.
 
 ## Watch List
 
-**Stale goals (no cite > 4 quarters):** 5
+**Stale goals (no cite > 4 quarters):** 7

@@ -2,7 +2,7 @@
 
 **Quadrant:** Insufficient data  
 **Delivery rate:** —  
-**Engagement score:** +0.25  
+**Transparency score:** 15%  
 **Open goals at call:** 1
 
 ---
@@ -11,7 +11,7 @@
 - **David Cordani** (CEO), since FY2019-Q3
 - Regime deliver rate: **40%** on 9 promises
 
-## This Call — Engagement
+## This Call — Transparency
 
 | Metric | Count |
 |---|---|

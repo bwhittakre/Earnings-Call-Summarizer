@@ -2,7 +2,7 @@
 
 **Quadrant:** Credible & Committed  
 **Delivery rate:** 100%  
-**Engagement score:** +0.50  
+**Transparency score:** 85%  
 **Open goals at call:** 1
 
 ---
@@ -11,7 +11,7 @@
 - **Michael Mahoney** (CEO), since FY2018-Q4
 - Regime deliver rate: **44%** on 10 promises
 
-## This Call — Engagement
+## This Call — Transparency
 
 | Metric | Count |
 |---|---|

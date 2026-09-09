@@ -568,6 +568,16 @@ def main(argv: list[str] | None = None) -> int:
             print("\n  Books rebuilt.")
         except Exception as exc:
             print(f"\n  [WARN] Book rebuild failed: {exc}", file=sys.stderr)
+        try:
+            from services.earnings_monitor.scorecard import rebuild_scorecard
+
+            sc = rebuild_scorecard(repo_root=ROOT, rebuild_canvas=False)
+            print(
+                f"\n  Scorecard rebuilt: {sc.get('status')} "
+                f"({sc.get('n_entries')} entries, briefs={sc.get('briefs_written')})"
+            )
+        except Exception as exc:
+            print(f"\n  [WARN] Scorecard rebuild failed: {exc}", file=sys.stderr)
 
     # Summary
     total_seeds = sum(s.get("seeds_inserted_confirmed", 0) + s.get("seeds_inserted_provisional", 0)

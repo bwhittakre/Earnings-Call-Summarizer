@@ -1,8 +1,8 @@
 # Post-Call Brief: PFE — FY2022-Q2
 
-**Quadrant:** Credible & Committed  
-**Delivery rate:** 100%  
-**Engagement score:** 0.00  
+**Quadrant:** Quietly Delivering  
+**Delivery rate:** 50%  
+**Transparency score:** 10%  
 **Open goals at call:** 2
 
 ---
@@ -12,7 +12,7 @@
 - Regime deliver rate: **43%** on 12 promises
 - Prior regime (Ian Read): — on 0 promises
 
-## This Call — Engagement
+## This Call — Transparency
 
 | Metric | Count |
 |---|---|

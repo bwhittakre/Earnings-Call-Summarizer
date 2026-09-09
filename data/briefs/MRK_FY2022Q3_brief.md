@@ -1,8 +1,8 @@
 # Post-Call Brief: MRK — FY2022-Q3
 
-**Quadrant:** Credible & Committed  
-**Delivery rate:** 100%  
-**Engagement score:** 0.00  
+**Quadrant:** Quietly Delivering  
+**Delivery rate:** 50%  
+**Transparency score:** 10%  
 **Open goals at call:** 2
 
 ---
@@ -12,7 +12,7 @@
 - Regime deliver rate: **100%** on 8 promises
 - Prior regime (Kenneth Frazier): 50% on 2 promises
 
-## This Call — Engagement
+## This Call — Transparency
 
 | Metric | Count |
 |---|---|

@@ -2,7 +2,7 @@
 
 **Quadrant:** Insufficient data  
 **Delivery rate:** —  
-**Engagement score:** +0.25  
+**Transparency score:** 15%  
 **Open goals at call:** 1
 
 ---
@@ -11,7 +11,7 @@
 - **Tim Cook** (CEO), since FY2018-Q1
 - Regime deliver rate: **33%** on 14 promises
 
-## This Call — Engagement
+## This Call — Transparency
 
 | Metric | Count |
 |---|---|

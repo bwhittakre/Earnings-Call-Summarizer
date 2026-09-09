@@ -1,8 +1,8 @@
 # Post-Call Brief: SYK — FY2022-Q1
 
-**Quadrant:** Credible & Committed  
-**Delivery rate:** 100%  
-**Engagement score:** 0.00  
+**Quadrant:** Quietly Delivering  
+**Delivery rate:** 50%  
+**Transparency score:** 10%  
 **Open goals at call:** 2
 
 ---
@@ -11,7 +11,7 @@
 - **Kevin Lobo** (CEO), since FY2016-Q3
 - Regime deliver rate: **43%** on 9 promises
 
-## This Call — Engagement
+## This Call — Transparency
 
 | Metric | Count |
 |---|---|

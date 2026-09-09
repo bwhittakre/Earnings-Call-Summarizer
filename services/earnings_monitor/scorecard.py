@@ -1,6 +1,10 @@
-"""Rebuild the claims-desk call scorecard sidecar (and canvas) after a post_call.
+"""Rebuild the claims-desk call scorecard sidecar (and canvas).
 
-Called automatically by ``service.py`` after the desk autopilot completes.
+Called automatically after:
+  * live ``post_call`` in ``service.py``
+  * company onboard (``sync_book_after_onboard`` / skip-book-sync path)
+  * desk autopilot post-run (conference ingest, history onboard, manual runs)
+
 Never raises — failures are caught, logged, and returned as ``{"status": "error"}``.
 
 Also writes a markdown Post-Call Brief to ``data/briefs/{TICKER}_{PERIOD}.md``

@@ -1,9 +1,9 @@
 # Post-Call Brief: STRW — FY2026-Q2
 
-**Quadrant:** Quietly Delivering  
-**Delivery rate:** 100%  
-**Engagement score:** -0.12  
-**Open goals at call:** 3
+**Quadrant:** Insufficient data  
+**Delivery rate:** —  
+**Transparency score:** 6%  
+**Open goals at call:** 4
 
 ---
 
@@ -11,17 +11,17 @@
 - **Moishe Gubin** (CEO), since FY2025-Q3
 - Regime deliver rate: **100%** on 5 promises
 
-## This Call — Engagement
+## This Call — Transparency
 
 | Metric | Count |
 |---|---|
 | New goals | 1 |
 | Restated | 0 |
-| Delivered | 1 |
+| Delivered | 0 |
 | Failed | 0 |
 | Deferred | 0 |
 | Dropped | 0 |
-| Silent (not mentioned) | 3 |
+| Silent (not mentioned) | 4 |
 
 ## Resolved This Period
 - No follow-up cites recorded for this specific period.

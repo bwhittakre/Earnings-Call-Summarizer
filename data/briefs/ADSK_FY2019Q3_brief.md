@@ -1,8 +1,8 @@
 # Post-Call Brief: ADSK — FY2019-Q3
 
-**Quadrant:** Credible & Committed  
-**Delivery rate:** 100%  
-**Engagement score:** 0.00  
+**Quadrant:** Retreating  
+**Delivery rate:** 33%  
+**Transparency score:** 10%  
 **Open goals at call:** 2
 
 ---
@@ -12,7 +12,7 @@
 - Regime deliver rate: **100%** on 8 promises
 - Prior regime (Carl Bass): 100% on 1 promises
 
-## This Call — Engagement
+## This Call — Transparency
 
 | Metric | Count |
 |---|---|

@@ -2,7 +2,7 @@
 
 **Quadrant:** Quietly Delivering  
 **Delivery rate:** 100%  
-**Engagement score:** -0.38  
+**Transparency score:** 18%  
 **Open goals at call:** 4
 
 ---
@@ -11,7 +11,7 @@
 - **Alex Gorsky** (CEO), since FY2016-Q3
 - Regime deliver rate: **67%** on 8 promises
 
-## This Call — Engagement
+## This Call — Transparency
 
 | Metric | Count |
 |---|---|

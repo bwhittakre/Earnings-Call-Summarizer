@@ -1,8 +1,8 @@
 # Post-Call Brief: ADSK — FY2020-Q4
 
-**Quadrant:** Quietly Delivering  
-**Delivery rate:** 100%  
-**Engagement score:** -0.20  
+**Quadrant:** Retreating  
+**Delivery rate:** 33%  
+**Transparency score:** 6%  
 **Open goals at call:** 4
 
 ---
@@ -12,7 +12,7 @@
 - Regime deliver rate: **100%** on 8 promises
 - Prior regime (Carl Bass): 100% on 1 promises
 
-## This Call — Engagement
+## This Call — Transparency
 
 | Metric | Count |
 |---|---|

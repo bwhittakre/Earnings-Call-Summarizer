@@ -1,9 +1,9 @@
 # Post-Call Brief: UNH — FY2022-Q3
 
-**Quadrant:** Quietly Delivering  
-**Delivery rate:** 50%  
-**Engagement score:** -0.33  
-**Open goals at call:** 8
+**Quadrant:** Retreating  
+**Delivery rate:** 0%  
+**Transparency score:** 3%  
+**Open goals at call:** 9
 
 ---
 
@@ -12,21 +12,21 @@
 - Regime deliver rate: **0%** on 1 promises
 - Prior regime (David Wichmann): 0% on 4 promises
 
-## This Call — Engagement
+## This Call — Transparency
 
 | Metric | Count |
 |---|---|
 | New goals | 1 |
 | Restated | 0 |
-| Delivered | 1 |
+| Delivered | 0 |
 | Failed | 1 |
 | Deferred | 0 |
 | Dropped | 0 |
-| Silent (not mentioned) | 8 |
+| Silent (not mentioned) | 9 |
 
 ## Resolved This Period
 - No follow-up cites recorded for this specific period.
 
 ## Watch List
 
-**Stale goals (no cite > 4 quarters):** 8
+**Stale goals (no cite > 4 quarters):** 9

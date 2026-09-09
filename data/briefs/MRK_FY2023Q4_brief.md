@@ -1,8 +1,8 @@
 # Post-Call Brief: MRK — FY2023-Q4
 
 **Quadrant:** Quietly Delivering  
-**Delivery rate:** 100%  
-**Engagement score:** -0.20  
+**Delivery rate:** 50%  
+**Transparency score:** 6%  
 **Open goals at call:** 4
 
 ---
@@ -12,7 +12,7 @@
 - Regime deliver rate: **100%** on 8 promises
 - Prior regime (Kenneth Frazier): 50% on 2 promises
 
-## This Call — Engagement
+## This Call — Transparency
 
 | Metric | Count |
 |---|---|

@@ -1,8 +1,8 @@
 # Post-Call Brief: MSFT — FY2017-Q3
 
-**Quadrant:** Quietly Delivering  
+**Quadrant:** Credible & Committed  
 **Delivery rate:** 100%  
-**Engagement score:** -0.25  
+**Transparency score:** 35%  
 **Open goals at call:** 2
 
 ---
@@ -11,7 +11,7 @@
 - **Satya Nadella** (CEO), since FY2017-Q2
 - Regime deliver rate: **60%** on 10 promises
 
-## This Call — Engagement
+## This Call — Transparency
 
 | Metric | Count |
 |---|---|

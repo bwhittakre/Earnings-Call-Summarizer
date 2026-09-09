@@ -714,6 +714,23 @@ def sync_book_after_onboard(
             }
         )
 
+    # Write the per-ticker cue queue from novelty_view BEFORE autopilot.
+    # Without this, a new name has no desk_cue_queue_v2_{TICKER}.json and
+    # propose_seeds sees zero missed rows.
+    if not dry_run:
+        try:
+            from .desk_trees import walk_after_novelty_view
+
+            walk = walk_after_novelty_view(
+                repo_root=repo_root,
+                ticker=ticker_key,
+                fiscal_period=period,
+            )
+            steps.append({"step": "desk_cue_queue", **walk})
+        except Exception as exc:  # noqa: BLE001
+            steps.append({"step": "desk_cue_queue", "error": str(exc)})
+            LOG.warning("Post-onboard cue queue failed for %s: %s", ticker_key, exc)
+
     # Desk autopilot: propose seeds and score open trees for the newly-onboarded ticker.
     # Guard with the same env var that MonitorConfig.desk_autopilot_after_post_call parses,
     # so setting EARNINGS_MONITOR_DESK_AUTOPILOT=0 disables this path too.
@@ -736,6 +753,18 @@ def sync_book_after_onboard(
         except Exception as exc:  # noqa: BLE001
             steps.append({"step": "desk_autopilot", "error": str(exc)})
             LOG.warning("Post-onboard desk autopilot failed for %s: %s", ticker_key, exc)
+
+    # Call scorecard + post-call briefs must refresh on every onboard, not only
+    # live post_call. New tickers otherwise never appear in the Brief / 2-axis view.
+    if not dry_run:
+        try:
+            from .scorecard import rebuild_scorecard
+
+            sc = rebuild_scorecard(repo_root=repo_root, rebuild_canvas=False)
+            steps.append({"step": "call_scorecard", **sc})
+        except Exception as exc:  # noqa: BLE001
+            steps.append({"step": "call_scorecard", "error": str(exc)})
+            LOG.warning("Post-onboard scorecard rebuild failed for %s: %s", ticker_key, exc)
 
     return steps
 
@@ -1372,6 +1401,61 @@ def run_onboard(
                     "Feature panel is on disk; live Roz book was not rewritten."
                 )
                 sync_steps = []
+                if not dry_run:
+                    try:
+                        from .desk_trees import walk_after_novelty_view
+
+                        walk = walk_after_novelty_view(
+                            repo_root=repo_root,
+                            ticker=ticker_key,
+                            fiscal_period=period,
+                        )
+                        result.steps.append({"step": "desk_cue_queue", **walk})
+                    except Exception as exc:  # noqa: BLE001
+                        result.steps.append(
+                            {"step": "desk_cue_queue", "error": str(exc)}
+                        )
+                        LOG.warning(
+                            "Post-onboard cue queue failed for %s: %s",
+                            ticker_key,
+                            exc,
+                        )
+                    try:
+                        from .desk_autopilot import run_autopilot_for_ticker
+
+                        autopilot_result = run_autopilot_for_ticker(
+                            repo_root=repo_root,
+                            ticker=ticker_key,
+                            fiscal_period=period,
+                        )
+                        result.steps.append(
+                            {"step": "desk_autopilot", **autopilot_result}
+                        )
+                    except Exception as exc:  # noqa: BLE001
+                        result.steps.append(
+                            {"step": "desk_autopilot", "error": str(exc)}
+                        )
+                        LOG.warning(
+                            "Post-onboard desk autopilot failed for %s: %s",
+                            ticker_key,
+                            exc,
+                        )
+                    try:
+                        from .scorecard import rebuild_scorecard
+
+                        sc = rebuild_scorecard(
+                            repo_root=repo_root, rebuild_canvas=False
+                        )
+                        result.steps.append({"step": "call_scorecard", **sc})
+                    except Exception as exc:  # noqa: BLE001
+                        result.steps.append(
+                            {"step": "call_scorecard", "error": str(exc)}
+                        )
+                        LOG.warning(
+                            "Post-onboard scorecard rebuild failed for %s: %s",
+                            ticker_key,
+                            exc,
+                        )
             else:
                 sync_steps = sync_book_after_onboard(
                     repo_root=repo_root,

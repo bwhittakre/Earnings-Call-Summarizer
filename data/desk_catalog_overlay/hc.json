@@ -1,6 +1,6 @@
 {
   "schema_version": "1",
-  "updated_at": "2026-09-09T00:20:39.550386+00:00",
+  "updated_at": "2026-09-09T01:27:26.032091+00:00",
   "trees": [
     {
       "tree_id": "lly-alimta-uk-appeal",
@@ -7808,6 +7808,174 @@
         "proposed_at": "2026-09-09T00:20:39.550386+00:00",
         "model": "claude-sonnet-4-5",
         "run_id": "7e71a4f2-8b73-4dd4-bc49-164a83eaa86b"
+      }
+    },
+    {
+      "tree_id": "crwv-exit-2026-arr-17b-19b",
+      "title": "Exit 2026 at $17B\u2013$19B ARR",
+      "kind": "promise",
+      "bucket": "guidance",
+      "objects": [
+        "$17 billion",
+        "$19 billion",
+        "annualized run rate revenue",
+        "ARR"
+      ],
+      "match": {
+        "anchors": [
+          "$17 billion",
+          "$19 billion",
+          "annualized run rate revenue"
+        ],
+        "context": [
+          "exit",
+          "2026",
+          "revenue",
+          "ARR"
+        ],
+        "exclude": [
+          "over $30 billion",
+          "2027"
+        ],
+        "generic": null
+      },
+      "seed": {
+        "fiscal_period": "FY2025-Q4",
+        "claim_type": "forward_clock",
+        "clock": "FY2026-Q4",
+        "excerpt": "we expect to exit 2026 with annualized run rate revenue of $17 billion-$19 billion",
+        "dimension": "management_confidence",
+        "status": "verbatim",
+        "materiality": "high",
+        "materiality_rationale": "Full-year revenue guidance is thesis-level for a high-growth infrastructure company; defines the growth trajectory investors are underwriting.",
+        "delivery_basis": "transcript"
+      },
+      "confidence": "high",
+      "rationale": "Specific multi-year revenue guidance with clear numeric targets and exit timing. Highly trackable through quarterly earnings reports.",
+      "materiality": "high",
+      "materiality_rationale": "Full-year revenue guidance is thesis-level for a high-growth infrastructure company; defines the growth trajectory investors are underwriting.",
+      "ticker": "CRWV",
+      "excerpt_verified": true,
+      "proposed_seed_py": "    {\n        \"tree_id\": \"crwv-exit-2026-arr-17b-19b\",\n        \"ticker\": \"CRWV\",\n        \"kind\": \"promise\",\n        \"beat_id\": \"exit-2026-arr-17b-19b\",\n        \"bucket\": \"guidance\",\n        \"title\": \"Exit 2026 at $17B\u2013$19B ARR\",\n        \"objects\": (\"$17 billion\", \"$19 billion\", \"annualized run rate revenue\", \"ARR\",),\n        \"match\": {\n            \"anchors\": (\"$17 billion\", \"$19 billion\", \"annualized run rate revenue\"),\n            \"context\": (\"exit\", \"2026\", \"revenue\", \"ARR\"),\n            \"exclude\": (\"over $30 billion\", \"2027\"),\n            \"generic\": None,\n        },\n        \"seed\": {\n            \"fiscal_period\": \"FY2025-Q4\",\n            \"claim_type\": \"forward_clock\",\n            \"clock\": \"FY2026-Q4\",\n            \"excerpt\": (\"we expect to exit 2026 with annualized run rate revenue of $17 billion-$19 billion\"),\n            \"dimension\": \"management_confidence\",\n            \"status\": \"verbatim\",\n        },\n        \"nodes\": (),\n    },",
+      "book": "desk_hc_v2",
+      "provenance": {
+        "source": "autopilot",
+        "status": "confirmed",
+        "confidence": "high",
+        "proposed_at": "2026-09-09T01:27:26.032091+00:00",
+        "model": "claude-sonnet-4-5",
+        "run_id": "e1fb9d72-ac05-46d9-9dc7-74acabcc3abe"
+      }
+    },
+    {
+      "tree_id": "crwv-exit-2027-arr-30b-plus",
+      "title": "Exit 2027 at >$30B ARR",
+      "kind": "promise",
+      "bucket": "guidance",
+      "objects": [
+        "$30 billion",
+        "annualized run rate revenue",
+        "ARR"
+      ],
+      "match": {
+        "anchors": [
+          "$30 billion",
+          "annualized run rate revenue"
+        ],
+        "context": [
+          "exit",
+          "2027",
+          "revenue",
+          "grow to more than"
+        ],
+        "exclude": [
+          "$17 billion",
+          "$19 billion",
+          "2026"
+        ],
+        "generic": null
+      },
+      "seed": {
+        "fiscal_period": "FY2025-Q4",
+        "claim_type": "forward_clock",
+        "clock": "FY2027-Q4",
+        "excerpt": "which we expect to grow to more than $30 billion of annualized run rate revenue as we exit 2027",
+        "dimension": "management_confidence",
+        "status": "verbatim",
+        "materiality": "high",
+        "materiality_rationale": "Multi-year growth target exceeding $30B defines the company's scale trajectory and competitive positioning in AI infrastructure.",
+        "delivery_basis": "transcript"
+      },
+      "confidence": "high",
+      "rationale": "Extended-horizon revenue target with specific numeric floor. Part of two-year growth narrative and highly material to valuation.",
+      "materiality": "high",
+      "materiality_rationale": "Multi-year growth target exceeding $30B defines the company's scale trajectory and competitive positioning in AI infrastructure.",
+      "ticker": "CRWV",
+      "excerpt_verified": true,
+      "proposed_seed_py": "    {\n        \"tree_id\": \"crwv-exit-2027-arr-30b-plus\",\n        \"ticker\": \"CRWV\",\n        \"kind\": \"promise\",\n        \"beat_id\": \"exit-2027-arr-30b-plus\",\n        \"bucket\": \"guidance\",\n        \"title\": \"Exit 2027 at >$30B ARR\",\n        \"objects\": (\"$30 billion\", \"annualized run rate revenue\", \"ARR\",),\n        \"match\": {\n            \"anchors\": (\"$30 billion\", \"annualized run rate revenue\"),\n            \"context\": (\"exit\", \"2027\", \"revenue\", \"grow to more than\"),\n            \"exclude\": (\"$17 billion\", \"$19 billion\", \"2026\"),\n            \"generic\": None,\n        },\n        \"seed\": {\n            \"fiscal_period\": \"FY2025-Q4\",\n            \"claim_type\": \"forward_clock\",\n            \"clock\": \"FY2027-Q4\",\n            \"excerpt\": (\"which we expect to grow to more than $30 billion of annualized run rate revenue as we exit 2027\"),\n            \"dimension\": \"management_confidence\",\n            \"status\": \"verbatim\",\n        },\n        \"nodes\": (),\n    },",
+      "book": "desk_hc_v2",
+      "provenance": {
+        "source": "autopilot",
+        "status": "confirmed",
+        "confidence": "high",
+        "proposed_at": "2026-09-09T01:27:26.032091+00:00",
+        "model": "claude-sonnet-4-5",
+        "run_id": "e1fb9d72-ac05-46d9-9dc7-74acabcc3abe"
+      }
+    },
+    {
+      "tree_id": "crwv-managed-inference-arr-250m-2026",
+      "title": "Exit 2026 with \u2265$250M managed inference ARR",
+      "kind": "promise",
+      "bucket": "demand",
+      "objects": [
+        "managed inference platform",
+        "$250 million",
+        "ARR"
+      ],
+      "match": {
+        "anchors": [
+          "managed inference",
+          "$250 million"
+        ],
+        "context": [
+          "exit 2026",
+          "ARR",
+          "booked ARR",
+          "platform"
+        ],
+        "exclude": [
+          "$1 million",
+          "$100 million"
+        ],
+        "generic": null
+      },
+      "seed": {
+        "fiscal_period": "FY2026-Q2",
+        "claim_type": "forward_clock",
+        "clock": "FY2026-Q4",
+        "excerpt": "We expect to exit 2026 with at least $250 million of managed inference ARR",
+        "dimension": "competitive_position",
+        "status": "verbatim",
+        "materiality": "medium",
+        "materiality_rationale": "Product-level revenue target that validates CoreWeave's ability to monetize inference workloads, a key thesis driver as AI shifts from training to inference.",
+        "delivery_basis": "transcript"
+      },
+      "confidence": "high",
+      "rationale": "Specific product-level ARR target with clear timing. Management cited growth from $1M to $100M already, making this a trackable extension.",
+      "materiality": "medium",
+      "materiality_rationale": "Product-level revenue target that validates CoreWeave's ability to monetize inference workloads, a key thesis driver as AI shifts from training to inference.",
+      "ticker": "CRWV",
+      "excerpt_verified": true,
+      "proposed_seed_py": "    {\n        \"tree_id\": \"crwv-managed-inference-arr-250m-2026\",\n        \"ticker\": \"CRWV\",\n        \"kind\": \"promise\",\n        \"beat_id\": \"managed-inference-arr-250m-2026\",\n        \"bucket\": \"demand\",\n        \"title\": \"Exit 2026 with \u2265$250M managed inference ARR\",\n        \"objects\": (\"managed inference platform\", \"$250 million\", \"ARR\",),\n        \"match\": {\n            \"anchors\": (\"managed inference\", \"$250 million\"),\n            \"context\": (\"exit 2026\", \"ARR\", \"booked ARR\", \"platform\"),\n            \"exclude\": (\"$1 million\", \"$100 million\"),\n            \"generic\": None,\n        },\n        \"seed\": {\n            \"fiscal_period\": \"FY2026-Q2\",\n            \"claim_type\": \"forward_clock\",\n            \"clock\": \"FY2026-Q4\",\n            \"excerpt\": (\"We expect to exit 2026 with at least $250 million of managed inference ARR\"),\n            \"dimension\": \"competitive_position\",\n            \"status\": \"verbatim\",\n        },\n        \"nodes\": (),\n    },",
+      "book": "desk_hc_v2",
+      "provenance": {
+        "source": "autopilot",
+        "status": "confirmed",
+        "confidence": "high",
+        "proposed_at": "2026-09-09T01:27:26.032091+00:00",
+        "model": "claude-sonnet-4-5",
+        "run_id": "e1fb9d72-ac05-46d9-9dc7-74acabcc3abe"
       }
     }
   ],

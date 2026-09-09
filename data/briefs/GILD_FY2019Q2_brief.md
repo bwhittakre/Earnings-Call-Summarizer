@@ -2,7 +2,7 @@
 
 **Quadrant:** Insufficient data  
 **Delivery rate:** —  
-**Engagement score:** -0.12  
+**Transparency score:** 8%  
 **Open goals at call:** 3
 
 ---
@@ -12,7 +12,7 @@
 - Regime deliver rate: **80%** on 8 promises
 - Prior regime (John Milligan): 0% on 2 promises
 
-## This Call — Engagement
+## This Call — Transparency
 
 | Metric | Count |
 |---|---|

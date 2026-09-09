@@ -1,8 +1,8 @@
 # Post-Call Brief: CSCO — FY2025-Q3
 
-**Quadrant:** Insufficient data  
-**Delivery rate:** —  
-**Engagement score:** -0.17  
+**Quadrant:** Retreating  
+**Delivery rate:** 0%  
+**Transparency score:** 7%  
 **Open goals at call:** 7
 
 ---
@@ -11,7 +11,7 @@
 - **Chuck Robbins** (CEO), since FY2019-Q2
 - Regime deliver rate: **0%** on 10 promises
 
-## This Call — Engagement
+## This Call — Transparency
 
 | Metric | Count |
 |---|---|

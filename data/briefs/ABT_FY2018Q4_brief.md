@@ -2,7 +2,7 @@
 
 **Quadrant:** Credible & Committed  
 **Delivery rate:** 100%  
-**Engagement score:** 0.00  
+**Transparency score:** 35%  
 **Open goals at call:** 2
 
 ---
@@ -11,17 +11,17 @@
 - **Miles White** (CEO), since FY2018-Q2
 - Regime deliver rate: **100%** on 3 promises
 
-## This Call — Engagement
+## This Call — Transparency
 
 | Metric | Count |
 |---|---|
 | New goals | 0 |
 | Restated | 0 |
-| Delivered | 2 |
+| Delivered | 1 |
 | Failed | 0 |
 | Deferred | 0 |
 | Dropped | 0 |
-| Silent (not mentioned) | 0 |
+| Silent (not mentioned) | 1 |
 
 ## Resolved This Period
 - No follow-up cites recorded for this specific period.

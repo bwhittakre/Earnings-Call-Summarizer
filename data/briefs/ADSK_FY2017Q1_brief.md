@@ -2,7 +2,7 @@
 
 **Quadrant:** Insufficient data  
 **Delivery rate:** —  
-**Engagement score:** 0.00  
+**Transparency score:** 10%  
 **Open goals at call:** 2
 
 ---
@@ -11,7 +11,7 @@
 - **Carl Bass** (CEO), since FY2017-Q1
 - Regime deliver rate: **100%** on 1 promises
 
-## This Call — Engagement
+## This Call — Transparency
 
 | Metric | Count |
 |---|---|

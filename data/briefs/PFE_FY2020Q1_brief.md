@@ -2,7 +2,7 @@
 
 **Quadrant:** Credible & Committed  
 **Delivery rate:** 100%  
-**Engagement score:** +0.50  
+**Transparency score:** 85%  
 **Open goals at call:** 1
 
 ---
@@ -12,7 +12,7 @@
 - Regime deliver rate: **43%** on 12 promises
 - Prior regime (Ian Read): — on 0 promises
 
-## This Call — Engagement
+## This Call — Transparency
 
 | Metric | Count |
 |---|---|

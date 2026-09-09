@@ -2,7 +2,7 @@
 
 **Quadrant:** Insufficient data  
 **Delivery rate:** —  
-**Engagement score:** +0.25  
+**Transparency score:** 15%  
 **Open goals at call:** 1
 
 ---
@@ -12,7 +12,7 @@
 - Regime deliver rate: **67%** on 7 promises
 - Prior regime (Tom Lynch): — on 0 promises
 
-## This Call — Engagement
+## This Call — Transparency
 
 | Metric | Count |
 |---|---|

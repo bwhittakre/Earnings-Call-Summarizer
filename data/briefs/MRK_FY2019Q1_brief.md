@@ -1,8 +1,8 @@
 # Post-Call Brief: MRK — FY2019-Q1
 
-**Quadrant:** Quietly Delivering  
+**Quadrant:** Credible & Committed  
 **Delivery rate:** 100%  
-**Engagement score:** -0.25  
+**Transparency score:** 35%  
 **Open goals at call:** 2
 
 ---
@@ -11,7 +11,7 @@
 - **Kenneth Frazier** (CEO), since FY2018-Q3
 - Regime deliver rate: **50%** on 2 promises
 
-## This Call — Engagement
+## This Call — Transparency
 
 | Metric | Count |
 |---|---|

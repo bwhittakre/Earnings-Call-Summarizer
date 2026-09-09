@@ -2,7 +2,7 @@
 
 **Quadrant:** Insufficient data  
 **Delivery rate:** —  
-**Engagement score:** -0.12  
+**Transparency score:** 8%  
 **Open goals at call:** 3
 
 ---
@@ -11,7 +11,7 @@
 - **Moishe Gubin** (CEO), since FY2025-Q3
 - Regime deliver rate: **100%** on 5 promises
 
-## This Call — Engagement
+## This Call — Transparency
 
 | Metric | Count |
 |---|---|

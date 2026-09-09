@@ -2,7 +2,7 @@
 
 **Quadrant:** Retreating  
 **Delivery rate:** 0%  
-**Engagement score:** -0.12  
+**Transparency score:** 8%  
 **Open goals at call:** 3
 
 ---
@@ -12,7 +12,7 @@
 - Regime deliver rate: **83%** on 7 promises
 - Prior regime (Omar Ishrak): 0% on 2 promises
 
-## This Call — Engagement
+## This Call — Transparency
 
 | Metric | Count |
 |---|---|

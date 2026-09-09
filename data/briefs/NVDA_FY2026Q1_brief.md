@@ -1,8 +1,8 @@
 # Post-Call Brief: NVDA — FY2026-Q1
 
-**Quadrant:** Quietly Delivering  
-**Delivery rate:** 100%  
-**Engagement score:** -0.44  
+**Quadrant:** Retreating  
+**Delivery rate:** 48%  
+**Transparency score:** 9%  
 **Open goals at call:** 16
 
 ---
@@ -11,7 +11,7 @@
 - **Jensen Huang** (CEO), since FY2016-Q2
 - Regime deliver rate: **59%** on 33 promises
 
-## This Call — Engagement
+## This Call — Transparency
 
 | Metric | Count |
 |---|---|

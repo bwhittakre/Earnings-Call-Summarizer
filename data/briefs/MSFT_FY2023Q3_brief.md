@@ -1,9 +1,9 @@
 # Post-Call Brief: MSFT — FY2023-Q3
 
-**Quadrant:** Quietly Delivering  
-**Delivery rate:** 100%  
-**Engagement score:** -0.40  
-**Open goals at call:** 5
+**Quadrant:** Retreating  
+**Delivery rate:** 25%  
+**Transparency score:** 0%  
+**Open goals at call:** 7
 
 ---
 
@@ -11,17 +11,17 @@
 - **Satya Nadella** (CEO), since FY2017-Q2
 - Regime deliver rate: **60%** on 10 promises
 
-## This Call — Engagement
+## This Call — Transparency
 
 | Metric | Count |
 |---|---|
 | New goals | 0 |
 | Restated | 0 |
-| Delivered | 4 |
+| Delivered | 1 |
 | Failed | 0 |
 | Deferred | 0 |
 | Dropped | 0 |
-| Silent (not mentioned) | 4 |
+| Silent (not mentioned) | 7 |
 
 ## Resolved This Period
 
@@ -30,4 +30,4 @@
 
 ## Watch List
 
-**Stale goals (no cite > 4 quarters):** 2
+**Stale goals (no cite > 4 quarters):** 4

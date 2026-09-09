@@ -7,7 +7,7 @@ What DOES run:
   - Transcripts seeded via Cursor Quartr MCP into transcripts_raw (no REST API)
   - Quartr company_id (20310) written to overlay
   - Fiscal calendar registered in config/fiscal_calendars.yaml
-  - Ticker added to config/sectors/xlk_tech.txt
+  - Ticker added to config/sectors/independent.txt (not XLK / healthcare)
   - Ticker registered in monitor.sqlite3
   - Full-history claims desk seeding via run_history_onboard_for_ticker
 
@@ -64,7 +64,7 @@ def run_onboard(
         "--call-at", call_at,
         "--as-of", as_of,            # bypass deadline guard for historical backfill
         "--quartr-company-id", str(quartr_company_id),
-        "--research-sector", "xlk_tech",
+        "--research-sector", "independent",
         "--prior-event-count", "1",  # tell classifier at least 1 prior event exists
         "--skip-pull",               # transcripts already seeded via Quartr MCP
         "--skip-ids",                # no I/B/E/S estpermid for CRWV yet

@@ -2,7 +2,7 @@
 
 **Quadrant:** Quietly Delivering  
 **Delivery rate:** 100%  
-**Engagement score:** -0.33  
+**Transparency score:** 23%  
 **Open goals at call:** 3
 
 ---
@@ -11,7 +11,7 @@
 - **Jeffrey Leiden** (CEO), since FY2018-Q2
 - Regime deliver rate: **33%** on 3 promises
 
-## This Call — Engagement
+## This Call — Transparency
 
 | Metric | Count |
 |---|---|

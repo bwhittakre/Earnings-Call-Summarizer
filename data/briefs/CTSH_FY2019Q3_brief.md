@@ -1,9 +1,9 @@
 # Post-Call Brief: CTSH — FY2019-Q3
 
-**Quadrant:** Credible & Committed  
-**Delivery rate:** 100%  
-**Engagement score:** 0.00  
-**Open goals at call:** 2
+**Quadrant:** Quietly Delivering  
+**Delivery rate:** 50%  
+**Transparency score:** 6%  
+**Open goals at call:** 4
 
 ---
 
@@ -12,20 +12,21 @@
 - Regime deliver rate: **0%** on 3 promises
 - Prior regime (Francisco D'Souza): 100% on 4 promises
 
-## This Call — Engagement
+## This Call — Transparency
 
 | Metric | Count |
 |---|---|
 | New goals | 1 |
 | Restated | 0 |
-| Delivered | 3 |
+| Delivered | 1 |
 | Failed | 0 |
 | Deferred | 0 |
 | Dropped | 0 |
-| Silent (not mentioned) | 2 |
+| Silent (not mentioned) | 4 |
 
 ## Resolved This Period
 - No follow-up cites recorded for this specific period.
 
 ## Watch List
-- Watch list clear.
+
+**Stale goals (no cite > 4 quarters):** 1

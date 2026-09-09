@@ -1,8 +1,8 @@
 # Post-Call Brief: NVDA — FY2022-Q1
 
 **Quadrant:** Credible & Committed  
-**Delivery rate:** 100%  
-**Engagement score:** +0.06  
+**Delivery rate:** 50%  
+**Transparency score:** 36%  
 **Open goals at call:** 8
 
 ---
@@ -11,7 +11,7 @@
 - **Jensen Huang** (CEO), since FY2016-Q2
 - Regime deliver rate: **59%** on 33 promises
 
-## This Call — Engagement
+## This Call — Transparency
 
 | Metric | Count |
 |---|---|

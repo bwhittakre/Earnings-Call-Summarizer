@@ -2,7 +2,7 @@
 
 **Quadrant:** Credible & Committed  
 **Delivery rate:** 100%  
-**Engagement score:** +1.00  
+**Transparency score:** 30%  
 **Open goals at call:** 0
 
 ---
@@ -11,7 +11,7 @@
 - **Jeff Bezos** (CEO), since FY2016-Q2
 - Regime deliver rate: **67%** on 6 promises
 
-## This Call — Engagement
+## This Call — Transparency
 
 | Metric | Count |
 |---|---|

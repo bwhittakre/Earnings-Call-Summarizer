@@ -1,9 +1,9 @@
 # Post-Call Brief: MSFT — FY2026-Q3
 
-**Quadrant:** Credible & Committed  
-**Delivery rate:** 100%  
-**Engagement score:** 0.00  
-**Open goals at call:** 4
+**Quadrant:** Retreating  
+**Delivery rate:** 12%  
+**Transparency score:** 7%  
+**Open goals at call:** 7
 
 ---
 
@@ -11,21 +11,21 @@
 - **Satya Nadella** (CEO), since FY2017-Q2
 - Regime deliver rate: **60%** on 10 promises
 
-## This Call — Engagement
+## This Call — Transparency
 
 | Metric | Count |
 |---|---|
 | New goals | 2 |
 | Restated | 0 |
-| Delivered | 4 |
+| Delivered | 1 |
 | Failed | 0 |
 | Deferred | 0 |
 | Dropped | 0 |
-| Silent (not mentioned) | 4 |
+| Silent (not mentioned) | 7 |
 
 ## Resolved This Period
 - No follow-up cites recorded for this specific period.
 
 ## Watch List
 
-**Stale goals (no cite > 4 quarters):** 4
+**Stale goals (no cite > 4 quarters):** 7

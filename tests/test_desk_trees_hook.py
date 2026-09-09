@@ -4,7 +4,10 @@ from __future__ import annotations
 import json
 from datetime import datetime, timezone
 
-from services.earnings_monitor.desk_trees import walk_after_novelty_view
+from services.earnings_monitor.desk_trees import (
+    desk_book_for_ticker,
+    walk_after_novelty_view,
+)
 
 
 def _book(stamp: str, trees: list[dict]) -> dict:
@@ -149,3 +152,10 @@ def test_hook_walks_open_tree(tmp_path) -> None:
     assert "trees" not in queue
     assert updated["trees"][0]["delivery"] == "unresolved"
     assert len(updated["trees"]) == 1
+
+
+def test_desk_book_routes_independent_to_hc() -> None:
+    assert desk_book_for_ticker("NVDA") == "gold"
+    assert desk_book_for_ticker("MSFT") == "ops"
+    assert desk_book_for_ticker("LLY") == "hc"
+    assert desk_book_for_ticker("CRWV") == "hc"

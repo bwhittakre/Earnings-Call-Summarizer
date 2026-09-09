@@ -2,7 +2,7 @@
 
 **Quadrant:** Credible & Committed  
 **Delivery rate:** 100%  
-**Engagement score:** +1.00  
+**Transparency score:** 30%  
 **Open goals at call:** 0
 
 ---
@@ -11,7 +11,7 @@
 - **Gary Guthart** (CEO), since FY2017-Q1
 - Regime deliver rate: **100%** on 10 promises
 
-## This Call — Engagement
+## This Call — Transparency
 
 | Metric | Count |
 |---|---|

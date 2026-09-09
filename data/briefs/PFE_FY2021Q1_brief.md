@@ -1,8 +1,8 @@
 # Post-Call Brief: PFE — FY2021-Q1
 
-**Quadrant:** Credible & Committed  
+**Quadrant:** Quietly Delivering  
 **Delivery rate:** 100%  
-**Engagement score:** +0.25  
+**Transparency score:** 15%  
 **Open goals at call:** 1
 
 ---
@@ -12,7 +12,7 @@
 - Regime deliver rate: **43%** on 12 promises
 - Prior regime (Ian Read): — on 0 promises
 
-## This Call — Engagement
+## This Call — Transparency
 
 | Metric | Count |
 |---|---|

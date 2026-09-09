@@ -1,8 +1,8 @@
 # Post-Call Brief: PFE — FY2023-Q3
 
-**Quadrant:** Quietly Delivering  
-**Delivery rate:** 100%  
-**Engagement score:** -0.40  
+**Quadrant:** Retreating  
+**Delivery rate:** 33%  
+**Transparency score:** 0%  
 **Open goals at call:** 5
 
 ---
@@ -12,17 +12,17 @@
 - Regime deliver rate: **43%** on 12 promises
 - Prior regime (Ian Read): — on 0 promises
 
-## This Call — Engagement
+## This Call — Transparency
 
 | Metric | Count |
 |---|---|
 | New goals | 0 |
 | Restated | 0 |
-| Delivered | 2 |
+| Delivered | 1 |
 | Failed | 0 |
 | Deferred | 0 |
 | Dropped | 0 |
-| Silent (not mentioned) | 4 |
+| Silent (not mentioned) | 5 |
 
 ## Resolved This Period
 - No follow-up cites recorded for this specific period.

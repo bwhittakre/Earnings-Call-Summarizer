@@ -1,8 +1,8 @@
 # Post-Call Brief: AMGN — FY2024-Q1
 
-**Quadrant:** Credible & Committed  
+**Quadrant:** Quietly Delivering  
 **Delivery rate:** 100%  
-**Engagement score:** +0.50  
+**Transparency score:** 20%  
 **Open goals at call:** 1
 
 ---
@@ -11,7 +11,7 @@
 - **Robert Bradway** (CEO), since FY2019-Q2
 - Regime deliver rate: **75%** on 10 promises
 
-## This Call — Engagement
+## This Call — Transparency
 
 | Metric | Count |
 |---|---|

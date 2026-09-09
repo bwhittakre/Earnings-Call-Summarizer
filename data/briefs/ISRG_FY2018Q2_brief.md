@@ -1,8 +1,8 @@
 # Post-Call Brief: ISRG — FY2018-Q2
 
-**Quadrant:** Credible & Committed  
+**Quadrant:** Quietly Delivering  
 **Delivery rate:** 100%  
-**Engagement score:** +0.25  
+**Transparency score:** 15%  
 **Open goals at call:** 1
 
 ---
@@ -11,7 +11,7 @@
 - **Gary Guthart** (CEO), since FY2017-Q1
 - Regime deliver rate: **100%** on 10 promises
 
-## This Call — Engagement
+## This Call — Transparency
 
 | Metric | Count |
 |---|---|

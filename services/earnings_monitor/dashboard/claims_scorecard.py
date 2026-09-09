@@ -1,17 +1,15 @@
-"""2-Axis Call Scorecard view for the Claims Desk page.
+"""Call Scorecard view for Claims Desk and Post-Call Brief.
 
-Quadrant layout (fixed x-axis orientation):
-  X-axis: Delivery Score     (0 = never delivered → 1 = always delivered)
-  Y-axis: Transparency Score (0 = all goals silent → 1 = all goals discussed)
+Primary visual is a live call-sequence chart: every FY quarter and every
+conference / investor day, in calendar order. Y-axis is transparency.
+Delivery is tooltip-only until a promise settles — never plotted as zero.
 
-  Top-left    → Aspirational         (talking openly but hasn't delivered yet)
-  Top-right   → Credible & Committed (delivering AND discussing commitments)
-  Bottom-left → Retreating           (not delivering AND going silent on goals)
-  Bottom-right→ Quietly Delivering   (delivering without much public commitment)
+The delivery-vs-transparency quadrant is a secondary layer for settled
+points only.
 
 Two view modes (st.radio):
-  A — Company Timeline  : one ticker, scatter of all periods, connected in time
-  B — Period Snapshot   : one fiscal period, all tickers as labeled dots
+  A — Company Timeline  : one ticker, all calls connected in time
+  B — Period Snapshot   : one call, all tickers as transparency bars
 """
 from __future__ import annotations
 
@@ -19,6 +17,13 @@ import json
 import os
 from pathlib import Path
 from typing import Any
+
+from services.earnings_monitor.period_keys import (
+    call_chrono_key,
+    period_kind,
+    period_label,
+    period_sort_key,
+)
 
 # Altair import guarded — charts degrade to tables if altair not installed.
 try:
@@ -36,6 +41,11 @@ _QUAD_COLOUR = {
     "Quietly Delivering":   "#3498db",   # blue   (bottom-right)
     "Retreating":           "#e74c3c",   # red    (bottom-left)
     "Insufficient data":    "#bdc3c7",   # grey
+}
+
+_TYPE_COLOUR = {
+    "Earnings": "#1f4e79",
+    "Conference": "#7d3c98",
 }
 
 _SIDECAR_HELP = (
@@ -98,6 +108,89 @@ def _enrich(entries: list[dict]) -> list[dict]:
     return out
 
 
+# ── row prep (all calls, including unsettled) ─────────────────────────────────
+
+def _axis_label(fp: str, event_name: str | None) -> str:
+    text = str(fp or "").strip()
+    if period_kind(text) == "fy" and text.startswith("FY") and "-Q" in text:
+        year, _, quarter = text[2:].partition("-Q")
+        return f"FY{year[-2:]}-Q{quarter}"
+    name = str(event_name or "").strip()
+    if name:
+        return name if len(name) <= 22 else name[:20] + "…"
+    return text.replace("CONF-", "") or "—"
+
+
+def timeline_rows(entries: list[dict]) -> list[dict]:
+    """Display rows for every call. Delivery stays blank when unsettled."""
+    used: set[str] = set()
+    rows: list[dict] = []
+    for entry in sorted(entries, key=lambda r: call_chrono_key(r.get("fiscal_period"))):
+        fp = str(entry.get("fiscal_period") or "")
+        event = entry.get("event_name")
+        kind = entry.get("period_kind") or period_kind(fp)
+        call_type = "Conference" if kind == "conf" else "Earnings"
+        axis = _axis_label(fp, event)
+        if axis in used:
+            axis = f"{axis} {fp[-5:]}"
+        used.add(axis)
+        delivery = entry.get("delivery_score")
+        transparency = entry.get("transparency_score")
+        open_trees = int(entry.get("open_trees_at_call") or 0)
+        new_seeds = int(entry.get("n_new_seeds") or 0)
+        rows.append({
+            **entry,
+            "call_type": call_type,
+            "axis_label": axis,
+            "full_label": period_label(fp, event),
+            "chrono": call_chrono_key(fp).isoformat(),
+            "delivery_label": f"{delivery:.0%}" if delivery is not None else "—",
+            "transparency_plot": float(transparency) if transparency is not None else 0.0,
+            "delivery_status": "Settled" if delivery is not None else "Open book",
+            "weight": max(open_trees, new_seeds, 1),
+            "quadrant": entry.get("quadrant") or _quadrant(delivery, transparency),
+        })
+    return rows
+
+
+def _selected_fiscal_period(event: Any) -> str | None:
+    """Read the clicked call from a Streamlit Altair selection event."""
+    if event is None:
+        return None
+    selection = getattr(event, "selection", None)
+    if selection is None and isinstance(event, dict):
+        selection = event.get("selection")
+    if selection is None:
+        return None
+    points = getattr(selection, "points", None)
+    if points is None and isinstance(selection, dict):
+        points = (
+            selection.get("points")
+            or selection.get("call")
+            or next((v for v in selection.values() if isinstance(v, list)), None)
+        )
+    if not points:
+        return None
+    first = points[0]
+    if isinstance(first, dict):
+        return first.get("fiscal_period")
+    return None
+
+
+def _render_interactive_chart(st: Any, chart: Any, key: str) -> Any:
+    """Live Altair chart: hover, legend filter, click-to-select when supported."""
+    try:
+        return st.altair_chart(
+            chart,
+            use_container_width=True,
+            on_select="rerun",
+            key=key,
+        )
+    except TypeError:
+        st.altair_chart(chart, use_container_width=True, key=key)
+        return None
+
+
 # ── Altair chart helpers ──────────────────────────────────────────────────────
 
 def _quadrant_background() -> "alt.LayerChart":
@@ -140,14 +233,133 @@ def _quadrant_background() -> "alt.LayerChart":
     return bg + labels
 
 
+def _call_sequence_chart(rows: list[dict], ticker: str) -> "alt.LayerChart":
+    """Company Timeline: every call in calendar order. Delivery is tooltip-only."""
+    import altair as alt
+
+    if not rows:
+        return alt.Chart(alt.Data(values=[])).mark_point()
+
+    labels = [r["axis_label"] for r in rows]
+    pick = alt.selection_point(name="call", fields=["fiscal_period"], empty=True)
+    kind_pick = alt.selection_point(fields=["call_type"], bind="legend")
+
+    line = (
+        alt.Chart(alt.Data(values=rows))
+        .mark_line(color="#9aa5b1", strokeWidth=1.5)
+        .encode(
+            x=alt.X("axis_label:N", sort=labels, axis=alt.Axis(title="Call", labelAngle=-40)),
+            y=alt.Y(
+                "transparency_plot:Q",
+                scale=alt.Scale(domain=[0, 1]),
+                axis=alt.Axis(title="Transparency", format=".0%"),
+            ),
+            order=alt.Order("chrono:T"),
+        )
+    )
+
+    dots = (
+        alt.Chart(alt.Data(values=rows))
+        .mark_point(filled=True)
+        .encode(
+            x=alt.X("axis_label:N", sort=labels),
+            y=alt.Y("transparency_plot:Q", scale=alt.Scale(domain=[0, 1])),
+            color=alt.Color(
+                "call_type:N",
+                scale=alt.Scale(
+                    domain=list(_TYPE_COLOUR),
+                    range=list(_TYPE_COLOUR.values()),
+                ),
+                legend=alt.Legend(title="Call type"),
+            ),
+            shape=alt.Shape(
+                "delivery_status:N",
+                scale=alt.Scale(domain=["Settled", "Open book"], range=["circle", "triangle"]),
+                legend=alt.Legend(title="Delivery"),
+            ),
+            size=alt.Size(
+                "weight:Q",
+                scale=alt.Scale(range=[80, 360]),
+                legend=alt.Legend(title="Open goals / new seeds"),
+            ),
+            opacity=alt.condition(pick, alt.value(1.0), alt.value(0.35)),
+            tooltip=[
+                alt.Tooltip("full_label:N", title="Call"),
+                alt.Tooltip("call_type:N", title="Type"),
+                alt.Tooltip("transparency_plot:Q", title="Transparency", format=".0%"),
+                alt.Tooltip("delivery_label:N", title="Delivery"),
+                alt.Tooltip("n_new_seeds:Q", title="New goals"),
+                alt.Tooltip("open_trees_at_call:Q", title="Open goals"),
+                alt.Tooltip("n_never_touched:Q", title="Never touched"),
+                alt.Tooltip("n_silent:Q", title="Silent"),
+            ],
+        )
+    )
+
+    return (
+        (line + dots)
+        .add_params(pick, kind_pick)
+        .transform_filter(kind_pick)
+        .properties(
+            title=f"{ticker} — every tracked call",
+            height=420,
+        )
+    )
+
+
+def _snapshot_transparency_chart(rows: list[dict], period_title: str) -> "alt.Chart":
+    """Period Snapshot: every ticker at this call, even when delivery is blank."""
+    import altair as alt
+
+    if not rows:
+        return alt.Chart(alt.Data(values=[])).mark_point()
+
+    pick = alt.selection_point(name="call", fields=["ticker"], empty=True)
+    return (
+        alt.Chart(alt.Data(values=rows))
+        .mark_bar(cornerRadiusTopLeft=3, cornerRadiusTopRight=3)
+        .add_params(pick)
+        .encode(
+            x=alt.X("ticker:N", sort="-y", axis=alt.Axis(title="Ticker", labelAngle=-40)),
+            y=alt.Y(
+                "transparency_plot:Q",
+                scale=alt.Scale(domain=[0, 1]),
+                axis=alt.Axis(title="Transparency", format=".0%"),
+            ),
+            color=alt.Color(
+                "call_type:N",
+                scale=alt.Scale(
+                    domain=list(_TYPE_COLOUR),
+                    range=list(_TYPE_COLOUR.values()),
+                ),
+                legend=alt.Legend(title="Call type"),
+            ),
+            opacity=alt.condition(pick, alt.value(1.0), alt.value(0.35)),
+            tooltip=[
+                alt.Tooltip("ticker:N", title="Ticker"),
+                alt.Tooltip("full_label:N", title="Call"),
+                alt.Tooltip("transparency_plot:Q", title="Transparency", format=".0%"),
+                alt.Tooltip("delivery_label:N", title="Delivery"),
+                alt.Tooltip("n_new_seeds:Q", title="New goals"),
+                alt.Tooltip("open_trees_at_call:Q", title="Open goals"),
+                alt.Tooltip("n_never_touched:Q", title="Never touched"),
+            ],
+        )
+        .properties(
+            title=f"Transparency — {period_title}",
+            height=380,
+        )
+    )
+
+
 def _scatter_timeline(df_records: list[dict], ticker: str) -> "alt.LayerChart":
-    """Company Timeline: one ticker, all periods, dots connected by time."""
+    """Settled-only quadrant: one ticker, periods with a delivery rate."""
     import altair as alt
 
     data = [r for r in df_records if r.get("ticker") == ticker
             and r.get("delivery_score") is not None
             and r.get("transparency_score") is not None]
-    data.sort(key=lambda r: (r.get("fiscal_period") or ""))
+    data.sort(key=lambda r: call_chrono_key(r.get("fiscal_period")))
 
     if not data:
         return alt.Chart(alt.Data(values=[])).mark_point()
@@ -183,6 +395,7 @@ def _scatter_timeline(df_records: list[dict], ticker: str) -> "alt.LayerChart":
             ),
             tooltip=[
                 alt.Tooltip("fiscal_period:N", title="Period"),
+                alt.Tooltip("event_name:N", title="Event"),
                 alt.Tooltip("delivery_score:Q", title="Delivery", format=".1%"),
                 alt.Tooltip("transparency_score:Q", title="Transparency", format=".2f"),
                 alt.Tooltip("n_confirmed:Q", title="Delivered"),
@@ -294,13 +507,14 @@ def _goal_health_metrics(st: Any, entry: dict) -> None:
 # ── main render ───────────────────────────────────────────────────────────────
 
 def render_scorecard(st: Any, sector_tickers: list[str] | None = None) -> None:
-    """Render the 2-axis call scorecard inside the Claims Desk page."""
-    st.subheader("Call Scorecard — 2-Axis Accountability")
+    """Render the call scorecard: live timeline of every call, plus settled quadrant."""
+    st.subheader("Call Scorecard")
     st.caption(
-        "X-axis: rolling delivery rate (promises kept, including deferred/expired/aged misses). "
-        "Y-axis: transparency score (fraction of open goals management discussed this call). "
-        "Bottom-left = Retreating · Bottom-right = Quietly Delivering · "
-        "Top-left = Aspirational · Top-right = Credible & Committed."
+        "Every tracked call is on the chart — earnings, conferences, and investor days. "
+        "Y-axis is transparency (share of open goals management discussed). "
+        "Delivery stays blank until a promise settles; it is never plotted as zero. "
+        "Click a point to pin goal health. Use the legend to show or hide call types. "
+        "Settled promises also appear on the delivery-vs-transparency quadrant."
     )
 
     entries = _load_entries()
@@ -330,10 +544,12 @@ def render_scorecard(st: Any, sector_tickers: list[str] | None = None) -> None:
     )
 
     all_tickers = sorted({e["ticker"] for e in sector_entries})
-    all_periods = sorted({e["fiscal_period"] for e in sector_entries},
-                         key=lambda p: (int(p[2:6]), int(p[8:])) if len(p) == 10 else (0,0))
+    all_periods = sorted(
+        {e["fiscal_period"] for e in sector_entries},
+        key=period_sort_key,
+    )
 
-    # Tickers that have at least one period with a real delivery_score
+    # Prefer a ticker that already has a delivery rate; otherwise any ticker.
     scored_tickers = sorted({
         e["ticker"] for e in sector_entries if e.get("delivery_score") is not None
     })
@@ -347,30 +563,47 @@ def render_scorecard(st: Any, sector_tickers: list[str] | None = None) -> None:
             if first_scored in all_tickers:
                 default_ticker_idx = all_tickers.index(first_scored)
         ticker = st.selectbox("Ticker", all_tickers, index=default_ticker_idx, key="scorecard_ticker")
-        ticker_entries = [e for e in sector_entries if e["ticker"] == ticker
-                          and e.get("delivery_score") is not None]
+        ticker_entries = [e for e in sector_entries if e["ticker"] == ticker]
 
         if not ticker_entries:
-            st.info(f"No scored periods for {ticker} yet.")
+            st.info(f"No scorecard rows for {ticker} yet.")
             return
 
-        if _ALTAIR:
-            chart = _scatter_timeline(sector_entries, ticker)
-            st.altair_chart(chart, use_container_width=False)
-        else:
+        rows = timeline_rows(ticker_entries)
+        selected_fp = None
+        if rows and _ALTAIR:
+            event = _render_interactive_chart(
+                st,
+                _call_sequence_chart(rows, ticker),
+                key=f"scorecard_seq_{ticker}",
+            )
+            selected_fp = _selected_fiscal_period(event)
+            settled = [e for e in ticker_entries if e.get("delivery_score") is not None]
+            if settled:
+                with st.expander("Settled promises — delivery vs transparency"):
+                    st.altair_chart(
+                        _scatter_timeline(sector_entries, ticker),
+                        use_container_width=True,
+                    )
+        elif not _ALTAIR:
             st.warning("Altair not installed — showing table.")
 
-        # Latest-period goal health strip
-        latest = max(ticker_entries, key=lambda e: (int(e["fiscal_period"][2:6]), int(e["fiscal_period"][8:])))
-        st.caption(f"Goal health — {latest['fiscal_period']}")
-        _goal_health_metrics(st, latest)
+        # Clicked call, else most recent by calendar date
+        focus = next((e for e in ticker_entries if e.get("fiscal_period") == selected_fp), None)
+        if focus is None:
+            focus = max(ticker_entries, key=lambda e: call_chrono_key(e["fiscal_period"]))
+        st.caption(
+            f"Goal health — {period_label(focus['fiscal_period'], focus.get('event_name'))}"
+        )
+        _goal_health_metrics(st, focus)
 
         # Data table
         with st.expander("Scorecard data"):
             st.dataframe(
                 [
                     {
-                        "period": e["fiscal_period"],
+                        "period": period_label(e["fiscal_period"], e.get("event_name")),
+                        "kind": e.get("period_kind") or period_kind(e["fiscal_period"]),
                         "delivery": f"{e['delivery_score']:.1%}" if e.get("delivery_score") is not None else "—",
                         "transparency": f"{e['transparency_score']:.2f}" if e.get("transparency_score") is not None else "—",
                         "quadrant": e["quadrant"],
@@ -380,8 +613,7 @@ def render_scorecard(st: Any, sector_tickers: list[str] | None = None) -> None:
                         "never_touched": e.get("n_never_touched", 0),
                         "stale": e.get("n_open_stale", 0),
                     }
-                    for e in sorted(ticker_entries,
-                                    key=lambda e: (int(e["fiscal_period"][2:6]), int(e["fiscal_period"][8:])))
+                    for e in sorted(ticker_entries, key=lambda e: call_chrono_key(e["fiscal_period"]))
                 ],
                 hide_index=True,
                 use_container_width=True,
@@ -389,22 +621,60 @@ def render_scorecard(st: Any, sector_tickers: list[str] | None = None) -> None:
 
     # ── View B: Period Snapshot ───────────────────────────────────────────────
     else:
-        # Default to latest period
-        default_idx = len(all_periods) - 1
-        period = st.selectbox("Fiscal period", all_periods,
-                              index=default_idx, key="scorecard_period")
-        period_entries = [e for e in sector_entries
-                          if e["fiscal_period"] == period
-                          and e.get("delivery_score") is not None]
+        include_conf = st.checkbox(
+            "Include conferences / investor days",
+            value=False,
+            key="scorecard_include_conf",
+            help="Off keeps the cross-ticker snapshot on earnings quarters only.",
+        )
+        snapshot_periods = [
+            p for p in all_periods
+            if include_conf or period_kind(p) == "fy"
+        ]
+        if not snapshot_periods:
+            st.info("No FY quarters in this filter. Enable conferences to see event rows.")
+            return
+        default_idx = len(snapshot_periods) - 1
+        period = st.selectbox(
+            "Fiscal period",
+            snapshot_periods,
+            index=default_idx,
+            key="scorecard_period",
+            format_func=lambda p: period_label(
+                p,
+                next(
+                    (e.get("event_name") for e in sector_entries if e.get("fiscal_period") == p),
+                    None,
+                ),
+            ),
+        )
+        period_entries = [
+            e for e in sector_entries if e["fiscal_period"] == period
+        ]
 
         if not period_entries:
-            st.info(f"No scored entries for {period} yet.")
+            st.info(f"No scorecard rows for {period} yet.")
             return
 
-        if _ALTAIR:
-            chart = _scatter_snapshot(sector_entries, period)
-            st.altair_chart(chart, use_container_width=False)
-        else:
+        period_rows = timeline_rows(period_entries)
+        period_title = period_label(
+            period,
+            next((e.get("event_name") for e in period_entries), None),
+        )
+        if period_rows and _ALTAIR:
+            _render_interactive_chart(
+                st,
+                _snapshot_transparency_chart(period_rows, period_title),
+                key=f"scorecard_snap_{period}",
+            )
+            settled = [e for e in period_entries if e.get("delivery_score") is not None]
+            if settled:
+                with st.expander("Settled promises — delivery vs transparency"):
+                    st.altair_chart(
+                        _scatter_snapshot(sector_entries, period),
+                        use_container_width=True,
+                    )
+        elif not _ALTAIR:
             st.warning("Altair not installed — showing table.")
 
         # Quad summary counts

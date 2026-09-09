@@ -2,7 +2,7 @@
 
 **Quadrant:** Aspirational  
 **Delivery rate:** 0%  
-**Engagement score:** +1.00  
+**Transparency score:** 30%  
 **Open goals at call:** 0
 
 ---
@@ -12,7 +12,7 @@
 - Regime deliver rate: **33%** on 7 promises
 - Prior regime (Martin Anstice): 0% on 1 promises
 
-## This Call — Engagement
+## This Call — Transparency
 
 | Metric | Count |
 |---|---|

@@ -1,8 +1,8 @@
 # Post-Call Brief: AMAT — FY2020-Q3
 
-**Quadrant:** Credible & Committed  
-**Delivery rate:** 100%  
-**Engagement score:** +0.25  
+**Quadrant:** Retreating  
+**Delivery rate:** 33%  
+**Transparency score:** 15%  
 **Open goals at call:** 2
 
 ---
@@ -11,7 +11,7 @@
 - **Gary Dickerson** (CEO), since FY2016-Q4
 - Regime deliver rate: **38%** on 12 promises
 
-## This Call — Engagement
+## This Call — Transparency
 
 | Metric | Count |
 |---|---|

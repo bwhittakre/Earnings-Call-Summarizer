@@ -14,6 +14,7 @@ from services.earnings_monitor.dashboard.claims_brief import (
     all_scored_tickers,
     generate_brief_markdown,
     load_brief_data,
+    period_display_label,
     render_brief,
 )
 from services.earnings_monitor.dashboard.claims_scorecard import render_scorecard
@@ -51,14 +52,13 @@ def main() -> None:
         )
         return
 
-    # Default ticker: try to match the active sector filter from context, else first
-    sector_tickers = getattr(ctx, "tickers", None) or []
+    sector_tickers = list(getattr(ctx, "sector_tickers", None) or [])
     sector_up = {str(t).upper() for t in sector_tickers}
-    default_ticker = next(
-        (t for t in tickers if t in sector_up),
-        tickers[0],
-    )
-    default_idx = tickers.index(default_ticker) if default_ticker in tickers else 0
+    if sector_up:
+        filtered = [t for t in tickers if t in sector_up]
+        if filtered:
+            tickers = filtered
+    default_idx = 0
 
     col_ticker, col_period = st.columns(2)
     with col_ticker:
@@ -71,10 +71,11 @@ def main() -> None:
 
     with col_period:
         period = st.selectbox(
-            "Fiscal period",
+            "Call / period",
             periods,
-            index=0,  # default to most recent
+            index=0,
             key="brief_period",
+            format_func=lambda p: period_display_label(ticker, p),
         )
 
     # ── Load and render ───────────────────────────────────────────────────────

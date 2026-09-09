@@ -1,9 +1,9 @@
 # Post-Call Brief: MDT — FY2025-Q4
 
-**Quadrant:** Credible & Committed  
-**Delivery rate:** 67%  
-**Engagement score:** +0.21  
-**Open goals at call:** 4
+**Quadrant:** Retreating  
+**Delivery rate:** 0%  
+**Transparency score:** 11%  
+**Open goals at call:** 5
 
 ---
 
@@ -12,17 +12,17 @@
 - Regime deliver rate: **83%** on 7 promises
 - Prior regime (Omar Ishrak): 0% on 2 promises
 
-## This Call — Engagement
+## This Call — Transparency
 
 | Metric | Count |
 |---|---|
 | New goals | 3 |
 | Restated | 0 |
-| Delivered | 2 |
+| Delivered | 0 |
 | Failed | 1 |
 | Deferred | 0 |
 | Dropped | 0 |
-| Silent (not mentioned) | 3 |
+| Silent (not mentioned) | 5 |
 
 ## Resolved This Period
 - No follow-up cites recorded for this specific period.

@@ -1,9 +1,9 @@
 # Post-Call Brief: LRCX — FY2026-Q4
 
-**Quadrant:** Credible & Committed  
-**Delivery rate:** 50%  
-**Engagement score:** +0.25  
-**Open goals at call:** 3
+**Quadrant:** Retreating  
+**Delivery rate:** 0%  
+**Transparency score:** 13%  
+**Open goals at call:** 4
 
 ---
 
@@ -12,21 +12,21 @@
 - Regime deliver rate: **33%** on 7 promises
 - Prior regime (Martin Anstice): 0% on 1 promises
 
-## This Call — Engagement
+## This Call — Transparency
 
 | Metric | Count |
 |---|---|
 | New goals | 3 |
 | Restated | 0 |
-| Delivered | 1 |
+| Delivered | 0 |
 | Failed | 1 |
 | Deferred | 0 |
 | Dropped | 0 |
-| Silent (not mentioned) | 3 |
+| Silent (not mentioned) | 4 |
 
 ## Resolved This Period
 - No follow-up cites recorded for this specific period.
 
 ## Watch List
 
-**Stale goals (no cite > 4 quarters):** 3
+**Stale goals (no cite > 4 quarters):** 4

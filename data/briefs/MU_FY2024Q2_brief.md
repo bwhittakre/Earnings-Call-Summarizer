@@ -1,9 +1,9 @@
 # Post-Call Brief: MU — FY2024-Q2
 
-**Quadrant:** Quietly Delivering  
-**Delivery rate:** 100%  
-**Engagement score:** -0.38  
-**Open goals at call:** 8
+**Quadrant:** Retreating  
+**Delivery rate:** 10%  
+**Transparency score:** 0%  
+**Open goals at call:** 12
 
 ---
 
@@ -12,21 +12,21 @@
 - Regime deliver rate: **57%** on 8 promises
 - Prior regime (D. Mark Durcan): 60% on 6 promises
 
-## This Call — Engagement
+## This Call — Transparency
 
 | Metric | Count |
 |---|---|
 | New goals | 0 |
 | Restated | 0 |
-| Delivered | 7 |
+| Delivered | 1 |
 | Failed | 0 |
 | Deferred | 0 |
 | Dropped | 0 |
-| Silent (not mentioned) | 6 |
+| Silent (not mentioned) | 12 |
 
 ## Resolved This Period
 - No follow-up cites recorded for this specific period.
 
 ## Watch List
 
-**Stale goals (no cite > 4 quarters):** 6
+**Stale goals (no cite > 4 quarters):** 10

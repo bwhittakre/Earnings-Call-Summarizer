@@ -1,8 +1,8 @@
 # Post-Call Brief: LRCX — FY2017-Q1
 
-**Quadrant:** Retreating  
+**Quadrant:** Aspirational  
 **Delivery rate:** 0%  
-**Engagement score:** -1.00  
+**Transparency score:** 70%  
 **Open goals at call:** 1
 
 ---
@@ -11,7 +11,7 @@
 - **Martin Anstice** (CEO), since FY2016-Q2
 - Regime deliver rate: **0%** on 1 promises
 
-## This Call — Engagement
+## This Call — Transparency
 
 | Metric | Count |
 |---|---|

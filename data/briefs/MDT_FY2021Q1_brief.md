@@ -1,8 +1,8 @@
 # Post-Call Brief: MDT — FY2021-Q1
 
-**Quadrant:** Aspirational  
+**Quadrant:** Retreating  
 **Delivery rate:** 0%  
-**Engagement score:** +0.25  
+**Transparency score:** 15%  
 **Open goals at call:** 1
 
 ---
@@ -12,7 +12,7 @@
 - Regime deliver rate: **83%** on 7 promises
 - Prior regime (Omar Ishrak): 0% on 2 promises
 
-## This Call — Engagement
+## This Call — Transparency
 
 | Metric | Count |
 |---|---|

@@ -2,7 +2,7 @@
 
 **Quadrant:** Insufficient data  
 **Delivery rate:** —  
-**Engagement score:** -0.12  
+**Transparency score:** 8%  
 **Open goals at call:** 3
 
 ---
@@ -11,7 +11,7 @@
 - **Richard Gonzalez** (CEO), since FY2016-Q4
 - Regime deliver rate: **25%** on 9 promises
 
-## This Call — Engagement
+## This Call — Transparency
 
 | Metric | Count |
 |---|---|

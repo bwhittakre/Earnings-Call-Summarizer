@@ -2,7 +2,7 @@
 
 **Quadrant:** Credible & Committed  
 **Delivery rate:** 100%  
-**Engagement score:** +0.67  
+**Transparency score:** 90%  
 **Open goals at call:** 1
 
 ---
@@ -11,7 +11,7 @@
 - **D. Mark Durcan** (CEO), since FY2016-Q2
 - Regime deliver rate: **60%** on 6 promises
 
-## This Call — Engagement
+## This Call — Transparency
 
 | Metric | Count |
 |---|---|

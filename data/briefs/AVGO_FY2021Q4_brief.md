@@ -1,9 +1,9 @@
 # Post-Call Brief: AVGO — FY2021-Q4
 
-**Quadrant:** Quietly Delivering  
-**Delivery rate:** 67%  
-**Engagement score:** -0.40  
-**Open goals at call:** 5
+**Quadrant:** Retreating  
+**Delivery rate:** 17%  
+**Transparency score:** 0%  
+**Open goals at call:** 6
 
 ---
 
@@ -11,21 +11,21 @@
 - **Hock Tan** (CEO), since FY2016-Q3
 - Regime deliver rate: **67%** on 13 promises
 
-## This Call — Engagement
+## This Call — Transparency
 
 | Metric | Count |
 |---|---|
 | New goals | 0 |
 | Restated | 0 |
-| Delivered | 2 |
-| Failed | 1 |
+| Delivered | 1 |
+| Failed | 0 |
 | Deferred | 0 |
 | Dropped | 0 |
-| Silent (not mentioned) | 4 |
+| Silent (not mentioned) | 6 |
 
 ## Resolved This Period
 - No follow-up cites recorded for this specific period.
 
 ## Watch List
 
-**Stale goals (no cite > 4 quarters):** 2
+**Stale goals (no cite > 4 quarters):** 5

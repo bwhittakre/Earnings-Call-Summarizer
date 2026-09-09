@@ -1,9 +1,9 @@
 # Post-Call Brief: APH — FY2025-Q3
 
-**Quadrant:** Credible & Committed  
-**Delivery rate:** 100%  
-**Engagement score:** 0.00  
-**Open goals at call:** 1
+**Quadrant:** Insufficient data  
+**Delivery rate:** —  
+**Transparency score:** 0%  
+**Open goals at call:** 2
 
 ---
 
@@ -11,20 +11,21 @@
 - **R. Adam Norwitt** (CEO), since FY2009-Q1
 - Regime deliver rate: **100%** on 2 promises
 
-## This Call — Engagement
+## This Call — Transparency
 
 | Metric | Count |
 |---|---|
 | New goals | 0 |
 | Restated | 0 |
-| Delivered | 2 |
+| Delivered | 0 |
 | Failed | 0 |
 | Deferred | 0 |
 | Dropped | 0 |
-| Silent (not mentioned) | 0 |
+| Silent (not mentioned) | 2 |
 
 ## Resolved This Period
 - No follow-up cites recorded for this specific period.
 
 ## Watch List
-- Watch list clear.
+
+**Stale goals (no cite > 4 quarters):** 2

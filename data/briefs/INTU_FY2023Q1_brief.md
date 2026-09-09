@@ -1,8 +1,8 @@
 # Post-Call Brief: INTU — FY2023-Q1
 
-**Quadrant:** Insufficient data  
-**Delivery rate:** —  
-**Engagement score:** 0.00  
+**Quadrant:** Retreating  
+**Delivery rate:** 0%  
+**Transparency score:** 10%  
 **Open goals at call:** 4
 
 ---
@@ -12,7 +12,7 @@
 - Regime deliver rate: **80%** on 10 promises
 - Prior regime (Brad Smith): — on 1 promises
 
-## This Call — Engagement
+## This Call — Transparency
 
 | Metric | Count |
 |---|---|

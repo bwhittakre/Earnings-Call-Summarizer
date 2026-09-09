@@ -4,7 +4,7 @@ Does not propose new seeds. Does not call an LLM.
 Does not read transcripts_raw. Refuses the 17 Aug stamp.
 
 NVIDIA gold stays in desk_trees_v2.json. Tech names walk the ops book.
-Healthcare names walk the healthcare book.
+Healthcare and Independent (non-tech) names walk the healthcare book.
 Live Roz monitor/worker bind-mount ``./services`` and ``./scripts`` so
 this module runs after post_call even when the image bake lags. If those
 mounts are missing, refresh on the host with
@@ -166,6 +166,53 @@ def _write_queue_and_proposals(
     return cue_queue
 
 
+def _ticker_trees_with_overlay(
+    book_trees: list,
+    ticker: str,
+    *,
+    overlay_key: str,
+) -> list:
+    """Compiled-book trees plus overlay trees for *ticker* (overlay wins on id)."""
+    want = str(ticker).upper()
+    by_id: dict[str, object] = {}
+    for tree in book_trees:
+        if str(tree.get("ticker") or "").upper() != want:
+            continue
+        tid = str(tree.get("tree_id") or "")
+        if tid:
+            by_id[tid] = tree
+    try:
+        from scripts._desk_catalog_overlay import get_overlay_trees, load_overlay
+
+        for tree in get_overlay_trees(load_overlay(overlay_key)):
+            if str(tree.get("ticker") or "").upper() != want:
+                continue
+            tid = str(tree.get("tree_id") or "")
+            if tid:
+                by_id[tid] = tree
+    except Exception:
+        LOG.debug("overlay merge skipped for %s %s", overlay_key, want, exc_info=True)
+    return list(by_id.values())
+
+
+def desk_book_for_ticker(ticker: str) -> str:
+    """Book overlay the desk autopilot already uses: gold / ops / hc.
+
+    Tech catalog names stay on ops. Everyone else (healthcare, Independent,
+    future non-tech onboards) lands on hc so cue-queue writes and tree walks
+    hit the same overlay autopilot seeds into.
+    """
+    want = str(ticker).upper()
+    if want == "NVDA":
+        return "gold"
+    from scripts._desk_trees_v2_ops import TECH_TICKERS
+
+    tech = {str(name).upper() for name in TECH_TICKERS}
+    if want in tech:
+        return "ops"
+    return "hc"
+
+
 def walk_after_novelty_view(
     *,
     repo_root: Path | str,
@@ -205,15 +252,16 @@ def walk_after_novelty_view(
             gold_result.get("changed"),
         )
 
-    from scripts._desk_trees_v2_hc import HC_BOOK_ID, HC_TICKERS
+    from scripts._desk_trees_v2_hc import HC_BOOK_ID
 
-    hc_names = {str(ticker).upper() for ticker in HC_TICKERS}
-    is_healthcare = want in hc_names
+    routed_book = desk_book_for_ticker(want)
+    use_hc_book = routed_book == "hc"
+    use_ops_book = routed_book == "ops"
 
     ops_path = ops_book_path(repo_root)
     ops = load_json(ops_path)
     ops_result: dict[str, object] | None = None
-    if ops is not None and not is_healthcare:
+    if ops is not None and use_ops_book:
         ops_stamp = str(ops.get("generated_at") or "")
         if ops_stamp == _V1_STAMP:
             ops_result = {"status": "refused", "reason": "v1_stamp"}
@@ -240,7 +288,7 @@ def walk_after_novelty_view(
     hc_path = hc_book_path(repo_root)
     hc = load_json(hc_path)
     hc_result: dict[str, object] | None = None
-    if hc is not None and is_healthcare:
+    if hc is not None and use_hc_book:
         hc_stamp = str(hc.get("generated_at") or "")
         if hc_stamp == _V1_STAMP:
             hc_result = {"status": "refused", "reason": "v1_stamp"}
@@ -278,17 +326,15 @@ def walk_after_novelty_view(
                 fiscal_period=fiscal_period,
                 now=now,
             )
-        elif is_healthcare:
+        elif use_hc_book:
             book = hc if hc is not None and str(hc.get("generated_at") or "") == _HC_STAMP else {
                 "generated_at": _HC_STAMP,
                 "book_id": HC_BOOK_ID,
                 "trees": [],
             }
-            trees = [
-                tree
-                for tree in (book.get("trees") or [])
-                if str(tree.get("ticker") or "").upper() == want
-            ]
+            trees = _ticker_trees_with_overlay(
+                book.get("trees") or [], want, overlay_key="hc"
+            )
             cue_queue = _write_queue_and_proposals(
                 repo_root=repo_root,
                 book=book,
@@ -304,11 +350,9 @@ def walk_after_novelty_view(
                 "book_id": "desk_ops_v2",
                 "trees": [],
             }
-            trees = [
-                tree
-                for tree in (book.get("trees") or [])
-                if str(tree.get("ticker") or "").upper() == want
-            ]
+            trees = _ticker_trees_with_overlay(
+                book.get("trees") or [], want, overlay_key="ops"
+            )
             cue_queue = _write_queue_and_proposals(
                 repo_root=repo_root,
                 book=book,
@@ -330,7 +374,7 @@ def walk_after_novelty_view(
                 "changed": ops_result.get("changed"),
                 "n_trees": ops_result.get("n_trees"),
             }
-    elif is_healthcare:
+    elif use_hc_book:
         primary = hc_result or gold_result
     else:
         primary = ops_result or gold_result

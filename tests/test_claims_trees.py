@@ -209,6 +209,7 @@ def test_latest_scored_fiscal_prefers_queue() -> None:
 def test_suggested_book_follows_sector() -> None:
     books = [_BOOK_NVDA, _BOOK_OPS, _BOOK_HC]
     assert suggested_book("healthcare_large_cap", books) == _BOOK_HC
+    assert suggested_book("independent", books) == _BOOK_HC
     assert suggested_book("xlk_tech", books) == _BOOK_OPS
     assert suggested_book("All Companies", books) == _BOOK_NVDA
     assert suggested_book("Custom List", books, ["LLY", "JNJ"]) == _BOOK_HC

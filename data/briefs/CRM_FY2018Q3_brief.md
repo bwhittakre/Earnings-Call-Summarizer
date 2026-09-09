@@ -2,7 +2,7 @@
 
 **Quadrant:** Insufficient data  
 **Delivery rate:** —  
-**Engagement score:** +0.10  
+**Transparency score:** 12%  
 **Open goals at call:** 3
 
 ---
@@ -11,7 +11,7 @@
 - **Marc Benioff** (CEO), since FY2017-Q3
 - Regime deliver rate: **67%** on 8 promises
 
-## This Call — Engagement
+## This Call — Transparency
 
 | Metric | Count |
 |---|---|
@@ -30,3 +30,5 @@
 
 **Ghost commitments (never cited again): 1**
 - Slack Connect *(seeded FY2027-Q1)*
+
+**Stale goals (no cite > 4 quarters):** 1

@@ -2,7 +2,7 @@
 
 **Quadrant:** Credible & Committed  
 **Delivery rate:** 100%  
-**Engagement score:** 0.00  
+**Transparency score:** 70%  
 **Open goals at call:** 1
 
 ---
@@ -11,7 +11,7 @@
 - **Kevin Lobo** (CEO), since FY2016-Q3
 - Regime deliver rate: **43%** on 9 promises
 
-## This Call — Engagement
+## This Call — Transparency
 
 | Metric | Count |
 |---|---|

@@ -1,8 +1,8 @@
 # Post-Call Brief: MU — FY2017-Q1
 
-**Quadrant:** Credible & Committed  
+**Quadrant:** Quietly Delivering  
 **Delivery rate:** 100%  
-**Engagement score:** 0.00  
+**Transparency score:** 8%  
 **Open goals at call:** 3
 
 ---
@@ -11,17 +11,17 @@
 - **D. Mark Durcan** (CEO), since FY2016-Q2
 - Regime deliver rate: **60%** on 6 promises
 
-## This Call — Engagement
+## This Call — Transparency
 
 | Metric | Count |
 |---|---|
 | New goals | 1 |
 | Restated | 0 |
-| Delivered | 2 |
+| Delivered | 1 |
 | Failed | 0 |
 | Deferred | 0 |
 | Dropped | 0 |
-| Silent (not mentioned) | 2 |
+| Silent (not mentioned) | 3 |
 
 ## Resolved This Period
 - No follow-up cites recorded for this specific period.

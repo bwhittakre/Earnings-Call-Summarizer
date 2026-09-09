@@ -1,8 +1,8 @@
 # Post-Call Brief: AMD — FY2020-Q2
 
-**Quadrant:** Insufficient data  
-**Delivery rate:** —  
-**Engagement score:** -0.12  
+**Quadrant:** Retreating  
+**Delivery rate:** 0%  
+**Transparency score:** 8%  
 **Open goals at call:** 3
 
 ---
@@ -11,7 +11,7 @@
 - **Lisa Su** (CEO), since FY2016-Q1
 - Regime deliver rate: **0%** on 11 promises
 
-## This Call — Engagement
+## This Call — Transparency
 
 | Metric | Count |
 |---|---|

@@ -1,9 +1,9 @@
 # Post-Call Brief: ORCL — FY2018-Q1
 
-**Quadrant:** Credible & Committed  
+**Quadrant:** Quietly Delivering  
 **Delivery rate:** 100%  
-**Engagement score:** +0.50  
-**Open goals at call:** 1
+**Transparency score:** 15%  
+**Open goals at call:** 2
 
 ---
 
@@ -11,20 +11,21 @@
 - **Mark Hurd / Safra Catz** (CEO), since FY2017-Q2
 - Regime deliver rate: **25%** on 5 promises
 
-## This Call — Engagement
+## This Call — Transparency
 
 | Metric | Count |
 |---|---|
 | New goals | 2 |
 | Restated | 0 |
-| Delivered | 2 |
+| Delivered | 1 |
 | Failed | 0 |
 | Deferred | 0 |
 | Dropped | 0 |
-| Silent (not mentioned) | 1 |
+| Silent (not mentioned) | 2 |
 
 ## Resolved This Period
 - No follow-up cites recorded for this specific period.
 
 ## Watch List
-- Watch list clear.
+
+**Stale goals (no cite > 4 quarters):** 1

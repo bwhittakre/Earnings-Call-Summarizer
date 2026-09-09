@@ -862,6 +862,23 @@ def main(argv: list[str] | None = None) -> int:
         print("\n── Rebuilding workshop HTML ──")
         _rebuild_workshop(errors=errors)
 
+        print("\n── Rebuilding call scorecard + briefs ──")
+        try:
+            from services.earnings_monitor.scorecard import rebuild_scorecard
+
+            sc = rebuild_scorecard(repo_root=ROOT, rebuild_canvas=False)
+            print(
+                f"  [scorecard] {sc.get('status')} "
+                f"({sc.get('n_entries')} entries, "
+                f"briefs={sc.get('briefs_written')})"
+            )
+            if sc.get("status") != "ok":
+                errors.append(f"scorecard: {sc}")
+        except Exception as exc:
+            msg = f"scorecard rebuild failed: {exc}"
+            print(f"  [WARN] {msg}", file=sys.stderr)
+            errors.append(msg)
+
     # ── Overlay stats summary ─────────────────────────────────────────────────
     for book_key in ("ops", "hc"):
         st = overlay_stats(overlays[book_key])

@@ -2,7 +2,7 @@
 
 **Quadrant:** Insufficient data  
 **Delivery rate:** —  
-**Engagement score:** +0.50  
+**Transparency score:** 20%  
 **Open goals at call:** 1
 
 ---
@@ -11,7 +11,7 @@
 - **Alex Gorsky** (CEO), since FY2016-Q3
 - Regime deliver rate: **67%** on 8 promises
 
-## This Call — Engagement
+## This Call — Transparency
 
 | Metric | Count |
 |---|---|

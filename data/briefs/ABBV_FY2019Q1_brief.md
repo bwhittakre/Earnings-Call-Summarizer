@@ -1,8 +1,8 @@
 # Post-Call Brief: ABBV — FY2019-Q1
 
-**Quadrant:** Insufficient data  
-**Delivery rate:** —  
-**Engagement score:** -0.20  
+**Quadrant:** Retreating  
+**Delivery rate:** 0%  
+**Transparency score:** 6%  
 **Open goals at call:** 4
 
 ---
@@ -11,7 +11,7 @@
 - **Richard Gonzalez** (CEO), since FY2016-Q4
 - Regime deliver rate: **25%** on 9 promises
 
-## This Call — Engagement
+## This Call — Transparency
 
 | Metric | Count |
 |---|---|

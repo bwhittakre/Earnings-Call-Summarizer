@@ -17,6 +17,13 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from services.earnings_monitor.period_keys import (
+    fiscal_key,
+    period_kind,
+    period_label,
+    period_sort_key,
+)
+
 ROOT = Path(__file__).resolve().parents[3]
 
 _SCORECARD_PATH = ROOT / "data" / "desk_call_scorecard_v1.json"
@@ -37,12 +44,9 @@ _CLAIMS_PATH = (
     / "desk_claims_v1.json"
 )
 
-_FY_RE = __import__("re").compile(r"^FY(\d{4})-Q([1-4])$", __import__("re").IGNORECASE)
-
-
 def _fkey(fp: str | None) -> tuple[int, int]:
-    m = _FY_RE.fullmatch(str(fp or "").strip().upper())
-    return (int(m.group(1)), int(m.group(2))) if m else (-1, -1)
+    """Canonical FY key for regime windows. Conferences map onto their quarter."""
+    return fiscal_key(fp)
 
 
 def _fmt_rate(v: float | None) -> str:
@@ -108,6 +112,9 @@ class BriefData:
     narrative_level: float | None = None
     narrative_change: float | None = None
     quant_z: float | None = None
+
+    # Conference / investor-day title when fiscal_period is CONF-*
+    event_title: str | None = None
 
     @property
     def quadrant(self) -> str:
@@ -222,8 +229,7 @@ def load_brief_data(
 ) -> BriefData | None:
     """Assemble all signals for the brief. Returns None if no scorecard entry exists."""
     ticker_up = ticker.strip().upper()
-    fp_key = _fkey(fiscal_period)
-    if fp_key[0] < 0:
+    if period_kind(fiscal_period) == "unknown":
         return None
 
     # ── scorecard ──────────────────────────────────────────────────────────────
@@ -231,7 +237,7 @@ def load_brief_data(
     ticker_entries = [
         e for e in sc_entries if str(e.get("ticker") or "").upper() == ticker_up
     ]
-    ticker_entries.sort(key=lambda e: _fkey(e.get("fiscal_period")))
+    ticker_entries.sort(key=lambda e: period_sort_key(e.get("fiscal_period")))
 
     this_entry = next(
         (e for e in ticker_entries if e.get("fiscal_period") == fiscal_period), None
@@ -316,6 +322,7 @@ def load_brief_data(
         narrative_level=narrative_level,
         narrative_change=narrative_change,
         quant_z=quant_z,
+        event_title=this_entry.get("event_name") or None,
     )
 
 
@@ -328,9 +335,21 @@ def all_scored_periods(ticker: str) -> list[str]:
     ]
     return [
         e["fiscal_period"]
-        for e in sorted(entries, key=lambda e: _fkey(e.get("fiscal_period")), reverse=True)
+        for e in sorted(entries, key=lambda e: period_sort_key(e.get("fiscal_period")), reverse=True)
         if e.get("fiscal_period")
     ]
+
+
+def period_display_label(ticker: str, fiscal_period: str) -> str:
+    """Scorecard period label, including conference event name when present."""
+    ticker_up = ticker.strip().upper()
+    for entry in _load_scorecard_entries():
+        if (
+            str(entry.get("ticker") or "").upper() == ticker_up
+            and entry.get("fiscal_period") == fiscal_period
+        ):
+            return period_label(fiscal_period, entry.get("event_name"))
+    return period_label(fiscal_period)
 
 
 def all_scored_tickers() -> list[str]:
@@ -352,7 +371,9 @@ def render_brief(st: Any, brief: "BriefData") -> None:
     quad_color = brief.quadrant_color
     col_title, col_badge = st.columns([3, 1])
     with col_title:
-        st.subheader(f"{brief.ticker} — {brief.fiscal_period}")
+        st.subheader(
+            f"{brief.ticker} — {period_label(brief.fiscal_period, brief.event_title)}"
+        )
         st.caption(
             f"Transparency this call: {_fmt_rate(brief.transparency_score)}  |  "
             f"Delivery rate: {_fmt_rate(brief.delivery_score)}  |  "
@@ -525,7 +546,8 @@ def _fmt_float(v: float | None, decimals: int = 2) -> str:
 def generate_brief_markdown(brief: "BriefData") -> str:
     """Generate a compact markdown brief suitable for saving to disk or forwarding."""
     lines: list[str] = [
-        f"# Post-Call Brief: {brief.ticker} — {brief.fiscal_period}",
+        f"# Post-Call Brief: {brief.ticker} — "
+        f"{period_label(brief.fiscal_period, brief.event_title)}",
         "",
         f"**Quadrant:** {brief.quadrant}  ",
         f"**Delivery rate:** {_fmt_rate(brief.delivery_score)}  ",

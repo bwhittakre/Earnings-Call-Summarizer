@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from collections import defaultdict
 from datetime import datetime, timezone
@@ -26,6 +27,16 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parent.parent
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from services.earnings_monitor.period_keys import (  # noqa: E402
+    canonical_period as _canonical_period,
+    fiscal_key as _fiscal_key,
+    period_kind,
+    period_sort_key,
+    seed_before_call,
+)
 OUT_PATH = ROOT / "data" / "desk_call_scorecard_v1.json"
 
 BOOK_PATHS: dict[str, Path] = {
@@ -33,6 +44,13 @@ BOOK_PATHS: dict[str, Path] = {
     "desk_ops_v2":   ROOT / "Structured Narrative/output/cross_company/json/desk_trees_ops_v2.json",
     "desk_hc_v2":    ROOT / "Structured Narrative/output/cross_company/json/desk_trees_hc_v2.json",
 }
+BOOK_OVERLAY: dict[str, str] = {
+    "desk_ops_v2": "ops",
+    "desk_hc_v2": "hc",
+}
+
+_FY_RE = re.compile(r"^FY(\d{4})-Q([1-4])$", re.IGNORECASE)
+_CONF_RE = re.compile(r"^CONF-(\d{4})-(\d{2})-(\d{2})$")
 
 # Edges that count as explicit terminal-negative at a call
 NEGATIVE_TERMINAL_EDGES = {"missed", "dropped", "abandoned", "expired"}
@@ -72,13 +90,69 @@ def _kind_rank(k: str) -> int:
 # Helpers
 # ---------------------------------------------------------------------------
 
+def canonical_period(fp: str) -> str:
+    """Delivery-math only: map CONF stamps onto a calendar FY quarter."""
+    return _canonical_period(fp)
+
+
 def fiscal_key(fp: str) -> tuple[int, int]:
-    """'FY2024-Q3' -> (2024, 3) for sorting."""
+    """Canonical (year, quarter) for delivery / age. Unknown → (0, 0)."""
+    return _fiscal_key(fp)
+
+
+def _registry_fy_periods(ticker: str) -> set[str]:
+    path = (
+        ROOT
+        / "Structured Narrative"
+        / "output"
+        / ticker.upper()
+        / "json"
+        / "quarter_registry.json"
+    )
+    if not path.is_file():
+        return set()
     try:
-        year_part, q_part = fp.split("-")
-        return (int(year_part[2:]), int(q_part[1:]))
+        payload = json.loads(path.read_text(encoding="utf-8"))
     except Exception:
-        return (0, 0)
+        return set()
+    scored = payload.get("scored_quarters") or {}
+    return {str(p) for p in scored if period_kind(str(p)) == "fy"}
+
+
+def _conf_cue_events(ticker: str) -> dict[str, str]:
+    """CONF-YYYY-MM-DD → event name from the supplemental cue file."""
+    path = ROOT / "data" / f"desk_conf_cue_{ticker.upper()}.json"
+    if not path.is_file():
+        return {}
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+    out: dict[str, str] = {}
+    for event in payload.get("events") or []:
+        day = str(event.get("date") or "").strip()
+        if not day:
+            continue
+        key = f"CONF-{day}"
+        if period_kind(key) == "conf":
+            out[key] = str(event.get("name") or "").strip()
+    return out
+
+
+def _collect_call_periods(ticker: str, ttrees: list[dict]) -> set[str]:
+    """Raw FY + CONF labels: tree seeds/nodes, Roz registry, conference cues."""
+    periods: set[str] = set()
+    for t in ttrees:
+        seed_fp = str((t.get("seed") or {}).get("fiscal_period") or "").strip()
+        if period_kind(seed_fp) in {"fy", "conf"}:
+            periods.add(seed_fp)
+        for n in t.get("nodes") or []:
+            node_fp = str(n.get("fiscal_period") or "").strip()
+            if period_kind(node_fp) in {"fy", "conf"}:
+                periods.add(node_fp)
+    periods.update(_registry_fy_periods(ticker))
+    periods.update(_conf_cue_events(ticker))
+    return periods
 
 
 def _load_book(path: Path) -> dict[str, Any] | None:
@@ -89,6 +163,34 @@ def _load_book(path: Path) -> dict[str, Any] | None:
     except Exception as exc:
         print(f"[scorecard] warning: could not load {path}: {exc}", file=sys.stderr)
         return None
+
+
+def _merge_overlay_trees(book: dict[str, Any], overlay_key: str) -> dict[str, Any]:
+    """Union compiled-book trees with overlay trees (overlay wins on id)."""
+    try:
+        from scripts._desk_catalog_overlay import get_overlay_trees, load_overlay
+    except Exception as exc:
+        print(f"[scorecard] warning: overlay import failed: {exc}", file=sys.stderr)
+        return book
+
+    overlay = load_overlay(overlay_key)
+    extras = get_overlay_trees(overlay)
+    if not extras:
+        return book
+
+    by_id: dict[str, dict] = {}
+    for tree in book.get("trees") or []:
+        tid = str(tree.get("tree_id") or "")
+        if tid:
+            by_id[tid] = tree
+    for tree in extras:
+        tid = str(tree.get("tree_id") or "")
+        if tid:
+            by_id[tid] = tree
+
+    merged = dict(book)
+    merged["trees"] = list(by_id.values())
+    return merged
 
 
 # ---------------------------------------------------------------------------
@@ -117,17 +219,19 @@ def _scorecard_for_book(book: dict[str, Any], book_id: str) -> list[dict[str, An
     entries: list[dict[str, Any]] = []
 
     for ticker, ttrees in sorted(ticker_trees.items()):
-        # Collect all quarters that have any event (seed or node)
-        all_quarters: set[str] = set()
-        for t in ttrees:
-            all_quarters.add(t["seed"]["fiscal_period"])
-            for n in t.get("nodes") or []:
-                all_quarters.add(n["fiscal_period"])
+        cue_names = _conf_cue_events(ticker)
+        all_calls = _collect_call_periods(ticker, ttrees)
+        sorted_calls = sorted(all_calls, key=period_sort_key)
 
-        sorted_quarters = sorted(all_quarters, key=fiscal_key)
-
-        for q in sorted_quarters:
-            entry = _score_ticker_at_quarter(ticker, q, ttrees, book_id)
+        for q in sorted_calls:
+            entry = _score_ticker_at_quarter(
+                ticker,
+                q,
+                ttrees,
+                book_id,
+                allow_empty=True,
+                event_name=cue_names.get(q) or None,
+            )
             if entry is not None:
                 entries.append(entry)
 
@@ -139,13 +243,19 @@ def _score_ticker_at_quarter(
     q: str,
     trees: list[dict],
     book_id: str,
+    *,
+    allow_empty: bool = False,
+    event_name: str | None = None,
 ) -> dict[str, Any] | None:
     """
     Compute delivery + engagement scores for `ticker` at call `q`.
 
-    Returns None if the quarter has no meaningful data (e.g. pre-history).
+    `q` is the raw call id (``FY2026-Q2`` or ``CONF-2025-08-27``).
+    Delivery rolling math still uses the canonical FY key.
+    Returns None if the call has no meaningful data unless *allow_empty*.
     """
     q_key = fiscal_key(q)
+    kind = period_kind(q)
 
     # ------------------------------------------------------------------ #
     # Delivery score — rolling rate up to and including Q               #
@@ -221,19 +331,26 @@ def _score_ticker_at_quarter(
 
     open_trees_at_q: list[dict] = []
     for t in trees:
-        seed_fp_key = fiscal_key(t["seed"]["fiscal_period"])
-        if seed_fp_key >= q_key:
-            continue  # seeded in Q or later — not yet open at start of Q
-        # Check if it was already terminated BEFORE Q
+        seed_fp = str((t.get("seed") or {}).get("fiscal_period") or "")
+        if not seed_before_call(seed_fp, q):
+            continue
+        # Check if it was already terminated BEFORE this call
         terminal_before_q = any(
-            n["edge"] in ALL_TERMINAL_EDGES and fiscal_key(n["fiscal_period"]) < q_key
+            n["edge"] in ALL_TERMINAL_EDGES
+            and (
+                (period_kind(q) == "conf" and seed_before_call(str(n.get("fiscal_period") or ""), q))
+                or (period_kind(q) != "conf" and fiscal_key(n["fiscal_period"]) < q_key)
+            )
             for n in (t.get("nodes") or [])
         )
         if not terminal_before_q:
             open_trees_at_q.append(t)
 
-    # New seeds introduced AT Q
-    new_seed_trees = [t for t in trees if fiscal_key(t["seed"]["fiscal_period"]) == q_key]
+    # New seeds introduced AT this exact call (FY or CONF), not the collapsed quarter
+    new_seed_trees = [
+        t for t in trees
+        if str((t.get("seed") or {}).get("fiscal_period") or "").strip() == q
+    ]
     n_new_seeds = len(new_seed_trees)
 
     # Categorise each open tree's signal AT Q
@@ -244,7 +361,10 @@ def _score_ticker_at_quarter(
 
     for t in open_trees_at_q:
         node_at_q = next(
-            (n for n in (t.get("nodes") or []) if n["fiscal_period"] == q),
+            (
+                n for n in (t.get("nodes") or [])
+                if str(n.get("fiscal_period") or "").strip() == q
+            ),
             None,
         )
         if node_at_q is None:
@@ -305,13 +425,15 @@ def _score_ticker_at_quarter(
     quality = (n_new_seeds + n_restated) / max(1, len(open_trees_at_q) + n_new_seeds)
     transparency_score = min(1.0, coverage * 0.7 + quality * 0.3)
 
-    # Skip quarters with zero information (no open trees, no new seeds)
-    if len(open_trees_at_q) == 0 and n_new_seeds == 0:
+    # Skip calls with zero information unless this is a backfilled FY / CONF row
+    if len(open_trees_at_q) == 0 and n_new_seeds == 0 and not allow_empty:
         return None
 
     return {
         "ticker": ticker,
         "fiscal_period": q,
+        "period_kind": kind,
+        "event_name": event_name,
         "book_id": book_id,
         # Delivery
         "delivery_score": round(delivery_score, 4) if delivery_score is not None else None,
@@ -354,6 +476,9 @@ def build_scorecard() -> dict[str, Any]:
         if book is None:
             print(f"[scorecard] skipping {book_id} — file not found", file=sys.stderr)
             continue
+        overlay_key = BOOK_OVERLAY.get(book_id)
+        if overlay_key:
+            book = _merge_overlay_trees(book, overlay_key)
         entries = _scorecard_for_book(book, book_id)
         all_entries.extend(entries)
         tickers = sorted({e["ticker"] for e in entries})
@@ -364,7 +489,7 @@ def build_scorecard() -> dict[str, Any]:
         )
 
     # Sort: book_id, ticker, fiscal_period
-    all_entries.sort(key=lambda e: (e["book_id"], e["ticker"], fiscal_key(e["fiscal_period"])))
+    all_entries.sort(key=lambda e: (e["book_id"], e["ticker"], period_sort_key(e["fiscal_period"])))
 
     return {
         "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),

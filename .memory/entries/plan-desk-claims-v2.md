@@ -7,11 +7,11 @@ title: Claims desk v2 — trees, goals, live pipeline
 node_label: Desk v2 trees
 tags: plan,desk,claims,trees,goals,nvidia,august-2026
 status: active
-open_threads: 1
+open_threads: 7
 success: 'null'
 files: ''
 created_at: '2026-08-27T18:02:00+00:00'
-updated_at: '2026-08-27T18:02:00+00:00'
+updated_at: '2026-09-09T12:57:19.911061+00:00'
 ---
 v1 stays the locked 17 Aug book. Flex launch must still read
 kept and delivered. This work is a new stamp and a new object.

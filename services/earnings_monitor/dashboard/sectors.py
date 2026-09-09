@@ -26,6 +26,8 @@ def list_sector_options(*, sectors_dir: Path | None = None) -> list[str]:
 
 def sector_option_label(choice: str) -> str:
     """Human label for a sector selectbox option."""
+    if choice == "independent":
+        return "Independent"
     if choice.startswith("quartr_"):
         pretty = choice.removeprefix("quartr_").replace("_", " ").strip()
         return f"Quartr: {pretty}" if pretty else "Quartr"

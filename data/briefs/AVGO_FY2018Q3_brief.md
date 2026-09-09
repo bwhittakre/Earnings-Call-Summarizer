@@ -1,8 +1,8 @@
 # Post-Call Brief: AVGO — FY2018-Q3
 
-**Quadrant:** Credible & Committed  
-**Delivery rate:** 100%  
-**Engagement score:** +0.10  
+**Quadrant:** Quietly Delivering  
+**Delivery rate:** 50%  
+**Transparency score:** 12%  
 **Open goals at call:** 3
 
 ---
@@ -11,7 +11,7 @@
 - **Hock Tan** (CEO), since FY2016-Q3
 - Regime deliver rate: **67%** on 13 promises
 
-## This Call — Engagement
+## This Call — Transparency
 
 | Metric | Count |
 |---|---|
@@ -27,4 +27,5 @@
 - No follow-up cites recorded for this specific period.
 
 ## Watch List
-- Watch list clear.
+
+**Stale goals (no cite > 4 quarters):** 1

@@ -2,7 +2,7 @@
 
 **Quadrant:** Quietly Delivering  
 **Delivery rate:** 100%  
-**Engagement score:** -0.07  
+**Transparency score:** 4%  
 **Open goals at call:** 6
 
 ---
@@ -11,20 +11,21 @@
 - **Robert Bradway** (CEO), since FY2019-Q2
 - Regime deliver rate: **75%** on 10 promises
 
-## This Call — Engagement
+## This Call — Transparency
 
 | Metric | Count |
 |---|---|
 | New goals | 1 |
 | Restated | 0 |
-| Delivered | 4 |
+| Delivered | 1 |
 | Failed | 0 |
 | Deferred | 0 |
 | Dropped | 0 |
-| Silent (not mentioned) | 3 |
+| Silent (not mentioned) | 6 |
 
 ## Resolved This Period
 - No follow-up cites recorded for this specific period.
 
 ## Watch List
-- Watch list clear.
+
+**Stale goals (no cite > 4 quarters):** 1

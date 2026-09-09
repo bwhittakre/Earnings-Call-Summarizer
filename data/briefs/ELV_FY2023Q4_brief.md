@@ -1,9 +1,9 @@
 # Post-Call Brief: ELV — FY2023-Q4
 
-**Quadrant:** Quietly Delivering  
-**Delivery rate:** 100%  
-**Engagement score:** -0.43  
-**Open goals at call:** 7
+**Quadrant:** Retreating  
+**Delivery rate:** 0%  
+**Transparency score:** 0%  
+**Open goals at call:** 8
 
 ---
 
@@ -12,21 +12,21 @@
 - Regime deliver rate: **29%** on 10 promises
 - Prior regime (Joseph Swedish): — on 0 promises
 
-## This Call — Engagement
+## This Call — Transparency
 
 | Metric | Count |
 |---|---|
 | New goals | 0 |
 | Restated | 0 |
-| Delivered | 2 |
+| Delivered | 0 |
 | Failed | 0 |
 | Deferred | 0 |
 | Dropped | 0 |
-| Silent (not mentioned) | 6 |
+| Silent (not mentioned) | 8 |
 
 ## Resolved This Period
 - No follow-up cites recorded for this specific period.
 
 ## Watch List
 
-**Stale goals (no cite > 4 quarters):** 5
+**Stale goals (no cite > 4 quarters):** 6

@@ -1,8 +1,8 @@
 # Post-Call Brief: BSX — FY2019-Q3
 
-**Quadrant:** Credible & Committed  
+**Quadrant:** Quietly Delivering  
 **Delivery rate:** 100%  
-**Engagement score:** +0.25  
+**Transparency score:** 15%  
 **Open goals at call:** 1
 
 ---
@@ -11,7 +11,7 @@
 - **Michael Mahoney** (CEO), since FY2018-Q4
 - Regime deliver rate: **44%** on 10 promises
 
-## This Call — Engagement
+## This Call — Transparency
 
 | Metric | Count |
 |---|---|

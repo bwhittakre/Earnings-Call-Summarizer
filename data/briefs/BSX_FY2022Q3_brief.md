@@ -1,8 +1,8 @@
 # Post-Call Brief: BSX — FY2022-Q3
 
-**Quadrant:** Quietly Delivering  
-**Delivery rate:** 100%  
-**Engagement score:** -0.20  
+**Quadrant:** Retreating  
+**Delivery rate:** 33%  
+**Transparency score:** 6%  
 **Open goals at call:** 4
 
 ---
@@ -11,7 +11,7 @@
 - **Michael Mahoney** (CEO), since FY2018-Q4
 - Regime deliver rate: **44%** on 10 promises
 
-## This Call — Engagement
+## This Call — Transparency
 
 | Metric | Count |
 |---|---|

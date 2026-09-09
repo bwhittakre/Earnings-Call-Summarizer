@@ -125,6 +125,9 @@ def suggested_book(
     sector = str(sector_choice or "")
     if sector in _HC_SECTORS and _BOOK_HC in books:
         return _BOOK_HC
+    if sector == "independent" and _BOOK_HC in books:
+        # Independent names (CRWV today) seed the hc overlay, not ops.
+        return _BOOK_HC
     if sector in _TECH_SECTORS and _BOOK_OPS in books:
         return _BOOK_OPS
     if sector == "Custom List":

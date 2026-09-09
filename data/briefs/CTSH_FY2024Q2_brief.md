@@ -1,9 +1,9 @@
 # Post-Call Brief: CTSH — FY2024-Q2
 
-**Quadrant:** Quietly Delivering  
-**Delivery rate:** 100%  
-**Engagement score:** -0.42  
-**Open goals at call:** 6
+**Quadrant:** Retreating  
+**Delivery rate:** 14%  
+**Transparency score:** 0%  
+**Open goals at call:** 8
 
 ---
 
@@ -12,21 +12,21 @@
 - Regime deliver rate: **50%** on 3 promises
 - Prior regime (Brian Humphries): 0% on 3 promises
 
-## This Call — Engagement
+## This Call — Transparency
 
 | Metric | Count |
 |---|---|
 | New goals | 0 |
 | Restated | 0 |
-| Delivered | 4 |
+| Delivered | 1 |
 | Failed | 0 |
 | Deferred | 0 |
 | Dropped | 0 |
-| Silent (not mentioned) | 5 |
+| Silent (not mentioned) | 8 |
 
 ## Resolved This Period
 - No follow-up cites recorded for this specific period.
 
 ## Watch List
 
-**Stale goals (no cite > 4 quarters):** 4
+**Stale goals (no cite > 4 quarters):** 6

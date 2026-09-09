@@ -1,8 +1,8 @@
 # Post-Call Brief: VRTX — FY2021-Q4
 
-**Quadrant:** Credible & Committed  
-**Delivery rate:** 100%  
-**Engagement score:** 0.00  
+**Quadrant:** Retreating  
+**Delivery rate:** 33%  
+**Transparency score:** 10%  
 **Open goals at call:** 2
 
 ---
@@ -12,7 +12,7 @@
 - Regime deliver rate: **67%** on 6 promises
 - Prior regime (Jeffrey Leiden): 33% on 3 promises
 
-## This Call — Engagement
+## This Call — Transparency
 
 | Metric | Count |
 |---|---|

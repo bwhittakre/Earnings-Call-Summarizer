@@ -1,9 +1,9 @@
 # Post-Call Brief: INTU — FY2026-Q3
 
-**Quadrant:** Quietly Delivering  
-**Delivery rate:** 100%  
-**Engagement score:** -0.29  
-**Open goals at call:** 6
+**Quadrant:** Retreating  
+**Delivery rate:** 0%  
+**Transparency score:** 3%  
+**Open goals at call:** 10
 
 ---
 
@@ -12,21 +12,21 @@
 - Regime deliver rate: **80%** on 10 promises
 - Prior regime (Brad Smith): — on 1 promises
 
-## This Call — Engagement
+## This Call — Transparency
 
 | Metric | Count |
 |---|---|
 | New goals | 1 |
 | Restated | 0 |
-| Delivered | 4 |
+| Delivered | 0 |
 | Failed | 0 |
 | Deferred | 0 |
 | Dropped | 0 |
-| Silent (not mentioned) | 6 |
+| Silent (not mentioned) | 10 |
 
 ## Resolved This Period
 - No follow-up cites recorded for this specific period.
 
 ## Watch List
 
-**Stale goals (no cite > 4 quarters):** 4
+**Stale goals (no cite > 4 quarters):** 8
