@@ -1,6 +1,6 @@
 {
   "schema_version": "1",
-  "updated_at": "2026-09-08T23:15:47.954903+00:00",
+  "updated_at": "2026-09-09T00:20:39.550386+00:00",
   "trees": [
     {
       "tree_id": "lly-alimta-uk-appeal",
@@ -7753,6 +7753,61 @@
         "proposed_at": "2026-09-08T23:15:47.954903+00:00",
         "model": "claude-sonnet-4-5",
         "run_id": "2dd1d8d4-d4c5-460e-98c2-4085c71b9bac"
+      }
+    },
+    {
+      "tree_id": "crwv-100m-arr-networking-cpu-software",
+      "title": "Networking, CPU, software each >$100M ARR by end 2026",
+      "kind": "promise",
+      "bucket": "earnings_power",
+      "objects": [
+        "networking",
+        "CPU",
+        "software",
+        "$100 million ARR"
+      ],
+      "match": {
+        "anchors": [
+          "networking",
+          "CPU",
+          "software",
+          "$100 million"
+        ],
+        "context": [
+          "ARR",
+          "crossing",
+          "end of year",
+          "2026"
+        ],
+        "exclude": [],
+        "generic": null
+      },
+      "seed": {
+        "fiscal_period": "CONF-2026-05-27",
+        "claim_type": "forward_clock",
+        "clock": "FY2026-Q4",
+        "excerpt": "Networking, CPU, and software, all three crossing $100 million of ARR by the end of this year",
+        "dimension": "product_roadmap",
+        "status": "verbatim",
+        "materiality": "medium",
+        "materiality_rationale": "Validates product diversification beyond GPU compute; $300M+ combined ARR meaningful for gross margin profile and competitive differentiation.",
+        "delivery_basis": "transcript"
+      },
+      "confidence": "high",
+      "rationale": "Specific revenue target for three non-GPU product lines. Demonstrates diversification strategy. Trackable through segment revenue disclosures.",
+      "materiality": "medium",
+      "materiality_rationale": "Validates product diversification beyond GPU compute; $300M+ combined ARR meaningful for gross margin profile and competitive differentiation.",
+      "ticker": "CRWV",
+      "excerpt_verified": true,
+      "proposed_seed_py": "    {\n        \"tree_id\": \"crwv-100m-arr-networking-cpu-software\",\n        \"ticker\": \"CRWV\",\n        \"kind\": \"promise\",\n        \"beat_id\": \"100m-arr-networking-cpu-software\",\n        \"bucket\": \"earnings_power\",\n        \"title\": \"Networking, CPU, software each >$100M ARR by end 2026\",\n        \"objects\": (\"networking\", \"CPU\", \"software\", \"$100 million ARR\",),\n        \"match\": {\n            \"anchors\": (\"networking\", \"CPU\", \"software\", \"$100 million\"),\n            \"context\": (\"ARR\", \"crossing\", \"end of year\", \"2026\"),\n            \"exclude\": (),\n            \"generic\": None,\n        },\n        \"seed\": {\n            \"fiscal_period\": \"CONF-2026-05-27\",\n            \"claim_type\": \"forward_clock\",\n            \"clock\": \"FY2026-Q4\",\n            \"excerpt\": (\"Networking, CPU, and software, all three crossing $100 million of ARR by the end of this year\"),\n            \"dimension\": \"product_roadmap\",\n            \"status\": \"verbatim\",\n        },\n        \"nodes\": (),\n    },",
+      "book": "desk_hc_v2",
+      "provenance": {
+        "source": "autopilot",
+        "status": "confirmed",
+        "confidence": "high",
+        "proposed_at": "2026-09-09T00:20:39.550386+00:00",
+        "model": "claude-sonnet-4-5",
+        "run_id": "7e71a4f2-8b73-4dd4-bc49-164a83eaa86b"
       }
     }
   ],

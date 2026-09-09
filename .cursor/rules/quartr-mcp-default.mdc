@@ -1,0 +1,29 @@
+---
+description: Quartr MCP is the only transcript source — never the REST API
+alwaysApply: true
+---
+
+# Quartr MCP is the default (no API access)
+
+Bobby does not have Quartr REST API access. There is no `QUARTR_API_KEY`.
+Never ask for one. Never treat `--use-quartr-rest`, `quartr_history_import`,
+or `QuartrApiClient` as the pull path.
+
+## Always do this
+
+1. Pull transcripts with **Cursor Quartr MCP**: `search_companies` →
+   `list_events` → `read_transcript` (and `section: "qna"` for the tail
+   when `nextFromTimestamp` is set).
+2. Write earnings calls to
+   `Structured Narrative/transcripts_raw/{TICKER}_{PERIOD}.txt`
+   via `scripts/_write_quartr_mcp_transcript.py` (merge full + Q&A windows
+   by `paragraphId` if paginated).
+3. Onboard with `--skip-pull` so Roz consumes the MCP-seeded files.
+   Conferences go to `data/conf_transcripts/{TICKER}/{eventId}.json` and
+   `scripts/_desk_conf_ingest.py --transcript-file`.
+
+## Never do this
+
+- Propose setting a Quartr API key
+- Fail an onboard because REST is unset and stop
+- Use ROIC as the default (`--allow-roic-fallback` is opt-in only)

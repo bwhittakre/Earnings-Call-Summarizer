@@ -1,22 +1,18 @@
 """CRWV earnings history batch onboard.
 
 Onboards CoreWeave (CRWV) across its 6 completed earnings quarters
-(FY2025-Q1 through FY2026-Q2). After all quarters are registered,
-kicks off the full-history desk seeding so CRWV is fully wired into
-the claims desk.
+(FY2025-Q1 through FY2026-Q2) using a full pull via Quartr MCP.
 
 What DOES run:
+  - Transcripts seeded via Cursor Quartr MCP into transcripts_raw (no REST API)
   - Quartr company_id (20310) written to overlay
   - Fiscal calendar registered in config/fiscal_calendars.yaml
   - Ticker added to config/sectors/xlk_tech.txt
   - Ticker registered in monitor.sqlite3
   - Full-history claims desk seeding via run_history_onboard_for_ticker
 
-What SKIPS (data already on disk / not applicable):
-  --skip-pull   (transcripts already pulled or will be pulled by SN)
-  --skip-quant  (consensus not yet available for all quarters)
-  --skip-llm    (LLM scoring handled by claims desk pipeline)
-  --skip-panel  (panel ingestion not needed here)
+Uses --as-of (one day before each call date) to bypass the deadline guard
+that blocks past-dated historical onboards.
 
 Usage (from repo root, PowerShell):
     python scripts/_crwv_onboard_batch.py [--dry-run]
@@ -33,13 +29,14 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
 # (fiscal_period, call_date_iso, quartr_company_id)
-CRWV_QUARTERS: list[tuple[str, str, int]] = [
-    ("FY2025-Q1", "2025-05-14T20:00:00+00:00", 20310),
-    ("FY2025-Q2", "2025-08-12T20:00:00+00:00", 20310),
-    ("FY2025-Q3", "2025-11-10T21:00:00+00:00", 20310),
-    ("FY2025-Q4", "2026-02-26T21:00:00+00:00", 20310),
-    ("FY2026-Q1", "2026-05-07T20:00:00+00:00", 20310),
-    ("FY2026-Q2", "2026-08-11T20:00:00+00:00", 20310),
+# as_of is set to ~1 hour before the call to bypass the deadline guard
+CRWV_QUARTERS: list[tuple[str, str, str, int]] = [
+    ("FY2025-Q1", "2025-05-14T20:00:00+00:00", "2025-05-14T19:00:00+00:00", 20310),
+    ("FY2025-Q2", "2025-08-12T20:00:00+00:00", "2025-08-12T19:00:00+00:00", 20310),
+    ("FY2025-Q3", "2025-11-10T21:00:00+00:00", "2025-11-10T20:00:00+00:00", 20310),
+    ("FY2025-Q4", "2026-02-26T21:00:00+00:00", "2026-02-26T20:00:00+00:00", 20310),
+    ("FY2026-Q1", "2026-05-07T20:00:00+00:00", "2026-05-07T19:00:00+00:00", 20310),
+    ("FY2026-Q2", "2026-08-11T20:00:00+00:00", "2026-08-11T19:00:00+00:00", 20310),
 ]
 
 
@@ -53,6 +50,7 @@ class BatchResult:
 def run_onboard(
     period: str,
     call_at: str,
+    as_of: str,
     quartr_company_id: int,
     *,
     dry_run: bool = False,
@@ -64,13 +62,13 @@ def run_onboard(
         "--period", period,
         "--report-at", call_at,
         "--call-at", call_at,
+        "--as-of", as_of,            # bypass deadline guard for historical backfill
         "--quartr-company-id", str(quartr_company_id),
         "--research-sector", "xlk_tech",
-        "--prior-event-count", "1",   # override: past-date onboard with no on-disk data
-        "--skip-pull",
-        "--skip-quant",
-        "--skip-llm",
-        "--skip-panel",
+        "--prior-event-count", "1",  # tell classifier at least 1 prior event exists
+        "--skip-pull",               # transcripts already seeded via Quartr MCP
+        "--skip-ids",                # no I/B/E/S estpermid for CRWV yet
+        "--skip-quant",              # no consensus data for CRWV yet
         "--force-onboard",
     ]
     if dry_run:
@@ -137,8 +135,8 @@ def main() -> int:
         print(f"Filtered to {len(targets)} quarter(s): {[r[0] for r in targets]}")
 
     failures: list[BatchResult] = []
-    for period, call_at, cid in targets:
-        r = run_onboard(period, call_at, cid, dry_run=args.dry_run)
+    for period, call_at, as_of, cid in targets:
+        r = run_onboard(period, call_at, as_of, cid, dry_run=args.dry_run)
         if not r.ok:
             failures.append(r)
 

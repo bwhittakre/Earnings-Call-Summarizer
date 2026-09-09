@@ -1,0 +1,19 @@
+{
+  "barra_id": "USBQ331",
+  "company_id": 20310,
+  "company_name": "CRWV",
+  "estpermid": 30064885888,
+  "isin": "US21873S1087",
+  "output_quarters": [
+    "FY2025-Q2",
+    "FY2025-Q3",
+    "FY2025-Q4",
+    "FY2026-Q1",
+    "FY2026-Q2"
+  ],
+  "prior_quarters": [
+    "FY2025-Q1"
+  ],
+  "ticker": "CRWV",
+  "updated_at": "2026-09-09T00:23:02+00:00"
+}

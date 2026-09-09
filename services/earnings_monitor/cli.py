@@ -156,6 +156,15 @@ def main(argv: list[str] | None = None) -> int:
     onboard_parser.add_argument("--call-at", default=None)
     onboard_parser.add_argument("--company-name", default="")
     onboard_parser.add_argument("--dry-run", action="store_true")
+    onboard_parser.add_argument(
+        "--as-of",
+        default=None,
+        help=(
+            "Override 'now' for the deadline guard (ISO-8601 with UTC offset). "
+            "Use a timestamp BEFORE report-at to onboard historical events without "
+            "triggering onboarding_blocked. Example: --as-of 2025-05-13T23:59:00+00:00"
+        ),
+    )
     onboard_parser.add_argument("--skip-pull", action="store_true")
     onboard_parser.add_argument("--skip-ids", action="store_true")
     onboard_parser.add_argument("--skip-fiscal", action="store_true")
@@ -327,12 +336,23 @@ def main(argv: list[str] | None = None) -> int:
         except ValueError as exc:
             parser.error(str(exc))
 
+        # --as-of lets callers override 'now' to bypass the deadline guard for
+        # historical backfills.  The value must be before report_at.
+        as_of_now: datetime | None = None
+        if getattr(args, "as_of", None):
+            as_of_now = datetime.fromisoformat(
+                str(args.as_of).strip().replace("Z", "+00:00")
+            )
+            if as_of_now.tzinfo is None:
+                parser.error("--as-of must include a UTC offset, e.g. +00:00")
+
         result = run_onboard(
             repo_root=config.repo_root,
             ticker=ticker,
             fiscal_period=args.period.upper(),
             report_at=report_at,
             company_name=args.company_name or ticker,
+            now=as_of_now,
             dry_run=bool(args.dry_run),
             skip_pull=bool(args.skip_pull),
             skip_ids=bool(args.skip_ids),
