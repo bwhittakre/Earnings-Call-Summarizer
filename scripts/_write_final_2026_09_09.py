@@ -81,13 +81,14 @@ def write_outline() -> Path:
         doc,
         "Final talk. Two full parts, then a short thank-you. "
         "Part 1 is the summer: how Roz came to be and what it is. "
-        "Part 2 is the last week, including what landed tonight. "
+        "Part 2 is the last week, then the Independent case study — "
+        "process, outcomes, meaning. "
         f"Rank IC book is still {RANK_IC}. Not a promotion. "
         f"NVIDIA gold {GOLD}. Ops {OPS}. Healthcare desk {HC}. "
         f"Scorecard {SCORECARD}. No healthcare Rank IC. "
         "No production_v1. No invented delivery rates.",
     )
-    add_h(doc, "Through-line (~28 minutes)")
+    add_h(doc, "Through-line (~30 minutes)")
     add_body(
         doc,
         "Part 1 (~15 min). One question all summer: does a cite-backed "
@@ -101,14 +102,14 @@ def write_outline() -> Path:
     )
     add_body(
         doc,
-        "Part 2 (~12 min). Noon 31 August the room asked for B, then C. "
+        "Part 2 (~15 min). Noon 31 August the room asked for B, then C. "
         "This week B ran. 310 proposed seeds, a 351-row review, "
         "Desk Autopilot, 44 skeletons walked to 207 ops / 187 HC. "
-        "The monitor had been watching 5 of 45. Tonight’s live "
-        "Independents are DDOG and LITE. Delivery on a first-seed "
-        "book is still an em dash. This week the scorecard started "
-        "plotting every tracked call. Tonight Claims Desk can isolate "
-        "a company across all three books. Rank IC book did not move.",
+        "The monitor had been watching 5 of 45. Then the Independent "
+        "case study — process, outcomes, meaning. DDOG FY2026-Q2 is "
+        "the gap (words ahead of the print). LITE FY2026-Q4 is the "
+        "split (demand agrees; margins do not). Delivery on a "
+        "first-seed book is still an em dash. Rank IC book did not move.",
     )
     add_h(doc, "PART 1 — How Roz came to be")
     add_h(doc, "1. Title and the question (60 seconds)")
@@ -297,27 +298,53 @@ def write_outline() -> Path:
         "Rank IC is still the 17 August comparison set. ADSK 27 August "
         "call never ran — that is the honest example.",
     )
-    add_h(doc, "11. DDOG, LITE, and this week’s chart (3.5 minutes)")
+    add_h(doc, "11. Case study — process, outcomes, meaning (6 minutes)")
     add_body(
         doc,
-        "Demo last in this part, not first. Independent → DDOG or "
-        "LITE (tonight’s case study; CRWV stays on the desk as the "
-        "younger-name precedent). Overlay book desk_hc_v2 — overlay "
-        "file, not a sector claim. Quartr MCP only. Delivery on a "
-        "first-seed book is an em dash, not 0%. Quote only the "
-        "inventory on the one-pager.",
+        "Paste CS-1 through CS-6 from documents/260910_case_study_slides.md. "
+        "Demo last, not first. Leave-behind: Roz_Independent_Case_Study.html. "
+        "CRWV stays on the desk as the younger-name precedent. Overlay "
+        "book desk_hc_v2 is a filename, not a healthcare claim. Quartr "
+        "MCP only. Delivery is an em dash, not 0%.",
         ink=True,
     )
     add_body(
         doc,
-        "This week: the old scatter dropped every row without a "
-        "delivery rate, so an Independent vanished. Company Timeline "
-        "now plots every tracked call. Y-axis transparency. Color = "
-        "earnings vs conference. Size = open goals / new seeds. "
-        "Delivery stays a tooltip em dash — never plotted as zero. "
-        "Tonight: Claims Desk Book is All books plus gold / ops / hc. "
-        "Companies picker isolates DDOG or LITE across books. Rates "
-        "follow the visible trees.",
+        "Process (CS-2). A new name is seven steps: pull FY + conferences "
+        "through Quartr MCP; score eight dimensions on four stages "
+        "(level, delta, surprise, novelty); join the PIT print z; write "
+        "the brief; seed Claims Desk clocks; add a scorecard row; Rank IC "
+        "stays parked. Conferences seed clocks. FY restates or ignores them.",
+    )
+    add_body(
+        doc,
+        "Outcomes (CS-3). DDOG: 28 FY + 37 conferences, 25/28 four-stage, "
+        "200 panel rows, 65 scorecard rows, 10 overlay trees. LITE: 31 FY "
+        "+ 26 conferences, 232 panel rows, 14 trees. First DDOG call "
+        "12 Nov 2019. First LITE call 1 Nov 2018. Do not invent 2016. "
+        "Both books: every open tree is silent. Delivery is a dash.",
+        ink=True,
+    )
+    add_body(
+        doc,
+        "Meaning (CS-4 / CS-5 / CS-6). Datadog FY2026-Q2: demand +1.9 / "
+        "surprise +1.2 / z −0.29 / gap 1.49 — the call is ahead of the "
+        "print. Guidance +1.2 / delta −0.8 — Q3 28–29% from 36%. "
+        "Confidence still +1.6; novelty −0.8 is the largest-customer "
+        "caveat. Lumentum FY2026-Q4: demand agrees (+2.0 / z +0.15). "
+        "Margins +2.0 / z −0.38 / gap 1.88. Cap alloc z +1.14 agrees. "
+        "Macro −0.5 (Chinese InP). Live clock $2B / 40%. Dead clock "
+        "$600M / 17–20%. Roz does not stamp bullish. Divergence is the "
+        "use case. Slope vs adjective. Novelty is an object detector. "
+        "A tree remembers what a quarter rank forgets.",
+        ink=True,
+    )
+    add_body(
+        doc,
+        "This week’s chart, then the live click: Company Timeline plots "
+        "every tracked call. Delivery stays a tooltip em dash. Claims "
+        "Desk Book is All books. Company picker isolates DDOG or LITE. "
+        "Then the HTML, then FY2026-Q2 / FY2026-Q4 Post-Call Brief.",
     )
     add_h(doc, "12. Still true / still not done (60 seconds)")
     add_body(
@@ -382,8 +409,10 @@ def write_outline() -> Path:
     add_body(
         doc,
         "Live: localhost:8501/Claims_Desk — All books, Companies DDOG "
-        "or LITE. Post_Call_Brief — latest FY. Optional gold 6 / 7 "
-        "on NVIDIA gold.",
+        "or LITE. Post_Call_Brief — DDOG FY2026-Q2, LITE FY2026-Q4 "
+        "(default DDOG meeting is Citi TMT 8 Sep — switch period). "
+        "Leave-behind: Roz_Independent_Case_Study.html. Optional gold "
+        "6 / 7 on NVIDIA gold.",
     )
     add_h(doc, "Order")
     add_body(
@@ -391,8 +420,9 @@ def write_outline() -> Path:
         "Title / question → three generations → scoring contract → "
         "when the market adjusts (the window) → Flex then trees → "
         "onboard, walk, analyze → transparency / dead window → [pause] → "
-        "31 August recap → pull / 44 → hundreds → monitor → DDOG/LITE "
-        "case study → still true → thank you → questions. "
+        "31 August recap → pull / 44 → hundreds → monitor → case study "
+        "CS-1–CS-6 (names, process, book, Datadog gap, Lumentum split, "
+        "meaning) → HTML / live desk → still true → thank you → questions. "
         "Demo at the end of Part 2, not at the open.",
     )
     dest = DESK / "Roz_Final_Presentation_Outline_2026-09-09.docx"
@@ -623,44 +653,97 @@ def write_script() -> Path:
         "cycle.",
     )
 
-    add_h(doc, "DDOG and LITE, and what landed tonight")
+    add_h(doc, "Case study — process")
     add_body(
         doc,
-        "The live names are Datadog and Lumentum. Independent "
-        "sector. Industry tag is tech. They sit on the healthcare "
-        "claims overlay because that is the file, not because they "
-        "are drug companies. Transcripts through Quartr in Cursor. "
-        "Earnings get narrative plus quant. Conferences seed Claims "
-        "Desk only. CoreWeave stays on the desk; it is not the hero.",
+        "The live names are Datadog and Lumentum. Independent. "
+        "Industry tag is tech. They sit on the healthcare overlay "
+        "because that is the file, not because they are drug "
+        "companies. CoreWeave stays on the desk. It is not the hero. "
+        "They are not in the 17 August Rank IC book.",
     )
     add_body(
         doc,
+        "Here is what actually runs on a new name. We pull every "
+        "earnings call and every conference through Quartr in "
+        "Cursor — Q&A tails included. Structured Narrative scores "
+        "eight dimensions on four stages: how this quarter looks, "
+        "whether the story got better or worse versus last call, "
+        "whether they were more bullish than the Street, and "
+        "whether they said something new. That joins a point-in-time "
+        "print z — this company’s own surprise history, as of the "
+        "call date. Then a brief, then Claims Desk clocks, then a "
+        "scorecard row for this meeting. Rank IC stays parked. "
+        "Conferences are where a lot of clocks are first said. "
+        "FY is where they get restated or ignored.",
+    )
+
+    add_h(doc, "Case study — outcomes")
+    add_body(
+        doc,
         "Datadog: twenty-eight earnings transcripts, thirty-seven "
-        "conferences. First call 12 November 2019. Eight overlay "
-        "trees, seven confirmed, one provisional. Latest quarter "
-        "FY2026-Q2. Lumentum: thirty-one earnings, twenty-six "
-        "conferences. First call 1 November 2018. Quartr has no "
-        "FY2021-Q2 transcript. Six confirmed overlay trees. Latest "
-        "quarter FY2026-Q4. Delivery on both first-seed books is a "
-        "dash. Do not say zero percent. Tree count is inventory, "
-        "not a keep rate.",
+        "conferences. First call 12 November 2019. Twenty-five of "
+        "twenty-eight FY quarters have all four stages. Two hundred "
+        "panel rows. Sixty-five scorecard rows. Ten overlay trees. "
+        "Latest quarter FY2026 Q2, sixth of August. Lumentum: "
+        "thirty-one earnings, twenty-six conferences. First call "
+        "1 November 2018. June-thirtieth fiscal. Two hundred "
+        "thirty-two panel rows. Fourteen trees. Latest quarter "
+        "FY2026 Q4, eleventh of August. Do not invent 2016. Quartr "
+        "has nothing earlier. Delivery on both books is a dash. "
+        "Ten silent and fourteen silent. Do not say zero percent. "
+        "Tree count is inventory, not a keep rate.",
+    )
+
+    add_h(doc, "Case study — meaning")
+    add_body(
+        doc,
+        "Datadog just ran a confident call on a slightly negative "
+        "print z. Demand is plus 1.9, surprise plus 1.2, z minus "
+        "0.29, gap 1.49. They sold thirty-six percent growth and "
+        "record sequential adds. The call is ahead of the number. "
+        "Guidance is still plus 1.2 on the adjective — they raised "
+        "dollars — and minus 0.8 on the slope. Q3 growth twenty-eight "
+        "to twenty-nine from thirty-six, after they de-risked the "
+        "largest customer. Confidence did not collapse. Novelty "
+        "minus 0.8 is the new caveat. FedRAMP High is still open. "
+        "Bits SRE went GA. India/Brazil is due this quarter. Ask it.",
+    )
+    add_body(
+        doc,
+        "Lumentum is the contrast. A billion-oh-one quarter, one "
+        "twenty-five guided. Demand agrees with the print. Cash "
+        "agrees — they retired 1.1 billion of converts, z plus 1.14. "
+        "Margins do not. Level pinned at plus 2.0, surprise plus 1.5, "
+        "z still minus 0.38, gap 1.88. They crossed fifty percent "
+        "gross a year early versus their own two-billion model. "
+        "Macro is the only red cell, minus 0.5. Chinese indium "
+        "phosphide just entered the script. The six-hundred-million "
+        "/ seventeen-to-twenty clock is already dead. The live clock "
+        "is two billion / forty percent in eighteen to twenty-four "
+        "months.",
+    )
+    add_body(
+        doc,
+        "Roz does not stamp bullish. Divergence is the use case — "
+        "the call saying something the print z does not. Slope "
+        "versus adjective. Novelty is an object detector, not a "
+        "louder tone. A tree remembers what a quarter rank forgets. "
+        "On XLK, not these names, raw tone reversed. Agreement was "
+        "flat three weeks and built later. These two show the "
+        "machinery on a live print. They are not a live IC.",
     )
     add_body(
         doc,
         "This week the scorecard chart stopped throwing away any "
         "call without a delivery rate. An Independent used to "
         "vanish. It now plots every tracked call, in time. "
-        "Transparency on the vertical. Earnings in one color, "
-        "conferences in the other. You can click a point. Delivery "
-        "is a dash in the tooltip until a promise settles. We do "
-        "not draw that dash as zero.",
-    )
-    add_body(
-        doc,
-        "Tonight Claims Desk defaults to All books. The company "
-        "picker isolates DDOG or LITE even if you are sitting on "
-        "XLK or a custom list. Rates follow the trees you can see. "
-        "Still no invented delivery rate.",
+        "Delivery is a dash in the tooltip. We do not draw that "
+        "dash as zero. Tonight Claims Desk defaults to All books. "
+        "The company picker isolates DDOG or LITE. The leave-behind "
+        "is the HTML. Then Independent, DDOG or LITE, Claims Desk, "
+        "Company Timeline, FY Post-Call Brief. Switch DDOG off the "
+        "Citi TMT conference onto FY2026 Q2.",
     )
 
     add_h(doc, "Still true")
@@ -682,9 +765,9 @@ def write_script() -> Path:
         "Do not invent a close. Do not call a dash zero. That "
         "guidance is the product as much as the software. I "
         "appreciate the time and the advice. I am happy to take "
-        "questions. If you want the live object: Independent, "
-        "DDOG or LITE, Claims Desk, Company Timeline, then the "
-        "latest FY Post-Call Brief.",
+        "questions. If you want the live object: the HTML first, "
+        "then Independent, DDOG or LITE, Claims Desk, Company "
+        "Timeline, then the FY Post-Call Brief.",
     )
 
     dest = DESK / "Roz_Final_Presentation_Script_2026-09-09.docx"

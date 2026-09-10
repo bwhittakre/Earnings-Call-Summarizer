@@ -15,6 +15,9 @@ Do not claim 2016 history.
 - Fiscal calendar: calendar year
 - Industry group: tech (tag). Overlay book: desk_hc_v2 (file, not healthcare)
 - Latest FY for the one-pager: FY2026-Q2 (2026-08-06)
+- Overlay trees tonight: 10 on `desk_hc_v2` (live autopilot, not a history mine)
+- Four-stage FY: 25 / 28 (FY2021-Q1 and FY2025-Q3 missing novelty; FY2019-Q3 prior-only)
+- Feature panel: 200 rows. Scorecard: 65 rows. Delivery: em dash (10 silent)
 
 ## LITE · Lumentum · companyId 6193 · ISIN US55024U1097
 
@@ -28,6 +31,13 @@ Missing FY2021-Q2 in the event list.
 - Fiscal calendar: June 30 year-end
 - Industry group: tech (tag). Overlay book: desk_hc_v2
 - Latest FY for the one-pager: FY2026-Q4 (2026-08-11)
+- Overlay trees tonight: 14 on `desk_hc_v2`
+- Feature panel: 232 rows. Scorecard: 57 rows. Delivery: em dash (14 silent)
+
+## Slides
+
+Paste sheet: `documents/260910_case_study_slides.md`. Do not quote a
+keep rate from this inventory.
 
 Neither name is appended to `xlk_tech` or `roz_book_tickers`.
 The 17 August Rank IC book is unchanged.

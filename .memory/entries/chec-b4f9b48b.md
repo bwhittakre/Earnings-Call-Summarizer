@@ -12,11 +12,12 @@ success: 'null'
 files: ''
 session_id: sess-7b99e8a2
 created_at: '2026-09-09T12:57:19.911061+00:00'
-updated_at: '2026-09-09T12:57:19.911061+00:00'
+updated_at: '2026-09-09T13:36:04.859953+00:00'
 results: '[{"metric": "crwv_scorecard_rows", "value": 19, "split": "CRWV", "window":
   "FY2025-Q1-through-CONF-2026-09-08", "criterion": "6 FY + 13 CONF", "source": "data/desk_call_scorecard_v1.json
   generated_at=2026-09-09T01:27:26Z"}, {"metric": "crwv_delivery_null", "value": 19,
   "split": "CRWV", "window": "same", "source": "desk_call_scorecard_v1.json"}]'
+related_to: chec-9e3c79ce
 ---
 Last-night work before the 9 Sep talk.
 
