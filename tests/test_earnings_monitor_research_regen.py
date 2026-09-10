@@ -19,6 +19,7 @@ from services.earnings_monitor.research_regen import (
     RegenRunResult,
     build_consolidated_command,
     build_rank_ic_command,
+    missing_onboarded_book_members,
     run_research_regen_once,
     sync_onboarded_book_members,
 )
@@ -337,6 +338,105 @@ def test_regen_once_force_runs_even_when_clean(tmp_path):
     assert result.ok
     assert not result.skipped
     assert calls == ["force"]
+    assert state.research_book_dirty() is None
+
+
+def test_regen_once_runs_when_overlay_sector_member_missing(tmp_path):
+    sector = tmp_path / "config" / "sectors" / "xlk_tech.txt"
+    sector.parent.mkdir(parents=True)
+    sector.write_text("AAPL\nCRWV\nTESTX99\n", encoding="utf-8")
+    overlays = tmp_path / "Structured Narrative" / "config" / "company_overlays"
+    overlays.mkdir(parents=True)
+    (overlays / "AAPL.json").write_text("{}", encoding="utf-8")
+    (overlays / "CRWV.json").write_text("{}", encoding="utf-8")
+    state = OperationalState(tmp_path / "monitor.sqlite3")
+    state.initialize()
+    state.set_meta("roz_book_tickers", '{"tickers": ["AAPL"]}')
+    calls: list[str] = []
+
+    def ok_runner(config, *, triggered_by="manual", python=None):
+        calls.append(triggered_by)
+        return RegenRunResult(
+            triggered_by=triggered_by,
+            started_at="t0",
+            finished_at="t1",
+            commands=(
+                RegenCommandResult(
+                    name="evaluate_narrative_signals",
+                    command=("python", "evaluate"),
+                    returncode=0,
+                    duration_seconds=0.1,
+                ),
+                RegenCommandResult(
+                    name="build_consolidated_panel_report",
+                    command=("python", "build"),
+                    returncode=0,
+                    duration_seconds=0.1,
+                ),
+            ),
+        )
+
+    result = run_research_regen_once(
+        _config(tmp_path, research_regen_debounce_seconds=0),
+        state,
+        force=False,
+        honor_debounce=False,
+        runner=ok_runner,
+    )
+    assert not result.skipped
+    assert result.ok
+    assert calls == ["book_membership:CRWV"]
+    from services.earnings_monitor.ticker_book import resolve_book_tickers
+
+    book = resolve_book_tickers(_config(tmp_path), state)
+    assert "CRWV" in book
+    assert "TESTX99" not in book
+    assert missing_onboarded_book_members(_config(tmp_path), state) == ()
+
+
+def test_regen_once_book_ranks_failure_does_not_redirty(tmp_path):
+    state = OperationalState(tmp_path / "monitor.sqlite3")
+    state.initialize()
+    state.mark_research_book_dirty(
+        trigger="AAPL:FY2026-Q3",
+        now=datetime(2026, 1, 1, tzinfo=UTC),
+    )
+
+    def ranks_failing_runner(config, *, triggered_by="manual", python=None):
+        return RegenRunResult(
+            triggered_by=triggered_by,
+            started_at="t0",
+            finished_at="t1",
+            commands=(
+                RegenCommandResult(
+                    name="evaluate_narrative_signals",
+                    command=("python", "evaluate"),
+                    returncode=0,
+                    duration_seconds=0.1,
+                ),
+                RegenCommandResult(
+                    name="build_consolidated_panel_report",
+                    command=("python", "build"),
+                    returncode=0,
+                    duration_seconds=0.1,
+                ),
+                RegenCommandResult(
+                    name="build_book_ranks",
+                    command=("python", "ranks"),
+                    returncode=2,
+                    duration_seconds=0.1,
+                ),
+            ),
+        )
+
+    result = run_research_regen_once(
+        _config(tmp_path, research_regen_debounce_seconds=0),
+        state,
+        force=False,
+        honor_debounce=False,
+        runner=ranks_failing_runner,
+    )
+    assert not result.ok
     assert state.research_book_dirty() is None
 
 

@@ -18,9 +18,14 @@ or `QuartrApiClient` as the pull path.
    `Structured Narrative/transcripts_raw/{TICKER}_{PERIOD}.txt`
    via `scripts/_write_quartr_mcp_transcript.py` (merge full + Q&A windows
    by `paragraphId` if paginated).
-3. Onboard with `--skip-pull` so Roz consumes the MCP-seeded files.
-   Conferences go to `data/conf_transcripts/{TICKER}/{eventId}.json` and
-   `scripts/_desk_conf_ingest.py --transcript-file`.
+3. Target **2016-Q1 through today**. If Quartr has nothing that far back,
+   pull every available FY + conference + other transcript meeting.
+   Write conferences to `data/conf_transcripts/{TICKER}/{eventId}.json`
+   plus `manifest.json`, then
+   `scripts/_desk_conf_ingest.py --transcript-file` (never REST).
+4. Onboard with `--skip-pull --research-sector independent` (and
+   `--industry-group`, e.g. tech). Do not join `xlk_tech` / Rank IC
+   unless the user asks. See `onboard-new-company`.
 
 ## Never do this
 

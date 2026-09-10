@@ -1,0 +1,58 @@
+---
+description: New-company Independent onboard — MCP pull, desk, Docker history, no XLK Rank IC
+globs: services/earnings_monitor/onboard*.py,services/earnings_monitor/conf_desk.py,services/earnings_monitor/cli.py,scripts/_desk_conf_ingest.py,scripts/_write_quartr_mcp_transcript.py
+alwaysApply: false
+---
+
+# New-company onboard
+
+Day-one surfaces: company tabs, Docker history parquet, that company's Roz
+feature panel, Claims Desk, Call Scorecard — under **Independent** and
+**All Companies**. Not the live XLK Rank IC / consolidated book.
+
+## Pull first (Quartr MCP only)
+
+Docker cannot call Cursor Quartr MCP. The agent pulls, then onboard uses
+`--skip-pull`.
+
+1. `search_companies` → `list_events` targeting **2016-Q1 through today**.
+2. If Quartr has nothing that far back (recent IPO / CRWV-style), pull
+   **every available event**. Do not invent earlier periods. Do not stop at
+   the 3y/10y `choose_lookback_years` window.
+3. Include every transcript meeting: quarterly earnings, conferences,
+   investor days, other public meetings.
+4. Earnings → `Structured Narrative/transcripts_raw/{TICKER}_{FY….txt}` via
+   `scripts/_write_quartr_mcp_transcript.py`.
+5. Conferences / other meetings → `data/conf_transcripts/{TICKER}/{eventId}.json`
+   plus `manifest.json` (`onboard_pull.write_conference_transcript`). Then
+   `scripts/_desk_conf_ingest.py --transcript-file` (never REST).
+
+See `services/earnings_monitor/onboard_pull.py` (`pull_checklist`).
+
+## Onboard command
+
+```
+python -m services.earnings_monitor onboard \
+  --ticker TICK --period FY… --report-at <iso> \
+  --skip-pull --research-sector independent --industry-group tech
+```
+
+- Default sector is **independent**. That implies `--skip-book-sync`.
+- Stamp overlay `industry_group` (tech, healthcare, …). Default
+  `unclassified`. This is **not** `xlk_tech`.
+- Do not append `config/sectors/xlk_tech.txt` or Docker `roz_book_tickers`.
+- Do not mark the XLK research book dirty / force Rank IC regen.
+- History **does** import into Docker parquet so the name is viewable.
+- Roz LLM scoring is **FY earnings only**. Conferences are desk/scorecard.
+
+## Desk + scorecard (default finish)
+
+After the feature panel: ingest on-disk conferences, plant seeds / walk trees
+from **any** call (`FY…` and `CONF-YYYY-MM-DD`), run history onboard, rebuild
+Call Scorecard. Delivery stays `null` until a promise settles.
+
+## Stale check
+
+`artifact_universe_status` compares Rank IC / consolidated to the XLK
+research book (`roz_book_tickers` or `xlk_tech`), not every parquet ticker.
+Independents in the dataset are not missing Rank IC members.

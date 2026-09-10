@@ -26,6 +26,7 @@ from .data import DashboardData
 from .report_static import ensure_reports_static_link, static_report_url
 from .research_data import (
     artifact_universe_status,
+    load_research_book_tickers,
     can_inline_html,
     format_universe_stale_message,
     html_report_meta,
@@ -451,12 +452,12 @@ def render_company_history(
     # Build per-period delivery_score lookup from scorecard sidecar
     _scorecard_lookup: dict[tuple[str, str], str] = {}
     try:
-        from .claims_scorecard import load_desk_scorecard_sidecar
+        from .claims_scorecard import load_desk_scorecard_sidecar, scored_delivery
         _sc = load_desk_scorecard_sidecar()
         for _e in (_sc.get("entries") or []):
             _t = str(_e.get("ticker") or "").upper()
             _fp = str(_e.get("fiscal_period") or "")
-            _ds = _e.get("delivery_score")
+            _ds = scored_delivery(_e)
             if _t and _fp and _ds is not None:
                 _pct = f"{round(_ds * 100)}%" if isinstance(_ds, float) else str(_ds)
                 _scorecard_lookup[(_t, _fp)] = _pct
@@ -960,7 +961,7 @@ def _warn_research_universe(st: Any, data: DashboardData) -> None:
     rank_ic = load_rank_ic_bundle()
     consolidated = load_consolidated_panel()
     status = artifact_universe_status(
-        data.tickers,
+        load_research_book_tickers(),
         rank_ic.meta if rank_ic.available else None,
         consolidated.meta if consolidated.available else None,
     )

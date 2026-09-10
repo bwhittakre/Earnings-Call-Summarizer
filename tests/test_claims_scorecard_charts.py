@@ -3,6 +3,7 @@ from services.earnings_monitor.dashboard.claims_scorecard import (
     _call_sequence_chart,
     _selected_fiscal_period,
     _snapshot_transparency_chart,
+    scored_delivery,
     timeline_rows,
 )
 
@@ -89,3 +90,20 @@ def test_selected_fiscal_period_reads_streamlit_event() -> None:
     assert _selected_fiscal_period(_Event()) == "CONF-2026-09-08"
     assert _selected_fiscal_period({"selection": {"call": [{"fiscal_period": "FY2026-Q2"}]}}) == "FY2026-Q2"
     assert _selected_fiscal_period(None) is None
+
+
+def test_first_seed_zero_is_not_a_delivery_rate() -> None:
+    fake_zero = _row(
+        delivery_score=0.0,
+        n_confirmed=0,
+        n_failed=0,
+        n_failed_frac=1.0,
+        n_never_touched=8,
+        open_trees_at_call=8,
+    )
+    assert scored_delivery(fake_zero) is None
+    rows = timeline_rows([fake_zero])
+    assert rows[0]["delivery_label"] == "—"
+    assert rows[0]["delivery_status"] == "Open book"
+    scored = _row(delivery_score=0.0, n_confirmed=0, n_failed=1)
+    assert scored_delivery(scored) == 0.0

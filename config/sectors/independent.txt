@@ -1,3 +1,5 @@
 # Independent companies — not in XLK tech or healthcare large-cap
 # Rank IC / Roz sector stem: independent
 CRWV
+DDOG
+LITE

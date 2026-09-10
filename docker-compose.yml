@@ -143,6 +143,14 @@ services:
       - type: bind
         source: ${STRUCTURED_NARRATIVE_OUTPUT_DIR:-./Structured Narrative/output}
         target: /app/Structured Narrative/output
+      # Live regen + ticker-book heal (image bake can lag the repo).
+      - type: bind
+        source: ./services
+        target: /app/services
+      - type: bind
+        source: ./Structured Narrative/build_book_ranks.py
+        target: /app/Structured Narrative/build_book_ranks.py
+        read_only: true
     depends_on:
       monitor:
         condition: service_started

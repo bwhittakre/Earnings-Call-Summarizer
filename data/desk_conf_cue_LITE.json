@@ -1,0 +1,1300 @@
+{
+  "ticker": "LITE",
+  "source": "conference",
+  "events": [
+    {
+      "event_id": 16020,
+      "date": "2022-03-08",
+      "name": "Investor Day 2022",
+      "ingested_at": "2026-09-09T17:42:47.173635+00:00",
+      "ticker": "LITE",
+      "excerpts": [
+        {
+          "class": "promise",
+          "dimension": "capex_investment",
+          "excerpt": "We are ramping up our capacity in anticipation of very strong demand in new ROADM architectures as well as higher speed transmission products at 400, 600, and 800 gigs."
+        },
+        {
+          "class": "promise",
+          "dimension": "capex_investment",
+          "excerpt": "We're investing also to increase our capacity in our DataCom EML chips in response to this what seems very rapid growth of DataCom."
+        },
+        {
+          "class": "promise",
+          "dimension": "capex_investment",
+          "excerpt": "Our EML capacity has grown rapidly year-on-year and will continue to do so."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "As we advance that technology and invest in other types of VCSEL arrays and other kinds of lasers, for example, for LiDAR, we're starting to get design wins that we announced last quarter."
+        },
+        {
+          "class": "promise",
+          "dimension": "capex_investment",
+          "excerpt": "We're adding additional capacity that'll come on late this calendar year to enable us to continue to ramp to meet this kind of what seems to be insatiable demand within the data center and the hyperscale space."
+        },
+        {
+          "class": "promise",
+          "dimension": "capex_investment",
+          "excerpt": "We're adding ROADM capacity so that when we are able to get those semiconductors, we can flex up in our capacity to meet their demands."
+        },
+        {
+          "class": "goal",
+          "dimension": "revenue_growth",
+          "excerpt": "We believe that at least for the next several years, we can grow at nice double-digit CAGR."
+        },
+        {
+          "class": "goal",
+          "dimension": "revenue_growth",
+          "excerpt": "In the telecom and datacom portion of our business, we feel that the market is set up for very strong growth."
+        },
+        {
+          "class": "goal",
+          "dimension": "revenue_growth",
+          "excerpt": "In the laser space, we believe we can grow quite a bit above market growth rates, so in this case, 10%-15% CAGR."
+        },
+        {
+          "class": "goal",
+          "dimension": "revenue_growth",
+          "excerpt": "Greater than 10% CAGR, if you kind of revenue weight all of those growth rates across our portfolio."
+        },
+        {
+          "class": "goal",
+          "dimension": "margin_expansion",
+          "excerpt": "We reiterate our target financial model. 50% growth rate, 30% operating margin with the greater than 10% growth rate."
+        },
+        {
+          "class": "promise",
+          "dimension": "capital_return",
+          "excerpt": "Our board authorized increasing our buyback program, share buyback program that is, to $1 billion, added a little extra time out to May of 2024."
+        },
+        {
+          "class": "promise",
+          "dimension": "partnerships",
+          "excerpt": "We did a convertible note offering last week and concurrently with that purchased $200 million worth of stock."
+        },
+        {
+          "class": "promise",
+          "dimension": "partnerships",
+          "excerpt": "One of the parts of the deal was that we offered NeoPhotonics a $50 million loan so that they could invest to meet the kind of demand we talked about."
+        },
+        {
+          "class": "goal",
+          "dimension": "market_share",
+          "excerpt": "We're confident that we can grow faster than the market via introducing new products and picking up market share."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "We continue to invest in R&D across the board in all of these different technologies to be ready for the next generation."
+        },
+        {
+          "class": "goal",
+          "dimension": "revenue_growth",
+          "excerpt": "Over the next five years or so, we expect the market to more than double with a pretty heavy contribution, more than half of that growth coming from things like augmented and virtual reality and LiDAR."
+        },
+        {
+          "class": "promise",
+          "dimension": "geographic_expansion",
+          "excerpt": "We've probably for the last nine months, have a dedicated team looking at what other markets that we don't participate in could utilize our technology and, you know, EVs and battery, things like that. Also, defense is also something that we're looking at."
+        },
+        {
+          "class": "promise",
+          "dimension": "geographic_expansion",
+          "excerpt": "We may do that completely organically, but we also may look at, you know, inorganic small acquisitions to be able to accelerate our entrance into those kinds of markets."
+        },
+        {
+          "class": "promise",
+          "dimension": "regulatory",
+          "excerpt": "We're going through the process, constructive dialogue with the officials in SAMR. We would expect it to close in the second half of calendar 2022."
+        },
+        {
+          "class": "promise",
+          "dimension": "revenue_growth",
+          "excerpt": "The June quarter will be better than the March quarter, and a lot of that's coming from continued growth in telecom as we expect that the semiconductor chips will free up."
+        }
+      ]
+    },
+    {
+      "event_id": 58506,
+      "date": "2023-03-09",
+      "name": "Morgan Stanley Technology, Media & Telecom Conference",
+      "ingested_at": "2026-09-09T17:42:53.934150+00:00",
+      "ticker": "LITE",
+      "excerpts": [
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "We expect we'll be ready with that at the end of this calendar year. We expect to lead in this next transition to 200G per lane, which will enable the next 1.6T transceivers when they come to market."
+        },
+        {
+          "class": "goal",
+          "dimension": "revenue_growth",
+          "excerpt": "From a Lumentum perspective, we expect that the market will basically double our opportunity in five years' time. Today, we have a certain market size that we already serve, in serving the leading transceivers. We expect this will at least double our opportunity from a dollar perspective in five years' time."
+        },
+        {
+          "class": "goal",
+          "dimension": "revenue_growth",
+          "excerpt": "The ROADM market itself is expected to double over the next five years with, you know, the expected growth that we're expecting on the edge of the network."
+        },
+        {
+          "class": "goal",
+          "dimension": "market_share",
+          "excerpt": "You add on top of that some of our differentiating advantages that we show in our MxN products. You know, we can see us even growing from the high level of market share that we already have."
+        },
+        {
+          "class": "goal",
+          "dimension": "revenue_growth",
+          "excerpt": "The sensing market from our standpoint is about $1 billion that's expected to double in the next 5 years."
+        },
+        {
+          "class": "promise",
+          "dimension": "cost_reduction",
+          "excerpt": "We've increased our number from $50 million-$80 million. That's really important because we see our R&D expenses as a % of revenue remaining elevated, you know, with all the opportunities that we've talked about and the fact that we want to be ahead of the curve, in each one of our product portfolios. We really need those synergies so that we can fund that R&D and still have a reasonable financial model that supports growth."
+        }
+      ]
+    },
+    {
+      "event_id": 69807,
+      "date": "2023-05-22",
+      "name": "51st Annual J.P. Morgan\u2019s Global Technology, Media and Communications Conference 2023",
+      "ingested_at": "2026-09-09T17:43:02.508511+00:00",
+      "ticker": "LITE",
+      "excerpts": [
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "We're working on several different designs with leading processor companies to really have something in calendar 2024 to address that in particular."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "We've designed that product already. Now it's getting into qualification builds with our customers. As that becomes a reality, it's just a matter of how fast can we ramp it."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "Those are the things that still need R&D in collaboration with our customers to get to market. I think that's really more of a first half of calendar 2024 product realization."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "We expect that to ramp into production really by the end of the year and early into calendar 2024."
+        },
+        {
+          "class": "promise",
+          "dimension": "cost_reduction",
+          "excerpt": "We said, we'll get $50 million of synergies as we integrate that business. At OFC, we upped that synergy target to $80 million, we think that's very doable, and we'll be getting that in the next several quarters."
+        },
+        {
+          "class": "goal",
+          "dimension": "revenue_growth",
+          "excerpt": "I do believe that in two to three years from now, that's gonna be a meaningful part of our business and provide us that diversification that we're looking for, in addition to applications in AR/VR that could use multiple light sources, from us to address one pair of glasses or a headset."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "First product out will give us an incremental big step down in the overall 400G ZR and ZR module cost that I think will maybe even open up the market even broader. We will have products after that for 800G and 1.6T."
+        },
+        {
+          "class": "promise",
+          "dimension": "r_and_d",
+          "excerpt": "We're looking at EV battery welding, other kinds of EV type of applications. We're also looking at other markets that are, you know, even more far afield that could be using photonics that aren't, where photonics could be very disruptive. As we start introducing those products, we'll talk more about those on our calls."
+        }
+      ]
+    },
+    {
+      "event_id": 131345,
+      "date": "2023-11-29",
+      "name": "2023 UBS Global Technology Conference",
+      "ingested_at": "2026-09-09T17:43:08.060075+00:00",
+      "ticker": "LITE",
+      "excerpts": [
+        {
+          "class": "promise",
+          "dimension": "margin_expansion",
+          "excerpt": "what we've communicated as part of the transaction is that we could get the business to a high teens margin level, operating margin level, within the next 24 months."
+        },
+        {
+          "class": "goal",
+          "dimension": "revenue_growth",
+          "excerpt": "we think it's steeper in the, in the next 12 months than over the longer term."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "we're already providing, you know, qualification samples to customers on 200G. And so enabling that transition to 200G, we'll be ahead of... We believe we'll be ahead of the competition on that."
+        },
+        {
+          "class": "goal",
+          "dimension": "revenue_growth",
+          "excerpt": "our base case scenario is that probably by the middle of the calendar year, 2024, you know, we would start to see a pickup in our revenues associated with the telecom side of our business."
+        },
+        {
+          "class": "goal",
+          "dimension": "margin_expansion",
+          "excerpt": "I think really the next step is us getting back to double-digit operating margins."
+        },
+        {
+          "class": "promise",
+          "dimension": "capital_return",
+          "excerpt": "priority number one is to be free cash flow positive every single quarter."
+        },
+        {
+          "class": "promise",
+          "dimension": "partnerships",
+          "excerpt": "We're looking to continue to innovate with that large customer. And you know, we're actively looking at opportunities to how we can improve that business over the next year or two."
+        }
+      ]
+    },
+    {
+      "event_id": 132516,
+      "date": "2023-12-04",
+      "name": "Raymond James TMT and Consumer Conference",
+      "ingested_at": "2026-09-09T17:43:17.246890+00:00",
+      "ticker": "LITE",
+      "excerpts": [
+        {
+          "class": "promise",
+          "dimension": "revenue_growth",
+          "excerpt": "we're working to get up, but given the manufacturing time in the case of selling laser chips into this end market is several quarters. You know, we're through the trough from a demand standpoint, but looking to ramp up to prior levels or even exceed prior levels, given the strength that we've seen in the end market."
+        },
+        {
+          "class": "goal",
+          "dimension": "revenue_growth",
+          "excerpt": "we certainly believe that telecom will start growing during calendar 2024, hopefully sooner in calendar 2024"
+        },
+        {
+          "class": "goal",
+          "dimension": "revenue_growth",
+          "excerpt": "we have some new businesses selling into solar space, display processing, some other microelectronics applications based on some new ultra-fast lasers that we've developed over the last several years, that kinda ameliorates or partially offsets the broader industrial weakness."
+        },
+        {
+          "class": "promise",
+          "dimension": "margin_expansion",
+          "excerpt": "we're very focused on doing everything we can do to ensure that as you know demand returns, that margins will grow much faster than revenue grows in that return to normal."
+        },
+        {
+          "class": "promise",
+          "dimension": "capex_investment",
+          "excerpt": "we've put a lot of our focus on investing in new products so that as we come out of the trough, we're able to grow off of the secular trends and technology trends in the market, acquisition synergies, and as well as, you know, for both our dataco m chip business, expanding manufacturing capacity, because there's a lot of demand out there driven by cloud trends, particularly those driven by AI"
+        },
+        {
+          "class": "promise",
+          "dimension": "capex_investment",
+          "excerpt": "adding manufacturing capacity for our Cloud Light acquisition, as they're seeing very strong demand for 800G transceivers."
+        },
+        {
+          "class": "goal",
+          "dimension": "market_share",
+          "excerpt": "we'll get that up to, you know, more than 30% of company revenues... believe that in calendar 2024, we'll get that up to, you know, more than 30% of company revenues."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "We're in the process of developing that 400G DSP to serve a market that we think will be very long-lived and a high-volume market, where 400G's a speed that will live on for a while."
+        },
+        {
+          "class": "goal",
+          "dimension": "revenue_growth",
+          "excerpt": "I think we will start to see that business grow as we go out another year or two."
+        }
+      ]
+    },
+    {
+      "event_id": 131357,
+      "date": "2023-12-06",
+      "name": "Barclays Global Technology Conference",
+      "ingested_at": "2026-09-09T17:43:22.903346+00:00",
+      "ticker": "LITE",
+      "excerpts": [
+        {
+          "class": "goal",
+          "dimension": "margin_expansion",
+          "excerpt": "CloudLight is operating on its own, in the low teens operating margins, and we expect to be able to get it up to the high teens operating margins."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "we expect we're going to be at the forefront of [the transition to 1.6T]"
+        },
+        {
+          "class": "goal",
+          "dimension": "revenue_growth",
+          "excerpt": "the Cloud Light part of that business, we communicated, we think it's, it's expected to grow at about 30% over the next few years."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "We believe that we are going to be a market leader in [200G EMLs] space"
+        },
+        {
+          "class": "promise",
+          "dimension": "capex_investment",
+          "excerpt": "probably the CapEx requirements will be very similar to what Lumentum has as a standalone, 5%-6% of revenue. And so at least in the next 24 months, it shouldn't exceed that."
+        },
+        {
+          "class": "promise",
+          "dimension": "regulatory",
+          "excerpt": "by that point in time, it'll be 4 or 5 quarters of inventory digestion, and so by that time, we expect to see some type of normalization in our shipments into customers being more equal to the shipments that they have out."
+        },
+        {
+          "class": "promise",
+          "dimension": "capital_return",
+          "excerpt": "We do still have some authorization left for share buybacks, and that's something that we're always considering."
+        },
+        {
+          "class": "promise",
+          "dimension": "partnerships",
+          "excerpt": "there's an opportunity to continue to do some acquisitions that continue to strengthen the company."
+        }
+      ]
+    },
+    {
+      "event_id": 168435,
+      "date": "2024-03-05",
+      "name": "Morgan Stanley\u2019s Technology, Media & Telecom Conference 2024",
+      "ingested_at": "2026-09-09T17:43:30.049244+00:00",
+      "ticker": "LITE",
+      "excerpts": [
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "Our 200G EMLs, which we believe we're going to be first to market on, and be shipping, you know, at the end of this calendar year."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "And also take\u2014to take advantage of, you know, any AOC opportunities that come about with our 100G VCSELs that are also expected to, you know, intercept that opportunity later on in this calendar year."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "I think that digestion will then be followed on with sampling of 1.6T product by the end of the summer."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "I think from a production standpoint on 1.6T with our current customer, it's probably an end of calendar 2024 event."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "Our internal plans are for the first part of calendar 2025."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "We're already sampling 800G ZR products."
+        },
+        {
+          "class": "promise",
+          "dimension": "capex_investment",
+          "excerpt": "I mean, so last year, fiscal 2023, we spent about $130 million of CapEx. The CapEx was much more focused in on ensuring we had sufficient capacity at our Sagamihara facility for EMLs and building out our indium phosphide capabilities in Caswell. So I think that that envelope of CapEx spend stays the same, at least for fiscal 2024."
+        },
+        {
+          "class": "goal",
+          "dimension": "margin_expansion",
+          "excerpt": "But I think, you know, kind of step one is for us to get to a double-digit non-GAAP operating profits. You know, the way to get there the fastest is really for our revenues, on a quarterly basis, to be north of $400 million a quarter."
+        },
+        {
+          "class": "goal",
+          "dimension": "cost_reduction",
+          "excerpt": "We've been, you know, trying to bring that down on a quarterly basis to below $100 million a quarter."
+        },
+        {
+          "class": "promise",
+          "dimension": "r_and_d",
+          "excerpt": "We've got a great team, you know, down in Brazil. And that's really allowed us to expand our capacity from an R&D standpoint, to take on new R&D projects that might not make sense, you know, with a Silicon Valley-based R&D team, but more with a lower cost, but, you know, very capable team in Brazil."
+        }
+      ]
+    },
+    {
+      "event_id": 168440,
+      "date": "2024-03-26",
+      "name": "2024 Optical Fiber Conference",
+      "ingested_at": "2026-09-09T17:43:37.627052+00:00",
+      "ticker": "LITE",
+      "excerpts": [
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "the plan is that we will launch 1.6T product, second half of this year, and 3.2T, 2025 and beyond."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "Sampling of the transceivers will happen this summer, and it'll take some time to qual and then ramp into production."
+        },
+        {
+          "class": "promise",
+          "dimension": "capex_investment",
+          "excerpt": "we will see some elevated CapEx over the next 12-18 months versus our historical CapEx investments, but those CapEx investments will be very much focused in on our Thailand facility and the equipment and infrastructure that's needed to support the transceiver growth."
+        },
+        {
+          "class": "goal",
+          "dimension": "revenue_growth",
+          "excerpt": "our goal number one from a financial standpoint is to get back to double-digit operating margins. And for us to be able to get back to double-digit operating margins, we really need to be north of $400 million a quarter of revenue."
+        },
+        {
+          "class": "goal",
+          "dimension": "margin_expansion",
+          "excerpt": "once we get to that level of quarterly revenue, we should be able to comfortably get back into a 17%-20% operating margin cadence."
+        },
+        {
+          "class": "promise",
+          "dimension": "r_and_d",
+          "excerpt": "we are not backing off from those critical R&D investments, but we are lowering our overall fixed cost base so that we can all do it within an envelope of operating expenses that's reasonable for the business."
+        },
+        {
+          "class": "promise",
+          "dimension": "geographic_expansion",
+          "excerpt": "we are executing our plan to expand this facility per our previous announcement."
+        },
+        {
+          "class": "goal",
+          "dimension": "revenue_growth",
+          "excerpt": "I do believe we will grow faster than that 30% CAGR, certainly, on data center and hyperscaler side."
+        }
+      ]
+    },
+    {
+      "event_id": 195576,
+      "date": "2024-05-20",
+      "name": "The 52nd J.P. Morgan Annual Global Technology, Media & Communications Conference",
+      "ingested_at": "2026-09-09T17:43:45.761548+00:00",
+      "ticker": "LITE",
+      "excerpts": [
+        {
+          "class": "goal",
+          "dimension": "revenue_growth",
+          "excerpt": "calendar 2025 versus calendar 2023, I expect the market for high-speed optics to be multiples of what it was in 2023."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "the products that we're launching late this calendar year and into calendar 2025 will have a certain level of Lumentum component in-feeds, as well as a certain level of manufacturing in Lumentum factories, so those drive synergies there."
+        },
+        {
+          "class": "goal",
+          "dimension": "revenue_growth",
+          "excerpt": "we do expect, as we get into later this calendar year, and then much more so into next calendar year, that's when the opportunity for new customer traction to translate into significant revenue increase."
+        },
+        {
+          "class": "promise",
+          "dimension": "capex_investment",
+          "excerpt": "we're well underway with increasing capacity. I think you heard on the call, we talked about being able to increment up, you know, maybe 50% or more additional output out of our wafer fab, once the next slug of capacity comes online. We didn't really put a precise timeline, but you're gonna see that probably out in the calendar 2025 timeframe."
+        },
+        {
+          "class": "promise",
+          "dimension": "geographic_expansion",
+          "excerpt": "we have been kind of running at a certain run rate, which is essentially our capacity. And now, as we have new customer opportunities or frankly, even growth within our existing customers, will require additional manufacturing capacity. And the way we're doing that is adding it in Thailand to add more geographic diversity to our supply base."
+        },
+        {
+          "class": "goal",
+          "dimension": "revenue_growth",
+          "excerpt": "you talked about doubling or more than doubling the Datacom business by the end of calendar 2025."
+        },
+        {
+          "class": "promise",
+          "dimension": "r_and_d",
+          "excerpt": "We are developing our own next-generation silicon photonic component-level technologies. We're also developing EML-based transceivers."
+        }
+      ]
+    },
+    {
+      "event_id": 197517,
+      "date": "2024-06-05",
+      "name": "BofA Securities 2024 Global Technology Conference",
+      "ingested_at": "2026-09-09T17:43:51.738649+00:00",
+      "ticker": "LITE",
+      "excerpts": [
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "qualification samples coming out of our Thailand facility this summer are really the next key milestone to that progression"
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "providing the transceivers to our customers, and that's gonna happen this summer, or our transceiver customers\u2014supplying them as well"
+        },
+        {
+          "class": "goal",
+          "dimension": "market_share",
+          "excerpt": "there's no reason why we couldn't be one of the top three transceiver manufacturers in the world"
+        },
+        {
+          "class": "promise",
+          "dimension": "capex_investment",
+          "excerpt": "we've kicked off our phase two, which is a new, very large three-story building in Thailand, to be able to really kind of implement incremental capacity over time"
+        },
+        {
+          "class": "promise",
+          "dimension": "revenue_growth",
+          "excerpt": "we should exit calendar 2025 at $500 million"
+        },
+        {
+          "class": "goal",
+          "dimension": "margin_expansion",
+          "excerpt": "getting to, say, $600 million a quarter, could get us to that 40/20 gross and operating margin target"
+        },
+        {
+          "class": "promise",
+          "dimension": "margin_expansion",
+          "excerpt": "by, you know, the second half of our fiscal year, we should see that $100 million of synergies from that deal"
+        },
+        {
+          "class": "promise",
+          "dimension": "cost_reduction",
+          "excerpt": "we are trying to stay around $100 million quarterly operating expenses. And that'll grow slightly as we grow our top line"
+        }
+      ]
+    },
+    {
+      "event_id": 258668,
+      "date": "2024-12-03",
+      "name": "UBS Global Technology and AI Conference",
+      "ingested_at": "2026-09-09T17:44:00.683273+00:00",
+      "ticker": "LITE",
+      "excerpts": [
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "Two quarters ago, we announced that we had a design win. That's on track. We're going through the qualification work now, and we're still on track for the 1st half of next calendar year to start that initial ramp."
+        },
+        {
+          "class": "promise",
+          "dimension": "capex_investment",
+          "excerpt": "we pulled the trigger on a very large infrastructure build-out of a three-story building that is well underway, and first floor is done. The existing campus, we had one and a half floors of space available. Those are now built out, and equipment is going in, so our qualification builds are going on now for that product we talked about that we announced two quarters ago in our bottom floor, but equipment for production is being put in in the top floor."
+        },
+        {
+          "class": "promise",
+          "dimension": "capacity_expansion",
+          "excerpt": "what we've said in the past is that we're adding from the June quarter of 2024 to the June quarter of 2025, adding 40% capacity. And then we're adding additional capacity in this back half of calendar 2025 as we convert to larger wafer sizes."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "we are working on EML designs to design our EMLs into our transceivers, and that should give us a nice pickup in the margin for our transceivers when we ramp those up in the 2nd half of calendar 2025."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "We've sampled 1.6T, both silicon photonics as well as EML-based transceivers. I'd say that for us, it's probably by the end of the fiscal year or early fiscal 2026, so summertime, before we get into production on the transceivers, on the EMLs, it'll be before then."
+        },
+        {
+          "class": "goal",
+          "dimension": "margin_expansion",
+          "excerpt": "what we said in OFC is at $600 million, we should get into the high teens of operating margin."
+        },
+        {
+          "class": "goal",
+          "dimension": "revenue_growth",
+          "excerpt": "I think by the end of the year, there's no reason to believe they couldn't be equal size."
+        }
+      ]
+    },
+    {
+      "event_id": 262212,
+      "date": "2024-12-09",
+      "name": "Raymond James TMT and Consumer Conference",
+      "ingested_at": "2026-09-09T17:44:05.918227+00:00",
+      "ticker": "LITE",
+      "excerpts": [
+        {
+          "class": "promise",
+          "dimension": "revenue_growth",
+          "excerpt": "what we said is that by the end of calendar 2025, we will be at a $500 million run rate again, and you know, with growth expectations beyond that."
+        },
+        {
+          "class": "goal",
+          "dimension": "margin_expansion",
+          "excerpt": "at $600 million, we expect to get back into those levels of gross and operating margins, so high 30%-40% gross margins and 17%-20% operating margins at a $600 million quarterly revenue run rate."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "we are growing output from the June quarter of 2024 to the June quarter of 2025 by 40%, and then another 40% by the end of the calendar year. So basically a doubling of EML output from June of last year to the end of next year."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "we will be launching transceivers with EMLs-based designs in the second half of calendar 2025."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "we are working on co-packaged optics and with very high-power lasers to be able to split into multi-lanes of interconnects within a data center. That's probably more like 18 months out from really being in volume."
+        }
+      ]
+    },
+    {
+      "event_id": 262279,
+      "date": "2024-12-11",
+      "name": "Barclays 22nd Annual Global Technology Conference 2024",
+      "ingested_at": "2026-09-09T17:44:11.633170+00:00",
+      "ticker": "LITE",
+      "excerpts": [
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "For us, the logical time to kinda bring EMLs into our transceivers is both, one, we have more capacity, which will happen, you know, next calendar year, but at the same time, when we have an EML technology inside of the transceiver that truly provides a differentiation at the transceiver level, so maybe disproportionate share or price or some other benefit that we wouldn't get by any other approach, then that's a real win."
+        },
+        {
+          "class": "promise",
+          "dimension": "capex_investment",
+          "excerpt": "we're adding significant capacity in calendar 2025 and a couple tranches... as we, you know, exit calendar 2025, that we will have, let's say, 2X the capacity of what we are exiting calendar 2024 at, maybe more than that"
+        },
+        {
+          "class": "goal",
+          "dimension": "capex_investment",
+          "excerpt": "Our goal is certainly to add capacity as fast, if not faster, than the market is growing"
+        },
+        {
+          "class": "promise",
+          "dimension": "customer_retention",
+          "excerpt": "and, you know, expect over time we'll announce more"
+        },
+        {
+          "class": "goal",
+          "dimension": "revenue_growth",
+          "excerpt": "I think that more than covers what we need... provides... the ability to hit that number a little earlier than we said... I think it's as Alan liked to say, it's on us, right? The opportunity is there, and we just need to go execute, and we should be able to get there."
+        }
+      ]
+    },
+    {
+      "event_id": 321118,
+      "date": "2025-03-04",
+      "name": "Morgan Stanley Technology, Media & Telecom Conference",
+      "ingested_at": "2026-09-09T17:44:19.550599+00:00",
+      "ticker": "LITE",
+      "excerpts": [
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "For example, in the coming year, our indium phosphide lasers that we make, market leader in those, they played only in a certain set of the data center applications. Now they're going to play in a much larger set in the 1.6T generation."
+        },
+        {
+          "class": "promise",
+          "dimension": "capacity_constraint",
+          "excerpt": "We expect that it will complete. I mean, some of that's not fully in our control as to do with the customer's timeline and their resources towards the middle of the year, kind of in the June quarter time frame. And then we expect it would start to ramp and grow from that point forward."
+        },
+        {
+          "class": "promise",
+          "dimension": "capex_investment",
+          "excerpt": "We're adding significant indium phosphide capacity to be able to ensure that we can meet the growing demand from external customers as well as for our internal needs. We believe that intersection point is likely in the next calendar year."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "We're going to see improvement in supply sequentially. So I think we're going to see through the year improving CW laser supply."
+        },
+        {
+          "class": "goal",
+          "dimension": "revenue_growth",
+          "excerpt": "We've had a very significant growth, not just in actual telecom revenue, but in our demand outlook is really turning up quite strongly due to data center interconnect."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "we'll go through this calendar year providing some products into it. But really in calendar 2026 is maybe where an opportunity at a customer starts to ramp up a little more aggressively."
+        },
+        {
+          "class": "promise",
+          "dimension": "revenue_growth",
+          "excerpt": "We feel pretty good that the market has bottomed. And we're starting to see some green shoots in traditional industrial markets. But that said, we've also put a lot of effort into introducing new products where we weren't selling them historically."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "the new product lines, particularly on these ultrafast lasers that are used in semiconductor manufacturing processes and display and solar cell manufacturing, brand new products for us that we're just really ramping up the production of."
+        }
+      ]
+    },
+    {
+      "event_id": 332683,
+      "date": "2025-04-01",
+      "name": "Investor Briefing",
+      "ingested_at": "2026-09-09T17:44:28.539967+00:00",
+      "ticker": "LITE",
+      "excerpts": [
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "we believe we're first to market with a 400G EML. We already have 200 G, and we have an opportunity to move that to a differential from a single-ended to a differential, which again saves power."
+        },
+        {
+          "class": "goal",
+          "dimension": "revenue_growth",
+          "excerpt": "we see a 25%, greater than 25% compound annual growth for the part of the optics market that we play in over the next handful of years."
+        },
+        {
+          "class": "promise",
+          "dimension": "revenue_growth",
+          "excerpt": "as we think about our business, we see a near-term track to revenues of greater than $3 billion annually and a 20% operating margin."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "we're going to be shipping OCS products in the second half of calendar year 2025."
+        },
+        {
+          "class": "promise",
+          "dimension": "revenue_growth",
+          "excerpt": "we expect to be able to achieve that $500 million quarter and the associated operating leverage associated with that by the end of this calendar year."
+        },
+        {
+          "class": "goal",
+          "dimension": "capex_investment",
+          "excerpt": "Our EML capacity will double between the Q2 that just ended and the Q2 2026 that we have talked about."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "Lumentum has a full roadmap covering the next two generations, three generations of optical technology. Right now, we're in the 800G generation. Next year, it'll be 1.6-T generation. Two years later, we'll be 3.2-T generations."
+        },
+        {
+          "class": "promise",
+          "dimension": "capex_investment",
+          "excerpt": "we have a long-term plan to also increase the indium phosphide capacity even further beyond this to serve the EML, to serve the CW laser, to serve the ultra-high-power lasers going forward."
+        },
+        {
+          "class": "promise",
+          "dimension": "r_and_d",
+          "excerpt": "We're definitely vertically integrating our CW lasers into our silicon photonics platform. As we talked about just now, we've been favoring EMLs just because of the gross margin. Now we're also using our own laser for our own internal use."
+        },
+        {
+          "class": "goal",
+          "dimension": "margin_expansion",
+          "excerpt": "How do we get the gross margin up overall into the 40s?"
+        }
+      ]
+    },
+    {
+      "event_id": 342800,
+      "date": "2025-05-13",
+      "name": "53rd Annual JPMorgan Global Technology, Media and Communications Conference",
+      "ingested_at": "2026-09-09T17:44:36.493994+00:00",
+      "ticker": "LITE",
+      "excerpts": [
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "We are planning to do that in the fourth quarter. I think you know that over the calendar year, start shipping production CW lasers."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "We have a strategy to now put our own components in our own transceivers."
+        },
+        {
+          "class": "promise",
+          "dimension": "geographic_expansion",
+          "excerpt": "Our first plan is to continue to scale up in Thailand. As you and others that follow the company know very well, we've enlarged our manufacturing footprint there. We're still not at capacity. We still have room to grow in Thailand, and we would intend to do that as sort of plan A."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "Over the course of a few quarters, we could move more of our manufacturing footprint to the contract manufacturers and have them pick up some of the work, in countries that were more tariff favorable."
+        },
+        {
+          "class": "goal",
+          "dimension": "revenue_growth",
+          "excerpt": "Our plan certainly in the next four, six, eight quarters is to grow in the transceiver market."
+        },
+        {
+          "class": "goal",
+          "dimension": "margin_expansion",
+          "excerpt": "We've certainly outlined a near-term path to get our margins above 40%."
+        },
+        {
+          "class": "goal",
+          "dimension": "revenue_growth",
+          "excerpt": "We'd like to get this thing to, you know, a $5 billion plus revenue company."
+        },
+        {
+          "class": "goal",
+          "dimension": "product_roadmap",
+          "excerpt": "In a sort of five-year, six-year asymptote, I'd like to skew the company much more to components."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "We think we'll kind of get early, early revenue toward the end of the calendar year and then really material revenue starting to build probably in the second quarter of fiscal 2026, calendar 2026, and then really starting to impact our fiscal 2027."
+        }
+      ]
+    },
+    {
+      "event_id": 353854,
+      "date": "2025-06-04",
+      "name": "BofA Securities 2025 Global Technology Conference",
+      "ingested_at": "2026-09-09T17:44:44.188221+00:00",
+      "ticker": "LITE",
+      "excerpts": [
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "In the first half of 2026, we have OCS that we feel good about, that a lot of people, I think, underappreciate our opportunity and our positioning there. In the back half of 2026, we have co-packaged optics."
+        },
+        {
+          "class": "promise",
+          "dimension": "revenue_growth",
+          "excerpt": "the $500 million quarter comes in to our September quarter, and then the $600 million quarter"
+        },
+        {
+          "class": "promise",
+          "dimension": "margin_expansion",
+          "excerpt": "We definitely have line of sight to margins in the 40s. We're not happy with margins in the mid-30s. We're inching those up. I think with all of the different levers that we have, pricing levers to a certain extent, big cost levers, we think we can get it up into the low 40s."
+        },
+        {
+          "class": "goal",
+          "dimension": "revenue_growth",
+          "excerpt": "we want to grow this business. We think there is a path to get this portion of the business up over $1 billion, but I do not want it to be a $3 billion-$4 billion business."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "we're being asked to deploy, you know, 50, 100, 200 units a week at, you know, ASPs that we're talking about, which are nearing $100,000 each."
+        },
+        {
+          "class": "promise",
+          "dimension": "margin_expansion",
+          "excerpt": "We definitely have a track to get the margins up into the 30% next year."
+        },
+        {
+          "class": "promise",
+          "dimension": "revenue_growth",
+          "excerpt": "we certainly will get it up, you know, in $50 million-$60 million-$70 million more incrementally over the next couple of quarters."
+        },
+        {
+          "class": "promise",
+          "dimension": "capex_investment",
+          "excerpt": "We have a path to probably increase the capacity another 40%-50% over the next four or five months, four or five quarters."
+        },
+        {
+          "class": "promise",
+          "dimension": "margin_expansion",
+          "excerpt": "I think that's a 5% or 6% bump in margin that we didn't fully appreciate. That's something that we're intently focused on and we'll execute, I think, in the first half of next year."
+        }
+      ]
+    },
+    {
+      "event_id": 420718,
+      "date": "2025-12-03",
+      "name": "UBS\u2019s 2025 Global Technology and AI Conference",
+      "ingested_at": "2026-09-09T17:44:51.363561+00:00",
+      "ticker": "LITE",
+      "excerpts": [
+        {
+          "class": "goal",
+          "dimension": "revenue_growth",
+          "excerpt": "We've said, look, we have aspirations to get it to $1 billion annually to add another $500 million of incremental revenue, but we don't want it to run much higher than that, just given the margin headwinds we see."
+        },
+        {
+          "class": "promise",
+          "dimension": "margin_expansion",
+          "excerpt": "All of which I think moves us much closer to a sort of a mid-30s margin profile over the next handful of quarters."
+        },
+        {
+          "class": "promise",
+          "dimension": "capex_investment",
+          "excerpt": "We gave in the last earnings call a new benchmark saying over the next three quarters, meaning our December, March, and June quarters, we expect it to add that 40%. That's a forward-looking statement where we'd expect an increase in capacity of 40% on what already is."
+        },
+        {
+          "class": "promise",
+          "dimension": "capex_investment",
+          "excerpt": "As we look at the next six quarters, we've also talked about a strategy that's a very unique strategy that this person, our new leader for our fabs, has come up with, and that is to virtualize... In so doing, we would expect to get another step up in capacity over the ensuing six quarters."
+        },
+        {
+          "class": "promise",
+          "dimension": "revenue_growth",
+          "excerpt": "What we've said in the 2nd half of 2026 is we'd expect a pretty big step up in the revenue, and it would become something much more material."
+        },
+        {
+          "class": "promise",
+          "dimension": "revenue_growth",
+          "excerpt": "We've given a revenue roadmap, as you know, David, saying $10 million, which will be our 1st real appreciable revenue from OCS, $10 million incrementally in Q1 of this year, ramping to $100 million in Q4 of this year."
+        }
+      ]
+    },
+    {
+      "event_id": 420721,
+      "date": "2025-12-08",
+      "name": "Raymond James TMT and Consumer Conference",
+      "ingested_at": "2026-09-09T17:44:57.981226+00:00",
+      "ticker": "LITE",
+      "excerpts": [
+        {
+          "class": "promise",
+          "dimension": "capex_investment",
+          "excerpt": "we're adding 40% additional capacity on a big number, right? Because we're by far the largest supplier of EMLs today... And then the next two subsequent quarters, we'd expect to add pieces of additional capacity to get us to a total of 40."
+        },
+        {
+          "class": "promise",
+          "dimension": "capex_investment",
+          "excerpt": "I feel very comfortable we'll be able to hit that commitment. And beyond that, what we've said to you is we're going to adopt this really interesting strategy where we virtualize three of our indium phosphide fabs."
+        },
+        {
+          "class": "goal",
+          "dimension": "product_roadmap",
+          "excerpt": "What we've said from a trajectory standpoint is we would expect that the 200 gig per lane lasers, as you said, 10% in Q1, calendar Q1, going to 25% in calendar Q4."
+        },
+        {
+          "class": "promise",
+          "dimension": "revenue_growth",
+          "excerpt": "we've put in front of everybody as targets... $10 million of ROC, $10 million of OCS in Q1 going to $100 million of incremental dollars for us in Q4."
+        },
+        {
+          "class": "promise",
+          "dimension": "revenue_growth",
+          "excerpt": "We feel like it's going to be material revenue for us in the back half of calendar 2026."
+        },
+        {
+          "class": "goal",
+          "dimension": "market_share",
+          "excerpt": "We believe at least at the outset, we'll be the only supplier, at least with the opportunity that you just mentioned. We believe that several customers are looking at this, both for switches and for processors and for servers, where we can expand the customer footprint."
+        }
+      ]
+    },
+    {
+      "event_id": 420724,
+      "date": "2025-12-10",
+      "name": "Barclays 23rd Annual Global Technology Conference",
+      "ingested_at": "2026-09-09T17:45:05.252419+00:00",
+      "ticker": "LITE",
+      "excerpts": [
+        {
+          "class": "promise",
+          "dimension": "capex_investment",
+          "excerpt": "on the laser front, right, so definitely the 40% is we're actually well on track of that. And then, you know, it's not like one-step jump, right? It's a quarter-by-quarter we're increasing."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "we're providing some to ourselves, to our own modules starting from middle of next year, right, to ensure that we can bridge through the gap of our own laser supply too for our own modules."
+        },
+        {
+          "class": "goal",
+          "dimension": "revenue_growth",
+          "excerpt": "on the last earnings call, you guys talked about OCS going from kind of single-digit millions to something around 100 million per quarter by December of 2026."
+        },
+        {
+          "class": "goal",
+          "dimension": "revenue_growth",
+          "excerpt": "I think by 2027, by 2028-ish, we should see, let's say 40%-50% of the switches of the first user of this CPO to be a CPO-based, right? They have the incentive to really drive the adoption of CPO, right? And then we'll see at that vendor in 2028 timeframe, late 2027, 2028, it will be like 50/50 between a pluggable-based versus a kinda CPO-based."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "we definitely think that 2026 ramp is happening and 2027 will continue to ramp. And we're gonna see, you know, the share of CPO increasing from 2027 and in onward to 2028, probably reaching 40%-50% in 2028."
+        }
+      ]
+    },
+    {
+      "event_id": 555323,
+      "date": "2026-03-02",
+      "name": "Morgan Stanley Technology, Media & Telecom Conference 2026",
+      "ingested_at": "2026-09-09T17:45:13.282769+00:00",
+      "ticker": "LITE",
+      "excerpts": [
+        {
+          "class": "promise",
+          "dimension": "capex_investment",
+          "excerpt": "As part of the commitment from NVIDIA, we're gonna go out and get another fab. We've actually identified and have that under negotiation at this point in time."
+        },
+        {
+          "class": "promise",
+          "dimension": "capex_investment",
+          "excerpt": "We have 4 indium phosphide fabs. We intend to bring on a 5th."
+        },
+        {
+          "class": "promise",
+          "dimension": "revenue_growth",
+          "excerpt": "We forecast in the existing properties that we have that we're gonna be able to increase capacity another 20% over the next 2 quarters, which, you know, on balance means 10% increments over the next couple of quarters."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "We're now gonna reapply that fab in the United Kingdom to CPO. The CPO ramp that we're facing is so very high and so considerable that we've decided now to shift that fab to CPO."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "We've cleaned everything out of that fab to get ready, and we've already started production, as you know, and are shipping our high-power lasers for the CPO application. We'd expect all of that now to be consumed very quickly within the next couple of quarters on CPO."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "We're gonna reapply that fab in the United Kingdom to CPO. We'll still try a little bit of PD because we think that's a good incremental opportunity for us that's not getting a lot of attention."
+        },
+        {
+          "class": "goal",
+          "dimension": "margin_expansion",
+          "excerpt": "I would hope to push this company considerably above that [40% margins], and I think we can do that as long as we keep executing on lasers, on OCS and things like that."
+        },
+        {
+          "class": "promise",
+          "dimension": "partnerships",
+          "excerpt": "We've done a very strategic deal with that particular customer, supplier. A 7-year deal, right, that we think covers us out through mid-2030s that assures us of supply."
+        }
+      ]
+    },
+    {
+      "event_id": 549970,
+      "date": "2026-03-17",
+      "name": "Nokia Oyj Optical Fiber Communication Conference 2026",
+      "ingested_at": "2026-09-09T17:45:26.121984+00:00",
+      "ticker": "LITE",
+      "excerpts": [
+        {
+          "class": "promise",
+          "dimension": "capex_investment",
+          "excerpt": "In 2027, we expect another step up in capacity for our UHP lasers as we start shipping out of our United Kingdom fab in Caswell."
+        },
+        {
+          "class": "promise",
+          "dimension": "capex_investment",
+          "excerpt": "To help the project, we're announcing today we finally closed our fifth indium phosphide fab. This indium phosphide fab is in Greensboro, North Carolina... We expect to be shipping out of this Greensboro fab by 2028."
+        },
+        {
+          "class": "promise",
+          "dimension": "revenue_growth",
+          "excerpt": "We have set expectation that we'll have our first $100 million revenue quarter in the end of 2026, calendar 2026, and then deliver on this multi-hundred million dollar commitment that we talked about in our last earnings call in early 2027."
+        },
+        {
+          "class": "promise",
+          "dimension": "revenue_growth",
+          "excerpt": "We will be shipping our optical scale up solution... You're gonna have a blended environment, but what it represents for us in the optics industry is pure incremental upside... starting the H2 of 2027."
+        },
+        {
+          "class": "goal",
+          "dimension": "revenue_growth",
+          "excerpt": "We expect it to be ramping beyond $1 billion in calendar 2027. Building on the $400 million that we've described in the back 1/2 of 2026 and accelerating."
+        },
+        {
+          "class": "promise",
+          "dimension": "revenue_growth",
+          "excerpt": "Our 1.6 T shipments start this summer, so we'll start seeing our first 1.6 T shipments, which we expect to see improved gross margin on."
+        },
+        {
+          "class": "promise",
+          "dimension": "revenue_growth",
+          "excerpt": "we are going to increase this indium phosphide capacity by an additional 50% on top of what's already the industry's largest base... from the last quarter of the calendar 2025 until the last quarter of calendar 2026."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "our vertical integration, bringing our own lasers to help with the margin will start happening in the summertime."
+        },
+        {
+          "class": "goal",
+          "dimension": "margin_expansion",
+          "excerpt": "we expect to continue to evolve our margins towards semiconductor-like margins."
+        },
+        {
+          "class": "goal",
+          "dimension": "revenue_growth",
+          "excerpt": "We believe that this will lead to multiple years of revenue growth and revenue enhancement on our OCS line."
+        },
+        {
+          "class": "promise",
+          "dimension": "revenue_growth",
+          "excerpt": "We are very much on track to be shipping this $400 million of backlog in the H2 of this calendar year."
+        },
+        {
+          "class": "promise",
+          "dimension": "revenue_growth",
+          "excerpt": "we will be able to execute to that and deliver incremental revenue in the first half of 2027."
+        },
+        {
+          "class": "goal",
+          "dimension": "revenue_growth",
+          "excerpt": "we expect to exit at $1.25 billion a quarter with operating margins that hover around 35%... Within a 9 months-12 months range."
+        },
+        {
+          "class": "goal",
+          "dimension": "revenue_growth",
+          "excerpt": "we think that we can exit at $2 billion and 40% operating margins anywhere from 18 months-24 months from now."
+        },
+        {
+          "class": "goal",
+          "dimension": "margin_expansion",
+          "excerpt": "When we move to our $2 billion quarter with all of the capacity ramps that we've got going on, we think that we can actually run the company at a 40% non-GAAP operating margin."
+        }
+      ]
+    },
+    {
+      "event_id": 665400,
+      "date": "2026-05-18",
+      "name": "J.P. Morgan 54th Annual Global Technology, Media and Communications Conference",
+      "ingested_at": "2026-09-09T17:45:32.996127+00:00",
+      "ticker": "LITE",
+      "excerpts": [
+        {
+          "class": "goal",
+          "dimension": "revenue_growth",
+          "excerpt": "we laid out a $2 billion quarterly revenue target with 40% operating margins in 18-24 months"
+        },
+        {
+          "class": "goal",
+          "dimension": "revenue_growth",
+          "excerpt": "we think we have an opportunity to double that revenue line over the next four or five quarters by virtue of the fact...we've got to the front of the line"
+        },
+        {
+          "class": "promise",
+          "dimension": "capex_investment",
+          "excerpt": "we bought another indium phosphide fab, our fifth indium phosphide fab, to try to meet that demand"
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "we'd expect big inflection points in 2027"
+        },
+        {
+          "class": "goal",
+          "dimension": "capex_investment",
+          "excerpt": "we're really at a point where we need to start considering that, right? The demand signal is so very high...we're really at a point where we need to start considering that"
+        },
+        {
+          "class": "promise",
+          "dimension": "capex_investment",
+          "excerpt": "What is happening for us is in Greensboro, the new fab in North Carolina, that fab is already a 6-inch fab. Our intention is to keep it on 6-inch"
+        },
+        {
+          "class": "promise",
+          "dimension": "partnerships",
+          "excerpt": "Our job is to get deals locked up as quickly as we possibly can and to try to do so probably before, you know, next quarter"
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "We feel very confident we're going to be able to take a portion of our lead customer's volume on ELS"
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "we are now tooling our engineering to meet that demand"
+        }
+      ]
+    },
+    {
+      "event_id": 682169,
+      "date": "2026-06-03",
+      "name": "Bank of America 2026 Global Technology Conference",
+      "ingested_at": "2026-09-09T17:45:37.281942+00:00",
+      "ticker": "LITE",
+      "excerpts": [
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "our ramp of CPO lasers to be on schedule, the pressure from the customers are the same or increasing."
+        },
+        {
+          "class": "goal",
+          "dimension": "capex_investment",
+          "excerpt": "we're pretty aggressive in ramping our capacity, because we have these kind of visibilities, and in most cases, the commercial assurances as well."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "we're actually moving our legacy products out of our own factories, moving to the CMs for the CMs to help us manage those kind of products"
+        },
+        {
+          "class": "goal",
+          "dimension": "product_roadmap",
+          "excerpt": "let's serve our current customer well, right? Let's not go crazy to expand our customer base, but they just focus on serving our couple of hyperscaler customers really well."
+        },
+        {
+          "class": "promise",
+          "dimension": "revenue_growth",
+          "excerpt": "we don't want to max our capacity with LTAs because we still do believe that the AI optics usage will continue to rise. Therefore, we don't want to just lock up all capacity we have. We want to preserve some capacity for engaging more customers or opportunistically spot price of the market"
+        }
+      ]
+    },
+    {
+      "event_id": 682174,
+      "date": "2026-06-09",
+      "name": "Mizuho Technology Conference 2026",
+      "ingested_at": "2026-09-09T17:45:43.635094+00:00",
+      "ticker": "LITE",
+      "excerpts": [
+        {
+          "class": "promise",
+          "dimension": "revenue_growth",
+          "excerpt": "We've talked about in the fourth quarter of this year, seeing somewhere between $50 million and $100 million incremental revenue coming from our scale-out CPO."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "we would expect for us to start shipping in the second half of 2027. For you to see scale-up optical products on the market in the first part of 2028."
+        },
+        {
+          "class": "goal",
+          "dimension": "capex_investment",
+          "excerpt": "We've just bought this fab in Greensboro, and we spent a lot of time in North Carolina, and we think that can generate $5 billion of incremental revenue."
+        },
+        {
+          "class": "goal",
+          "dimension": "product_roadmap",
+          "excerpt": "I think if you fast-forward for five years, we want to add more components to our portfolio. We think we can compete in more than just lasers. We think there's a lot of things that go around the laser that are interesting. Photonic ICs, photodiodes, maybe laser drivers, maybe even getting in more to the semiconductor world with TIAs."
+        },
+        {
+          "class": "goal",
+          "dimension": "revenue_growth",
+          "excerpt": "I think the current component piece of the DCI market or scale-across is about $1.5 billion. We see that growing to about $4 billion by 2029."
+        }
+      ]
+    },
+    {
+      "event_id": 735211,
+      "date": "2026-08-27",
+      "name": "Deutsche Bank 2026 Technology Conference",
+      "ingested_at": "2026-09-09T17:45:49.963556+00:00",
+      "ticker": "LITE",
+      "excerpts": [
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "in 2028, we figure that we can now deliver $40 of earnings power."
+        },
+        {
+          "class": "promise",
+          "dimension": "capex_investment",
+          "excerpt": "Greensboro will see first revenue in 2028, and I believe full production in 2029."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "we are actually going to increase the number of CW lasers because we see an opportunity."
+        },
+        {
+          "class": "goal",
+          "dimension": "product_roadmap",
+          "excerpt": "holding to more than 50% EML unit growth by December quarter."
+        },
+        {
+          "class": "promise",
+          "dimension": "revenue_growth",
+          "excerpt": "we expect it to grow considerably throughout 2027."
+        },
+        {
+          "class": "goal",
+          "dimension": "margin_expansion",
+          "excerpt": "we're looking at as we enter calendar 2027 is how do we fix the manufacturing? How do we go best in class or not?"
+        },
+        {
+          "class": "goal",
+          "dimension": "other",
+          "excerpt": "I think we can get a lot better in terms of the margin."
+        },
+        {
+          "class": "promise",
+          "dimension": "r_and_d",
+          "excerpt": "We're already working with the best silicon manufacturers to embed Indium phosphide in their processes."
+        }
+      ]
+    }
+  ]
+}

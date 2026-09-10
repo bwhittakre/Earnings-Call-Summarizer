@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Roz — Datadog FY2026-Q2 · Lumentum FY2026-Q4</title>
+  <style>
+    :root {
+      --ink: #1a1a1a;
+      --muted: #5a5a5a;
+      --navy: #1b2a4a;
+      --paper: #f6f3ec;
+      --card: #fffdf8;
+      --line: #d8d2c6;
+      --warn: #8a5a12;
+      --warn-bg: #f4e6c8;
+      --danger: #7a2a2a;
+      --danger-bg: #f3d8d8;
+      --ok: #1f5a3a;
+      --ok-bg: #d9eadf;
+      --info: #2a4a7a;
+      --info-bg: #d9e3f0;
+      --level: #2a4a7a;
+      --surprise: #2f6f4f;
+      --quant: #b06a12;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: "Segoe UI", Calibri, system-ui, sans-serif;
+      color: var(--ink);
+      background: var(--paper);
+      line-height: 1.45;
+    }
+    header.top {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: var(--navy);
+      color: #f6f3ec;
+      padding: 14px 28px 12px;
+      border-bottom: 1px solid #0e1628;
+    }
+    header.top h1 {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 650;
+      letter-spacing: -0.02em;
+    }
+    header.top p {
+      margin: 4px 0 12px;
+      font-size: 13px;
+      color: #c9c3b6;
+    }
+    nav {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    nav button {
+      appearance: none;
+      border: 1px solid transparent;
+      background: transparent;
+      color: #e8e2d6;
+      padding: 7px 12px;
+      font: inherit;
+      font-size: 13px;
+      cursor: pointer;
+      border-radius: 3px;
+    }
+    nav button[aria-selected="true"] {
+      background: #f6f3ec;
+      color: var(--navy);
+      font-weight: 650;
+    }
+    nav .hint {
+      margin-left: auto;
+      font-size: 12px;
+      color: #b8b2a6;
+    }
+    main { max-width: 1080px; margin: 0 auto; padding: 22px 24px 64px; }
+    .page { display: none; }
+    .page.active { display: block; }
+    h2 { font-size: 18px; color: var(--navy); margin: 22px 0 8px; }
+    p.lead { font-size: 16px; max-width: 72ch; }
+    .muted { color: var(--muted); font-size: 13px; }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin: 14px 0 16px;
+    }
+    .card, .stat {
+      background: var(--card);
+      border: 1px solid var(--line);
+      padding: 14px 16px;
+    }
+    .stat strong {
+      display: block;
+      font-size: 20px;
+      color: var(--navy);
+      letter-spacing: -0.02em;
+    }
+    .stat span { font-size: 12px; color: var(--muted); }
+    .stat.warn strong { color: var(--warn); }
+    .stat.danger strong { color: var(--danger); }
+    .stat.ok strong { color: var(--ok); }
+    .card h3 {
+      margin: 0 0 8px;
+      font-size: 15px;
+      color: var(--navy);
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: baseline;
+    }
+    .pill {
+      font-size: 11px;
+      font-weight: 650;
+      padding: 2px 7px;
+      border-radius: 2px;
+      white-space: nowrap;
+    }
+    .pill.warn { background: var(--warn-bg); color: var(--warn); }
+    .pill.ok { background: var(--ok-bg); color: var(--ok); }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--card);
+      border: 1px solid var(--line);
+      font-size: 13.5px;
+    }
+    th, td {
+      text-align: left;
+      vertical-align: top;
+      padding: 9px 11px;
+      border-bottom: 1px solid var(--line);
+    }
+    th { background: #efe9dc; color: var(--navy); font-size: 12px; letter-spacing: 0.02em; }
+    tr:last-child td { border-bottom: 0; }
+    tr.warn td:first-child { box-shadow: inset 3px 0 0 var(--warn); }
+    tr.danger td:first-child { box-shadow: inset 3px 0 0 var(--danger); }
+    tr.ok td:first-child { box-shadow: inset 3px 0 0 var(--ok); }
+    .metric { font-weight: 650; color: var(--navy); white-space: nowrap; }
+    .note {
+      background: var(--info-bg);
+      border: 1px solid #b7c6dc;
+      padding: 12px 14px;
+      font-size: 14px;
+      margin-top: 18px;
+    }
+    .note strong { color: var(--navy); }
+    .chart-wrap { background: var(--card); border: 1px solid var(--line); padding: 10px 12px 4px; }
+    .legend { display: flex; gap: 16px; font-size: 12px; color: var(--muted); margin: 6px 0 10px; }
+    .legend i { display: inline-block; width: 10px; height: 10px; margin-right: 5px; }
+    .legend .l { background: var(--level); }
+    .legend .s { background: var(--surprise); }
+    .legend .q { background: var(--quant); }
+    footer.walk {
+      position: sticky;
+      bottom: 0;
+      background: #efe9dc;
+      border-top: 1px solid var(--line);
+      padding: 8px 24px;
+      font-size: 12px;
+      color: var(--muted);
+      display: flex;
+      justify-content: space-between;
+    }
+    @media (max-width: 820px) {
+      .grid-2, .stats { grid-template-columns: 1fr; }
+      nav .hint { display: none; }
+      .metric { white-space: normal; }
+    }
+    @media print {
+      header.top, footer.walk { position: static; }
+      nav, footer.walk { display: none; }
+      .page { display: block !important; break-after: page; }
+      body { background: #fff; }
+      main { padding: 0; max-width: none; }
+    }
+  </style>
+</head>
+<body>
+  <header class="top">
+    <h1>Roz on the latest print</h1>
+    <p>Datadog FY2026-Q2 (6 Aug 2026) · Lumentum FY2026-Q4 (11 Aug 2026) · scored against each name’s own call history</p>
+    <nav role="tablist">
+      <button type="button" role="tab" id="tab-pair" aria-selected="true" data-page="pair">1 · The pair</button>
+      <button type="button" role="tab" id="tab-ddog" aria-selected="false" data-page="ddog">2 · Datadog</button>
+      <button type="button" role="tab" id="tab-lite" aria-selected="false" data-page="lite">3 · Lumentum</button>
+      <span class="hint">Arrow keys or 1 / 2 / 3 to walk · one file, works offline</span>
+    </nav>
+  </header>
+
+  <main>
+    <section id="pair" class="page active" role="tabpanel">
+      <p class="lead">Two names. Same stack. Opposite tells. Roz does not stamp “bullish.” It tells you whether this call is running ahead of the print, hiding a broken slope under a still-positive adjective, or finally rhyming with the number — and it remembers the clocks they set on earlier calls.</p>
+
+      <div class="grid-2">
+        <article class="card">
+          <h3>Datadog — sell the gap <span class="pill warn">words ahead of print</span></h3>
+          <p>Demand surprise is +1.2. The print z is −0.29. Gap 1.49. They sold a booming tape — 36% growth, record sequential adds — that their own surprise history does not back at that size. Guidance is still +1.2 on level and down −0.8 on delta: dollars up, Q3 growth 28–29% from 36%. The adjective is fine. The slope just broke on the largest customer.</p>
+        </article>
+        <article class="card">
+          <h3>Lumentum — sell the split <span class="pill ok">print and story split</span></h3>
+          <p>Demand, guidance, and cash agree with the print. Margins and EPS do not: level pinned at +2.0, surprise +1.5 / +1.2, PIT z still negative. They crossed 50% gross a year early versus their own $2B model. Macro is the only red cell (−0.5) — Chinese InP just entered the script. The $600M / 17–20% clock is already dead behind a $1.01B / ~40% quarter.</p>
+        </article>
+      </div>
+
+      <h2>What you walk out knowing</h2>
+      <table>
+        <thead>
+          <tr><th></th><th>Datadog FY2026-Q2</th><th>Lumentum FY2026-Q4</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="metric">This call vs the print</td>
+            <td>Narrative overruns the z on demand, margins, EPS, cash. Only guidance agrees — and that agree is the deceleration.</td>
+            <td>Demand / FCF / guide rhyme. Margins and EPS are still talking louder than the z.</td>
+          </tr>
+          <tr>
+            <td class="metric">This call vs last call</td>
+            <td>Demand better (32% → 36%). Guidance worse — first time the large-customer usage cut is in the script.</td>
+            <td>Another step-up: $1.01B, $1.25B guided, 50% gross. Macro went from ignored to −0.5.</td>
+          </tr>
+          <tr>
+            <td class="metric">On the hook for</td>
+            <td>FedRAMP High, Bits SRE GA, 30% R&amp;D, 25%+ margin, India/Brazil headcount due this quarter.</td>
+            <td>$2B / 40% in 18–24 months. $100M CPO and $100M OCS clocks. Greensboro 2028. Dead $500M / $600M ancestors.</td>
+          </tr>
+          <tr>
+            <td class="metric">Desk status</td>
+            <td>10 trees. 10 silent. Delivery is an em dash — starter book, not a keep rate.</td>
+            <td>14 trees. 14 silent. Delivery is an em dash. Aging is already visible in the superseded clocks.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="note">
+        <strong>Why this is not a tone model.</strong>
+        On the XLK research book (not these names), raw tone reversed. The signal that held was narrative–quant agreement: flat three weeks, ~0.10 by weeks 6–9, ~0.17 by ~day 90. These two Independent names show the machinery on a live print — not a live IC claim.
+      </div>
+    </section>
+
+    <section id="ddog" class="page" role="tabpanel">
+      <div class="stats">
+        <div class="stat warn"><strong>+1.9 vs −0.29</strong><span>Demand: words vs print z</span></div>
+        <div class="stat danger"><strong>−0.8</strong><span>Guidance delta vs last call</span></div>
+        <div class="stat warn"><strong>−0.8</strong><span>Confidence novelty (new caveat)</span></div>
+        <div class="stat"><strong>—</strong><span>Delivery (starter book)</span></div>
+      </div>
+      <p class="lead">Datadog just ran a confident call on a slightly negative print z. The tape they sold is stronger than their own surprise history. The only thing that got worse versus last quarter is the slope — Q3 growth guided to 28–29% from 36% after they de-risked the largest customer.</p>
+
+      <h2>This call vs the print vs last quarter</h2>
+      <p class="muted">Call 6 Aug 2026 · prior = FY2026-Q1 · surprise vs Street · level = this quarter’s tape · delta vs last call · quant_z_pit = print vs DDOG’s own history as of the call date. Score units −2 to +2. Narrative dims have no print z.</p>
+      <div class="chart-wrap">
+        <div class="legend"><span><i class="l"></i>This-call level</span><span><i class="s"></i>Surprise vs Street</span><span><i class="q"></i>Print z (PIT)</span></div>
+        <svg id="chart-ddog" viewBox="0 0 980 260" width="100%" height="260"></svg>
+      </div>
+
+      <table>
+        <thead><tr><th>Dimension</th><th>Roz read</th></tr></thead>
+        <tbody>
+          <tr class="warn">
+            <td class="metric">Demand<br>+1.9 / surprise +1.2 / z −0.29 / gap 1.49</td>
+            <td>Surprise says they beat the Street’s demand tape. The print z says this beat is ordinary versus their own history (sparse sales mapping). They are talking 36% growth, record sequential dollar adds, non-AI high-20s, new logos 25% → 30%. The call is running ahead of the number. Do not stop at the z.</td>
+          </tr>
+          <tr class="warn">
+            <td class="metric">Margins<br>+0.6 / in_line +0.2 / z −0.64 / gap 0.84</td>
+            <td>Surprise is basically flat — they did not sell a margin beat. The z is the weakest print on the page (gross 79.6% vs 80.7% consensus). Level stays modest because they flagged reinvestment. Operating story (23%, +1 pt seq) is cleaner than the z. They are not overclaiming margins. The print is the soft spot.</td>
+          </tr>
+          <tr class="warn">
+            <td class="metric">Earnings power<br>+1.5 / surprise +0.8 / z −0.61 / gap 1.41</td>
+            <td>Surprise says the EPS tape was better than the Street (+9.3%; FY guide $2.50–$2.54 vs $2.45). The z still says this is not a rare print versus their history. Same pattern as demand: they sold more bottom-line power than the historical distribution credits, after eating the large-customer headwind.</td>
+          </tr>
+          <tr class="warn">
+            <td class="metric">Capital allocation<br>+0.7 / surprise +1.0 / z −0.51 / gap 1.51</td>
+            <td>Surprise is the cash: FCF $279M vs $212M, capex $9.9M vs $49.5M. Level is only +0.7 because they did not attach a new capital-return promise. The beat is real. They just refused to turn it into a story. Delta is flat versus last call — same 4–5% capex, no buyback.</td>
+          </tr>
+          <tr class="danger">
+            <td class="metric">Guidance<br>+1.2 / delta −0.8 / surprise −0.3 / agree</td>
+            <td>This is the tell. Level is still positive — they raised dollars to $4.45–$4.47B. Delta says the slope broke versus last quarter. Surprise is slightly bearish vs Street because Q3 28–29% from 36% is the new object. The one dimension where words and print agree is the deceleration. Trade that, not “raised guide.”</td>
+          </tr>
+          <tr class="warn">
+            <td class="metric">Mgmt confidence<br>+1.6 / delta −0.2 / novelty −0.8</td>
+            <td>They still sound like Datadog (“booming”, “record”). Novelty is the watch item: first time the largest-customer usage cut is in the script. Confidence did not collapse. A new caveat entered the book.</td>
+          </tr>
+          <tr class="ok">
+            <td class="metric">Competitive<br>+1.7 / delta +0.7 / novelty +1.2</td>
+            <td>New objects, not louder adjectives: 750 AI customers including all top-10, MCP tool-calls 22× vs Q4’25, Bits Security Analyst decoupled from SIEM. Versus last call, the competitive tape improved.</td>
+          </tr>
+          <tr>
+            <td class="metric">Macro / regulatory<br>+0.3 / flat / novelty +0.2</td>
+            <td>Near-dead air. FedRAMP pipeline “building, not converting” — same script as last quarter. The FedRAMP High tree is still open.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>What they are on the hook for</h2>
+      <p class="muted">10 trees · FY2026-Q2 scorecard: 10 silent, 10 never-touched, 2 open-stale. Delivery is an em dash. Live clocks, not scored outcomes.</p>
+      <table>
+        <thead><tr><th>Clock</th><th>They said</th></tr></thead>
+        <tbody>
+          <tr><td class="metric">FedRAMP High · CONF-2025-11-18</td><td>“We're going for FedRAMP high. I think that will enable us to go into Department of Defense and others.” This call: pipeline still not converting.</td></tr>
+          <tr><td class="metric">Bits SRE GA · CONF-2025-12-02</td><td>“Today, we went GA on our Bits SRE… our first AI-native application.” Earlier clock (CONF-2025-11-18): “we're still in private beta.” The book just closed a beta.</td></tr>
+          <tr><td class="metric">Flex Logs + Cloud SIEM · FY2025-Q4</td><td>Flex Logs “scale quite a bit.” “We're gonna be more aggressive in selling Cloud SIEM.” Due clocks, not yet terminal-scored.</td></tr>
+          <tr><td class="metric">30% of revenue in R&amp;D</td><td>“We invest around 30% of our top line in engineering, and we keep that going.” The capital-allocation clock they actually own.</td></tr>
+          <tr><td class="metric">25%+ margin · CONF-2025-06-03</td><td>“We gave a margin target of 25% plus… cash flow margins are 200-300 basis points above that.” Q2 printed 23% / 25% FCF.</td></tr>
+          <tr><td class="metric">Core observability 5–10× · CONF-2024-03-05</td><td>Long-horizon goal. Still open. Not a 2026 clock.</td></tr>
+          <tr><td class="metric">India / Brazil 50–100, then double · FY2026-Q2</td><td>Due this quarter. “I think it'll at least double that.” Scorecard has not marked it. Ask it.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="lite" class="page" role="tabpanel">
+      <div class="stats">
+        <div class="stat ok"><strong>+2.0 / +0.15</strong><span>Demand: level vs print z</span></div>
+        <div class="stat warn"><strong>+2.0 vs −0.38</strong><span>Margins: words vs print z</span></div>
+        <div class="stat ok"><strong>+1.14</strong><span>FCF / debt print z</span></div>
+        <div class="stat danger"><strong>−0.5</strong><span>Macro (only red cell)</span></div>
+      </div>
+      <p class="lead">Lumentum just printed a $1.01B quarter and guided $1.25B. Demand, guidance, and the balance sheet agree with the number. Margins and EPS do not — they are talking a +2.0 operating story against a still-negative PIT z. Versus last call they stepped up again, and they finally put Chinese InP on the tape. The old $600M / 17–20% clock is already behind them. The live clock is $2B / 40%.</p>
+
+      <h2>This call vs the print vs last quarter</h2>
+      <p class="muted">Call 11 Aug 2026 · June-30 fiscal · prior = FY2026-Q3. Same stack as Datadog — opposite split. Guidance quant bar is revision z (+0.87).</p>
+      <div class="chart-wrap">
+        <div class="legend"><span><i class="l"></i>This-call level</span><span><i class="s"></i>Surprise vs Street</span><span><i class="q"></i>Print z (PIT)</span></div>
+        <svg id="chart-lite" viewBox="0 0 980 260" width="100%" height="260"></svg>
+      </div>
+
+      <table>
+        <thead><tr><th>Dimension</th><th>Roz read</th></tr></thead>
+        <tbody>
+          <tr class="ok">
+            <td class="metric">Demand<br>+2.0 / surprise +1.4 / z +0.15 / agree</td>
+            <td>Surprise says they blew past the Street’s demand tape ($1.01B, +109% YoY, Q1 $1.25B vs $1.165B). The z agrees on sign — this is not a hidden divergence. They cannot service all customer demand. Confirmation of the squeeze, not a secret.</td>
+          </tr>
+          <tr class="warn">
+            <td class="metric">Margins<br>+2.0 / surprise +1.5 / z −0.38 / gap 1.88</td>
+            <td>Surprise says they sold a bigger margin tape than the Street (gross 50.4% vs 48.1%; Q1 op. margin 39.5–40.5%). The z is still negative versus their own history. They crossed 50% a year early versus the old $2B model. Words ahead of the historical distribution — same Datadog pattern, on a name that just printed 2,160 bps of YoY op. expansion.</td>
+          </tr>
+          <tr class="warn">
+            <td class="metric">Earnings power<br>+2.0 / surprise +1.2 / z −0.40 / gap 1.60</td>
+            <td>EPS $3.23 vs $2.97; Q1 $4.05–$4.35 vs $3.65. Surprise says the Street was behind. The z still says this is not rare in their recent book. They beat their own $2.85–$3.05 guide. The call is pricing in more leverage than the PIT z.</td>
+          </tr>
+          <tr class="ok">
+            <td class="metric">Capital allocation<br>+1.5 / surprise +1.3 / z +1.14 / agree</td>
+            <td>The rare rhyme. They retired $1.1B of converts. Net debt −$1.1B vs ~+$1.9B consensus. CFO $363M vs $212M. Surprise and the print are the same sentence: the balance sheet just reset. Gap is 0.16. Do not treat this like the margin gap.</td>
+          </tr>
+          <tr class="ok">
+            <td class="metric">Guidance<br>+2.0 / delta +1.8 / surprise +1.6 / rev z +0.87</td>
+            <td>They pulled the $1.25B quarter forward more than a quarter and said the whole target stack gets raised at the next OFC. Versus last call this is a reset, not a beat. Surprise and the revision z agree. The Street was late.</td>
+          </tr>
+          <tr class="ok">
+            <td class="metric">Mgmt confidence<br>+1.9 / delta +0.8 / novelty +1.2</td>
+            <td>They beat their own clocks and said so. Novelty is the schedule pull-forward, not a new adjective. Tone stepped up from an already-high Q3.</td>
+          </tr>
+          <tr class="ok">
+            <td class="metric">Competitive<br>+1.9 / delta +1.0 / novelty +1.8</td>
+            <td>New objects: first ELS PO, 70–80% pump-laser share (first time quantified), NPO as additive TAM, first triple-digit OCS quarter guided, AXT InP deal. A product-tape rewrite versus last quarter.</td>
+          </tr>
+          <tr class="danger">
+            <td class="metric">Macro / regulatory<br>−0.5 / delta −0.5 / novelty +0.8</td>
+            <td>The only red cell. Last quarter this dim was ignored. This quarter Chinese InP fab competition is on the tape, and political constraints are both a pump-laser tailwind and a geopolitical risk. Do not skip it because everything else is +2.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>What they are on the hook for</h2>
+      <p class="muted">14 trees · FY2026-Q4 scorecard: 14 silent, 14 never-touched, 10 open-stale. Delivery is an em dash. The superseded clocks are the point — you can see the book aging in public.</p>
+      <table>
+        <thead><tr><th>Clock</th><th>They said</th></tr></thead>
+        <tbody>
+          <tr><td class="metric">$2B / 40% in 18–24 months · FY2027-Q4</td><td>“We think that we can exit at $2 billion and 40% operating margins anywhere from 18 months-24 months from now.” FY2026-Q3. Thesis-level. Live.</td></tr>
+          <tr><td class="metric">CPO $100M Q4 CY2026 · FY2027-Q2</td><td>“$10 million of ROC, $10 million of OCS in Q1 going to $100 million of incremental dollars for us in Q4.” CONF-2025-12-08.</td></tr>
+          <tr><td class="metric">$400M CPO backlog H2 CY2026 · FY2027-Q2</td><td>“We are very much on track to be shipping this $400 million of backlog in the H2 of this calendar year.” FY2026-Q3.</td></tr>
+          <tr><td class="metric">$100M quarterly OCS · FY2027-Q1</td><td>Roadmap $10M → $100M. This call guided the first triple-digit OCS quarter. Clock is coming due.</td></tr>
+          <tr><td class="metric">Greensboro fab revenue 2028 · FY2028-Q3</td><td>“We expect to be shipping out of this Greensboro fab by 2028.” Capacity for the $2B exit.</td></tr>
+          <tr><td class="metric">$600M / 17–20% op. margin · aged</td><td>Already dead. Q4 printed $1.01B and guided 39.5–40.5%. Keep it so the room sees the book compounding.</td></tr>
+          <tr><td class="metric">$500M quarterly by end-CY2025 · aged</td><td>Superseded. Ancestor, not a live risk.</td></tr>
+          <tr><td class="metric">InP / Thailand / 200G EML / NeoPhotonics</td><td>Capacity and synergy ancestors. The constraint behind “we cannot service all customer demand” is the same tree, three years later.</td></tr>
+        </tbody>
+      </table>
+    </section>
+  </main>
+
+  <footer class="walk">
+    <span>Roz Independent case · 9 Sep 2026 · not XLK / Rank IC</span>
+    <span>Print this file to get all three pages</span>
+  </footer>
+
+  <script>
+    const PAGES = ["pair", "ddog", "lite"];
+    const DIMS = ["Demand", "Margins", "Earn. power", "Cap. alloc.", "Guidance", "Mgmt conf.", "Competitive", "Macro / reg."];
+    const DDOG = {
+      level: [1.9, 0.6, 1.5, 0.7, 1.2, 1.6, 1.7, 0.3],
+      surprise: [1.2, 0.2, 0.8, 1.0, -0.3, 0, 0, 0],
+      quant: [-0.29, -0.64, -0.61, -0.51, -0.38, 0, 0, 0],
+    };
+    const LITE = {
+      level: [2.0, 2.0, 2.0, 1.5, 2.0, 1.9, 1.9, -0.5],
+      surprise: [1.4, 1.5, 1.2, 1.3, 1.6, 0, 0, 0],
+      quant: [0.15, -0.38, -0.4, 1.14, 0.87, 0, 0, 0],
+    };
+
+    function show(id) {
+      PAGES.forEach(function (p) {
+        document.getElementById(p).classList.toggle("active", p === id);
+        var btn = document.getElementById("tab-" + p);
+        btn.setAttribute("aria-selected", p === id ? "true" : "false");
+      });
+      if (history.replaceState) history.replaceState(null, "", "#" + id);
+      window.scrollTo(0, 0);
+    }
+
+    document.querySelectorAll("nav button").forEach(function (btn) {
+      btn.addEventListener("click", function () { show(btn.getAttribute("data-page")); });
+    });
+
+    document.addEventListener("keydown", function (e) {
+      if (e.target && (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA")) return;
+      var cur = PAGES.findIndex(function (p) {
+        return document.getElementById(p).classList.contains("active");
+      });
+      if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+        show(PAGES[Math.min(PAGES.length - 1, cur + 1)]);
+      } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+        show(PAGES[Math.max(0, cur - 1)]);
+      } else if (e.key === "1" || e.key === "2" || e.key === "3") {
+        show(PAGES[Number(e.key) - 1]);
+      }
+    });
+
+    var fromHash = (location.hash || "").replace("#", "");
+    if (PAGES.indexOf(fromHash) >= 0) show(fromHash);
+
+    function drawChart(svgId, series) {
+      var svg = document.getElementById(svgId);
+      var W = 980, H = 260, padL = 36, padR = 12, padT = 12, padB = 36;
+      var innerW = W - padL - padR, innerH = H - padT - padB;
+      var yMin = -2, yMax = 2;
+      function yx(v) { return padT + (1 - (v - yMin) / (yMax - yMin)) * innerH; }
+      var zero = yx(0);
+      var ns = "http://www.w3.org/2000/svg";
+      function el(name, attrs) {
+        var n = document.createElementNS(ns, name);
+        Object.keys(attrs).forEach(function (k) { n.setAttribute(k, attrs[k]); });
+        return n;
+      }
+      svg.innerHTML = "";
+      svg.appendChild(el("line", { x1: padL, x2: W - padR, y1: zero, y2: zero, stroke: "#c9c3b6", "stroke-width": "1" }));
+      [2, 1, -1, -2].forEach(function (t) {
+        var y = yx(t);
+        svg.appendChild(el("line", { x1: padL, x2: W - padR, y1: y, y2: y, stroke: "#eee8dc", "stroke-width": "1" }));
+        var lab = el("text", { x: padL - 6, y: y + 4, "text-anchor": "end", fill: "#5a5a5a", "font-size": "11" });
+        lab.textContent = String(t);
+        svg.appendChild(lab);
+      });
+      var n = DIMS.length;
+      var groupW = innerW / n;
+      var colors = ["#2a4a7a", "#2f6f4f", "#b06a12"];
+      var keys = ["level", "surprise", "quant"];
+      DIMS.forEach(function (label, i) {
+        var gx = padL + i * groupW;
+        keys.forEach(function (k, si) {
+          var v = series[k][i];
+          var barW = groupW / 5;
+          var x = gx + groupW * 0.22 + si * (barW + 2);
+          var y1 = yx(v);
+          var y = Math.min(y1, zero);
+          var h = Math.max(1.5, Math.abs(y1 - zero));
+          svg.appendChild(el("rect", { x: x, y: y, width: barW, height: h, fill: colors[si] }));
+        });
+        var tx = el("text", { x: gx + groupW / 2, y: H - 10, "text-anchor": "middle", fill: "#1b2a4a", "font-size": "11" });
+        tx.textContent = label;
+        svg.appendChild(tx);
+      });
+    }
+
+    drawChart("chart-ddog", DDOG);
+    drawChart("chart-lite", LITE);
+  </script>
+</body>
+</html>

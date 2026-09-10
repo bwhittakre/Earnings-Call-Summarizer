@@ -77,6 +77,21 @@ def _load_entries(sidecar: Path | None = None) -> list[dict]:
         return []
 
 
+def scored_delivery(entry: dict) -> float | None:
+    """Delivery is a rate only when a terminal was scored.
+
+    First-seed books can write ``delivery_score=0.0`` because an unparsed
+    seed age trips the horizon soft-miss (``n_failed_frac``). That is not
+    a keep rate. Unresolved stays a dash.
+    """
+    confirmed = int(entry.get("n_confirmed") or 0)
+    failed = int(entry.get("n_failed") or 0)
+    if confirmed + failed == 0:
+        return None
+    raw = entry.get("delivery_score")
+    return raw if raw is not None else None
+
+
 def _quadrant(delivery: float | None, transparency: float | None) -> str:
     if delivery is None or transparency is None:
         return "Insufficient data"
@@ -96,7 +111,7 @@ def _enrich(entries: list[dict]) -> list[dict]:
     """Add quadrant label and display-friendly columns."""
     out = []
     for e in entries:
-        d = e.get("delivery_score")
+        d = scored_delivery(e)
         tr = e.get("transparency_score")
         out.append({
             **e,
@@ -134,7 +149,7 @@ def timeline_rows(entries: list[dict]) -> list[dict]:
         if axis in used:
             axis = f"{axis} {fp[-5:]}"
         used.add(axis)
-        delivery = entry.get("delivery_score")
+        delivery = scored_delivery(entry)
         transparency = entry.get("transparency_score")
         open_trees = int(entry.get("open_trees_at_call") or 0)
         new_seeds = int(entry.get("n_new_seeds") or 0)
@@ -357,7 +372,7 @@ def _scatter_timeline(df_records: list[dict], ticker: str) -> "alt.LayerChart":
     import altair as alt
 
     data = [r for r in df_records if r.get("ticker") == ticker
-            and r.get("delivery_score") is not None
+            and scored_delivery(r) is not None
             and r.get("transparency_score") is not None]
     data.sort(key=lambda r: call_chrono_key(r.get("fiscal_period")))
 
@@ -429,7 +444,7 @@ def _scatter_snapshot(df_records: list[dict], fiscal_period: str) -> "alt.LayerC
     import altair as alt
 
     data = [r for r in df_records if r.get("fiscal_period") == fiscal_period
-            and r.get("delivery_score") is not None
+            and scored_delivery(r) is not None
             and r.get("transparency_score") is not None]
 
     if not data:
@@ -551,7 +566,7 @@ def render_scorecard(st: Any, sector_tickers: list[str] | None = None) -> None:
 
     # Prefer a ticker that already has a delivery rate; otherwise any ticker.
     scored_tickers = sorted({
-        e["ticker"] for e in sector_entries if e.get("delivery_score") is not None
+        e["ticker"] for e in sector_entries if scored_delivery(e) is not None
     })
 
     # ── View A: Company Timeline ──────────────────────────────────────────────
@@ -578,7 +593,7 @@ def render_scorecard(st: Any, sector_tickers: list[str] | None = None) -> None:
                 key=f"scorecard_seq_{ticker}",
             )
             selected_fp = _selected_fiscal_period(event)
-            settled = [e for e in ticker_entries if e.get("delivery_score") is not None]
+            settled = [e for e in ticker_entries if scored_delivery(e) is not None]
             if settled:
                 with st.expander("Settled promises — delivery vs transparency"):
                     st.altair_chart(
@@ -604,7 +619,7 @@ def render_scorecard(st: Any, sector_tickers: list[str] | None = None) -> None:
                     {
                         "period": period_label(e["fiscal_period"], e.get("event_name")),
                         "kind": e.get("period_kind") or period_kind(e["fiscal_period"]),
-                        "delivery": f"{e['delivery_score']:.1%}" if e.get("delivery_score") is not None else "—",
+                        "delivery": f"{scored_delivery(e):.1%}" if scored_delivery(e) is not None else "—",
                         "transparency": f"{e['transparency_score']:.2f}" if e.get("transparency_score") is not None else "—",
                         "quadrant": e["quadrant"],
                         "delivered": e.get("n_confirmed", 0),
@@ -667,7 +682,7 @@ def render_scorecard(st: Any, sector_tickers: list[str] | None = None) -> None:
                 _snapshot_transparency_chart(period_rows, period_title),
                 key=f"scorecard_snap_{period}",
             )
-            settled = [e for e in period_entries if e.get("delivery_score") is not None]
+            settled = [e for e in period_entries if scored_delivery(e) is not None]
             if settled:
                 with st.expander("Settled promises — delivery vs transparency"):
                     st.altair_chart(
@@ -693,7 +708,7 @@ def render_scorecard(st: Any, sector_tickers: list[str] | None = None) -> None:
                     [
                         {
                             "ticker": e["ticker"],
-                            "delivery": f"{e['delivery_score']:.1%}" if e.get("delivery_score") is not None else "—",
+                            "delivery": f"{scored_delivery(e):.1%}" if scored_delivery(e) is not None else "—",
                             "transparency": f"{e['transparency_score']:.2f}" if e.get("transparency_score") is not None else "—",
                             "quadrant": e["quadrant"],
                             "delivered": e.get("n_confirmed", 0),

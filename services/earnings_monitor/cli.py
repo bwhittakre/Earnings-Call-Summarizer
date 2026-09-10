@@ -120,7 +120,11 @@ def main(argv: list[str] | None = None) -> int:
     arm_parser.add_argument(
         "--skip-pull",
         action="store_true",
-        help="With --onboard, skip transcript pull (use MCP-seeded transcripts_raw)",
+        help=(
+            "With --onboard, skip transcript pull (use MCP-seeded "
+            "transcripts_raw + data/conf_transcripts). Pull target is 2016-Q1 "
+            "or every available Quartr event if the tape starts later."
+        ),
     )
     arm_parser.add_argument(
         "--allow-roic-fallback",
@@ -146,6 +150,24 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="With --onboard, ignore cached company overlay IDs and re-query Snowflake",
     )
+    arm_parser.add_argument(
+        "--skip-book-sync",
+        action="store_true",
+        help=(
+            "With --onboard, do not append this ticker into the live XLK Rank IC book. "
+            "Implied when --research-sector is not xlk_tech."
+        ),
+    )
+    arm_parser.add_argument(
+        "--research-sector",
+        default="independent",
+        help="With --onboard, dashboard sector file stem (default independent)",
+    )
+    arm_parser.add_argument(
+        "--industry-group",
+        default="",
+        help="With --onboard, overlay industry tag (e.g. tech). Default unclassified.",
+    )
     onboard_parser = subparsers.add_parser(
         "onboard",
         help="Run Onboard orchestrator for a ticker/period (history → score → panel)",
@@ -165,7 +187,14 @@ def main(argv: list[str] | None = None) -> int:
             "triggering onboarding_blocked. Example: --as-of 2025-05-13T23:59:00+00:00"
         ),
     )
-    onboard_parser.add_argument("--skip-pull", action="store_true")
+    onboard_parser.add_argument(
+        "--skip-pull",
+        action="store_true",
+        help=(
+            "Use MCP-seeded transcripts_raw and data/conf_transcripts. "
+            "Pull target is 2016-Q1, or every available event if younger."
+        ),
+    )
     onboard_parser.add_argument("--skip-ids", action="store_true")
     onboard_parser.add_argument("--skip-fiscal", action="store_true")
     onboard_parser.add_argument("--skip-quant", action="store_true")
@@ -207,12 +236,24 @@ def main(argv: list[str] | None = None) -> int:
     onboard_parser.add_argument(
         "--skip-book-sync",
         action="store_true",
-        help="Do not append this ticker into the live Roz SQLite/env book",
+        help=(
+            "Do not append this ticker into the live XLK Rank IC book. "
+            "Implied when --research-sector is not xlk_tech. Monitor history "
+            "still refreshes."
+        ),
     )
     onboard_parser.add_argument(
         "--research-sector",
-        default="xlk_tech",
-        help="Sector file stem for book integration (default xlk_tech)",
+        default="independent",
+        help="Dashboard sector file stem (default independent; xlk_tech joins Rank IC)",
+    )
+    onboard_parser.add_argument(
+        "--industry-group",
+        default="",
+        help=(
+            "General industry tag on the overlay (e.g. tech, healthcare). "
+            "Default unclassified for Independent names."
+        ),
     )
     onboard_parser.add_argument(
         "--quartr-company-id",
@@ -370,15 +411,27 @@ def main(argv: list[str] | None = None) -> int:
             quartr_company_id=args.quartr_company_id,
             refresh_ids=bool(args.refresh_ids),
             configured_tickers=config.tickers,
-            skip_book_sync=bool(args.skip_book_sync),
-            research_sector=str(args.research_sector or "xlk_tech"),
+            skip_book_sync=(
+                bool(args.skip_book_sync)
+                or str(args.research_sector or "independent") != "xlk_tech"
+            ),
+            research_sector=str(args.research_sector or "independent"),
+            industry_group=str(getattr(args, "industry_group", "") or "") or None,
         )
         payload = result.to_dict()
 
         # ── Full-history claims desk onboard ────────────────────────────────────
         # Runs automatically for every new company unless --skip-history-onboard is set.
         # Uses Haiku for seeding (cost-efficient) and Sonnet for terminal scoring.
-        if not args.skip_history_onboard and not args.dry_run and result.status not in ("failed", "blocked"):
+        already_history = any(
+            s.get("step") == "desk_history_onboard" for s in result.steps
+        )
+        if (
+            not args.skip_history_onboard
+            and not already_history
+            and not args.dry_run
+            and result.status not in ("failed", "blocked")
+        ):
             print(f"\n[history onboard] Starting full-history desk onboard for {ticker}...")
             try:
                 from .desk_autopilot import run_history_onboard_for_ticker
@@ -401,25 +454,36 @@ def main(argv: list[str] | None = None) -> int:
             monitor = build_local_monitor(config)
             from .ticker_book import ensure_ticker_in_book, resolve_book_tickers
 
-            book = ensure_ticker_in_book(
-                ticker=ticker,
-                config=config,
-                state=monitor.state,
-                seed_tickers=config.tickers,
+            join_xlk = (
+                str(args.research_sector or "independent") == "xlk_tech"
+                and not bool(args.skip_book_sync)
             )
-            payload["ticker_book"] = {
-                "added": book.added,
-                "tickers": list(book.tickers),
-                "sector_updated": book.sector_updated,
-                "env_updated": book.env_updated,
-            }
-            if ticker not in book.tickers and ticker not in resolve_book_tickers(
-                config, monitor.state
-            ):
-                parser.error(
-                    f"{ticker} is not in the Roz ticker book after integration. "
-                    f"{result.allowlist_guidance}"
+            if join_xlk:
+                book = ensure_ticker_in_book(
+                    ticker=ticker,
+                    config=config,
+                    state=monitor.state,
+                    seed_tickers=config.tickers,
                 )
+                payload["ticker_book"] = {
+                    "added": book.added,
+                    "tickers": list(book.tickers),
+                    "sector_updated": book.sector_updated,
+                    "env_updated": book.env_updated,
+                }
+                if ticker not in book.tickers and ticker not in resolve_book_tickers(
+                    config, monitor.state
+                ):
+                    parser.error(
+                        f"{ticker} is not in the Roz ticker book after integration. "
+                        f"{result.allowlist_guidance}"
+                    )
+            else:
+                payload["ticker_book"] = {
+                    "skipped": True,
+                    "research_sector": str(args.research_sector or "independent"),
+                    "note": "Independent onboard: not added to XLK / roz_book_tickers",
+                }
             if result.status == "first_print_fallback":
                 initial = EventState.SCHEDULED
                 mode = WorkflowMode.FIRST_PRINT.value
@@ -476,11 +540,15 @@ def main(argv: list[str] | None = None) -> int:
             getattr(args, "onboard", False)
         ):
             parser.error("--first-print and --onboard are mutually exclusive")
-        # First-Print / Onboard integrate the ticker into the shared Roz book
-        # (SQLite meta + sector file + env when writable) before arming.
-        if bool(getattr(args, "first_print", False)) or bool(
-            getattr(args, "onboard", False)
-        ):
+        # First-Print and XLK onboard join the shared Roz book before arming.
+        # Independent onboard stays off roz_book_tickers / xlk_tech.
+        join_xlk = bool(getattr(args, "first_print", False)) or (
+            bool(getattr(args, "onboard", False))
+            and str(getattr(args, "research_sector", "independent") or "independent")
+            == "xlk_tech"
+            and not bool(getattr(args, "skip_book_sync", False))
+        )
+        if join_xlk:
             from .ticker_book import ensure_ticker_in_book
 
             ensure_ticker_in_book(
@@ -488,6 +556,16 @@ def main(argv: list[str] | None = None) -> int:
                 config=config,
                 state=monitor.state,
                 seed_tickers=config.tickers,
+            )
+        elif bool(getattr(args, "onboard", False)):
+            from .ticker_book import sector_tickers_path, write_sector_ticker
+
+            write_sector_ticker(
+                sector_tickers_path(
+                    config.repo_root,
+                    str(getattr(args, "research_sector", "independent") or "independent"),
+                ),
+                ticker,
             )
         else:
             from .eligibility import (
@@ -564,6 +642,15 @@ def main(argv: list[str] | None = None) -> int:
                 quartr_company_id=args.quartr_company_id,
                 refresh_ids=bool(args.refresh_ids),
                 configured_tickers=config.tickers,
+                skip_book_sync=(
+                    bool(getattr(args, "skip_book_sync", False))
+                    or str(getattr(args, "research_sector", "independent") or "independent")
+                    != "xlk_tech"
+                ),
+                research_sector=str(
+                    getattr(args, "research_sector", "independent") or "independent"
+                ),
+                industry_group=str(getattr(args, "industry_group", "") or "") or None,
             )
             onboard_payload = result.to_dict()
             if result.status == "first_print_fallback":

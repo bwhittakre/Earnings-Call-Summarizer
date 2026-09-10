@@ -17,6 +17,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from services.earnings_monitor.dashboard.claims_scorecard import scored_delivery
 from services.earnings_monitor.period_keys import (
     fiscal_key,
     period_kind,
@@ -299,7 +300,7 @@ def load_brief_data(
     return BriefData(
         ticker=ticker_up,
         fiscal_period=fiscal_period,
-        delivery_score=this_entry.get("delivery_score"),
+        delivery_score=scored_delivery(this_entry),
         transparency_score=this_entry.get("transparency_score"),
         n_confirmed=int(this_entry.get("n_confirmed") or 0),
         n_failed=int(this_entry.get("n_failed") or 0),
@@ -397,15 +398,15 @@ def render_brief(st: Any, brief: "BriefData") -> None:
         # Delivery trend: last 5 periods with data
         scored = [
             h for h in brief.history
-            if h.get("delivery_score") is not None
+            if scored_delivery(h) is not None
         ][-5:]
         if scored:
             trend_rows = [
                 {
                     "period": h["fiscal_period"],
-                    "delivery": f"{h['delivery_score']:.0%}",
+                    "delivery": f"{scored_delivery(h):.0%}",
                     "transparency": f"{h['transparency_score']:.2f}" if h.get("transparency_score") is not None else "—",
-                    "quadrant": _quadrant_short(h.get("delivery_score"), h.get("transparency_score")),
+                    "quadrant": _quadrant_short(scored_delivery(h), h.get("transparency_score")),
                 }
                 for h in scored
             ]

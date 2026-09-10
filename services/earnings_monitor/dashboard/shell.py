@@ -23,6 +23,7 @@ from services.earnings_monitor.dashboard.research_data import (
     format_universe_stale_message,
     html_report_meta,
     load_research_book_dirty,
+    load_research_book_tickers,
     peek_consolidated_meta,
     peek_rank_ic_meta,
     resolve_consolidated_html,
@@ -221,7 +222,7 @@ def render_research_status_sidebar(st: Any, data: DashboardData) -> None:
         st.sidebar.caption("Consolidated: not loaded")
 
     universe_status = artifact_universe_status(
-        data.tickers,
+        load_research_book_tickers(),
         rank_peek if rank_peek.get("available") else None,
         consol_peek if consol_peek.get("available") else None,
     )

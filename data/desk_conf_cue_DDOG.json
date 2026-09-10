@@ -1,0 +1,1550 @@
+{
+  "ticker": "DDOG",
+  "source": "conference",
+  "events": [
+    {
+      "event_id": 24674,
+      "date": "2021-10-27",
+      "name": "Investor Meeting",
+      "ingested_at": "2026-09-09T17:08:21.846606+00:00",
+      "ticker": "DDOG",
+      "excerpts": [
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "We're announcing the private beta of our Application Security product here at DASH. We are also announcing a general availability of our CI Visibility product as we begin to bring observability to pure developer workflows, and we will share more about that in a bit."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "By the end of the year, we will soon be out with our first version of Watchdog Root Cause Analysis, which will help customers automatically identify root causes of performance incidents."
+        },
+        {
+          "class": "promise",
+          "dimension": "partnerships",
+          "excerpt": "Also, this week at the DASH conference, we are announcing official support of Vector by Datadog. Alongside the launch of the private beta of the new solution we have been at work on since the team joined us, called Observability Pipelines."
+        },
+        {
+          "class": "goal",
+          "dimension": "market_share",
+          "excerpt": "We think the security TAM opportunity will grow over time to be of the same order of magnitude as observability."
+        },
+        {
+          "class": "promise",
+          "dimension": "r_and_d",
+          "excerpt": "We will typically turn our acquisitions into a meaningful product in about a year after that acquisition."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "We'll continue to augment our product's capabilities, and we'll introduce new products over time as we learn more from our customers."
+        }
+      ]
+    },
+    {
+      "event_id": 39306,
+      "date": "2022-10-19",
+      "name": "Investor Meeting",
+      "ingested_at": "2026-09-09T17:08:26.540913+00:00",
+      "ticker": "DDOG",
+      "excerpts": [
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "What you will see over the next short period of time is it manifesting itself in various different parts of our of our stack, our agents, and so on, to make where it makes sense easy for customers to collect data without doing extra instrumentation, easy for customers to understand what's talking to what and so on and so forth."
+        },
+        {
+          "class": "goal",
+          "dimension": "market_share",
+          "dimension_secondary": "product_roadmap",
+          "excerpt": "Our ambition is to solve that problem for them, at least when it comes to cloud security, securing their homegrown applications, as well as the infrastructure they're running on and all the processes that surround that."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "There's a lot more product we're building internally. There's a lot more we know we need to build."
+        }
+      ]
+    },
+    {
+      "event_id": 69302,
+      "date": "2023-05-17",
+      "name": "MoffettNathanson Technology, Media, and Telecom Conference",
+      "ingested_at": "2026-09-09T17:08:33.794779+00:00",
+      "ticker": "DDOG",
+      "excerpts": [
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "We have a number of things we're working on. We tend to announce things at DASH. You know, we're working on different things to see if we can, you know, find the things that will be most useful to customers and then have the time to get customer feedback to sort of be on that schedule."
+        },
+        {
+          "class": "promise",
+          "dimension": "technology_platform",
+          "excerpt": "That's like one thing you do, but that's not embedded in the platform, and that's what I was speaking about in my previous remarks, about embedding the large language models within the platform."
+        },
+        {
+          "class": "goal",
+          "dimension": "r_and_d",
+          "excerpt": "We think there'll be lots of workloads and cases that are perfect for Datadog in our customer base. The last thing would be in our platform itself...we're optimistic that we're gonna be able to add parts to the platform."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "We have to get to product parity versus some of the other competitors which are not there yet. Then we have to then from there figure out whether the, our strategy is gonna be to lead with security into the CISO, which is more of a top-down sale, or to have it in, again, specializing in places in a more fulsome way."
+        },
+        {
+          "class": "promise",
+          "dimension": "capex_investment",
+          "excerpt": "We leave the long-term targets to be able to make investments in the infrastructure platform, which we've had at different times, so that we can have inefficiencies that might take it down in the short term, but will enhance the cost-effectiveness of the platform long term."
+        },
+        {
+          "class": "promise",
+          "dimension": "talent_hiring",
+          "excerpt": "The quota capacity will be increasing at a higher rate for this year than the amount of headcount in the year."
+        }
+      ]
+    },
+    {
+      "event_id": 69378,
+      "date": "2023-05-22",
+      "name": "51st Annual J.P. Morgan\u2019s Global Technology, Media and Communications Conference 2023",
+      "ingested_at": "2026-09-09T17:08:37.481857+00:00",
+      "ticker": "DDOG",
+      "excerpts": [
+        {
+          "class": "goal",
+          "dimension": "product_roadmap",
+          "excerpt": "we're still heavily developing it and adding features and integrations with cloud providers and things like that"
+        },
+        {
+          "class": "goal",
+          "dimension": "revenue_growth",
+          "excerpt": "There is tremendous opportunity if we can drive, you know, 5% or 10% worth of savings, for our customers on their cloud bills, for us to have our product basically just pay for itself in its integrity just through cloud cost optimization."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "We'll be able to let them trace that end to end. We basically integrated all into the monitoring we do for the applications."
+        }
+      ]
+    },
+    {
+      "event_id": 93506,
+      "date": "2023-09-06",
+      "name": "Goldman Sachs Communacopia & Technology Conference",
+      "ingested_at": "2026-09-09T17:08:44.982885+00:00",
+      "ticker": "DDOG",
+      "excerpts": [
+        {
+          "class": "goal",
+          "dimension": "product_roadmap",
+          "excerpt": "One of the largest portions of our product release was in the LLM. And essentially, as we believe our clients are going to be injecting AI, as we just talked about into their platforms and their products. We have to be ready to help them monitor that, which is the LLM product."
+        },
+        {
+          "class": "goal",
+          "dimension": "product_roadmap",
+          "excerpt": "There's one of the things that is increasingly being demanded is the injection of security. Looking at the security of applications at the point of deployment and in production."
+        },
+        {
+          "class": "goal",
+          "dimension": "product_roadmap",
+          "excerpt": "Another would be to have earlier and early examination of applications in the developer queues, which is our CI/CD. And another, which I know we're going to talk a lot about is to use AI and large language models in the platform and to monitor those workloads."
+        },
+        {
+          "class": "goal",
+          "dimension": "product_roadmap",
+          "excerpt": "We want to be prepared for that. That's number one. Number two is our own platform, not our clients' being able to inject AI into it, and that's what Bits is."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "It both opens up more use cases and provides more efficiency within the core monitoring product. Again, in the log pillar."
+        },
+        {
+          "class": "promise",
+          "dimension": "r_and_d",
+          "excerpt": "We've continued to hire strongly in R&D. We've continued to hire in the regions in sales and marketing where we feel we're under-penetrated."
+        },
+        {
+          "class": "promise",
+          "dimension": "partnerships",
+          "excerpt": "I think we have more to go in systems integrators. We probably haven't because of the less professional services tapped that fully and we're looking, you know, to do that."
+        }
+      ]
+    },
+    {
+      "event_id": 93590,
+      "date": "2023-09-07",
+      "name": "Citi's 2023 Global Technology Conference",
+      "ingested_at": "2026-09-09T17:08:49.969635+00:00",
+      "ticker": "DDOG",
+      "excerpts": [
+        {
+          "class": "goal",
+          "dimension": "market_share",
+          "excerpt": "we think that the market could be a doubling in TAM but we need more experience in the market to see if, like the other products, this can be a doubling, like the other products were."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "we may attack a bit more of the CISO market, which we're not in today. But that's down the road."
+        },
+        {
+          "class": "promise",
+          "dimension": "r_and_d",
+          "excerpt": "we're essentially injecting, we have been for a while, but we're increasing the pace, large language models and pilots in our platform."
+        },
+        {
+          "class": "goal",
+          "dimension": "margin_expansion",
+          "excerpt": "we've always said, big long-term opportunity, we're gonna continue to grow the investment a lot, but, in a prioritized way."
+        },
+        {
+          "class": "promise",
+          "dimension": "geographic_expansion",
+          "excerpt": "we've seen areas that we haven't really penetrated very well, some of the emerging markets, et c.. So put our money there, and, or government, as an example."
+        }
+      ]
+    },
+    {
+      "event_id": 130608,
+      "date": "2023-11-14",
+      "name": "RBC Capital Markets Global Technology, Internet, Media, Telecommunications Conference",
+      "ingested_at": "2026-09-09T17:08:52.863245+00:00",
+      "ticker": "DDOG",
+      "excerpts": [
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "we have developed, we, we've announced and are building out a number of LLM monitoring modules in our platform, and we're building integrations."
+        },
+        {
+          "class": "goal",
+          "dimension": "market_share",
+          "excerpt": "Number two would be our market share in the platform, and our ability to continue to win the full platform. So our ability to consolidate and win."
+        },
+        {
+          "class": "goal",
+          "dimension": "product_roadmap",
+          "excerpt": "Number three, let's say, would be what's happened with AI... And lastly, would be the success of DevSecOps."
+        }
+      ]
+    },
+    {
+      "event_id": 130440,
+      "date": "2023-11-28",
+      "name": "UBS Global Technology Conference",
+      "ingested_at": "2026-09-09T17:08:56.660025+00:00",
+      "ticker": "DDOG",
+      "excerpts": [
+        {
+          "class": "promise",
+          "dimension": "r_and_d",
+          "excerpt": "So we have a platform. So we're investing significantly in building the integrations. We've always had machine learning and AI in our platform, and that, what that means is we look at correlations in the performance of applications, and we always have been the you know, one of the ones that organize them, provides trends. Inserting large language models for us, we think for our utility, it's gonna enable us to be faster and more intelligent in analyzing problems, some of which may be able to be auto-remediated, others, where you're gonna have really good suggestions. And we are working on that, and so we also have the Bits, chatbot, and everything like that."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "So we've been really good at sort of continuing to grow. There's a lot of opportunities. We have plans, and we always have had to aggressively grow R&D, and there's a lot of go-to-market."
+        },
+        {
+          "class": "goal",
+          "dimension": "margin_expansion",
+          "excerpt": "And we've been giving guidance over time, sort of, you know, around 20 or 20+, et cetera. We wanna maximize the long-term revenues while protecting a certain level of margin."
+        }
+      ]
+    },
+    {
+      "event_id": 131359,
+      "date": "2023-12-06",
+      "name": "Barclays Global Technology Conference",
+      "ingested_at": "2026-09-09T17:09:02.374153+00:00",
+      "ticker": "DDOG",
+      "excerpts": [
+        {
+          "class": "promise",
+          "dimension": "r_and_d",
+          "excerpt": "We have a list of prioritized projects, and I can go into in R&D and in sales and marketing. We have been trying for some time to accelerate a bit there."
+        },
+        {
+          "class": "goal",
+          "dimension": "margin_expansion",
+          "excerpt": "We gave the guidance on margin back when we went public, 20-25. We called it long term. We got there faster than that."
+        },
+        {
+          "class": "promise",
+          "dimension": "geographic_expansion",
+          "excerpt": "In go-to-market, I think that's where you probably have more mature markets and emerging markets. Then, Asia, where we already are, but you're doing this, you're creating leadership that is a bit more decentralized, so you're making sure you have great heads of EMEA, great heads of APAC."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "Here's an example: when we launched our APM product, because it's, I would say, less, less, frictionless. To instrument applications, we launched it, but still there was more work to do in making the instrumentation of applications as frictionless as interesting. So we have projects on that. That's to make APM even easier to use and detect."
+        },
+        {
+          "class": "promise",
+          "dimension": "capital_return",
+          "excerpt": "We're kind of at the point now where we're saying in any way that we're into stock buybacks or etcetera. But we know that as we accumulate cash and we don't find a use to it, that our, you know, our job is not to accumulate on the balance sheet. And, you know, we study it. It's not. Now's not the right time, but we do look at that and could do that in the future."
+        }
+      ]
+    },
+    {
+      "event_id": 159509,
+      "date": "2024-02-15",
+      "name": "Investor Day 2024",
+      "ingested_at": "2026-09-09T17:09:10.679085+00:00",
+      "ticker": "DDOG",
+      "excerpts": [
+        {
+          "class": "goal",
+          "dimension": "market_share",
+          "excerpt": "observability alone, on its own, holds the next 5x or 10x scale-up for us. But if we can be successful at some of the other things I brought up today, I believe that the sky is the limit."
+        },
+        {
+          "class": "goal",
+          "dimension": "product_roadmap",
+          "excerpt": "we're still very early in this effort, but we know there's a large need... This is about making our customers an order of magnitude better, faster, and more efficient."
+        },
+        {
+          "class": "promise",
+          "dimension": "r_and_d",
+          "excerpt": "As you can see, we've been investing pretty aggressively in R&D over the past years. We plan to continue to do so going forward."
+        },
+        {
+          "class": "goal",
+          "dimension": "product_roadmap",
+          "excerpt": "for every step going from code to business, we want to be the force multiplier... we are very excited as this is a huge opportunity to deliver value for our customers if we can get this right."
+        },
+        {
+          "class": "goal",
+          "dimension": "product_roadmap",
+          "excerpt": "we want to do is actually look at that customer here... They landed with 3 products, maybe 4... they've adopted a lot more products... we see how digital transformation is forcing organizational transformation. And they're adopting Datadog."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "We're also working on things like API security and code security in this area... We're also working on securing customers' data within their accounts through data security and also scanning infrastructure as code in the cloud."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "We will continue to build that coverage over time... we are very, very early in our journey."
+        },
+        {
+          "class": "goal",
+          "dimension": "customer_retention",
+          "excerpt": "Every new product we add, there's a lot of excitement as long as it continues to reflect how the business works and they're connected together."
+        }
+      ]
+    },
+    {
+      "event_id": 172575,
+      "date": "2024-03-05",
+      "name": "Morgan Stanley\u2019s Technology, Media & Telecom Conference 2024",
+      "ingested_at": "2026-09-09T17:09:16.580826+00:00",
+      "ticker": "DDOG",
+      "excerpts": [
+        {
+          "class": "goal",
+          "dimension": "market_share",
+          "excerpt": "core observability being a potential 5x-10x from here"
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "we shipped some of that, at our conference last year. Say, for example, when we detect errors in production, we automatically generate a code fix that you can apply. And so there's a few more things that we're going to be doing like that."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "we don't do that yet, but we think we'll get there. And I think if you if you fast forward a few years, we'll see a mix of all of the above"
+        },
+        {
+          "class": "goal",
+          "dimension": "revenue_growth",
+          "excerpt": "in the end, hopefully, we can automate a good part of them, then solve with one simple validation the very vast majority of the issues they're having"
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "we integrate a lot, you know, with the ServiceNows and the Jiras and all of the other tools our customer might be using"
+        },
+        {
+          "class": "goal",
+          "dimension": "revenue_growth",
+          "excerpt": "we've seen in just a few months of having those new SKUs out is that they seem to actually resonate quite a bit"
+        }
+      ]
+    },
+    {
+      "event_id": 192478,
+      "date": "2024-05-14",
+      "name": "Needham 19th Annual Technology, Media & Consumer Conference",
+      "ingested_at": "2026-09-09T17:09:20.953004+00:00",
+      "ticker": "DDOG",
+      "excerpts": [
+        {
+          "class": "goal",
+          "dimension": "r_and_d",
+          "excerpt": "We continue to have a very strong pipeline of R&D projects. So we are continuing to hire there, both in terms of the platform or, you know, growing the platform, the integrations, and some of the new product areas that we've talked about, security or cloud cost, etc., or event management."
+        },
+        {
+          "class": "goal",
+          "dimension": "geographic_expansion",
+          "excerpt": "in sales and marketing, also, in some of the newer markets, in some you know, in places we really haven't built out to scale like Fed and government, in channels and things like that."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "We're gonna be more aggressive in selling Cloud SIEM. We've made some learnings and mistakes, right? So we used what we knew already and then learned. But there's been a lot of investment in the past year or so in the product itself and in the pricing."
+        },
+        {
+          "class": "goal",
+          "dimension": "product_roadmap",
+          "excerpt": "We'll learn more as we go to general availability and see this with more customers... We're optimistic about the future of the Flex Logs."
+        }
+      ]
+    },
+    {
+      "event_id": 192570,
+      "date": "2024-05-20",
+      "name": "The 52nd J.P. Morgan Annual Global Technology, Media and Communications Conference",
+      "ingested_at": "2026-09-09T17:09:27.085052+00:00",
+      "ticker": "DDOG",
+      "excerpts": [
+        {
+          "class": "goal",
+          "dimension": "market_share",
+          "excerpt": "We think observability alone holds the next 5x or 10x scale-up for us."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "We're not going to stop doing it any minute, and we'll keep doing that. Another thing we're doing is that we're structuring the company in a way that we serve a very wide array of customers."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "There are still many categories that relate to running, securing, understanding, shipping applications in cloud environments that still many of these categories we don't cover yet, and we intend to cover in the future."
+        },
+        {
+          "class": "goal",
+          "dimension": "product_roadmap",
+          "excerpt": "At the end of the day, we want our products in each and every one of these categories to be best of breed."
+        },
+        {
+          "class": "promise",
+          "dimension": "r_and_d",
+          "excerpt": "We built a very efficient business when it comes to G&A and go-to-market, and we can reinvest about 30% of our top line in R&D."
+        },
+        {
+          "class": "promise",
+          "dimension": "talent_hiring",
+          "excerpt": "To get to this opportunity, we'll need significantly more capacity, whether that's in product development or in go-to-market."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "I know that internally, we're accelerating some work on the product side that might be helpful for that."
+        }
+      ]
+    },
+    {
+      "event_id": 192565,
+      "date": "2024-06-04",
+      "name": "BofA Securities 2024 Global Technology Conference",
+      "ingested_at": "2026-09-09T17:09:30.737024+00:00",
+      "ticker": "DDOG",
+      "excerpts": [
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "We have a product in public beta, which is LLM Observability, and that, you know, is meant to basically have a module which allows our clients to look at the functionality and of, of the LLM models within an application."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "It may be that as this develops further, we're able to have metrics like that in terms of modules of our platform that we can deliver. And, you know, particularly when, you know, we have those in GA for our customers."
+        }
+      ]
+    },
+    {
+      "event_id": 206776,
+      "date": "2024-06-26",
+      "name": "DASH Conference 2024",
+      "ingested_at": "2026-09-09T17:09:40.138162+00:00",
+      "ticker": "DDOG",
+      "excerpts": [
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "Datadog LLM Observability is now available."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "today we're very excited to announce Datadog Kubernetes Autoscaling."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "We're very excited to start our private beta of Datadog Kubernetes Autoscaling with you all."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "Introducing Log Workspaces. Log Workspaces allow me to freely join and transform data across multiple sources, and then chain together simple queries to perform complex analysis in a single collaborative space."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "today, I'm happy to announce we're taking our next big step by unifying the Datadog Agent and the OpenTelemetry Collector."
+        },
+        {
+          "class": "promise",
+          "dimension": "partnerships",
+          "excerpt": "today I'm excited to announce our integration with Datadog LLM Observability. This new native integration offers you, our joint customers, robust monitoring capabilities, a suite of evaluations that assess the quality and safety of your LLM applications."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "Agentless Scanning, now generally available."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "Datadog Security, launched today in beta, I see exactly what type of sensitive data is being exposed."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "today, I'm pleased to announce that Datadog now secure the entire software development lifecycle. From the first line of code you write, all the way to deploying and monitoring your application in production."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "today I'm excited to introduce Datadog's Live Debugger. For the first time ever, I can debug my application with live production data at every step of the process."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "Introducing Product Analytics."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "Change Tracking, which I'm delighted to show you today."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "I'm thrilled to unveil the latest evolution of Bits AI, a fully autonomous AI agent."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "it is my great pleasure and honor to announce the latest addition to our platform, Datadog On-Call."
+        }
+      ]
+    },
+    {
+      "event_id": 220810,
+      "date": "2024-09-04",
+      "name": "The Citigroup Global\u00a0TMT Conference",
+      "ingested_at": "2026-09-09T17:09:44.588985+00:00",
+      "ticker": "DDOG",
+      "excerpts": [
+        {
+          "class": "goal",
+          "dimension": "revenue_growth",
+          "excerpt": "I think Oli has said that we feel we can get to $5 billion or beyond with the growth trends and our product suite in observability, and we have optionality above that in shift left, in security."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "What we've told everybody is, as we're building out the product suite and getting to product parity, we will look at the pace of DevSecOps development and see if we're gonna be able to do what we did in DevOps, which is attach and be a winner, potentially alongside the more traditional security companies, or we have to adjust our go-to-market."
+        },
+        {
+          "class": "promise",
+          "dimension": "r_and_d",
+          "excerpt": "Half of the investment in R&D is platform investment, and so we're re-engineering the architecture of the platform to relentlessly make this the case."
+        },
+        {
+          "class": "goal",
+          "dimension": "product_roadmap",
+          "excerpt": "We've been looking for engineering teams that can accelerate the product roadmap... the core of what we're looking at is that acqui-hire or the technology."
+        }
+      ]
+    },
+    {
+      "event_id": 220832,
+      "date": "2024-09-10",
+      "name": "Goldman Sachs Communacopia & Technology Conference",
+      "ingested_at": "2026-09-09T17:09:51.418942+00:00",
+      "ticker": "DDOG",
+      "excerpts": [
+        {
+          "class": "goal",
+          "dimension": "product_roadmap",
+          "excerpt": "the vision is that Datadog is the platform that that customer base turns on when it comes in in the morning and spends their whole day in it and does their job in it, which is essentially the monitoring and remediation of mission-critical, modern apps."
+        },
+        {
+          "class": "goal",
+          "dimension": "technology_platform",
+          "excerpt": "we've always thought about other platform companies... ServiceNow, Atlassian, Salesforce in the Sales Cloud, and thought about how we can create a solution that is easy to use, very flexible, ubiquitous, meaning everybody is in it, and keeps innovating"
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "what we have to do is we have to continue to innovate in the platform and add more functionality like I'm speaking about... service management function for on-call management of the platform, LLM monitoring, et cetera."
+        },
+        {
+          "class": "promise",
+          "dimension": "geographic_expansion",
+          "excerpt": "we have to continue to grow and evolve our go-to-market in a number of ways: geographically, channels, Fed, government, and centralized selling, enterprise upselling"
+        },
+        {
+          "class": "promise",
+          "dimension": "r_and_d",
+          "excerpt": "Datadog spends more in R&D than all the other companies in observability combined... That's the epicenter of the company."
+        },
+        {
+          "class": "promise",
+          "dimension": "talent_hiring",
+          "excerpt": "what we need to do is, if you look at it... it is very much related to hiring, educating, grooming people."
+        }
+      ]
+    },
+    {
+      "event_id": 256201,
+      "date": "2024-11-19",
+      "name": "2024 RBC Capital Markets Global Technology, Internet, Media and Telecommunications Conference",
+      "ingested_at": "2026-09-09T17:09:58.155911+00:00",
+      "ticker": "DDOG",
+      "excerpts": [
+        {
+          "class": "goal",
+          "dimension": "product_roadmap",
+          "excerpt": "We have tended to be a company that is a real-time analytics company, but in terms of workflow, once you identify a problem, how do you create the workflow to root it and resolve it? We really have, and that's with service management. I think Ollie talked a lot about On Call, and that means essentially not just paging, but also the whole operational fabric of getting through the documentation and routing of a problem. This is something that we have early signs compliance that they really want to pull us in this direction. We've been investing."
+        },
+        {
+          "class": "goal",
+          "dimension": "margin_expansion",
+          "excerpt": "We gave a long-term goal of 25%+. So we understand that it's important to the investor world what happens in these micro time periods, but we're really sketching out the company to be a compounding grower with a 25%+ margin over the long term."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "We have a product that's in beta and working on in business analytics that we think has a high degree of correlation to RUM. And what that means is that that allows you to see more of how the application is affecting client buying behavior."
+        },
+        {
+          "class": "promise",
+          "dimension": "talent_hiring",
+          "excerpt": "We talked about on the call having some evidence of success of ramping headcount capacity significantly in the second half of this year and then into next year."
+        }
+      ]
+    },
+    {
+      "event_id": 258687,
+      "date": "2024-12-03",
+      "name": "UBS Global Technology and AI Conference",
+      "ingested_at": "2026-09-09T17:10:05.280890+00:00",
+      "ticker": "DDOG",
+      "excerpts": [
+        {
+          "class": "promise",
+          "dimension": "geographic_expansion",
+          "excerpt": "We're landing our first people in India. We're investing in the areas where we think either they're catching up in terms of their maturity."
+        },
+        {
+          "class": "promise",
+          "dimension": "geographic_expansion",
+          "excerpt": "We were essentially the market environment was a little less robust... We went from zero to having 30 or 40 people in India now. I think it'll at least double that."
+        },
+        {
+          "class": "promise",
+          "dimension": "r_and_d",
+          "excerpt": "We talked about the continuum, out to the brave future of autoremediation. Along that path is using LLMs and AI, which we've been doing for some time, to diagnose problems quickly, and that is we're building models and putting that in."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "We're slowly but surely rolling things out. And the areas that would be most germane would be, you know, your chat or your ability to interact with the platform, but also using LLM models to help diagnose problems."
+        },
+        {
+          "class": "goal",
+          "dimension": "margin_expansion",
+          "excerpt": "We gave a 25-plus margin target. At our analyst day in February... we essentially think that there's some of the opportunities to invest both in R&D and sales and marketing... we're signaling that we're a long-term growth company. We see a lot of opportunities. We're gonna attempt to invest in this next period of time."
+        },
+        {
+          "class": "promise",
+          "dimension": "sales_and_marketing",
+          "excerpt": "We looked at white space, customers, geography, ways to go to market, where we can make the investment and, you know, at a very attractive return... We're gonna continue, and that will bear fruit if it works. We'll bear fruit next year."
+        }
+      ]
+    },
+    {
+      "event_id": 262262,
+      "date": "2024-12-11",
+      "name": "Barclays 22nd Annual Global Technology Conference 2024",
+      "ingested_at": "2026-09-09T17:10:11.070350+00:00",
+      "ticker": "DDOG",
+      "excerpts": [
+        {
+          "class": "goal",
+          "dimension": "product_roadmap",
+          "excerpt": "Our Database Monitoring product today monitors five different types of databases, including Oracle Database, but I guarantee you there's any number of other databases that our customers would like us to monitor and we'll, I'm sure, we'll keep extending that over time."
+        },
+        {
+          "class": "promise",
+          "dimension": "geographic_expansion",
+          "excerpt": "So to Raimo's point, we recently announced for general availability Datadog monitoring for OCI. So what that means is at least there's some number of customers who wanted to be able to do that and we want to be wherever our customers want to deploy."
+        },
+        {
+          "class": "goal",
+          "dimension": "market_share",
+          "excerpt": "The number of our $1 million customers continues to increase. We give it yearly at the end of last year as 396. Some of those are $10 million annualized spenders. And, we obviously hope to grow both of those numbers, over time."
+        },
+        {
+          "class": "promise",
+          "dimension": "margin_expansion",
+          "excerpt": "We also in February established a long-term operating margin, non-GAAP operating margin target of 20% long-term, no timing on that."
+        },
+        {
+          "class": "goal",
+          "dimension": "r_and_d",
+          "excerpt": "And that in 2024 it was our intent to get back to investing to the medium to long-term opportunities."
+        }
+      ]
+    },
+    {
+      "event_id": 321116,
+      "date": "2025-03-04",
+      "name": "Morgan Stanley Technology, Media & Telecom Conference",
+      "ingested_at": "2026-09-09T17:10:20.183326+00:00",
+      "ticker": "DDOG",
+      "excerpts": [
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "On top of this, product called Flex Logs, we are starting to see an inflection from our SIEM product, our Cloud SIEM product, that we expect also can make a significant dent this year"
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "we have a product called Flex Logs that is doing extremely well in the market, and that we expect to scale quite a bit"
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "we also expect that product to get strong uptake fairly quickly from our customers"
+        },
+        {
+          "class": "goal",
+          "dimension": "revenue_growth",
+          "excerpt": "we can see ourselves keep taking share over everybody else and have a very substantial growth for the foreseeable future just on our core market"
+        },
+        {
+          "class": "promise",
+          "dimension": "r_and_d",
+          "excerpt": "we reinvest about 30% of our top line in R&D"
+        },
+        {
+          "class": "promise",
+          "dimension": "geographic_expansion",
+          "excerpt": "we had nobody two years ago on the ground in India. We were covering it from Singapore. And now we have, you know, 30, 40, 50 people in all the functions in India"
+        },
+        {
+          "class": "promise",
+          "dimension": "capex_investment",
+          "excerpt": "we're going to continue ramping that. Now, it takes a year or two for that to become productive"
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "the goal there is, instead of waking you up at night telling you to fix something, or telling you to investigate to fix something, you get a text the following morning that said there was an issue. It was fixed"
+        },
+        {
+          "class": "promise",
+          "dimension": "geographic_expansion",
+          "excerpt": "in the channel side, in some of these markets, some of the first motion go-to-market motions is our channel-led, in Japan and in some of the areas where currency is an issue in Brazil"
+        },
+        {
+          "class": "goal",
+          "dimension": "margin_expansion",
+          "excerpt": "we think we can grow this and, you know, and have a payback in roughly the year and a half or so period. And because of the land and expand, you know, it's a great return"
+        }
+      ]
+    },
+    {
+      "event_id": 345933,
+      "date": "2025-05-13",
+      "name": "53rd Annual JPMorgan Global Technology, Media and Communications Conference",
+      "ingested_at": "2026-09-09T17:10:25.449356+00:00",
+      "ticker": "DDOG",
+      "excerpts": [
+        {
+          "class": "promise",
+          "dimension": "geographic_expansion",
+          "excerpt": "If they want to run data a certain way, we will be there for them."
+        },
+        {
+          "class": "goal",
+          "dimension": "market_share",
+          "excerpt": "Even though we're a leader in observability, I think there were updated Gartner numbers this week on the market share. We're also taking share. We're growing faster than the rest of the industry."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "The last step, which is even harder, and I think that that part we are still building, is, is my model doing what it is supposed to do for the business?"
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "We are doing all that. I think, and that is with the current iteration of those models, and we expect those models to evolve a lot."
+        },
+        {
+          "class": "promise",
+          "dimension": "r_and_d",
+          "excerpt": "I would say the only limit that we've given ourselves is we invest around 30% of our top line in engineering, and we keep that going."
+        },
+        {
+          "class": "promise",
+          "dimension": "r_and_d",
+          "excerpt": "If we get more efficiency with AI, we'll probably keep investing in that because we'll be able to produce more and we'll be less constrained on capacity on that side."
+        }
+      ]
+    },
+    {
+      "event_id": 347590,
+      "date": "2025-06-03",
+      "name": "Bank of America Global Technology Conference 2025",
+      "ingested_at": "2026-09-09T17:10:34.256121+00:00",
+      "ticker": "DDOG",
+      "excerpts": [
+        {
+          "class": "goal",
+          "dimension": "product_roadmap",
+          "excerpt": "Within our platform itself, what we're doing is engineering AI in order to get more information more quickly, have models that simulate what's happening, and at some point along the way, give solutions and, in the future, potentially auto-remediate."
+        },
+        {
+          "class": "goal",
+          "dimension": "market_share",
+          "excerpt": "We've been investing over time in developing the platform and are looking to be the single pane of glass for that customer base in managing and remediating their applications."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "I think there are a couple of different ways. The first that you're seeing in our numbers most is that a lot of the high growth and what you're reading about are from what we call AI-native companies... We have products, large language model monitoring, and it's just another thing in the application that needs to be looked at."
+        },
+        {
+          "class": "promise",
+          "dimension": "geographic_expansion",
+          "excerpt": "We're essentially winning use cases. We are consolidating tools so that we take the wallet. We are expanding business units, and we're doing that through an enterprise sales team that has been growing, and that's one of our major areas of growth, growing around the world. I think we said we've been growing in the 30s%."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "What we're doing is we are focusing this year on how we can really accelerate that cloud and the products a little further on, that cloud SIEM use case."
+        },
+        {
+          "class": "goal",
+          "dimension": "revenue_growth",
+          "excerpt": "Oh, yeah. I mean, it's a huge TAM. This is, I mean, you can see so much evidence from not only CrowdStrike and Palo Alto, but also companies that have emerged like Wiz and others. Yes, the opportunity is there. That's why we're making the investments in it."
+        },
+        {
+          "class": "promise",
+          "dimension": "margin_expansion",
+          "excerpt": "We gave a margin target of 25% plus. We said that cash flow margins are 200-300 basis points above that. We already proved we could get there, right? This is a decision in our hands."
+        }
+      ]
+    },
+    {
+      "event_id": 355084,
+      "date": "2025-06-10",
+      "name": "DASH Conference 2025",
+      "ingested_at": "2026-09-09T17:10:50.378511+00:00",
+      "ticker": "DDOG",
+      "excerpts": [
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "Today, I'm excited to announce that you can enable Bits AI SRE in your account."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "The voice interface is in preview, and you can try it out today on the expo floor after the keynote. Handoff notifications and the doc experience are available now. To sign up for the status page preview, you can do that today."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "Bits AI Security Analyst, launching today in preview."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "You can try Bits AI Security Analyst today in preview by going to this link."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "You can diagnose and fix problems across all of Datadog. We're excited for you to try out the Dev Agent for yourself. Go to this link to sign up and learn more."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "Now, in preview. Let's take a look. I'm debugging a latency issue on my checkout endpoint. I see the p90 latency is elevated, but the p75 and p50 seem normal. Just above the graph, I see something new. Let's investigate. This is a latency investigation... APM Investigator. Now, in preview."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "I'm stoked to announce proactive app recommendations. Now, in preview."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "Sign up today for IDP and see how you can level up your engineering culture."
+        },
+        {
+          "class": "promise",
+          "dimension": "partnerships",
+          "excerpt": "The MCP Server for IDEs is now in preview. It's really important for us that you can use Datadog in any AI agent. We're happy to share that we've partnered with OpenAI to bring that operational context to their new Codex CLI."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "Both the standalone MCP Server and the MCP Server for IDEs are now in preview. You can learn more on our website, sign up."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "I'm thrilled to introduce Flex Frozen, a new long-term storage tier designed for historical reporting and regulatory requests. Keep your logs fully managed in Datadog for up to seven years."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "I'm excited to announce Datadog Archive Search, a powerful new way for you to find log insights regardless of where that data lives."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "Today, 7,500 customers, including one in every five Fortune 500 companies, use Datadog security to protect their infrastructure and applications. Now, as you build and deploy your AI agents, we're evolving Datadog security to meet the unique challenges of AI at every single layer."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "To help you go further, we are expanding support to detect sensitive data in API response payloads and other data poisoning attacks coming later in 2025."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "We are continuing to add more support for attack vectors at the model layer, including model drift, model extraction, and jailbreaking coming soon in the near future."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "We are continuing to build more detections, including agentic tool misuse, novel identity attacks, and denial of service coming later in 2025."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "I'm so excited for you to try this new product. You can sign up at the link for the preview."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "We're excited to get this into your hands. Sign up today at dashcon.io/agents."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "We can't wait to get this to all of you. Sign up to become one of our design partners by following the link above."
+        },
+        {
+          "class": "promise",
+          "dimension": "r_and_d",
+          "excerpt": "We have partnered directly with AWS to build out our Bedrock detection library, and we are continuing to invest heavily in novel security research, building a comprehensive set of AI detections across cloud providers."
+        }
+      ]
+    },
+    {
+      "event_id": 372270,
+      "date": "2025-08-12",
+      "name": "KeyBanc Capital Markets Technology Leadership Forum",
+      "ingested_at": "2026-09-09T17:10:56.864024+00:00",
+      "ticker": "DDOG",
+      "excerpts": [
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "We announced developments in Bits AI in a number of different ways. The first one was in the platform in service management for production engineers, being able to use large language models to understand the root cause of what's happening faster and then to remediate. That's in private right now."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "We also announced AI Bits in both developer tools and in security."
+        },
+        {
+          "class": "promise",
+          "dimension": "r_and_d",
+          "excerpt": "Right now, we're trying to remove the barriers and let our coders, for instance, use such tools as Cursor. We're early stages on trying to see if we can increase productivity and output."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "We are working on right now the economic model where we're thinking about how do we link this to what's happening, like per investigation or per activity."
+        },
+        {
+          "class": "promise",
+          "dimension": "geographic_expansion",
+          "excerpt": "There have been some markets where we arrived relatively later to the game, and we did things in a more centralized way, and we're establishing presence in some of those markets."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "I think we are thinking about either how to slice or dice the packaging, pricing of the monitoring of on-premise workloads, which may not be as storage or computational intense, and maybe should be priced differently. The possibility of having more dedicated instances, we're looking at it."
+        },
+        {
+          "class": "goal",
+          "dimension": "margin_expansion",
+          "excerpt": "We stick to what we have said in our investor day, which is our long-term target is 25%+, and with free cash flow 200 basis points to 300 basis points higher."
+        }
+      ]
+    },
+    {
+      "event_id": 372954,
+      "date": "2025-09-03",
+      "name": "Citi\u2019s 2025 Global Technology, Media and Telecommunications Conference",
+      "ingested_at": "2026-09-09T17:11:02.523023+00:00",
+      "ticker": "DDOG",
+      "excerpts": [
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "As we go from Private Preview to GA in the Bits AI Service Management, we'll start to be able to report on numbers of customers using some of these things."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "We did the Appleseed acquisition, tightly integrate that and do what we've been really good at, which is attaching that to our most proximate use cases."
+        },
+        {
+          "class": "goal",
+          "dimension": "r_and_d",
+          "excerpt": "We've been trying to maintain our R&D at approximately 30% of revenues. We've given that target."
+        },
+        {
+          "class": "promise",
+          "dimension": "geographic_expansion",
+          "excerpt": "We didn't have anybody in India. We didn't have any in Brazil, and now we have teams of 50-100, and we're scoring."
+        },
+        {
+          "class": "promise",
+          "dimension": "go_to_market",
+          "excerpt": "We have more enterprise-type marketing, and I think we are enhancing our channel partnerships to try to get influencers or implementers to be in the field more."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "We're trying to work with them in account management, tried to advise them and get them to help themselves. We even go on site sometimes with them, and so we've worked on our own Infrastructure with things like Flex Logs, Frozen Logs."
+        }
+      ]
+    },
+    {
+      "event_id": 372973,
+      "date": "2025-09-09",
+      "name": "Goldman Sachs Communicopia + Technology Conference 2025",
+      "ingested_at": "2026-09-09T17:11:13.483214+00:00",
+      "ticker": "DDOG",
+      "excerpts": [
+        {
+          "class": "goal",
+          "dimension": "product_roadmap",
+          "excerpt": "We want to look at our customer, which is sort of the production engineer, the reliability engineer, the DevOps. We want to be the platform they turn on in the morning and never turn off or perhaps never turn off."
+        },
+        {
+          "class": "goal",
+          "dimension": "product_roadmap",
+          "excerpt": "anything that touches the function of that application when it comes to, and we'll talk about a database, network, LLMs, service management, we want to own. We want to spread out our use cases to things like security or DevSecOps and sort of coding tools."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "We're essentially developing integrations into the AI tools. We have 4,500 of our customers now sending us data from AI tools. We want to be able to monitor, and we can, GPUs and CPUs, and we want to refine that GPU."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "We also want to be able to monitor the LLMs in the application, and we announced our LLM monitoring product."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "We believe that to continue to be the leading observability platform, we have to inject AI into our platform, and we've been calling it blank bits."
+        },
+        {
+          "class": "promise",
+          "dimension": "geographic_expansion",
+          "excerpt": "We're trying to expand our enterprise sales team. I think we got a little behind in that. Maybe we risk managed a little too much. There are a lot of geographies we can talk about. We're trying through the combination of product innovation and go-to-market to accelerate that."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "What we're doing is moving to the next level, which is essentially, how can we use our infrastructure and our, for instance, logs and create a cloud SIEM product that is able to address the nature of compliance and other use cases besides observability."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "What we're doing, I think we think AI accelerates our opportunity to reinvigorate, reinvest in this, and essentially go from what's wrong to who's going to fix it, and way out there may be auto-remediation."
+        },
+        {
+          "class": "promise",
+          "dimension": "geographic_expansion",
+          "excerpt": "We have a lot of proof points. This might surprise you, but we had no one on the ground in India. Brazil when, you know, COVID ended. We were covering them centrally. I think what we learned is in looking at the white space and looking at the competitive environment, there were huge opportunities in a large number. I would say the Middle East would be an example that we just had nobody."
+        }
+      ]
+    },
+    {
+      "event_id": 419794,
+      "date": "2025-11-18",
+      "name": "Global Technology, Internet, Media & Telecommunications Conference 2025",
+      "ingested_at": "2026-09-09T17:11:18.575225+00:00",
+      "ticker": "DDOG",
+      "excerpts": [
+        {
+          "class": "promise",
+          "dimension": "regulatory",
+          "excerpt": "We're going for FedRAMP high. I think that will enable us to go into Department of Defense and others."
+        },
+        {
+          "class": "goal",
+          "dimension": "product_roadmap",
+          "excerpt": "Bits AI seems to be resonating... We think it is a good opportunity. We do not know yet whether it is going to be monetized through increase of win rates, staving off other entrants to the market, increased workloads, or through a SKU."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "Right now, we're still in private beta. I think we haven't said to everybody where we, when we're going to be in GA."
+        },
+        {
+          "class": "goal",
+          "dimension": "market_share",
+          "excerpt": "I think we're going to be good at it. And we're getting fully capability there. I think that's another opportunity for us."
+        },
+        {
+          "class": "goal",
+          "dimension": "geographic_expansion",
+          "excerpt": "We want to have it set up so that we can handle the most important government workloads, including defense, where a lot of dollars, where the budget's going."
+        }
+      ]
+    },
+    {
+      "event_id": 419829,
+      "date": "2025-12-02",
+      "name": "UBS\u2019s 2025 Global Technology and AI Conference",
+      "ingested_at": "2026-09-09T17:11:22.827105+00:00",
+      "ticker": "DDOG",
+      "excerpts": [
+        {
+          "class": "goal",
+          "dimension": "geographic_expansion",
+          "excerpt": "when you look at the percentage of workloads that are in the cloud, which Gartner and others say is in their 20% or 30%, and when you see major parts of the economy in large enterprises, in regions, and in governments not having modernized, we think that this will continue for a long time."
+        },
+        {
+          "class": "goal",
+          "dimension": "product_roadmap",
+          "excerpt": "the three pillars plus the DEM are really good. And in logs, and these are related, the fact that we have observability pipelines that can get access to logs that are not observability, that's interesting. Now, that has enabled one of the big potential opportunities, which is Cloud SIEM."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "Another opportunity that we're seeing is service management. Today, we went GA on our Bits SRE."
+        },
+        {
+          "class": "goal",
+          "dimension": "margin_expansion",
+          "excerpt": "we're trying to do as a company is, while staying within this band, you can look at our guidance, our long-term, we're leaning in towards investments that are going to maintain as high as possible long-term growth rate and compound our revenue"
+        }
+      ]
+    },
+    {
+      "event_id": 419850,
+      "date": "2025-12-10",
+      "name": "53rd Annual Nasdaq Investor Conference",
+      "ingested_at": "2026-09-09T17:11:27.322053+00:00",
+      "ticker": "DDOG",
+      "excerpts": [
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "We just last week at re:Invent, we had general, with GA on our first AI-native application, which was the SRE agent."
+        },
+        {
+          "class": "promise",
+          "dimension": "geographic_expansion",
+          "excerpt": "We are also, I think, doing go-to-market in some different ways, like a different way of going to market, in terms of the government and Fed section. We're having more data centers."
+        },
+        {
+          "class": "promise",
+          "dimension": "r_and_d",
+          "excerpt": "We are continuing to invest at this industry-leading around 30% of R&D."
+        },
+        {
+          "class": "promise",
+          "dimension": "partnerships",
+          "excerpt": "We've invested in our channel partnerships. And literally in the last you know months or so, we brought on our first specialty security salespeople."
+        },
+        {
+          "class": "goal",
+          "dimension": "market_share",
+          "excerpt": "We can stand by the statement that we can continue to expand our go-to-market."
+        }
+      ]
+    },
+    {
+      "event_id": 544582,
+      "date": "2026-02-12",
+      "name": "Investor Day 2026",
+      "ingested_at": "2026-09-09T17:11:44.728717+00:00",
+      "ticker": "DDOG",
+      "excerpts": [
+        {
+          "class": "goal",
+          "dimension": "r_and_d",
+          "excerpt": "Over the years, we've invested about 30% of revenues into R&D. In 2025, we invested over $1 billion in R&D and ended the year with about 4,000 engineers."
+        },
+        {
+          "class": "goal",
+          "dimension": "product_roadmap",
+          "excerpt": "We wanted to make our customers one order of magnitude more productive for every single step, going from code to business value from end to end, and we call this closing the loop. We are well on our way to deliver this vision on behalf of our customers."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "Solving this problem will take us from observability to the edge of autonomy. Enabling autonomy will mean that we validate our customer systems, apps, and agents and that we do so as they are increasingly AI-coded or rely on probabilistic AI models."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "We're building a full stack of products so users can understand and improve their AI solutions."
+        },
+        {
+          "class": "goal",
+          "dimension": "product_roadmap",
+          "excerpt": "we have much more to do in this software delivery space."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "We are building AI capabilities to move faster and preempt security problems."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "We are building on our momentum in this space, including the successful launches in 2025 of our OnCall product and of Bits AI SRE Agent."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "we've brought more value to developers with capabilities such as Feature Flags, the Datadog MCP Server, and the Bits AI Dev Agent, and we have much more to do in this software delivery space."
+        },
+        {
+          "class": "promise",
+          "dimension": "geographic_expansion",
+          "excerpt": "We're already supporting on-prem servers and network, and now we also monitor wireless access points, end-user devices like laptops and desktops or edge devices."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "Datadog BYOC, Bring Your Own Cloud, is actually built for those customers, as they can go and keep their telemetry in their own environment. They can index, store, and search data within their own infrastructure while using the powerful Datadog single pane of glass cloud solutions."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "we expect to unlock even more opportunities with it. So that's it for me and the platform."
+        },
+        {
+          "class": "goal",
+          "dimension": "market_share",
+          "excerpt": "Today, 70% of our million-dollar customers use one or more Datadog security products, but the spend security represents together is only 2% of their Datadog spend. So as a result, we see potential for much more wallet share as we deliver more security products and capitalize on that Datadog advantage."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "We have automated testing. We just launched our Feature Flags product, which is unique in the domain, in which we can actually contain or sandbox that change."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "we have to continue to build new types of product, new types of observability, new types of security, to be ahead of the curve when people need to start bringing these things into production."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "The AI agent console gives leadership a way to actually track, and teams who are building these things, a way to track all of these questions about the agents that they're bringing into their market."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "we're starting to see these things try to get into production, and who helps people get things into production is Datadog."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "we have our Bits AI Security Analyst in preview. So this agent can autonomously investigate Datadog's Cloud SIEM signals and conduct an in-depth investigation for potential threats, and also enable users to remediate those threats."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "So the Dev Agent can automatically analyze the telemetry and code when there's an error happen in our customer's system. It can explain the root cause in plain human language and even map it directly to the relevant code files and function, and then proceed to generate a context-aware fix."
+        },
+        {
+          "class": "goal",
+          "dimension": "product_roadmap",
+          "excerpt": "our long-term vision, as Olivier outlined, is to achieve autonomy across DevOps, and security."
+        }
+      ]
+    },
+    {
+      "event_id": 570809,
+      "date": "2026-03-03",
+      "name": "Morgan Stanley Technology, Media & Telecom Conference 2026",
+      "ingested_at": "2026-09-09T17:11:52.096467+00:00",
+      "ticker": "DDOG",
+      "excerpts": [
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "The other SR, Bits products around security and around development, I would say they're a little earlier in the cycle. We plan to do the exact same thing. which is have, co-development partners figure out the uses, get them in GA and then learn."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "Right now we have some use. What we wanna do is increase the functionality, optimize the pricing, same way we do always. To be there for our broad client base as they use more GPUs."
+        },
+        {
+          "class": "goal",
+          "dimension": "market_share",
+          "excerpt": "We're still land and expand... What we're seeing is we're seeing, and this has to do with consolidation, replacement, quite a number of lands that are larger and are more comprehensive."
+        },
+        {
+          "class": "promise",
+          "dimension": "r_and_d",
+          "excerpt": "If agents are important in doing that, they'll be in our platform... we're investing significantly in having access to all the data... we are investing and leading the way in the agents in the platform to provide value, do diagnostics, and eventually self-remediate."
+        },
+        {
+          "class": "promise",
+          "dimension": "partnerships",
+          "excerpt": "I think the reason that we didn't do it up front is in order to win the hearts and minds of channel partners... We're just getting those, both the channel and the specialist salespeople potted in... we're optimistic that it'll help accelerate."
+        },
+        {
+          "class": "goal",
+          "dimension": "revenue_growth",
+          "excerpt": "You guided for 19% revenue growth at the midpoint. Excluding your largest customer, you think the remainder of the business will grow in excess of 20%."
+        }
+      ]
+    },
+    {
+      "event_id": 726980,
+      "date": "2026-08-12",
+      "name": "Canaccord Genuity's 46th Annual Growth Conference",
+      "ingested_at": "2026-09-09T17:11:57.736280+00:00",
+      "ticker": "DDOG",
+      "excerpts": [
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "We basically setting it up, so whatever they're doing, if it's a human, it's an agent, it's a coding agent, if it's a large language model, we're set up to monitor it."
+        },
+        {
+          "class": "goal",
+          "dimension": "technology_platform",
+          "excerpt": "Our view is that that's going to deepen the moat, and it's going to be something that's going to move towards self-remediation, meaning some cases you'll have enough intelligence that you know what's going wrong, and the client will push, yes, self-remediate, and without humans or less humans, you're going to have it."
+        },
+        {
+          "class": "promise",
+          "dimension": "r_and_d",
+          "excerpt": "When it comes to R&D, I think we're going to continue to invest at a high rate. But it's very likely, and it is happening, that the percentage of that, the allocation of that, is going to move more towards tokens than it is to humans."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "We also are expanding what we're doing with Bits. So we started out with these investigations, right? And now we're also doing it on to the left with development and security."
+        },
+        {
+          "class": "promise",
+          "dimension": "talent_hiring",
+          "excerpt": "So that we're going to continue to invest in. When it comes to R&D, I think we're going to continue to invest at a high rate... So that we're going to continue to invest in sales because right now there needs to be salespeople to sell."
+        }
+      ]
+    },
+    {
+      "event_id": 726988,
+      "date": "2026-09-08",
+      "name": "Citi\u2019s 2026 Global TMT Conference",
+      "ingested_at": "2026-09-09T17:12:07.721208+00:00",
+      "ticker": "DDOG",
+      "excerpts": [
+        {
+          "class": "goal",
+          "dimension": "revenue_growth",
+          "excerpt": "I'm here for the next 10 years. I'm here for this other order of magnitude we think is in front of us that we can get."
+        },
+        {
+          "class": "goal",
+          "dimension": "revenue_growth",
+          "excerpt": "You do not have to have a lot of imagination to understand how we can grow 5x or 10x from that. Just the core of what we do, just extending to the tool stack, that is going to grow even faster now."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "We've now extended it to a number of different surfaces. Bits AI has a chatbot you can use. Bits AI can optimize your code. Bits AI can actually build agents and build applications from scratch inside the Datadog context."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "We announced the decoupling of our security agent from our Cloud SIEM, for example. You can actually use our AI Smarts on other data source today."
+        },
+        {
+          "class": "promise",
+          "dimension": "r_and_d",
+          "excerpt": "We have released two models, the Toto and Toto 2.0, which we released a few months ago, both of which were state-of-the-art at the time of release."
+        },
+        {
+          "class": "promise",
+          "dimension": "r_and_d",
+          "excerpt": "We also announced a few months ago the acquisition of Adaptive ML, which is a company that was building reinforcement learning to tune and build custom models. That team has actually joined our research team to accelerate the development of next-generation models for us. So you should expect to hear and see more from us in the future on that topic."
+        },
+        {
+          "class": "goal",
+          "dimension": "market_share",
+          "excerpt": "I think there's plenty of opportunities for us there too. We also announced at our conference a data agent that you can use to query your data and to actually get much of run all of our internal data analytics on that at Datadog now."
+        },
+        {
+          "class": "goal",
+          "dimension": "product_roadmap",
+          "excerpt": "There's quite a bit we need to do also in terms of going up further into the business side of things. We started with Infrastructure Monitoring, then we went up to application, then we went up to end user monitoring on top of that, and what are they actually doing with it."
+        },
+        {
+          "class": "goal",
+          "dimension": "revenue_growth",
+          "excerpt": "We want them all to be in the end. Whenever we start with a new product, we definitely want those products to be $100 million+ products, and we have hopes that it can cross the billion-dollar mark."
+        }
+      ]
+    },
+    {
+      "event_id": 668384,
+      "date": "2026-05-19",
+      "name": "J.P. Morgan 54th Annual Global Technology, Media and Communications Conference",
+      "ingested_at": "2026-09-09T23:03:28.915231+00:00",
+      "ticker": "DDOG",
+      "excerpts": [
+        {
+          "class": "goal",
+          "dimension": "product_roadmap",
+          "excerpt": "You know, one thing we keep hearing from customers is, \"I want it to go faster into auto-resolution.\" ... We're working on that."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "A second area of pull we hear from customers is, \"Okay, this is great. This works really, really well, but I want it to work across my other systems.\" ... We're also pushing so that Datadog actually connects to all those, and Bits can investigate across all of those, you know, different system."
+        },
+        {
+          "class": "promise",
+          "dimension": "r_and_d",
+          "excerpt": "Another area we're investing in, is in getting more proactive and predictive. You know, we don't have to wait until you run into an incident. ... There's quite a bit of R&D that goes into that, you know. We're, we're developing our own models for that."
+        },
+        {
+          "class": "promise",
+          "dimension": "technology_platform",
+          "excerpt": "We've released actually 10 days ago our the second version of our time series foundation model. It's called Toto, and you can look it up."
+        },
+        {
+          "class": "promise",
+          "dimension": "talent_hiring",
+          "excerpt": "We also know that right now we're also we keep hiring. We think we can still scale. Still need to scale. There's still a lot more we need to build for our customers and a lot more demand out there."
+        }
+      ]
+    },
+    {
+      "event_id": 668397,
+      "date": "2026-05-28",
+      "name": "Bernstein 42nd Annual Strategic Decisions Conference",
+      "ingested_at": "2026-09-09T23:03:36.174022+00:00",
+      "ticker": "DDOG",
+      "excerpts": [
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "In the future, we want to do even more and automate basically the way their applications run after they've written them."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "We're busy basically extending those models beyond time series. When I say time series, these are mostly timestamps and values. We're extending that towards including the rest of observability data, whether that's logs and traces and application topology and network data and user data and all of that stuff, so we can really fully model and be predictive on our customers' infrastructure."
+        },
+        {
+          "class": "promise",
+          "dimension": "geographic_expansion",
+          "excerpt": "we're doing some what we call Bring Your Own Cloud options for our customers to deploy our product. Meaning that they can store the data on infrastructure that they manage themselves, even though we still run and update the application for them."
+        },
+        {
+          "class": "promise",
+          "dimension": "partnerships",
+          "excerpt": "we're adding some overlays for selling security very specifically to the CISO, because that's not the muscle we had before. We find that it's a little bit different enough to warrant a slightly different team to handle that. That's specific to security, to a CISO in the largest enterprises."
+        },
+        {
+          "class": "goal",
+          "dimension": "market_share",
+          "excerpt": "it doesn't take a ton of imagination to see where there's a 5X from there to just from the core, the observability, looking at infrastructure applications, end users around those applications, logs, and all of that stuff."
+        },
+        {
+          "class": "goal",
+          "dimension": "market_share",
+          "excerpt": "the boring, the existing part, the part that's not new form factors, new applications, new anything, that part has another five or 10 X into it"
+        }
+      ]
+    },
+    {
+      "event_id": 668400,
+      "date": "2026-06-03",
+      "name": "Bank of America 2026 Global Technology Conference",
+      "ingested_at": "2026-09-09T23:03:41.969901+00:00",
+      "ticker": "DDOG",
+      "excerpts": [
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "We also have the ability to connect to the code generation through our MCP Server, when that will enable that information to get into Datadog and monitor that."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "We're working towards is indifference, meaning that if you want to keep the data, great. If you want to give us the data, great. If you want to have all the functionality go over to your side. That's taking time to get complete product parity where we have exact functionality."
+        },
+        {
+          "class": "promise",
+          "dimension": "geographic_expansion",
+          "excerpt": "We're finding many areas with great payback, Brazil, Korea, India, et cetera, where we did not have on the ground presence. We're developing packages of salespeople, sales engineers, marketing dollars, maybe even data centers to be able to do that."
+        },
+        {
+          "class": "promise",
+          "dimension": "r_and_d",
+          "excerpt": "To the extent we can become more efficient in speeding up feature release, it's good for us. We're finding that. We're basically experimenting around the interplay within that envelope on R&D between tokens and people."
+        },
+        {
+          "class": "goal",
+          "dimension": "product_roadmap",
+          "excerpt": "We believe that the componentry of R&D will shift somewhat. We don't know exactly, to tokens from people, but we don't know the exact amount."
+        },
+        {
+          "class": "promise",
+          "dimension": "product_roadmap",
+          "excerpt": "We're now being able to have some customers buy from us. In this case, they were some large customers, a hyperscaler, who traditionally does more things on their own but use Datadog...we'll prepare ourselves for that opportunity."
+        }
+      ]
+    }
+  ]
+}

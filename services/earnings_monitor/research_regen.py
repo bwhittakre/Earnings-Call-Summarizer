@@ -23,6 +23,13 @@ from .state import OperationalState
 
 LOG = logging.getLogger(__name__)
 
+# Rank IC + consolidated are the dashboard research tabs. Book ranks is
+# a follow-on; a missing script or ranks-only failure must not re-dirty
+# the book and rerun the expensive evaluate step.
+_CORE_REGEN_STEPS = frozenset(
+    {"evaluate_narrative_signals", "build_consolidated_panel_report"}
+)
+
 @dataclass(frozen=True)
 class RegenCommandResult:
     name: str
@@ -114,6 +121,31 @@ def build_consolidated_command(
         cmd.extend(["--sector", config.research_sector])
     return cmd
 
+def missing_onboarded_book_members(
+    config: MonitorConfig,
+    state: OperationalState,
+) -> tuple[str, ...]:
+    """Sector ∩ overlay names that are not yet on the live SQLite book.
+
+    Host onboard writes the laptop sqlite + sector file; Docker regen reads
+    ``/data/monitor.sqlite3``. When those diverge the loop would idle forever
+    unless membership is checked even when ``research_book_dirty`` is unset.
+    """
+    from .eligibility import default_overlay_dir, list_overlay_tickers
+    from .ticker_book import (
+        load_sector_tickers,
+        resolve_book_tickers,
+        sector_tickers_path,
+    )
+
+    overlays = list_overlay_tickers(default_overlay_dir(config.repo_root))
+    sector = load_sector_tickers(
+        sector_tickers_path(config.repo_root, config.research_sector)
+    )
+    book = set(resolve_book_tickers(config, state))
+    return tuple(ticker for ticker in sector if ticker in overlays and ticker not in book)
+
+
 def sync_onboarded_book_members(
     config: MonitorConfig,
     state: OperationalState,
@@ -124,28 +156,17 @@ def sync_onboarded_book_members(
     missing CSCO/OPAL/etc. even though overlays + sector membership exist.
     Research-regen heals that gap before Rank IC / consolidated rebuild.
     """
-    from .eligibility import default_overlay_dir, list_overlay_tickers
-    from .ticker_book import (
-        ensure_ticker_in_book,
-        load_sector_tickers,
-        resolve_book_tickers,
-        sector_tickers_path,
-    )
+    from .ticker_book import ensure_ticker_in_book, resolve_book_tickers
 
-    overlays = list_overlay_tickers(default_overlay_dir(config.repo_root))
-    sector = load_sector_tickers(
-        sector_tickers_path(config.repo_root, config.research_sector)
-    )
     seed = resolve_book_tickers(config, state)
-    for ticker in sector:
-        if ticker in overlays:
-            ensure_ticker_in_book(
-                ticker=ticker,
-                config=config,
-                state=state,
-                seed_tickers=seed,
-            )
-            seed = resolve_book_tickers(config, state)
+    for ticker in missing_onboarded_book_members(config, state):
+        ensure_ticker_in_book(
+            ticker=ticker,
+            config=config,
+            state=state,
+            seed_tickers=seed,
+        )
+        seed = resolve_book_tickers(config, state)
     return resolve_book_tickers(config, state)
 
 def _run_command(name: str, command: Sequence[str], *, cwd: Path) -> RegenCommandResult:
@@ -197,21 +218,28 @@ def regenerate_research_book(
                 cwd=sn_dir,
             )
         )
-        try:
-            from .book_ranks import build_book_ranks_command
-        except ImportError:
-            # Image may lag the host worktree; Rank IC + consolidated still count.
+        ranks_script = sn_dir / "build_book_ranks.py"
+        if not ranks_script.is_file():
+            # Image bake can lag the host worktree; Rank IC + consolidated still count.
             LOG.warning(
-                "book_ranks module unavailable; skipping book ranks step"
+                "build_book_ranks.py missing at %s; skipping book ranks step",
+                ranks_script,
             )
         else:
-            commands.append(
-                _run_command(
-                    "build_book_ranks",
-                    build_book_ranks_command(config, python=python, tickers=book),
-                    cwd=sn_dir,
+            try:
+                from .book_ranks import build_book_ranks_command
+            except ImportError:
+                LOG.warning(
+                    "book_ranks module unavailable; skipping book ranks step"
                 )
-            )
+            else:
+                commands.append(
+                    _run_command(
+                        "build_book_ranks",
+                        build_book_ranks_command(config, python=python, tickers=book),
+                        cwd=sn_dir,
+                    )
+                )
     finished = datetime.now(timezone.utc)
     return RegenRunResult(
         triggered_by=triggered_by,
@@ -245,17 +273,27 @@ def run_research_regen_once(
     """Clear dirty (if any) and regenerate, or skip when clean / still debouncing."""
     dirty = state.research_book_dirty()
     now = datetime.now(timezone.utc)
+    from .ticker_book import seed_book_if_empty
+
+    membership_gap: tuple[str, ...] = ()
     if not force:
         if dirty is None:
-            return RegenRunResult(
-                triggered_by="idle",
-                started_at=now.isoformat(),
-                finished_at=now.isoformat(),
-                commands=(),
-                skipped=True,
-                skip_reason="not_dirty",
-            )
-        if honor_debounce and config.research_regen_debounce_seconds > 0:
+            seed_book_if_empty(config, state)
+            membership_gap = missing_onboarded_book_members(config, state)
+            if not membership_gap:
+                return RegenRunResult(
+                    triggered_by="idle",
+                    started_at=now.isoformat(),
+                    finished_at=now.isoformat(),
+                    commands=(),
+                    skipped=True,
+                    skip_reason="not_dirty",
+                )
+        if (
+            dirty is not None
+            and honor_debounce
+            and config.research_regen_debounce_seconds > 0
+        ):
             age = _dirty_age_seconds(dirty, now=now)
             if age is not None and age < config.research_regen_debounce_seconds:
                 return RegenRunResult(
@@ -273,7 +311,8 @@ def run_research_regen_once(
     trigger = "force" if force else "dirty"
     if dirty and dirty.get("triggers"):
         trigger = ",".join(str(item) for item in dirty["triggers"][-5:])
-    from .ticker_book import seed_book_if_empty
+    elif membership_gap:
+        trigger = "book_membership:" + ",".join(membership_gap[:5])
 
     seed_book_if_empty(config, state)
     book_tickers = sync_onboarded_book_members(config, state)
@@ -311,8 +350,12 @@ def run_research_regen_once(
         ),
         now=now,
     )
-    if not result.ok:
-        # Re-mark dirty so the loop retries after a failed regen.
+    core_failed = any(
+        (not item.ok) and item.name in _CORE_REGEN_STEPS for item in result.commands
+    )
+    if (not result.skipped) and core_failed:
+        # Re-mark dirty so the loop retries after Rank IC / consolidated fail.
+        # Book-ranks-only failures must not retrigger evaluate.
         state.mark_research_book_dirty(
             reason="regen_failed",
             trigger=result.triggered_by,

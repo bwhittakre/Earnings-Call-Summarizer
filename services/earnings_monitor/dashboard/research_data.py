@@ -697,12 +697,56 @@ def _ticker_set(values: Any) -> set[str]:
     return out
 
 
+def load_research_book_tickers(
+    database_path: str | os.PathLike[str] | None = None,
+    *,
+    repo_root: str | os.PathLike[str] | None = None,
+    research_sector: str = "xlk_tech",
+) -> list[str]:
+    """Tickers that belong on Rank IC / consolidated — not the full parquet.
+
+    Independents live in the monitor dataset without joining the XLK book.
+    Stale checks must use this list, or every new Independent looks stale.
+    """
+    from services.earnings_monitor.dashboard.data import default_operational_db_path
+    from services.earnings_monitor.state import OperationalState
+    from services.earnings_monitor.ticker_book import (
+        load_sector_tickers,
+        sector_tickers_path,
+    )
+
+    path = Path(database_path or default_operational_db_path())
+    if path.is_file():
+        try:
+            state = OperationalState(path)
+            raw = state.get_meta("roz_book_tickers")
+            if raw:
+                payload = json.loads(raw)
+                values = payload.get("tickers") if isinstance(payload, dict) else payload
+                if isinstance(values, list):
+                    tickers = [
+                        str(item).strip().upper()
+                        for item in values
+                        if str(item).strip()
+                    ]
+                    if tickers:
+                        return list(dict.fromkeys(tickers))
+        except Exception:  # noqa: BLE001 — sidebar must stay up
+            pass
+    root = Path(repo_root or os.environ.get("EARNINGS_MONITOR_REPO_ROOT") or ".")
+    return load_sector_tickers(sector_tickers_path(root, research_sector))
+
+
 def artifact_universe_status(
     expected_tickers: Any,
     rank_meta: dict[str, Any] | None = None,
     consol_meta: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """Compare onboarded/dataset tickers to Rank IC / consolidated artifact universes.
+    """Compare the Rank IC research book to Rank IC / consolidated artifacts.
+
+    ``expected_tickers`` must be the XLK / ``roz_book_tickers`` set — not every
+    name in ``company_quarters.parquet``. Independents in the dataset are
+    company-level Roz + desk, not missing Rank IC members.
 
     Returns missing tickers (in expected but not in artifact meta). When an
     artifact has no ticker metadata yet, that side is treated as unavailable
@@ -752,7 +796,7 @@ def load_research_book_dirty(
 
 
 def format_universe_stale_message(status: dict[str, Any]) -> str | None:
-    """Human-readable warning when research HTML/CSV lag the dataset universe."""
+    """Human-readable warning when Rank IC HTML/CSV lag the XLK research book."""
     if not status.get("stale"):
         return None
     parts: list[str] = []
@@ -769,7 +813,7 @@ def format_universe_stale_message(status: dict[str, Any]) -> str | None:
     if not parts:
         return None
     return (
-        "Research artifacts are stale vs the loaded dataset. "
+        "Research artifacts are stale vs the XLK research book. "
         + "; ".join(parts)
         + ". Run: python -m services.earnings_monitor research-regen --force "
         "(or wait for the research-regen loop after onboard)."

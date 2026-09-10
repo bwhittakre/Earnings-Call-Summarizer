@@ -77,6 +77,25 @@ def _mean(rows: Sequence[Mapping[str, Any]], key: str) -> float | None:
     return round(fmean(values), 4) if values else None
 
 
+def _quant_z_for_company(row: Mapping[str, Any]) -> float | None:
+    """Company-panel Quant z: PIT when defined, else full-sample for short tapes.
+
+    Young names (CRWV) have IBES/MSCI rows but fewer than MIN_HISTORY=8
+    prior quarters, so ``quant_z_pit`` stays null. Full-sample z is still a
+    real number and belongs on company tabs — not on Rank IC.
+    """
+    for key in ("quant_z_pit", "quant_z", "quant_z_fullsample"):
+        value = _number(row.get(key))
+        if value is not None:
+            return value
+    return None
+
+
+def _mean_quant_z_for_company(rows: Sequence[Mapping[str, Any]]) -> float | None:
+    values = [value for row in rows if (value := _quant_z_for_company(row)) is not None]
+    return round(fmean(values), 4) if values else None
+
+
 def _decode_json(value: Any, default: Any) -> Any:
     if isinstance(value, (dict, list)):
         return value
@@ -228,9 +247,7 @@ class DashboardData:
                     "dimensions": sum(row.get("dimension") not in (None, "") for row in rows),
                     "divergences": divergence_count,
                     "mean_narrative_level": _mean(rows, "llm_level"),
-                    "mean_quant_z": _mean(rows, "quant_z_pit")
-                    if any(row.get("quant_z_pit") not in (None, "") for row in rows)
-                    else _mean(rows, "quant_z"),
+                    "mean_quant_z": _mean_quant_z_for_company(rows),
                 }
             )
         events.sort(
@@ -399,6 +416,7 @@ class DashboardData:
                 artifact_universe_status,
                 format_universe_stale_message,
                 load_research_book_dirty,
+                load_research_book_tickers,
                 peek_consolidated_meta,
                 peek_rank_ic_meta,
             )
@@ -420,7 +438,7 @@ class DashboardData:
             rank_peek = peek_rank_ic_meta()
             consolidated_peek = peek_consolidated_meta()
             universe_status = artifact_universe_status(
-                self.tickers,
+                load_research_book_tickers(),
                 rank_peek if rank_peek.get("available") else None,
                 consolidated_peek if consolidated_peek.get("available") else None,
             )
@@ -530,9 +548,7 @@ class DashboardData:
                     "dimensions": sum(row.get("dimension") not in (None, "") for row in rows),
                     "narrative_level": _mean(rows, "llm_level"),
                     "narrative_change": _mean(rows, "change_magnitude"),
-                    "quant_z": _mean(rows, "quant_z_pit")
-                    if any(row.get("quant_z_pit") not in (None, "") for row in rows)
-                    else _mean(rows, "quant_z"),
+                    "quant_z": _mean_quant_z_for_company(rows),
                     "narrative_quant_gap": _mean(rows, "narrative_quant_gap"),
                     "divergences": sum(
                         _truthy(
@@ -575,9 +591,7 @@ class DashboardData:
                     "narrative_level": _mean(rows, "llm_level"),
                     "narrative_change": _mean(rows, "change_magnitude"),
                     "narrative_surprise": _mean(rows, "surprise_magnitude"),
-                    "quant_z": _mean(rows, "quant_z_pit")
-                    if any(row.get("quant_z_pit") not in (None, "") for row in rows)
-                    else _mean(rows, "quant_z"),
+                    "quant_z": _mean_quant_z_for_company(rows),
                     "narrative_quant_gap": _mean(rows, "narrative_quant_gap"),
                     "divergences": sum(
                         _truthy(
@@ -725,9 +739,7 @@ class DashboardData:
                     "period": calendar or fiscal,
                     "dimension": dimension,
                     "narrative_level": _mean(rows, "llm_level"),
-                    "quant_z": _mean(rows, "quant_z_pit")
-                    if any(row.get("quant_z_pit") not in (None, "") for row in rows)
-                    else _mean(rows, "quant_z"),
+                    "quant_z": _mean_quant_z_for_company(rows),
                     "gap": _mean(rows, "narrative_quant_gap"),
                     "divergence": any(
                         _truthy(
@@ -917,9 +929,7 @@ class DashboardData:
             if dimension and str(row.get("dimension", "")) != dimension:
                 continue
             narrative = _number(row.get("llm_level"))
-            quant_raw = _number(row.get("quant_z_pit"))
-            if quant_raw is None:
-                quant_raw = _number(row.get("quant_z"))
+            quant_raw = _quant_z_for_company(row)
             if narrative is None or quant_raw is None:
                 continue
             quant = _clip_z(quant_raw)

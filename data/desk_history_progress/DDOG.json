@@ -1,0 +1,17 @@
+{
+  "ticker": "DDOG",
+  "run_id": "08eeca2a-d775-4599-8952-e362ac95105b",
+  "seeds_proposed": 0,
+  "seeds_inserted_confirmed": 0,
+  "seeds_inserted_provisional": 0,
+  "seeds_recite_queue": 0,
+  "verdicts_proposed": 0,
+  "verdicts_inserted": 0,
+  "verdicts_recite_queue": 0,
+  "regime_stub": "ok",
+  "errors": [],
+  "seeding_done": true,
+  "scoring_done": true,
+  "completed_at": "2026-09-09T17:12:08.544061+00:00",
+  "updated_at": "2026-09-09T17:12:08.544061+00:00"
+}

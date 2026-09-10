@@ -31,6 +31,7 @@ from services.earnings_monitor.onboard import (  # noqa: E402
     run_onboard,
     scaffold_quarters_from_periods,
     sync_book_after_onboard,
+    write_company_overlay,
 )
 from quartr_history_import import (  # noqa: E402
     format_transcript_path,
@@ -506,7 +507,19 @@ def test_run_onboard_classifies_from_on_disk_mcp_without_quartr_rest(tmp_path: P
     assert result.status == "completed"
 
 
+def _stub_desk_finish(**_kwargs):
+    return [
+        {"step": "conference_ingest", "discovered": 0, "ingested": [], "skipped": []},
+        {"step": "desk_history_onboard", "status": "skipped", "reason": "test"},
+        {"step": "call_scorecard", "rows": 0},
+    ]
+
+
 def test_sync_book_after_onboard_imports_and_marks_dirty(tmp_path: Path, monkeypatch):
+    monkeypatch.setattr(
+        "services.earnings_monitor.onboard.run_desk_finish_after_panel",
+        _stub_desk_finish,
+    )
     sector = tmp_path / "config" / "sectors" / "xlk_tech.txt"
     sector.parent.mkdir(parents=True)
     sector.write_text("AAPL\nMSFT\n", encoding="utf-8")
@@ -554,6 +567,10 @@ def test_sync_book_after_onboard_imports_and_marks_dirty(tmp_path: Path, monkeyp
 
 
 def test_run_onboard_panel_triggers_book_sync(tmp_path: Path, monkeypatch):
+    monkeypatch.setattr(
+        "services.earnings_monitor.onboard.run_desk_finish_after_panel",
+        _stub_desk_finish,
+    )
     report = datetime(2026, 9, 1, tzinfo=UTC)
     sector = tmp_path / "config" / "sectors" / "xlk_tech.txt"
     sector.parent.mkdir(parents=True)
@@ -590,6 +607,7 @@ def test_run_onboard_panel_triggers_book_sync(tmp_path: Path, monkeypatch):
         configured_tickers=("AAPL",),
         run_command=fake_run,
         import_history_fn=lambda *a, **k: FakeHist(),
+        research_sector="xlk_tech",
     )
     assert result.status == "completed"
     steps = {s.get("step") for s in result.steps}
@@ -599,3 +617,97 @@ def test_run_onboard_panel_triggers_book_sync(tmp_path: Path, monkeypatch):
     assert "refreshed" in result.history_import_note.lower() or "dirty" in (
         result.history_import_note.lower()
     )
+
+
+def test_skip_book_sync_imports_history_without_dirty(tmp_path: Path, monkeypatch):
+    monkeypatch.setattr(
+        "services.earnings_monitor.onboard.run_desk_finish_after_panel",
+        _stub_desk_finish,
+    )
+    report = datetime(2026, 9, 1, tzinfo=UTC)
+    xlk = tmp_path / "config" / "sectors" / "xlk_tech.txt"
+    xlk.parent.mkdir(parents=True)
+    xlk.write_text("AAPL\n", encoding="utf-8")
+    (tmp_path / "Structured Narrative").mkdir(parents=True)
+    monkeypatch.setenv("EARNINGS_MONITOR_DB", str(tmp_path / "monitor.sqlite3"))
+    monkeypatch.setenv(
+        "EARNINGS_MONITOR_DATASET", str(tmp_path / "company_quarters.parquet")
+    )
+
+    class FakeHist:
+        records = 4
+        tickers = ("AAPL", "NEWCO")
+        missing_tickers = ()
+
+    def fake_run(argv, *, cwd, dry_run, env=None):
+        return {"argv": list(argv), "cwd": str(cwd), "dry_run": dry_run, "returncode": 0}
+
+    result = run_onboard(
+        repo_root=tmp_path,
+        ticker="NEWCO",
+        fiscal_period="FY2026-Q2",
+        report_at=report,
+        now=report - timedelta(days=10),
+        dry_run=False,
+        skip_pull=True,
+        skip_ids=True,
+        skip_fiscal=True,
+        skip_quant=True,
+        skip_llm=True,
+        skip_panel=False,
+        force_mode="onboard",
+        prior_event_count=5,
+        configured_tickers=("AAPL",),
+        run_command=fake_run,
+        import_history_fn=lambda *a, **k: FakeHist(),
+        research_sector="independent",
+        industry_group="tech",
+    )
+    assert result.status == "completed"
+    by_step = {s.get("step"): s for s in result.steps}
+    assert by_step["ticker_book"].get("skipped") is True
+    assert by_step["book_sync"].get("skipped") is True
+    assert by_step["history_import"].get("error") is None
+    assert by_step["history_import"].get("research_book") is False
+    assert "NEWCO" in by_step["history_import"]["tickers"]
+    assert "research_dirty" not in by_step
+    assert by_step["dashboard_sector"]["sector"] == "independent"
+    independent = (tmp_path / "config" / "sectors" / "independent.txt").read_text(
+        encoding="utf-8"
+    )
+    assert "NEWCO" in independent
+    assert "NEWCO" not in xlk.read_text(encoding="utf-8")
+    assert "Rank IC book was not rewritten" in result.history_import_note
+    overlay = json.loads(
+        (tmp_path / "Structured Narrative" / "config" / "company_overlays" / "NEWCO.json")
+        .read_text(encoding="utf-8")
+    )
+    assert overlay["industry_group"] == "tech"
+
+
+def test_write_company_overlay_keeps_industry_group(tmp_path: Path):
+    path = write_company_overlay(
+        tmp_path,
+        ticker="ACME",
+        company_name="Acme",
+        prior_quarters=["FY2025-Q1"],
+        output_quarters=["FY2025-Q2"],
+        estpermid=1,
+        isin=None,
+        barra_id=None,
+        industry_group="healthcare",
+    )
+    first = json.loads(path.read_text(encoding="utf-8"))
+    assert first["industry_group"] == "healthcare"
+    write_company_overlay(
+        tmp_path,
+        ticker="ACME",
+        company_name="Acme",
+        prior_quarters=["FY2025-Q1"],
+        output_quarters=["FY2025-Q2"],
+        estpermid=1,
+        isin=None,
+        barra_id=None,
+    )
+    second = json.loads(path.read_text(encoding="utf-8"))
+    assert second["industry_group"] == "healthcare"

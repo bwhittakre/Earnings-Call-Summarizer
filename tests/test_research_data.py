@@ -14,6 +14,7 @@ from services.earnings_monitor.dashboard.research_data import (
     format_universe_stale_message,
     load_consolidated_panel,
     load_rank_ic_bundle,
+    load_research_book_tickers,
     peek_rank_ic_meta,
     resolve_cross_company_root,
     unique_sorted,
@@ -259,6 +260,26 @@ def test_artifact_universe_status_skips_empty_artifact_meta() -> None:
     assert status["rank_available"] is False
     assert status["consol_available"] is False
     assert status["stale"] is False
+
+
+def test_independent_parquet_ticker_is_not_stale(tmp_path: Path) -> None:
+    sector = tmp_path / "config" / "sectors" / "xlk_tech.txt"
+    sector.parent.mkdir(parents=True)
+    sector.write_text("AAPL\nMSFT\n", encoding="utf-8")
+    expected = load_research_book_tickers(
+        tmp_path / "missing.sqlite3",
+        repo_root=tmp_path,
+    )
+    assert expected == ["AAPL", "MSFT"]
+    assert "CRWV" not in expected
+    status = artifact_universe_status(
+        expected,
+        {"tickers": ["AAPL", "MSFT"]},
+        {"tickers": ["AAPL", "MSFT", "CRWV"]},
+    )
+    assert status["ok"] is True
+    assert status["stale"] is False
+    assert format_universe_stale_message(status) is None
 
 
 @pytest.mark.skipif(

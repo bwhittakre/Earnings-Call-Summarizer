@@ -1,0 +1,17 @@
+{
+  "ticker": "LITE",
+  "run_id": "898cb78e-a120-4185-981d-7e7403a1a25e",
+  "seeds_proposed": 0,
+  "seeds_inserted_confirmed": 0,
+  "seeds_inserted_provisional": 0,
+  "seeds_recite_queue": 0,
+  "verdicts_proposed": 0,
+  "verdicts_inserted": 0,
+  "verdicts_recite_queue": 0,
+  "regime_stub": "ok",
+  "errors": [],
+  "seeding_done": true,
+  "scoring_done": true,
+  "completed_at": "2026-09-09T17:45:50.764259+00:00",
+  "updated_at": "2026-09-09T17:45:50.765264+00:00"
+}

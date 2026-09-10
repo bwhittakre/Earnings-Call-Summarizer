@@ -22,8 +22,8 @@ def main() -> None:
     configure_page(st, page_title="Claims Desk")
     st.title("Claims Desk")
     st.caption(
-        "Multi-quarter promise and goal trees. Company filter is shared with Roz — "
-        "the NVIDIA gold book is selectable without retuning xlk_tech."
+        "Multi-quarter promise and goal trees. Sector, custom list, and the "
+        "Companies picker scope every book — rates follow the visible trees."
     )
 
     ctx = load_dashboard_shell(st)

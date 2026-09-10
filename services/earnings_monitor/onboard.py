@@ -253,9 +253,19 @@ def write_company_overlay(
     isin: str | None,
     barra_id: str | None,
     company_id: int | None = None,
+    industry_group: str | None = None,
 ) -> Path:
     path = _overlay_path(repo_root, ticker)
     path.parent.mkdir(parents=True, exist_ok=True)
+    existing: dict[str, Any] = {}
+    if path.is_file():
+        try:
+            loaded = json.loads(path.read_text(encoding="utf-8"))
+            if isinstance(loaded, dict):
+                existing = loaded
+        except (OSError, json.JSONDecodeError):
+            existing = {}
+    group = (industry_group or existing.get("industry_group") or "").strip().lower()
     payload = {
         "ticker": ticker.upper(),
         "company_name": company_name,
@@ -267,6 +277,8 @@ def write_company_overlay(
         "output_quarters": list(output_quarters),
         "updated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
     }
+    if group:
+        payload["industry_group"] = group
     path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return path
 
@@ -582,6 +594,238 @@ def _monitor_paths(repo_root: Path) -> tuple[Path, Path]:
     return db, dataset
 
 
+def _existing_dataset_tickers(dataset_path: Path) -> list[str]:
+    if not dataset_path.is_file():
+        return []
+    try:
+        import pandas as pd
+
+        frame = pd.read_parquet(dataset_path, columns=["ticker"])
+    except Exception:  # noqa: BLE001 — empty union is safe
+        return []
+    return list(
+        dict.fromkeys(
+            str(item).strip().upper()
+            for item in frame["ticker"].tolist()
+            if str(item).strip()
+        )
+    )
+
+
+def history_import_universe(
+    *,
+    repo_root: Path,
+    ticker: str,
+    configured_tickers: Sequence[str] = (),
+) -> tuple[str, ...]:
+    """Existing monitor names plus *ticker* — never a single-name wipe."""
+    db_path, dataset_path = _monitor_paths(repo_root)
+    found: list[str] = []
+    found.extend(_existing_dataset_tickers(dataset_path))
+    try:
+        from .state import OperationalState
+        from .ticker_book import resolve_book_tickers
+        from .config import MonitorConfig
+
+        if db_path.is_file():
+            state = OperationalState(db_path)
+            cfg = MonitorConfig(
+                repo_root=Path(repo_root),
+                database_path=db_path,
+                inbox_path=Path(repo_root)
+                / "earnings-scraper-main"
+                / "earnings-scraper-main"
+                / "inbox",
+                tickers=tuple(configured_tickers) or (ticker.strip().upper(),),
+            )
+            found.extend(resolve_book_tickers(cfg, state))
+    except Exception:  # noqa: BLE001
+        pass
+    found.extend(
+        str(item).strip().upper()
+        for item in configured_tickers
+        if str(item).strip()
+    )
+    found.append(ticker.strip().upper())
+    return tuple(dict.fromkeys(item for item in found if item))
+
+
+def refresh_history_after_onboard(
+    *,
+    repo_root: Path,
+    ticker: str,
+    configured_tickers: Sequence[str] = (),
+    dry_run: bool = False,
+    import_history_fn: Callable[..., Any] | None = None,
+) -> list[dict[str, Any]]:
+    """Refresh the monitor parquet without touching the XLK Rank IC book."""
+    from .history_import import import_history
+
+    ticker_key = ticker.strip().upper()
+    _db_path, dataset_path = _monitor_paths(repo_root)
+    tickers = history_import_universe(
+        repo_root=repo_root,
+        ticker=ticker_key,
+        configured_tickers=configured_tickers,
+    )
+    steps: list[dict[str, Any]] = []
+    if dry_run:
+        steps.append(
+            {
+                "step": "history_import",
+                "dry_run": True,
+                "ticker": ticker_key,
+                "tickers": list(tickers),
+                "destination": str(dataset_path),
+                "research_book": False,
+            }
+        )
+        return steps
+    importer = import_history_fn or import_history
+    try:
+        hist = importer(repo_root, dataset_path, tickers=tickers)
+        steps.append(
+            {
+                "step": "history_import",
+                "records": getattr(hist, "records", None),
+                "tickers": list(getattr(hist, "tickers", tickers)),
+                "missing_tickers": list(getattr(hist, "missing_tickers", ()) or ()),
+                "destination": str(dataset_path),
+                "research_book": False,
+            }
+        )
+    except Exception as exc:  # noqa: BLE001
+        steps.append(
+            {
+                "step": "history_import",
+                "error": str(exc),
+                "tickers": list(tickers),
+                "destination": str(dataset_path),
+                "research_book": False,
+            }
+        )
+        LOG.warning("Post-onboard history_import failed for %s: %s", ticker_key, exc)
+    return steps
+
+
+def ensure_dashboard_sector(
+    *,
+    repo_root: Path,
+    ticker: str,
+    research_sector: str,
+) -> dict[str, Any]:
+    """Keep Independents (and other non-XLK names) on their dashboard sector file."""
+    from .ticker_book import sector_tickers_path, write_sector_ticker
+
+    sector = (research_sector or "independent").strip() or "independent"
+    path = sector_tickers_path(Path(repo_root), sector)
+    try:
+        updated = write_sector_ticker(path, ticker)
+    except (OSError, ValueError) as exc:
+        return {
+            "step": "dashboard_sector",
+            "sector": sector,
+            "error": str(exc),
+            "path": str(path),
+        }
+    return {
+        "step": "dashboard_sector",
+        "sector": sector,
+        "updated": updated,
+        "path": str(path),
+    }
+
+
+def run_desk_finish_after_panel(
+    *,
+    repo_root: Path,
+    ticker: str,
+    fiscal_period: str,
+    dry_run: bool = False,
+) -> list[dict[str, Any]]:
+    """Conference ingest + FY/CONF cues + autopilot + scorecard."""
+    ticker_key = ticker.strip().upper()
+    period = fiscal_period.strip().upper()
+    steps: list[dict[str, Any]] = []
+    if dry_run:
+        steps.append({"step": "desk_finish", "dry_run": True, "ticker": ticker_key})
+        return steps
+
+    try:
+        from .conf_desk import ingest_on_disk_conferences
+
+        conf = ingest_on_disk_conferences(repo_root=repo_root, ticker=ticker_key)
+        steps.append({"step": "conference_ingest", **conf})
+    except Exception as exc:  # noqa: BLE001
+        steps.append({"step": "conference_ingest", "error": str(exc)})
+        LOG.warning("Post-onboard conference ingest failed for %s: %s", ticker_key, exc)
+
+    try:
+        from .desk_autopilot import run_history_onboard_for_ticker
+
+        ho = run_history_onboard_for_ticker(
+            repo_root=repo_root,
+            ticker=ticker_key,
+        )
+        steps.append({"step": "desk_history_onboard", **ho})
+    except Exception as exc:  # noqa: BLE001
+        steps.append({"step": "desk_history_onboard", "error": str(exc)})
+        LOG.warning("Post-onboard history desk onboard failed for %s: %s", ticker_key, exc)
+
+    try:
+        from .desk_trees import walk_after_novelty_view
+
+        walk = walk_after_novelty_view(
+            repo_root=repo_root,
+            ticker=ticker_key,
+            fiscal_period=period,
+        )
+        steps.append({"step": "desk_cue_queue", **walk})
+    except Exception as exc:  # noqa: BLE001
+        steps.append({"step": "desk_cue_queue", "error": str(exc)})
+        LOG.warning("Post-onboard cue queue failed for %s: %s", ticker_key, exc)
+
+    import os as _os
+
+    _autopilot_enabled = _os.getenv("EARNINGS_MONITOR_DESK_AUTOPILOT", "1").strip().lower() not in {
+        "0",
+        "false",
+        "no",
+        "off",
+    }
+    if not _autopilot_enabled:
+        steps.append(
+            {"step": "desk_autopilot", "status": "skipped", "reason": "disabled_by_config"}
+        )
+    else:
+        try:
+            from .desk_autopilot import run_autopilot_for_ticker
+
+            autopilot_result = run_autopilot_for_ticker(
+                repo_root=repo_root,
+                ticker=ticker_key,
+                fiscal_period=period,
+            )
+            steps.append({"step": "desk_autopilot", **autopilot_result})
+        except Exception as exc:  # noqa: BLE001
+            steps.append({"step": "desk_autopilot", "error": str(exc)})
+            LOG.warning(
+                "Post-onboard desk autopilot failed for %s: %s", ticker_key, exc
+            )
+
+    try:
+        from .scorecard import rebuild_scorecard
+
+        sc = rebuild_scorecard(repo_root=repo_root, rebuild_canvas=False)
+        steps.append({"step": "call_scorecard", **sc})
+    except Exception as exc:  # noqa: BLE001
+        steps.append({"step": "call_scorecard", "error": str(exc)})
+        LOG.warning(
+            "Post-onboard scorecard rebuild failed for %s: %s", ticker_key, exc
+        )
+    return steps
+
+
 def sync_book_after_onboard(
     *,
     repo_root: Path,
@@ -714,58 +958,14 @@ def sync_book_after_onboard(
             }
         )
 
-    # Write the per-ticker cue queue from novelty_view BEFORE autopilot.
-    # Without this, a new name has no desk_cue_queue_v2_{TICKER}.json and
-    # propose_seeds sees zero missed rows.
-    if not dry_run:
-        try:
-            from .desk_trees import walk_after_novelty_view
-
-            walk = walk_after_novelty_view(
-                repo_root=repo_root,
-                ticker=ticker_key,
-                fiscal_period=period,
-            )
-            steps.append({"step": "desk_cue_queue", **walk})
-        except Exception as exc:  # noqa: BLE001
-            steps.append({"step": "desk_cue_queue", "error": str(exc)})
-            LOG.warning("Post-onboard cue queue failed for %s: %s", ticker_key, exc)
-
-    # Desk autopilot: propose seeds and score open trees for the newly-onboarded ticker.
-    # Guard with the same env var that MonitorConfig.desk_autopilot_after_post_call parses,
-    # so setting EARNINGS_MONITOR_DESK_AUTOPILOT=0 disables this path too.
-    import os as _os
-    _autopilot_enabled = _os.getenv("EARNINGS_MONITOR_DESK_AUTOPILOT", "1").strip().lower() \
-        not in {"0", "false", "no", "off"}
-    if not _autopilot_enabled:
-        steps.append({"step": "desk_autopilot", "status": "skipped",
-                      "reason": "disabled_by_config"})
-    else:
-        try:
-            from .desk_autopilot import run_autopilot_for_ticker
-
-            autopilot_result = run_autopilot_for_ticker(
-                repo_root=repo_root,
-                ticker=ticker_key,
-                fiscal_period=period,
-            )
-            steps.append({"step": "desk_autopilot", **autopilot_result})
-        except Exception as exc:  # noqa: BLE001
-            steps.append({"step": "desk_autopilot", "error": str(exc)})
-            LOG.warning("Post-onboard desk autopilot failed for %s: %s", ticker_key, exc)
-
-    # Call scorecard + post-call briefs must refresh on every onboard, not only
-    # live post_call. New tickers otherwise never appear in the Brief / 2-axis view.
-    if not dry_run:
-        try:
-            from .scorecard import rebuild_scorecard
-
-            sc = rebuild_scorecard(repo_root=repo_root, rebuild_canvas=False)
-            steps.append({"step": "call_scorecard", **sc})
-        except Exception as exc:  # noqa: BLE001
-            steps.append({"step": "call_scorecard", "error": str(exc)})
-            LOG.warning("Post-onboard scorecard rebuild failed for %s: %s", ticker_key, exc)
-
+    steps.extend(
+        run_desk_finish_after_panel(
+            repo_root=repo_root,
+            ticker=ticker_key,
+            fiscal_period=period,
+            dry_run=dry_run,
+        )
+    )
     return steps
 
 
@@ -802,8 +1002,10 @@ def _pull_history_transcripts(
             "on_disk": on_disk,
             "note": (
                 "Default: Quartr MCP → transcripts_raw/{TICKER}_FY….txt "
-                "(LocalFileProvider). Quartr REST and ROIC are not used unless "
-                "explicitly opted in."
+                "(LocalFileProvider). Target 2016-Q1; if Quartr has nothing "
+                "that far back, pull every available event. Conferences go to "
+                "data/conf_transcripts/{TICKER}/ + manifest.json. "
+                "Quartr REST and ROIC are not used unless explicitly opted in."
             ),
         }
     )
@@ -927,11 +1129,14 @@ def run_onboard(
     run_command: Callable[..., dict[str, Any]] | None = None,
     import_history_fn: Callable[..., Any] | None = None,
     skip_book_sync: bool = False,
-    research_sector: str = "xlk_tech",
+    research_sector: str = "independent",
+    industry_group: str | None = None,
 ) -> OnboardResult:
     """Execute the Onboard flow. Never silently falls through to baseline on failure."""
     ticker_key = ticker.strip().upper()
     period = fiscal_period.strip().upper()
+    if (research_sector or "independent").strip() != "xlk_tech":
+        skip_book_sync = True
     current = now or datetime.now(timezone.utc)
     if report_at.tzinfo is None:
         raise OnboardError("report_at must be timezone-aware")
@@ -1071,7 +1276,10 @@ def run_onboard(
                 "step": "ticker_book",
                 "skipped": True,
                 "research_sector": research_sector,
-                "note": "skip_book_sync: sector file is managed by the caller",
+                "note": (
+                    "skip_book_sync: XLK / roz_book_tickers left unchanged; "
+                    "dashboard sector is written after the feature panel"
+                ),
             }
         )
     else:
@@ -1262,6 +1470,9 @@ def run_onboard(
             }
         )
 
+        resolved_industry = (industry_group or "").strip().lower()
+        if not resolved_industry and research_sector == "independent":
+            resolved_industry = "unclassified"
         overlay = write_company_overlay(
             repo_root,
             ticker=ticker_key,
@@ -1272,6 +1483,7 @@ def run_onboard(
             isin=resolved_isin,
             barra_id=resolved_barra,
             company_id=resolved_cid,
+            industry_group=resolved_industry or None,
         )
         if not dry_run:
             register_overlay_profile(repo_root, ticker_key)
@@ -1394,68 +1606,50 @@ def run_onboard(
                         "step": "book_sync",
                         "skipped": True,
                         "research_sector": research_sector,
+                        "note": "Kept off the XLK Rank IC book; monitor history still refreshes.",
                     }
                 )
-                result.history_import_note = (
-                    "Book/history sync skipped (skip_book_sync). "
-                    "Feature panel is on disk; live Roz book was not rewritten."
+                if (research_sector or "independent") != "xlk_tech":
+                    result.steps.append(
+                        ensure_dashboard_sector(
+                            repo_root=repo_root,
+                            ticker=ticker_key,
+                            research_sector=research_sector or "independent",
+                        )
+                    )
+                hist_steps = refresh_history_after_onboard(
+                    repo_root=repo_root,
+                    ticker=ticker_key,
+                    configured_tickers=configured_tickers,
+                    dry_run=dry_run,
+                    import_history_fn=import_history_fn,
                 )
-                sync_steps = []
-                if not dry_run:
-                    try:
-                        from .desk_trees import walk_after_novelty_view
-
-                        walk = walk_after_novelty_view(
-                            repo_root=repo_root,
-                            ticker=ticker_key,
-                            fiscal_period=period,
-                        )
-                        result.steps.append({"step": "desk_cue_queue", **walk})
-                    except Exception as exc:  # noqa: BLE001
-                        result.steps.append(
-                            {"step": "desk_cue_queue", "error": str(exc)}
-                        )
-                        LOG.warning(
-                            "Post-onboard cue queue failed for %s: %s",
-                            ticker_key,
-                            exc,
-                        )
-                    try:
-                        from .desk_autopilot import run_autopilot_for_ticker
-
-                        autopilot_result = run_autopilot_for_ticker(
-                            repo_root=repo_root,
-                            ticker=ticker_key,
-                            fiscal_period=period,
-                        )
-                        result.steps.append(
-                            {"step": "desk_autopilot", **autopilot_result}
-                        )
-                    except Exception as exc:  # noqa: BLE001
-                        result.steps.append(
-                            {"step": "desk_autopilot", "error": str(exc)}
-                        )
-                        LOG.warning(
-                            "Post-onboard desk autopilot failed for %s: %s",
-                            ticker_key,
-                            exc,
-                        )
-                    try:
-                        from .scorecard import rebuild_scorecard
-
-                        sc = rebuild_scorecard(
-                            repo_root=repo_root, rebuild_canvas=False
-                        )
-                        result.steps.append({"step": "call_scorecard", **sc})
-                    except Exception as exc:  # noqa: BLE001
-                        result.steps.append(
-                            {"step": "call_scorecard", "error": str(exc)}
-                        )
-                        LOG.warning(
-                            "Post-onboard scorecard rebuild failed for %s: %s",
-                            ticker_key,
-                            exc,
-                        )
+                result.steps.extend(hist_steps)
+                result.steps.extend(
+                    run_desk_finish_after_panel(
+                        repo_root=repo_root,
+                        ticker=ticker_key,
+                        fiscal_period=period,
+                        dry_run=dry_run,
+                    )
+                )
+                hist_step = next(
+                    (s for s in hist_steps if s.get("step") == "history_import"),
+                    None,
+                )
+                if hist_step and not hist_step.get("error"):
+                    result.history_import_note = (
+                        f"History dataset refreshed at {hist_step.get('destination')} "
+                        f"({hist_step.get('records')} records). "
+                        "XLK Rank IC book was not rewritten."
+                    )
+                else:
+                    err = (hist_step or {}).get("error") or "history_import not run"
+                    result.history_import_note = (
+                        f"History import incomplete ({err}). Retry:\n"
+                        f"  python -m services.earnings_monitor.history_import "
+                        f"--source-root \"{repo_root}\""
+                    )
             else:
                 sync_steps = sync_book_after_onboard(
                     repo_root=repo_root,

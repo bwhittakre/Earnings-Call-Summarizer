@@ -1,6 +1,6 @@
 {
   "schema_version": "1",
-  "updated_at": "2026-09-09T01:27:26.032091+00:00",
+  "updated_at": "2026-09-09T23:04:34.495655+00:00",
   "trees": [
     {
       "tree_id": "lly-alimta-uk-appeal",
@@ -7976,6 +7976,1320 @@
         "proposed_at": "2026-09-09T01:27:26.032091+00:00",
         "model": "claude-sonnet-4-5",
         "run_id": "e1fb9d72-ac05-46d9-9dc7-74acabcc3abe"
+      }
+    },
+    {
+      "tree_id": "ddog-fedramp-high-certification",
+      "title": "FedRAMP High certification for DoD access",
+      "kind": "promise",
+      "bucket": "macro_regulatory_risk",
+      "objects": [
+        "FedRAMP High",
+        "Department of Defense"
+      ],
+      "match": {
+        "anchors": [
+          "FedRAMP High",
+          "Department of Defense"
+        ],
+        "context": [
+          "going for",
+          "enable",
+          "DoD",
+          "certification"
+        ],
+        "exclude": [
+          "FedRAMP moderate"
+        ],
+        "generic": null
+      },
+      "seed": {
+        "fiscal_period": "CONF-2025-11-18",
+        "claim_type": "forward_clock",
+        "clock": null,
+        "excerpt": "We're going for FedRAMP high. I think that will enable us to go into Department of Defense and others.",
+        "dimension": "regulatory",
+        "status": "verbatim",
+        "materiality": "medium",
+        "materiality_rationale": "Opens significant Federal/DoD revenue opportunity and demonstrates expansion into a new high-value customer segment.",
+        "delivery_basis": "transcript"
+      },
+      "confidence": "high",
+      "rationale": "Management commits to pursuing FedRAMP High certification with specific DoD market access goal. This is a concrete regulatory milestone with trackable outcome via public FedRAMP listings.",
+      "materiality": "medium",
+      "materiality_rationale": "Opens significant Federal/DoD revenue opportunity and demonstrates expansion into a new high-value customer segment.",
+      "ticker": "DDOG",
+      "excerpt_verified": true,
+      "proposed_seed_py": "    {\n        \"tree_id\": \"ddog-fedramp-high-certification\",\n        \"ticker\": \"DDOG\",\n        \"kind\": \"promise\",\n        \"beat_id\": \"fedramp-high-certification\",\n        \"bucket\": \"macro_regulatory_risk\",\n        \"title\": \"FedRAMP High certification for DoD access\",\n        \"objects\": (\"FedRAMP High\", \"Department of Defense\",),\n        \"match\": {\n            \"anchors\": (\"FedRAMP High\", \"Department of Defense\"),\n            \"context\": (\"going for\", \"enable\", \"DoD\", \"certification\"),\n            \"exclude\": (\"FedRAMP moderate\",),\n            \"generic\": None,\n        },\n        \"seed\": {\n            \"fiscal_period\": \"CONF-2025-11-18\",\n            \"claim_type\": \"forward_clock\",\n            \"clock\": None,\n            \"excerpt\": (\"We're going for FedRAMP high. I think that will enable us to go into Department of Defense and others.\"),\n            \"dimension\": \"regulatory\",\n            \"status\": \"verbatim\",\n        },\n        \"nodes\": (),\n    },",
+      "book": "desk_hc_v2",
+      "provenance": {
+        "source": "autopilot",
+        "status": "confirmed",
+        "confidence": "high",
+        "proposed_at": "2026-09-09T17:12:58.505086+00:00",
+        "model": "claude-sonnet-4-5",
+        "run_id": "81c0fb68-bb22-4045-989d-00ea568c9922"
+      }
+    },
+    {
+      "tree_id": "ddog-flex-logs-scale-2025",
+      "title": "Flex Logs material revenue contribution in 2025",
+      "kind": "promise",
+      "bucket": "earnings_power",
+      "objects": [
+        "Flex Logs"
+      ],
+      "match": {
+        "anchors": [
+          "Flex Logs"
+        ],
+        "context": [
+          "scale quite a bit",
+          "significant dent",
+          "2025",
+          "this year",
+          "inflection"
+        ],
+        "exclude": [
+          "Frozen Logs",
+          "Archive Search"
+        ],
+        "generic": null
+      },
+      "seed": {
+        "fiscal_period": "CONF-2025-03-04",
+        "claim_type": "forward_clock",
+        "clock": "FY2025-Q4",
+        "excerpt": "we have a product called Flex Logs that is doing extremely well in the market, and that we expect to scale quite a bit... On top of this, product called Flex Logs, we are starting to see an inflection from our SIEM product, our Cloud SIEM product, that we expect also can make a significant dent this year",
+        "dimension": "product_roadmap",
+        "status": "composite",
+        "materiality": "high",
+        "materiality_rationale": "Direct near-term revenue impact from a named product with explicit scaling timeline and management's confidence in material contribution.",
+        "delivery_basis": "transcript"
+      },
+      "confidence": "high",
+      "rationale": "Management explicitly commits to Flex Logs scaling 'quite a bit' and making a 'significant dent' in 2025 revenue. The product is already launched and seeing strong uptake, making this a trackable revenue driver.",
+      "materiality": "high",
+      "materiality_rationale": "Direct near-term revenue impact from a named product with explicit scaling timeline and management's confidence in material contribution.",
+      "ticker": "DDOG",
+      "excerpt_verified": true,
+      "proposed_seed_py": "    {\n        \"tree_id\": \"ddog-flex-logs-scale-2025\",\n        \"ticker\": \"DDOG\",\n        \"kind\": \"promise\",\n        \"beat_id\": \"flex-logs-scale-2025\",\n        \"bucket\": \"earnings_power\",\n        \"title\": \"Flex Logs material revenue contribution in 2025\",\n        \"objects\": (\"Flex Logs\",),\n        \"match\": {\n            \"anchors\": (\"Flex Logs\",),\n            \"context\": (\"scale quite a bit\", \"significant dent\", \"2025\", \"this year\", \"inflection\"),\n            \"exclude\": (\"Frozen Logs\", \"Archive Search\"),\n            \"generic\": None,\n        },\n        \"seed\": {\n            \"fiscal_period\": \"CONF-2025-03-04\",\n            \"claim_type\": \"forward_clock\",\n            \"clock\": \"FY2025-Q4\",\n            \"excerpt\": (\"we have a product called Flex Logs that is doing extremely well in the market, and that we expect to scale quite a bit... On top of this, product called Flex Logs, we are starting to see an inflection from our SIEM product, our Cloud SIEM product, that we expect also can make a significant dent this year\"),\n            \"dimension\": \"product_roadmap\",\n            \"status\": \"composite\",\n        },\n        \"nodes\": (),\n    },",
+      "book": "desk_hc_v2",
+      "provenance": {
+        "source": "autopilot",
+        "status": "confirmed",
+        "confidence": "high",
+        "proposed_at": "2026-09-09T17:12:58.505086+00:00",
+        "model": "claude-sonnet-4-5",
+        "run_id": "81c0fb68-bb22-4045-989d-00ea568c9922"
+      }
+    },
+    {
+      "tree_id": "ddog-bits-ai-sre-ga-monetization",
+      "title": "Bits AI SRE general availability and monetization path",
+      "kind": "promise",
+      "bucket": "earnings_power",
+      "objects": [
+        "Bits AI SRE",
+        "SRE Agent"
+      ],
+      "match": {
+        "anchors": [
+          "Bits AI SRE",
+          "SRE Agent"
+        ],
+        "context": [
+          "general availability",
+          "GA",
+          "monetization",
+          "SKU",
+          "private beta",
+          "revenue"
+        ],
+        "exclude": [
+          "Dev Agent",
+          "Security Analyst"
+        ],
+        "generic": null
+      },
+      "seed": {
+        "fiscal_period": "CONF-2025-12-02",
+        "claim_type": "forward_clock",
+        "clock": null,
+        "excerpt": "Today, we went GA on our Bits SRE... We just last week at re:Invent, we had general, with GA on our first AI-native application, which was the SRE agent.",
+        "dimension": "product_roadmap",
+        "status": "composite",
+        "materiality": "high",
+        "materiality_rationale": "First AI-native product at GA represents a new revenue stream and strategic validation of DDOG's AI platform ambitions, with management discussing multiple monetization paths.",
+        "delivery_basis": "transcript"
+      },
+      "confidence": "high",
+      "rationale": "Management has moved Bits AI SRE to GA and is actively exploring monetization models (win rates, workloads, or SKU). This is the company's first AI-native product reaching GA, making it a critical tracking point.",
+      "materiality": "high",
+      "materiality_rationale": "First AI-native product at GA represents a new revenue stream and strategic validation of DDOG's AI platform ambitions, with management discussing multiple monetization paths.",
+      "ticker": "DDOG",
+      "excerpt_verified": true,
+      "proposed_seed_py": "    {\n        \"tree_id\": \"ddog-bits-ai-sre-ga-monetization\",\n        \"ticker\": \"DDOG\",\n        \"kind\": \"promise\",\n        \"beat_id\": \"bits-ai-sre-ga-monetization\",\n        \"bucket\": \"earnings_power\",\n        \"title\": \"Bits AI SRE general availability and monetization path\",\n        \"objects\": (\"Bits AI SRE\", \"SRE Agent\",),\n        \"match\": {\n            \"anchors\": (\"Bits AI SRE\", \"SRE Agent\"),\n            \"context\": (\"general availability\", \"GA\", \"monetization\", \"SKU\", \"private beta\", \"revenue\"),\n            \"exclude\": (\"Dev Agent\", \"Security Analyst\"),\n            \"generic\": None,\n        },\n        \"seed\": {\n            \"fiscal_period\": \"CONF-2025-12-02\",\n            \"claim_type\": \"forward_clock\",\n            \"clock\": None,\n            \"excerpt\": (\"Today, we went GA on our Bits SRE... We just last week at re:Invent, we had general, with GA on our first AI-native application, which was the SRE agent.\"),\n            \"dimension\": \"product_roadmap\",\n            \"status\": \"composite\",\n        },\n        \"nodes\": (),\n    },",
+      "book": "desk_hc_v2",
+      "provenance": {
+        "source": "autopilot",
+        "status": "confirmed",
+        "confidence": "high",
+        "proposed_at": "2026-09-09T17:12:58.505086+00:00",
+        "model": "claude-sonnet-4-5",
+        "run_id": "81c0fb68-bb22-4045-989d-00ea568c9922"
+      }
+    },
+    {
+      "tree_id": "ddog-india-brazil-scale-50-100",
+      "title": "India and Brazil teams scaling to 50-100+ headcount",
+      "kind": "promise",
+      "bucket": "demand",
+      "objects": [
+        "India",
+        "Brazil"
+      ],
+      "match": {
+        "anchors": [
+          "India",
+          "Brazil"
+        ],
+        "context": [
+          "teams",
+          "50",
+          "100",
+          "ground",
+          "scoring",
+          "double",
+          "productive"
+        ],
+        "exclude": [
+          "Singapore"
+        ],
+        "generic": null
+      },
+      "seed": {
+        "fiscal_period": "CONF-2025-09-03",
+        "claim_type": "forward_clock",
+        "clock": "FY2026-Q2",
+        "excerpt": "We didn't have anybody in India. We didn't have any in Brazil, and now we have teams of 50-100, and we're scoring... We went from zero to having 30 or 40 people in India now. I think it'll at least double that.",
+        "dimension": "geographic_expansion",
+        "status": "composite",
+        "materiality": "medium",
+        "materiality_rationale": "Represents significant geographic expansion investment with 1-2 year payback expectations, demonstrating commitment to underpenetrated high-growth markets.",
+        "delivery_basis": "transcript"
+      },
+      "confidence": "high",
+      "rationale": "Management gives specific headcount targets for India and Brazil expansion with clear growth trajectory from zero to 50-100+ employees. These are concrete operational commitments in named markets.",
+      "materiality": "medium",
+      "materiality_rationale": "Represents significant geographic expansion investment with 1-2 year payback expectations, demonstrating commitment to underpenetrated high-growth markets.",
+      "ticker": "DDOG",
+      "excerpt_verified": true,
+      "proposed_seed_py": "    {\n        \"tree_id\": \"ddog-india-brazil-scale-50-100\",\n        \"ticker\": \"DDOG\",\n        \"kind\": \"promise\",\n        \"beat_id\": \"india-brazil-scale-50-100\",\n        \"bucket\": \"demand\",\n        \"title\": \"India and Brazil teams scaling to 50-100+ headcount\",\n        \"objects\": (\"India\", \"Brazil\",),\n        \"match\": {\n            \"anchors\": (\"India\", \"Brazil\"),\n            \"context\": (\"teams\", \"50\", \"100\", \"ground\", \"scoring\", \"double\", \"productive\"),\n            \"exclude\": (\"Singapore\",),\n            \"generic\": None,\n        },\n        \"seed\": {\n            \"fiscal_period\": \"CONF-2025-09-03\",\n            \"claim_type\": \"forward_clock\",\n            \"clock\": \"FY2026-Q2\",\n            \"excerpt\": (\"We didn't have anybody in India. We didn't have any in Brazil, and now we have teams of 50-100, and we're scoring... We went from zero to having 30 or 40 people in India now. I think it'll at least double that.\"),\n            \"dimension\": \"geographic_expansion\",\n            \"status\": \"composite\",\n        },\n        \"nodes\": (),\n    },",
+      "book": "desk_hc_v2",
+      "provenance": {
+        "source": "autopilot",
+        "status": "confirmed",
+        "confidence": "high",
+        "proposed_at": "2026-09-09T17:12:58.505086+00:00",
+        "model": "claude-sonnet-4-5",
+        "run_id": "81c0fb68-bb22-4045-989d-00ea568c9922"
+      }
+    },
+    {
+      "tree_id": "ddog-cloud-siem-acceleration-2025",
+      "title": "Cloud SIEM product acceleration in 2025",
+      "kind": "promise",
+      "bucket": "demand",
+      "objects": [
+        "Cloud SIEM"
+      ],
+      "match": {
+        "anchors": [
+          "Cloud SIEM"
+        ],
+        "context": [
+          "accelerate",
+          "aggressive",
+          "inflection",
+          "2025",
+          "use case",
+          "focus"
+        ],
+        "exclude": [
+          "Application Security",
+          "CSPM"
+        ],
+        "generic": null
+      },
+      "seed": {
+        "fiscal_period": "CONF-2025-06-03",
+        "claim_type": "forward_clock",
+        "clock": "FY2025-Q4",
+        "excerpt": "What we're doing is we are focusing this year on how we can really accelerate that cloud and the products a little further on, that cloud SIEM use case... We're gonna be more aggressive in selling Cloud SIEM.",
+        "dimension": "product_roadmap",
+        "status": "composite",
+        "materiality": "high",
+        "materiality_rationale": "Cloud SIEM targets a massive TAM comparable to observability and represents DDOG's key security market entry point with direct 2025 revenue impact.",
+        "delivery_basis": "transcript"
+      },
+      "confidence": "high",
+      "rationale": "Management commits to accelerating Cloud SIEM in 2025 with aggressive sales push after product and pricing improvements. This follows recognition of inflection point potential.",
+      "materiality": "high",
+      "materiality_rationale": "Cloud SIEM targets a massive TAM comparable to observability and represents DDOG's key security market entry point with direct 2025 revenue impact.",
+      "ticker": "DDOG",
+      "excerpt_verified": true,
+      "proposed_seed_py": "    {\n        \"tree_id\": \"ddog-cloud-siem-acceleration-2025\",\n        \"ticker\": \"DDOG\",\n        \"kind\": \"promise\",\n        \"beat_id\": \"cloud-siem-acceleration-2025\",\n        \"bucket\": \"demand\",\n        \"title\": \"Cloud SIEM product acceleration in 2025\",\n        \"objects\": (\"Cloud SIEM\",),\n        \"match\": {\n            \"anchors\": (\"Cloud SIEM\",),\n            \"context\": (\"accelerate\", \"aggressive\", \"inflection\", \"2025\", \"use case\", \"focus\"),\n            \"exclude\": (\"Application Security\", \"CSPM\"),\n            \"generic\": None,\n        },\n        \"seed\": {\n            \"fiscal_period\": \"CONF-2025-06-03\",\n            \"claim_type\": \"forward_clock\",\n            \"clock\": \"FY2025-Q4\",\n            \"excerpt\": (\"What we're doing is we are focusing this year on how we can really accelerate that cloud and the products a little further on, that cloud SIEM use case... We're gonna be more aggressive in selling Cloud SIEM.\"),\n            \"dimension\": \"product_roadmap\",\n            \"status\": \"composite\",\n        },\n        \"nodes\": (),\n    },",
+      "book": "desk_hc_v2",
+      "provenance": {
+        "source": "autopilot",
+        "status": "confirmed",
+        "confidence": "high",
+        "proposed_at": "2026-09-09T17:12:58.505086+00:00",
+        "model": "claude-sonnet-4-5",
+        "run_id": "81c0fb68-bb22-4045-989d-00ea568c9922"
+      }
+    },
+    {
+      "tree_id": "ddog-30-percent-rd-sustained",
+      "title": "Sustained 30% of revenue R&D investment rate",
+      "kind": "promise",
+      "bucket": "capital_allocation",
+      "objects": [
+        "30% R&D investment"
+      ],
+      "match": {
+        "anchors": [
+          "30%",
+          "R&D"
+        ],
+        "context": [
+          "top line",
+          "revenues",
+          "engineering",
+          "invest",
+          "continue",
+          "maintain"
+        ],
+        "exclude": [
+          "margins",
+          "operating"
+        ],
+        "generic": null
+      },
+      "seed": {
+        "fiscal_period": "CONF-2025-05-13",
+        "claim_type": "forward_clock",
+        "clock": null,
+        "excerpt": "I would say the only limit that we've given ourselves is we invest around 30% of our top line in engineering, and we keep that going... we reinvest about 30% of our top line in R&D",
+        "dimension": "r_and_d",
+        "status": "composite",
+        "materiality": "high",
+        "materiality_rationale": "Sets long-term capital allocation framework and margin expectations, differentiating DDOG's product velocity strategy with industry-leading R&D spend at scale.",
+        "delivery_basis": "transcript"
+      },
+      "confidence": "high",
+      "rationale": "Management explicitly commits to maintaining ~30% R&D/revenue ratio as a structural investment framework, repeated across multiple calls as a key strategic anchor.",
+      "materiality": "high",
+      "materiality_rationale": "Sets long-term capital allocation framework and margin expectations, differentiating DDOG's product velocity strategy with industry-leading R&D spend at scale.",
+      "ticker": "DDOG",
+      "excerpt_verified": true,
+      "proposed_seed_py": "    {\n        \"tree_id\": \"ddog-30-percent-rd-sustained\",\n        \"ticker\": \"DDOG\",\n        \"kind\": \"promise\",\n        \"beat_id\": \"30-percent-rd-sustained\",\n        \"bucket\": \"capital_allocation\",\n        \"title\": \"Sustained 30% of revenue R&D investment rate\",\n        \"objects\": (\"30% R&D investment\",),\n        \"match\": {\n            \"anchors\": (\"30%\", \"R&D\"),\n            \"context\": (\"top line\", \"revenues\", \"engineering\", \"invest\", \"continue\", \"maintain\"),\n            \"exclude\": (\"margins\", \"operating\"),\n            \"generic\": None,\n        },\n        \"seed\": {\n            \"fiscal_period\": \"CONF-2025-05-13\",\n            \"claim_type\": \"forward_clock\",\n            \"clock\": None,\n            \"excerpt\": (\"I would say the only limit that we've given ourselves is we invest around 30% of our top line in engineering, and we keep that going... we reinvest about 30% of our top line in R&D\"),\n            \"dimension\": \"r_and_d\",\n            \"status\": \"composite\",\n        },\n        \"nodes\": (),\n    },",
+      "book": "desk_hc_v2",
+      "provenance": {
+        "source": "autopilot",
+        "status": "confirmed",
+        "confidence": "high",
+        "proposed_at": "2026-09-09T17:12:58.505086+00:00",
+        "model": "claude-sonnet-4-5",
+        "run_id": "81c0fb68-bb22-4045-989d-00ea568c9922"
+      }
+    },
+    {
+      "tree_id": "ddog-core-observability-5x-10x",
+      "title": "Core observability 5x-10x scale-up potential",
+      "kind": "goal",
+      "bucket": "demand",
+      "objects": [
+        "core observability",
+        "5x",
+        "10x"
+      ],
+      "match": {
+        "anchors": [
+          "5x",
+          "10x",
+          "core observability"
+        ],
+        "context": [
+          "scale-up",
+          "alone",
+          "potential",
+          "grow"
+        ],
+        "exclude": [
+          "security",
+          "TAM"
+        ],
+        "generic": null
+      },
+      "seed": {
+        "fiscal_period": "CONF-2024-03-05",
+        "claim_type": "forward_clock",
+        "clock": null,
+        "excerpt": "core observability being a potential 5x-10x from here... observability alone, on its own, holds the next 5x or 10x scale-up for us.",
+        "dimension": "market_share",
+        "status": "composite",
+        "materiality": "high",
+        "materiality_rationale": "Defines management's thesis for core business growth potential, establishing baseline expectations for revenue scaling before optionality from new products.",
+        "delivery_basis": "transcript"
+      },
+      "confidence": "medium",
+      "rationale": "Management states explicit long-term growth aspiration for core observability alone before additional products. This is a clear multi-year revenue target setting expectations for the base business.",
+      "materiality": "high",
+      "materiality_rationale": "Defines management's thesis for core business growth potential, establishing baseline expectations for revenue scaling before optionality from new products.",
+      "ticker": "DDOG",
+      "excerpt_verified": true,
+      "proposed_seed_py": "    {\n        \"tree_id\": \"ddog-core-observability-5x-10x\",\n        \"ticker\": \"DDOG\",\n        \"kind\": \"goal\",\n        \"beat_id\": \"core-observability-5x-10x\",\n        \"bucket\": \"demand\",\n        \"title\": \"Core observability 5x-10x scale-up potential\",\n        \"objects\": (\"core observability\", \"5x\", \"10x\",),\n        \"match\": {\n            \"anchors\": (\"5x\", \"10x\", \"core observability\"),\n            \"context\": (\"scale-up\", \"alone\", \"potential\", \"grow\"),\n            \"exclude\": (\"security\", \"TAM\"),\n            \"generic\": None,\n        },\n        \"seed\": {\n            \"fiscal_period\": \"CONF-2024-03-05\",\n            \"claim_type\": \"forward_clock\",\n            \"clock\": None,\n            \"excerpt\": (\"core observability being a potential 5x-10x from here... observability alone, on its own, holds the next 5x or 10x scale-up for us.\"),\n            \"dimension\": \"market_share\",\n            \"status\": \"composite\",\n        },\n        \"nodes\": (),\n    },",
+      "book": "desk_hc_v2",
+      "provenance": {
+        "source": "autopilot",
+        "status": "provisional",
+        "confidence": "medium",
+        "proposed_at": "2026-09-09T17:12:58.505086+00:00",
+        "model": "claude-sonnet-4-5",
+        "run_id": "81c0fb68-bb22-4045-989d-00ea568c9922"
+      }
+    },
+    {
+      "tree_id": "ddog-25-percent-margin-target",
+      "title": "Long-term 25%+ operating margin target",
+      "kind": "goal",
+      "bucket": "margins",
+      "objects": [
+        "25% operating margin"
+      ],
+      "match": {
+        "anchors": [
+          "25%",
+          "operating margin"
+        ],
+        "context": [
+          "long-term",
+          "target",
+          "plus",
+          "non-GAAP"
+        ],
+        "exclude": [
+          "free cash flow",
+          "gross margin"
+        ],
+        "generic": null
+      },
+      "seed": {
+        "fiscal_period": "CONF-2025-06-03",
+        "claim_type": "forward_clock",
+        "clock": null,
+        "excerpt": "We gave a margin target of 25% plus. We said that cash flow margins are 200-300 basis points above that. We already proved we could get there, right? This is a decision in our hands.",
+        "dimension": "margin_expansion",
+        "status": "composite",
+        "materiality": "high",
+        "materiality_rationale": "Sets long-term profitability expectations and signals management's capital allocation philosophy, critical for valuation and investor positioning.",
+        "delivery_basis": "transcript"
+      },
+      "confidence": "high",
+      "rationale": "Management reiterates 25%+ long-term operating margin target repeatedly, positioning it as a deliberate choice balancing growth investment with profitability. This is the company's formal long-term margin guidance.",
+      "materiality": "high",
+      "materiality_rationale": "Sets long-term profitability expectations and signals management's capital allocation philosophy, critical for valuation and investor positioning.",
+      "ticker": "DDOG",
+      "excerpt_verified": true,
+      "proposed_seed_py": "    {\n        \"tree_id\": \"ddog-25-percent-margin-target\",\n        \"ticker\": \"DDOG\",\n        \"kind\": \"goal\",\n        \"beat_id\": \"25-percent-margin-target\",\n        \"bucket\": \"margins\",\n        \"title\": \"Long-term 25%+ operating margin target\",\n        \"objects\": (\"25% operating margin\",),\n        \"match\": {\n            \"anchors\": (\"25%\", \"operating margin\"),\n            \"context\": (\"long-term\", \"target\", \"plus\", \"non-GAAP\"),\n            \"exclude\": (\"free cash flow\", \"gross margin\"),\n            \"generic\": None,\n        },\n        \"seed\": {\n            \"fiscal_period\": \"CONF-2025-06-03\",\n            \"claim_type\": \"forward_clock\",\n            \"clock\": None,\n            \"excerpt\": (\"We gave a margin target of 25% plus. We said that cash flow margins are 200-300 basis points above that. We already proved we could get there, right? This is a decision in our hands.\"),\n            \"dimension\": \"margin_expansion\",\n            \"status\": \"composite\",\n        },\n        \"nodes\": (),\n    },",
+      "book": "desk_hc_v2",
+      "provenance": {
+        "source": "autopilot",
+        "status": "confirmed",
+        "confidence": "high",
+        "proposed_at": "2026-09-09T17:12:58.505086+00:00",
+        "model": "claude-sonnet-4-5",
+        "run_id": "81c0fb68-bb22-4045-989d-00ea568c9922"
+      }
+    },
+    {
+      "tree_id": "lite-200g-eml-production-cy2024",
+      "title": "200 gig EML production ramp calendar 2024",
+      "kind": "promise",
+      "bucket": "competitive_position",
+      "objects": [
+        "200 gig per lane EMLs",
+        "1.6 terabit per second"
+      ],
+      "match": {
+        "anchors": [
+          "200 gig",
+          "EML",
+          "1.6 terabit"
+        ],
+        "context": [
+          "production",
+          "ramp",
+          "shipments",
+          "calendar 2024"
+        ],
+        "exclude": [
+          "200G DSP",
+          "qualify"
+        ],
+        "generic": null
+      },
+      "seed": {
+        "fiscal_period": "FY2023-Q2",
+        "claim_type": "forward_clock",
+        "clock": "FY2024-Q1",
+        "excerpt": "We are on track with our 200 gig per lane EMLs for 1.6 terabit per second applications and expect to enter production as we exit fiscal 2023",
+        "dimension": "competitive_position",
+        "status": "verbatim",
+        "materiality": "high",
+        "materiality_rationale": "Product transition to 200G is central to maintaining competitive position in high-growth datacenter market and enables qualification for 1.6T generation, directly impacting revenue growth trajectory.",
+        "delivery_basis": "transcript"
+      },
+      "confidence": "high",
+      "rationale": "Critical product launch enabling next-gen datacenter transceivers. Management claims first-to-market position (excerpt 87, 65) with multiple references to production timing. Directly trackable via shipment disclosures.",
+      "materiality": "high",
+      "materiality_rationale": "Product transition to 200G is central to maintaining competitive position in high-growth datacenter market and enables qualification for 1.6T generation, directly impacting revenue growth trajectory.",
+      "ticker": "LITE",
+      "excerpt_verified": true,
+      "proposed_seed_py": "    {\n        \"tree_id\": \"lite-200g-eml-production-cy2024\",\n        \"ticker\": \"LITE\",\n        \"kind\": \"promise\",\n        \"beat_id\": \"200g-eml-production-cy2024\",\n        \"bucket\": \"competitive_position\",\n        \"title\": \"200 gig EML production ramp calendar 2024\",\n        \"objects\": (\"200 gig per lane EMLs\", \"1.6 terabit per second\",),\n        \"match\": {\n            \"anchors\": (\"200 gig\", \"EML\", \"1.6 terabit\"),\n            \"context\": (\"production\", \"ramp\", \"shipments\", \"calendar 2024\"),\n            \"exclude\": (\"200G DSP\", \"qualify\"),\n            \"generic\": None,\n        },\n        \"seed\": {\n            \"fiscal_period\": \"FY2023-Q2\",\n            \"claim_type\": \"forward_clock\",\n            \"clock\": \"FY2024-Q1\",\n            \"excerpt\": (\"We are on track with our 200 gig per lane EMLs for 1.6 terabit per second applications and expect to enter production as we exit fiscal 2023\"),\n            \"dimension\": \"competitive_position\",\n            \"status\": \"verbatim\",\n        },\n        \"nodes\": (),\n    },",
+      "book": "desk_hc_v2",
+      "provenance": {
+        "source": "autopilot",
+        "status": "confirmed",
+        "confidence": "high",
+        "proposed_at": "2026-09-09T17:46:47.146400+00:00",
+        "model": "claude-sonnet-4-5",
+        "run_id": "f1989834-cf75-45e3-b51e-a46c36f4eabf"
+      }
+    },
+    {
+      "tree_id": "lite-indium-phosphide-capacity-double-18mo",
+      "title": "Double indium phosphide wafer fab capacity 18 months",
+      "kind": "promise",
+      "bucket": "capital_allocation",
+      "objects": [
+        "indium phosphide wafer fab",
+        "capacity doubling"
+      ],
+      "match": {
+        "anchors": [
+          "indium phosphide",
+          "wafer fab",
+          "capacity"
+        ],
+        "context": [
+          "doubling",
+          "18 months",
+          "expansion",
+          "investment"
+        ],
+        "exclude": [
+          "fifth fab",
+          "Greensboro"
+        ],
+        "generic": null
+      },
+      "seed": {
+        "fiscal_period": "FY2020-Q4",
+        "claim_type": "forward_clock",
+        "clock": "FY2022-Q2",
+        "excerpt": "doubling of our indium phosphide wafer fab capacity over the next 18 months, as we believe the performance and capabilities provided by our indium phosphide laser chips and photonic integrated circuits will be central to every telecom and datacom communication network",
+        "dimension": "management_confidence",
+        "status": "verbatim",
+        "materiality": "high",
+        "materiality_rationale": "Capacity expansion is critical bottleneck for revenue growth in high-demand datacenter market. Doubling capacity represents significant capex investment and directly enables revenue scaling beyond current constraints.",
+        "delivery_basis": "transcript"
+      },
+      "confidence": "high",
+      "rationale": "Major capacity commitment with specific timeframe and clear strategic rationale. Indium phosphide is core enabling technology mentioned across dozens of excerpts. Capacity additions are verifiable through capex disclosures and production ramp updates.",
+      "materiality": "high",
+      "materiality_rationale": "Capacity expansion is critical bottleneck for revenue growth in high-demand datacenter market. Doubling capacity represents significant capex investment and directly enables revenue scaling beyond current constraints.",
+      "ticker": "LITE",
+      "excerpt_verified": true,
+      "proposed_seed_py": "    {\n        \"tree_id\": \"lite-indium-phosphide-capacity-double-18mo\",\n        \"ticker\": \"LITE\",\n        \"kind\": \"promise\",\n        \"beat_id\": \"indium-phosphide-capacity-double-18mo\",\n        \"bucket\": \"capital_allocation\",\n        \"title\": \"Double indium phosphide wafer fab capacity 18 months\",\n        \"objects\": (\"indium phosphide wafer fab\", \"capacity doubling\",),\n        \"match\": {\n            \"anchors\": (\"indium phosphide\", \"wafer fab\", \"capacity\"),\n            \"context\": (\"doubling\", \"18 months\", \"expansion\", \"investment\"),\n            \"exclude\": (\"fifth fab\", \"Greensboro\"),\n            \"generic\": None,\n        },\n        \"seed\": {\n            \"fiscal_period\": \"FY2020-Q4\",\n            \"claim_type\": \"forward_clock\",\n            \"clock\": \"FY2022-Q2\",\n            \"excerpt\": (\"doubling of our indium phosphide wafer fab capacity over the next 18 months, as we believe the performance and capabilities provided by our indium phosphide laser chips and photonic integrated circuits will be central to every telecom and datacom communication network\"),\n            \"dimension\": \"management_confidence\",\n            \"status\": \"verbatim\",\n        },\n        \"nodes\": (),\n    },",
+      "book": "desk_hc_v2",
+      "provenance": {
+        "source": "autopilot",
+        "status": "confirmed",
+        "confidence": "high",
+        "proposed_at": "2026-09-09T17:46:47.146400+00:00",
+        "model": "claude-sonnet-4-5",
+        "run_id": "f1989834-cf75-45e3-b51e-a46c36f4eabf"
+      }
+    },
+    {
+      "tree_id": "lite-110m-synergies-neophotonics",
+      "title": "$110M annual synergies NeoPhotonics acquisition",
+      "kind": "promise",
+      "bucket": "margins",
+      "objects": [
+        "$110 million synergies",
+        "NeoPhotonics acquisition"
+      ],
+      "match": {
+        "anchors": [
+          "$110 million",
+          "synergies",
+          "NeoPhotonics"
+        ],
+        "context": [
+          "annual run rate",
+          "acquisition",
+          "versus $100 million"
+        ],
+        "exclude": [
+          "$80 million",
+          "$50 million"
+        ],
+        "generic": null
+      },
+      "seed": {
+        "fiscal_period": "FY2020-Q2",
+        "claim_type": "forward_clock",
+        "clock": "FY2021-Q2",
+        "excerpt": "we expect to attain another $30 million in annual run rate synergies over the next three to four quarters, bringing the total acquisition synergies to $110 million versus the prior forecast of $100 million",
+        "dimension": "management_confidence",
+        "status": "verbatim",
+        "materiality": "medium",
+        "materiality_rationale": "Synergies represent ~3% of revenue at scale and directly improve operating margin by 2-3 percentage points, material to margin expansion story but not thesis-level for revenue growth.",
+        "delivery_basis": "transcript"
+      },
+      "confidence": "high",
+      "rationale": "Specific synergy target with incremental $30M over 3-4 quarters, raising prior $100M target to $110M. Updated multiple times (excerpt 11, 54, 59), demonstrating commitment. Synergies directly impact operating margin.",
+      "materiality": "medium",
+      "materiality_rationale": "Synergies represent ~3% of revenue at scale and directly improve operating margin by 2-3 percentage points, material to margin expansion story but not thesis-level for revenue growth.",
+      "ticker": "LITE",
+      "excerpt_verified": true,
+      "proposed_seed_py": "    {\n        \"tree_id\": \"lite-110m-synergies-neophotonics\",\n        \"ticker\": \"LITE\",\n        \"kind\": \"promise\",\n        \"beat_id\": \"110m-synergies-neophotonics\",\n        \"bucket\": \"margins\",\n        \"title\": \"$110M annual synergies NeoPhotonics acquisition\",\n        \"objects\": (\"$110 million synergies\", \"NeoPhotonics acquisition\",),\n        \"match\": {\n            \"anchors\": (\"$110 million\", \"synergies\", \"NeoPhotonics\"),\n            \"context\": (\"annual run rate\", \"acquisition\", \"versus $100 million\"),\n            \"exclude\": (\"$80 million\", \"$50 million\"),\n            \"generic\": None,\n        },\n        \"seed\": {\n            \"fiscal_period\": \"FY2020-Q2\",\n            \"claim_type\": \"forward_clock\",\n            \"clock\": \"FY2021-Q2\",\n            \"excerpt\": (\"we expect to attain another $30 million in annual run rate synergies over the next three to four quarters, bringing the total acquisition synergies to $110 million versus the prior forecast of $100 million\"),\n            \"dimension\": \"management_confidence\",\n            \"status\": \"verbatim\",\n        },\n        \"nodes\": (),\n    },",
+      "book": "desk_hc_v2",
+      "provenance": {
+        "source": "autopilot",
+        "status": "confirmed",
+        "confidence": "high",
+        "proposed_at": "2026-09-09T17:46:47.146400+00:00",
+        "model": "claude-sonnet-4-5",
+        "run_id": "f1989834-cf75-45e3-b51e-a46c36f4eabf"
+      }
+    },
+    {
+      "tree_id": "lite-thailand-transceiver-capacity-expansion",
+      "title": "Thailand optical transceiver capacity expansion",
+      "kind": "promise",
+      "bucket": "capital_allocation",
+      "objects": [
+        "Thailand facility",
+        "transceiver production lines"
+      ],
+      "match": {
+        "anchors": [
+          "Thailand",
+          "transceiver",
+          "production line"
+        ],
+        "context": [
+          "capacity expansion",
+          "state-of-the-art",
+          "first production line",
+          "qualification"
+        ],
+        "exclude": [
+          "Brazil",
+          "Greensboro"
+        ],
+        "generic": null
+      },
+      "seed": {
+        "fiscal_period": "FY2024-Q4",
+        "claim_type": "forward_clock",
+        "clock": "FY2025-Q1",
+        "excerpt": "Our significant capacity expansion for optical transceivers in our facility in Thailand is progressing as planned, with the first production line scheduled to start operations this quarter",
+        "dimension": "competitive_position",
+        "status": "verbatim",
+        "materiality": "high",
+        "materiality_rationale": "Thailand capacity enables transceiver business to scale from ~$200M to target $1B+ annually, representing incremental revenue stream and vertical integration benefits. Directly supports 30%+ CAGR growth target for datacenter segment.",
+        "delivery_basis": "transcript"
+      },
+      "confidence": "high",
+      "rationale": "Major manufacturing expansion enabling transceiver vertical integration strategy. Multiple references to Thailand buildout (excerpts 17, 19, 109, 121, 157) with specific milestones. Critical for CloudLight acquisition thesis and new customer wins.",
+      "materiality": "high",
+      "materiality_rationale": "Thailand capacity enables transceiver business to scale from ~$200M to target $1B+ annually, representing incremental revenue stream and vertical integration benefits. Directly supports 30%+ CAGR growth target for datacenter segment.",
+      "ticker": "LITE",
+      "excerpt_verified": true,
+      "proposed_seed_py": "    {\n        \"tree_id\": \"lite-thailand-transceiver-capacity-expansion\",\n        \"ticker\": \"LITE\",\n        \"kind\": \"promise\",\n        \"beat_id\": \"thailand-transceiver-capacity-expansion\",\n        \"bucket\": \"capital_allocation\",\n        \"title\": \"Thailand optical transceiver capacity expansion\",\n        \"objects\": (\"Thailand facility\", \"transceiver production lines\",),\n        \"match\": {\n            \"anchors\": (\"Thailand\", \"transceiver\", \"production line\"),\n            \"context\": (\"capacity expansion\", \"state-of-the-art\", \"first production line\", \"qualification\"),\n            \"exclude\": (\"Brazil\", \"Greensboro\"),\n            \"generic\": None,\n        },\n        \"seed\": {\n            \"fiscal_period\": \"FY2024-Q4\",\n            \"claim_type\": \"forward_clock\",\n            \"clock\": \"FY2025-Q1\",\n            \"excerpt\": (\"Our significant capacity expansion for optical transceivers in our facility in Thailand is progressing as planned, with the first production line scheduled to start operations this quarter\"),\n            \"dimension\": \"competitive_position\",\n            \"status\": \"verbatim\",\n        },\n        \"nodes\": (),\n    },",
+      "book": "desk_hc_v2",
+      "provenance": {
+        "source": "autopilot",
+        "status": "confirmed",
+        "confidence": "high",
+        "proposed_at": "2026-09-09T17:46:47.146400+00:00",
+        "model": "claude-sonnet-4-5",
+        "run_id": "f1989834-cf75-45e3-b51e-a46c36f4eabf"
+      }
+    },
+    {
+      "tree_id": "lite-600m-quarterly-17-20-op-margin",
+      "title": "17-20% operating margin at $600M quarterly revenue",
+      "kind": "goal",
+      "bucket": "earnings_power",
+      "objects": [
+        "$600 million quarterly revenue",
+        "17%-20% operating margin"
+      ],
+      "match": {
+        "anchors": [
+          "$600 million",
+          "operating margin",
+          "17%",
+          "20%"
+        ],
+        "context": [
+          "quarterly revenue",
+          "surpasses",
+          "targeting"
+        ],
+        "exclude": [
+          "$500 million",
+          "$400 million"
+        ],
+        "generic": null
+      },
+      "seed": {
+        "fiscal_period": "FY2025-Q1",
+        "claim_type": "forward_clock",
+        "clock": null,
+        "excerpt": "we are targeting an operating margin of 17%-20% once our quarterly revenue surpasses $600 million per quarter",
+        "dimension": "management_confidence",
+        "status": "verbatim",
+        "materiality": "high",
+        "materiality_rationale": "Operating margin targets are core to investment thesis, showing path from current ~5% to 17-20%, implying 3-4x leverage on incremental revenue. Critical for validating profitability model at scale.",
+        "delivery_basis": "transcript"
+      },
+      "confidence": "high",
+      "rationale": "Clear operating leverage model with specific revenue threshold and margin band. Reiterated multiple times across conferences (excerpts 94, 101, 117, 125, 128). Demonstrates earnings power scaling as business reaches critical mass.",
+      "materiality": "high",
+      "materiality_rationale": "Operating margin targets are core to investment thesis, showing path from current ~5% to 17-20%, implying 3-4x leverage on incremental revenue. Critical for validating profitability model at scale.",
+      "ticker": "LITE",
+      "excerpt_verified": true,
+      "proposed_seed_py": "    {\n        \"tree_id\": \"lite-600m-quarterly-17-20-op-margin\",\n        \"ticker\": \"LITE\",\n        \"kind\": \"goal\",\n        \"beat_id\": \"600m-quarterly-17-20-op-margin\",\n        \"bucket\": \"earnings_power\",\n        \"title\": \"17-20% operating margin at $600M quarterly revenue\",\n        \"objects\": (\"$600 million quarterly revenue\", \"17%-20% operating margin\",),\n        \"match\": {\n            \"anchors\": (\"$600 million\", \"operating margin\", \"17%\", \"20%\"),\n            \"context\": (\"quarterly revenue\", \"surpasses\", \"targeting\"),\n            \"exclude\": (\"$500 million\", \"$400 million\"),\n            \"generic\": None,\n        },\n        \"seed\": {\n            \"fiscal_period\": \"FY2025-Q1\",\n            \"claim_type\": \"forward_clock\",\n            \"clock\": None,\n            \"excerpt\": (\"we are targeting an operating margin of 17%-20% once our quarterly revenue surpasses $600 million per quarter\"),\n            \"dimension\": \"management_confidence\",\n            \"status\": \"verbatim\",\n        },\n        \"nodes\": (),\n    },",
+      "book": "desk_hc_v2",
+      "provenance": {
+        "source": "autopilot",
+        "status": "confirmed",
+        "confidence": "high",
+        "proposed_at": "2026-09-09T17:46:47.146400+00:00",
+        "model": "claude-sonnet-4-5",
+        "run_id": "f1989834-cf75-45e3-b51e-a46c36f4eabf"
+      }
+    },
+    {
+      "tree_id": "lite-cpo-100m-q4-cy2026",
+      "title": "Co-packaged optics $100M revenue Q4 CY2026",
+      "kind": "promise",
+      "bucket": "guidance",
+      "objects": [
+        "co-packaged optics",
+        "CPO",
+        "$100 million"
+      ],
+      "match": {
+        "anchors": [
+          "CPO",
+          "co-packaged optics",
+          "$100 million"
+        ],
+        "context": [
+          "Q4",
+          "calendar 2026",
+          "December",
+          "incremental revenue"
+        ],
+        "exclude": [
+          "OCS",
+          "optical scale"
+        ],
+        "generic": null
+      },
+      "seed": {
+        "fiscal_period": "CONF-2025-12-08",
+        "claim_type": "forward_clock",
+        "clock": "FY2027-Q2",
+        "excerpt": "$10 million of ROC, $10 million of OCS in Q1 going to $100 million of incremental dollars for us in Q4",
+        "dimension": "revenue_growth",
+        "status": "composite",
+        "materiality": "high",
+        "materiality_rationale": "CPO represents transformational technology shift enabling direct chip-to-optics integration. $100M quarterly run rate by end-2026 represents material new revenue stream (~15-20% of company) with potential to scale beyond $1B annually per management commentary.",
+        "delivery_basis": "transcript"
+      },
+      "confidence": "high",
+      "rationale": "Specific revenue ramp from $10M in Q1 to $100M in Q4 CY2026 for next-generation technology. Multiple confirmations (excerpts 178, 182, 227) with NVIDIA partnership context. Represents major new product category with multi-hundred million backlog mentioned.",
+      "materiality": "high",
+      "materiality_rationale": "CPO represents transformational technology shift enabling direct chip-to-optics integration. $100M quarterly run rate by end-2026 represents material new revenue stream (~15-20% of company) with potential to scale beyond $1B annually per management commentary.",
+      "ticker": "LITE",
+      "excerpt_verified": true,
+      "proposed_seed_py": "    {\n        \"tree_id\": \"lite-cpo-100m-q4-cy2026\",\n        \"ticker\": \"LITE\",\n        \"kind\": \"promise\",\n        \"beat_id\": \"cpo-100m-q4-cy2026\",\n        \"bucket\": \"guidance\",\n        \"title\": \"Co-packaged optics $100M revenue Q4 CY2026\",\n        \"objects\": (\"co-packaged optics\", \"CPO\", \"$100 million\",),\n        \"match\": {\n            \"anchors\": (\"CPO\", \"co-packaged optics\", \"$100 million\"),\n            \"context\": (\"Q4\", \"calendar 2026\", \"December\", \"incremental revenue\"),\n            \"exclude\": (\"OCS\", \"optical scale\"),\n            \"generic\": None,\n        },\n        \"seed\": {\n            \"fiscal_period\": \"CONF-2025-12-08\",\n            \"claim_type\": \"forward_clock\",\n            \"clock\": \"FY2027-Q2\",\n            \"excerpt\": (\"$10 million of ROC, $10 million of OCS in Q1 going to $100 million of incremental dollars for us in Q4\"),\n            \"dimension\": \"revenue_growth\",\n            \"status\": \"composite\",\n        },\n        \"nodes\": (),\n    },",
+      "book": "desk_hc_v2",
+      "provenance": {
+        "source": "autopilot",
+        "status": "confirmed",
+        "confidence": "high",
+        "proposed_at": "2026-09-09T17:46:47.146400+00:00",
+        "model": "claude-sonnet-4-5",
+        "run_id": "f1989834-cf75-45e3-b51e-a46c36f4eabf"
+      }
+    },
+    {
+      "tree_id": "lite-500m-quarterly-revenue-fy2025",
+      "title": "$500M quarterly revenue by end of CY2025",
+      "kind": "promise",
+      "bucket": "guidance",
+      "objects": [
+        "$500 million",
+        "quarterly revenue"
+      ],
+      "match": {
+        "anchors": [
+          "$500 million"
+        ],
+        "context": [
+          "quarterly revenue",
+          "calendar 2025",
+          "exit",
+          "end"
+        ],
+        "exclude": [
+          "$500 million annual",
+          "more than $500 million"
+        ],
+        "generic": null
+      },
+      "seed": {
+        "fiscal_period": "FY2025-Q1",
+        "claim_type": "forward_clock",
+        "clock": "FY2026-Q1",
+        "excerpt": "With strong progress on our three-prong strategy, we are highly confident that we will reach $500 million in quarterly revenue by the end of calendar 2025.",
+        "dimension": "management_confidence",
+        "status": "verbatim",
+        "materiality": "high",
+        "materiality_rationale": "Quarterly revenue threshold represents major growth milestone with direct implications for profitability and operating leverage.",
+        "delivery_basis": "transcript"
+      },
+      "confidence": "high",
+      "rationale": "Specific, measurable revenue target with clear timing and management confidence. Reiterated multiple times across calls, making it highly trackable.",
+      "materiality": "high",
+      "materiality_rationale": "Quarterly revenue threshold represents major growth milestone with direct implications for profitability and operating leverage.",
+      "ticker": "LITE",
+      "excerpt_verified": true,
+      "proposed_seed_py": "    {\n        \"tree_id\": \"lite-500m-quarterly-revenue-fy2025\",\n        \"ticker\": \"LITE\",\n        \"kind\": \"promise\",\n        \"beat_id\": \"500m-quarterly-revenue-fy2025\",\n        \"bucket\": \"guidance\",\n        \"title\": \"$500M quarterly revenue by end of CY2025\",\n        \"objects\": (\"$500 million\", \"quarterly revenue\",),\n        \"match\": {\n            \"anchors\": (\"$500 million\",),\n            \"context\": (\"quarterly revenue\", \"calendar 2025\", \"exit\", \"end\"),\n            \"exclude\": (\"$500 million annual\", \"more than $500 million\"),\n            \"generic\": None,\n        },\n        \"seed\": {\n            \"fiscal_period\": \"FY2025-Q1\",\n            \"claim_type\": \"forward_clock\",\n            \"clock\": \"FY2026-Q1\",\n            \"excerpt\": (\"With strong progress on our three-prong strategy, we are highly confident that we will reach $500 million in quarterly revenue by the end of calendar 2025.\"),\n            \"dimension\": \"management_confidence\",\n            \"status\": \"verbatim\",\n        },\n        \"nodes\": (),\n    },",
+      "book": "desk_hc_v2",
+      "provenance": {
+        "source": "autopilot",
+        "status": "confirmed",
+        "confidence": "high",
+        "proposed_at": "2026-09-09T18:32:54.263282+00:00",
+        "model": "claude-sonnet-4-5",
+        "run_id": "7006c32e-9268-4d9b-b7f7-9104887e1392"
+      }
+    },
+    {
+      "tree_id": "lite-100m-quarterly-ocs-revenue-fy2026",
+      "title": "$100M quarterly OCS revenue by Q4 CY2026",
+      "kind": "promise",
+      "bucket": "guidance",
+      "objects": [
+        "OCS",
+        "$100 million",
+        "optical circuit switch"
+      ],
+      "match": {
+        "anchors": [
+          "OCS",
+          "$100 million"
+        ],
+        "context": [
+          "quarterly revenue",
+          "Q4",
+          "calendar 2026",
+          "ramp"
+        ],
+        "exclude": [
+          "$10 million OCS"
+        ],
+        "generic": null
+      },
+      "seed": {
+        "fiscal_period": "FY2025-Q3",
+        "claim_type": "forward_clock",
+        "clock": "FY2027-Q1",
+        "excerpt": "We've given a revenue roadmap, as you know, David, saying $10 million, which will be our 1st real appreciable revenue from OCS, $10 million incrementally in Q1 of this year, ramping to $100 million in Q4 of this year.",
+        "dimension": "management_confidence",
+        "status": "verbatim",
+        "materiality": "high",
+        "materiality_rationale": "Represents new multi-hundred million dollar revenue stream tied to AI infrastructure build-out and strategic differentiation.",
+        "delivery_basis": "transcript"
+      },
+      "confidence": "high",
+      "rationale": "Very specific product revenue ramp with quarterly milestones. OCS is a new product category central to the company's AI strategy with clearly articulated progression.",
+      "materiality": "high",
+      "materiality_rationale": "Represents new multi-hundred million dollar revenue stream tied to AI infrastructure build-out and strategic differentiation.",
+      "ticker": "LITE",
+      "excerpt_verified": true,
+      "proposed_seed_py": "    {\n        \"tree_id\": \"lite-100m-quarterly-ocs-revenue-fy2026\",\n        \"ticker\": \"LITE\",\n        \"kind\": \"promise\",\n        \"beat_id\": \"100m-quarterly-ocs-revenue-fy2026\",\n        \"bucket\": \"guidance\",\n        \"title\": \"$100M quarterly OCS revenue by Q4 CY2026\",\n        \"objects\": (\"OCS\", \"$100 million\", \"optical circuit switch\",),\n        \"match\": {\n            \"anchors\": (\"OCS\", \"$100 million\"),\n            \"context\": (\"quarterly revenue\", \"Q4\", \"calendar 2026\", \"ramp\"),\n            \"exclude\": (\"$10 million OCS\",),\n            \"generic\": None,\n        },\n        \"seed\": {\n            \"fiscal_period\": \"FY2025-Q3\",\n            \"claim_type\": \"forward_clock\",\n            \"clock\": \"FY2027-Q1\",\n            \"excerpt\": (\"We've given a revenue roadmap, as you know, David, saying $10 million, which will be our 1st real appreciable revenue from OCS, $10 million incrementally in Q1 of this year, ramping to $100 million in Q4 of this year.\"),\n            \"dimension\": \"management_confidence\",\n            \"status\": \"verbatim\",\n        },\n        \"nodes\": (),\n    },",
+      "book": "desk_hc_v2",
+      "provenance": {
+        "source": "autopilot",
+        "status": "confirmed",
+        "confidence": "high",
+        "proposed_at": "2026-09-09T18:32:54.263282+00:00",
+        "model": "claude-sonnet-4-5",
+        "run_id": "7006c32e-9268-4d9b-b7f7-9104887e1392"
+      }
+    },
+    {
+      "tree_id": "lite-200g-eml-ramp-fy2024",
+      "title": "200 gig EML shipment ramp in CY2024",
+      "kind": "promise",
+      "bucket": "competitive_position",
+      "objects": [
+        "200 gig EML",
+        "200G per lane EML",
+        "1.6 terabit"
+      ],
+      "match": {
+        "anchors": [
+          "200 gig",
+          "EML"
+        ],
+        "context": [
+          "ramp",
+          "calendar 2024",
+          "shipments",
+          "start"
+        ],
+        "exclude": [
+          "100 gig",
+          "400 gig"
+        ],
+        "generic": null
+      },
+      "seed": {
+        "fiscal_period": "FY2023-Q4",
+        "claim_type": "forward_clock",
+        "clock": "FY2025-Q1",
+        "excerpt": "In calendar 2024, our 200 gig per lane EMLs will enable the next generation of transceivers with capacity of up to 1.6 terabits. We expect to start ramping shipments of 200 gig EML products in calendar 2024",
+        "dimension": "competitive_position",
+        "status": "verbatim",
+        "materiality": "high",
+        "materiality_rationale": "200G EML enables next-generation datacenter transceivers (1.6T) and represents key competitive moat in high-growth AI infrastructure market.",
+        "delivery_basis": "transcript"
+      },
+      "confidence": "high",
+      "rationale": "Critical technology transition milestone with explicit timing. Management claims first-to-market advantage, making competitive outcome trackable.",
+      "materiality": "high",
+      "materiality_rationale": "200G EML enables next-generation datacenter transceivers (1.6T) and represents key competitive moat in high-growth AI infrastructure market.",
+      "ticker": "LITE",
+      "excerpt_verified": true,
+      "proposed_seed_py": "    {\n        \"tree_id\": \"lite-200g-eml-ramp-fy2024\",\n        \"ticker\": \"LITE\",\n        \"kind\": \"promise\",\n        \"beat_id\": \"200g-eml-ramp-fy2024\",\n        \"bucket\": \"competitive_position\",\n        \"title\": \"200 gig EML shipment ramp in CY2024\",\n        \"objects\": (\"200 gig EML\", \"200G per lane EML\", \"1.6 terabit\",),\n        \"match\": {\n            \"anchors\": (\"200 gig\", \"EML\"),\n            \"context\": (\"ramp\", \"calendar 2024\", \"shipments\", \"start\"),\n            \"exclude\": (\"100 gig\", \"400 gig\"),\n            \"generic\": None,\n        },\n        \"seed\": {\n            \"fiscal_period\": \"FY2023-Q4\",\n            \"claim_type\": \"forward_clock\",\n            \"clock\": \"FY2025-Q1\",\n            \"excerpt\": (\"In calendar 2024, our 200 gig per lane EMLs will enable the next generation of transceivers with capacity of up to 1.6 terabits. We expect to start ramping shipments of 200 gig EML products in calendar 2024\"),\n            \"dimension\": \"competitive_position\",\n            \"status\": \"verbatim\",\n        },\n        \"nodes\": (),\n    },",
+      "book": "desk_hc_v2",
+      "provenance": {
+        "source": "autopilot",
+        "status": "confirmed",
+        "confidence": "high",
+        "proposed_at": "2026-09-09T18:32:54.263282+00:00",
+        "model": "claude-sonnet-4-5",
+        "run_id": "7006c32e-9268-4d9b-b7f7-9104887e1392"
+      }
+    },
+    {
+      "tree_id": "lite-indium-phosphide-capacity-40pct-fy2025",
+      "title": "40% indium phosphide capacity increase by Jun-2025",
+      "kind": "promise",
+      "bucket": "capital_allocation",
+      "objects": [
+        "indium phosphide capacity",
+        "wafer fab"
+      ],
+      "match": {
+        "anchors": [
+          "40%",
+          "indium phosphide",
+          "capacity"
+        ],
+        "context": [
+          "June quarter",
+          "2025",
+          "adding",
+          "increase"
+        ],
+        "exclude": [
+          "50%",
+          "doubling"
+        ],
+        "generic": null
+      },
+      "seed": {
+        "fiscal_period": "FY2024-Q4",
+        "claim_type": "forward_clock",
+        "clock": "FY2025-Q4",
+        "excerpt": "what we've said in the past is that we're adding from the June quarter of 2024 to the June quarter of 2025, adding 40% capacity.",
+        "dimension": "competitive_position",
+        "status": "verbatim",
+        "materiality": "high",
+        "materiality_rationale": "Indium phosphide capacity constrains EML and laser production, directly gating revenue growth in highest-margin products supporting AI datacenter build.",
+        "delivery_basis": "transcript"
+      },
+      "confidence": "high",
+      "rationale": "Specific capacity expansion target with precise timing. Multiple subsequent references confirm this is a key manufacturing milestone to meet demand.",
+      "materiality": "high",
+      "materiality_rationale": "Indium phosphide capacity constrains EML and laser production, directly gating revenue growth in highest-margin products supporting AI datacenter build.",
+      "ticker": "LITE",
+      "excerpt_verified": true,
+      "proposed_seed_py": "    {\n        \"tree_id\": \"lite-indium-phosphide-capacity-40pct-fy2025\",\n        \"ticker\": \"LITE\",\n        \"kind\": \"promise\",\n        \"beat_id\": \"indium-phosphide-capacity-40pct-fy2025\",\n        \"bucket\": \"capital_allocation\",\n        \"title\": \"40% indium phosphide capacity increase by Jun-2025\",\n        \"objects\": (\"indium phosphide capacity\", \"wafer fab\",),\n        \"match\": {\n            \"anchors\": (\"40%\", \"indium phosphide\", \"capacity\"),\n            \"context\": (\"June quarter\", \"2025\", \"adding\", \"increase\"),\n            \"exclude\": (\"50%\", \"doubling\"),\n            \"generic\": None,\n        },\n        \"seed\": {\n            \"fiscal_period\": \"FY2024-Q4\",\n            \"claim_type\": \"forward_clock\",\n            \"clock\": \"FY2025-Q4\",\n            \"excerpt\": (\"what we've said in the past is that we're adding from the June quarter of 2024 to the June quarter of 2025, adding 40% capacity.\"),\n            \"dimension\": \"competitive_position\",\n            \"status\": \"verbatim\",\n        },\n        \"nodes\": (),\n    },",
+      "book": "desk_hc_v2",
+      "provenance": {
+        "source": "autopilot",
+        "status": "confirmed",
+        "confidence": "high",
+        "proposed_at": "2026-09-09T18:32:54.263282+00:00",
+        "model": "claude-sonnet-4-5",
+        "run_id": "7006c32e-9268-4d9b-b7f7-9104887e1392"
+      }
+    },
+    {
+      "tree_id": "lite-neop-synergies-80m-fy2023",
+      "title": "$80M NeoPhotonics synergies achieved",
+      "kind": "promise",
+      "bucket": "margins",
+      "objects": [
+        "NeoPhotonics",
+        "synergies",
+        "$80 million"
+      ],
+      "match": {
+        "anchors": [
+          "$80 million",
+          "synergies"
+        ],
+        "context": [
+          "NeoPhotonics",
+          "operating expense",
+          "exceeded"
+        ],
+        "exclude": [
+          "$50 million",
+          "$100 million"
+        ],
+        "generic": null
+      },
+      "seed": {
+        "fiscal_period": "FY2023-Q2",
+        "claim_type": "forward_clock",
+        "clock": null,
+        "excerpt": "We have already exceeded our $20 million cost savings target in annual operating expense synergies. Over the last six months of integration activity, we have executed well on our operating expense reduction plans and are confident we will exceed our initial synergy targets.",
+        "dimension": "management_confidence",
+        "status": "composite",
+        "materiality": "medium",
+        "materiality_rationale": "Cost synergies directly impact operating margins and are material to returning to profitability post-acquisition, though smaller than revenue opportunities.",
+        "delivery_basis": "transcript"
+      },
+      "confidence": "medium",
+      "rationale": "Synergy target raised from $50M to $80M with multi-quarter execution window. Important for margin expansion but timing less precise.",
+      "materiality": "medium",
+      "materiality_rationale": "Cost synergies directly impact operating margins and are material to returning to profitability post-acquisition, though smaller than revenue opportunities.",
+      "ticker": "LITE",
+      "excerpt_verified": true,
+      "proposed_seed_py": "    {\n        \"tree_id\": \"lite-neop-synergies-80m-fy2023\",\n        \"ticker\": \"LITE\",\n        \"kind\": \"promise\",\n        \"beat_id\": \"neop-synergies-80m-fy2023\",\n        \"bucket\": \"margins\",\n        \"title\": \"$80M NeoPhotonics synergies achieved\",\n        \"objects\": (\"NeoPhotonics\", \"synergies\", \"$80 million\",),\n        \"match\": {\n            \"anchors\": (\"$80 million\", \"synergies\"),\n            \"context\": (\"NeoPhotonics\", \"operating expense\", \"exceeded\"),\n            \"exclude\": (\"$50 million\", \"$100 million\"),\n            \"generic\": None,\n        },\n        \"seed\": {\n            \"fiscal_period\": \"FY2023-Q2\",\n            \"claim_type\": \"forward_clock\",\n            \"clock\": None,\n            \"excerpt\": (\"We have already exceeded our $20 million cost savings target in annual operating expense synergies. Over the last six months of integration activity, we have executed well on our operating expense reduction plans and are confident we will exceed our initial synergy targets.\"),\n            \"dimension\": \"management_confidence\",\n            \"status\": \"composite\",\n        },\n        \"nodes\": (),\n    },",
+      "book": "desk_hc_v2",
+      "provenance": {
+        "source": "autopilot",
+        "status": "provisional",
+        "confidence": "medium",
+        "proposed_at": "2026-09-09T18:32:54.263282+00:00",
+        "model": "claude-sonnet-4-5",
+        "run_id": "7006c32e-9268-4d9b-b7f7-9104887e1392"
+      }
+    },
+    {
+      "tree_id": "lite-cpo-400m-backlog-h2-2026",
+      "title": "$400M CPO backlog shipment in H2 CY2026",
+      "kind": "promise",
+      "bucket": "guidance",
+      "objects": [
+        "CPO",
+        "co-packaged optics",
+        "$400 million",
+        "backlog"
+      ],
+      "match": {
+        "anchors": [
+          "$400 million",
+          "CPO",
+          "backlog"
+        ],
+        "context": [
+          "H2",
+          "calendar 2026",
+          "shipping",
+          "second half"
+        ],
+        "exclude": [
+          "first half",
+          "2027"
+        ],
+        "generic": null
+      },
+      "seed": {
+        "fiscal_period": "FY2026-Q3",
+        "claim_type": "forward_clock",
+        "clock": "FY2027-Q2",
+        "excerpt": "We are very much on track to be shipping this $400 million of backlog in the H2 of this calendar year.",
+        "dimension": "management_confidence",
+        "status": "verbatim",
+        "materiality": "high",
+        "materiality_rationale": "CPO represents strategic breakthrough in AI infrastructure with $400M H2 2026 backlog confirming major revenue inflection and competitive differentiation.",
+        "delivery_basis": "transcript"
+      },
+      "confidence": "high",
+      "rationale": "Specific backlog conversion commitment for breakthrough CPO product. Multi-hundred million dollar near-term inflection with clear timing.",
+      "materiality": "high",
+      "materiality_rationale": "CPO represents strategic breakthrough in AI infrastructure with $400M H2 2026 backlog confirming major revenue inflection and competitive differentiation.",
+      "ticker": "LITE",
+      "excerpt_verified": true,
+      "proposed_seed_py": "    {\n        \"tree_id\": \"lite-cpo-400m-backlog-h2-2026\",\n        \"ticker\": \"LITE\",\n        \"kind\": \"promise\",\n        \"beat_id\": \"cpo-400m-backlog-h2-2026\",\n        \"bucket\": \"guidance\",\n        \"title\": \"$400M CPO backlog shipment in H2 CY2026\",\n        \"objects\": (\"CPO\", \"co-packaged optics\", \"$400 million\", \"backlog\",),\n        \"match\": {\n            \"anchors\": (\"$400 million\", \"CPO\", \"backlog\"),\n            \"context\": (\"H2\", \"calendar 2026\", \"shipping\", \"second half\"),\n            \"exclude\": (\"first half\", \"2027\"),\n            \"generic\": None,\n        },\n        \"seed\": {\n            \"fiscal_period\": \"FY2026-Q3\",\n            \"claim_type\": \"forward_clock\",\n            \"clock\": \"FY2027-Q2\",\n            \"excerpt\": (\"We are very much on track to be shipping this $400 million of backlog in the H2 of this calendar year.\"),\n            \"dimension\": \"management_confidence\",\n            \"status\": \"verbatim\",\n        },\n        \"nodes\": (),\n    },",
+      "book": "desk_hc_v2",
+      "provenance": {
+        "source": "autopilot",
+        "status": "confirmed",
+        "confidence": "high",
+        "proposed_at": "2026-09-09T18:32:54.263282+00:00",
+        "model": "claude-sonnet-4-5",
+        "run_id": "7006c32e-9268-4d9b-b7f7-9104887e1392"
+      }
+    },
+    {
+      "tree_id": "lite-greensboro-fab-revenue-2028",
+      "title": "Greensboro fab first revenue in 2028",
+      "kind": "promise",
+      "bucket": "capital_allocation",
+      "objects": [
+        "Greensboro fab",
+        "fifth indium phosphide fab",
+        "North Carolina"
+      ],
+      "match": {
+        "anchors": [
+          "Greensboro",
+          "fab"
+        ],
+        "context": [
+          "2028",
+          "shipping",
+          "first revenue",
+          "North Carolina"
+        ],
+        "exclude": [
+          "Caswell",
+          "United Kingdom"
+        ],
+        "generic": null
+      },
+      "seed": {
+        "fiscal_period": "FY2026-Q3",
+        "claim_type": "forward_clock",
+        "clock": "FY2028-Q3",
+        "excerpt": "We expect to be shipping out of this Greensboro fab by 2028.",
+        "dimension": "competitive_position",
+        "status": "verbatim",
+        "materiality": "high",
+        "materiality_rationale": "Fifth indium phosphide fab represents major capacity expansion to meet multi-billion dollar demand, with US manufacturing strategic positioning.",
+        "delivery_basis": "transcript"
+      },
+      "confidence": "medium",
+      "rationale": "Major capital investment with clear facility and timing. Fifth fab acquisition signals strategic capacity expansion but execution risk on multi-year buildout.",
+      "materiality": "high",
+      "materiality_rationale": "Fifth indium phosphide fab represents major capacity expansion to meet multi-billion dollar demand, with US manufacturing strategic positioning.",
+      "ticker": "LITE",
+      "excerpt_verified": true,
+      "proposed_seed_py": "    {\n        \"tree_id\": \"lite-greensboro-fab-revenue-2028\",\n        \"ticker\": \"LITE\",\n        \"kind\": \"promise\",\n        \"beat_id\": \"greensboro-fab-revenue-2028\",\n        \"bucket\": \"capital_allocation\",\n        \"title\": \"Greensboro fab first revenue in 2028\",\n        \"objects\": (\"Greensboro fab\", \"fifth indium phosphide fab\", \"North Carolina\",),\n        \"match\": {\n            \"anchors\": (\"Greensboro\", \"fab\"),\n            \"context\": (\"2028\", \"shipping\", \"first revenue\", \"North Carolina\"),\n            \"exclude\": (\"Caswell\", \"United Kingdom\"),\n            \"generic\": None,\n        },\n        \"seed\": {\n            \"fiscal_period\": \"FY2026-Q3\",\n            \"claim_type\": \"forward_clock\",\n            \"clock\": \"FY2028-Q3\",\n            \"excerpt\": (\"We expect to be shipping out of this Greensboro fab by 2028.\"),\n            \"dimension\": \"competitive_position\",\n            \"status\": \"verbatim\",\n        },\n        \"nodes\": (),\n    },",
+      "book": "desk_hc_v2",
+      "provenance": {
+        "source": "autopilot",
+        "status": "provisional",
+        "confidence": "medium",
+        "proposed_at": "2026-09-09T18:32:54.263282+00:00",
+        "model": "claude-sonnet-4-5",
+        "run_id": "7006c32e-9268-4d9b-b7f7-9104887e1392"
+      }
+    },
+    {
+      "tree_id": "lite-2b-quarterly-40pct-margin-18-24mo",
+      "title": "$2B quarterly revenue, 40% op margin in 18-24mo",
+      "kind": "goal",
+      "bucket": "earnings_power",
+      "objects": [
+        "$2 billion",
+        "quarterly revenue",
+        "40% operating margin"
+      ],
+      "match": {
+        "anchors": [
+          "$2 billion",
+          "40%"
+        ],
+        "context": [
+          "quarterly revenue",
+          "operating margin",
+          "18 months",
+          "24 months"
+        ],
+        "exclude": [
+          "$1.25 billion",
+          "35%"
+        ],
+        "generic": null
+      },
+      "seed": {
+        "fiscal_period": "FY2026-Q3",
+        "claim_type": "forward_clock",
+        "clock": "FY2027-Q4",
+        "excerpt": "we think that we can exit at $2 billion and 40% operating margins anywhere from 18 months-24 months from now.",
+        "dimension": "management_confidence",
+        "status": "verbatim",
+        "materiality": "high",
+        "materiality_rationale": "Thesis-level target representing 3-4x revenue growth and best-in-class semiconductor margins, defining company's AI infrastructure opportunity.",
+        "delivery_basis": "transcript"
+      },
+      "confidence": "medium",
+      "rationale": "Ambitious long-term target combining revenue doubling and margin expansion. Multiple pathway dependencies but represents strategic aspiration.",
+      "materiality": "high",
+      "materiality_rationale": "Thesis-level target representing 3-4x revenue growth and best-in-class semiconductor margins, defining company's AI infrastructure opportunity.",
+      "ticker": "LITE",
+      "excerpt_verified": true,
+      "proposed_seed_py": "    {\n        \"tree_id\": \"lite-2b-quarterly-40pct-margin-18-24mo\",\n        \"ticker\": \"LITE\",\n        \"kind\": \"goal\",\n        \"beat_id\": \"2b-quarterly-40pct-margin-18-24mo\",\n        \"bucket\": \"earnings_power\",\n        \"title\": \"$2B quarterly revenue, 40% op margin in 18-24mo\",\n        \"objects\": (\"$2 billion\", \"quarterly revenue\", \"40% operating margin\",),\n        \"match\": {\n            \"anchors\": (\"$2 billion\", \"40%\"),\n            \"context\": (\"quarterly revenue\", \"operating margin\", \"18 months\", \"24 months\"),\n            \"exclude\": (\"$1.25 billion\", \"35%\"),\n            \"generic\": None,\n        },\n        \"seed\": {\n            \"fiscal_period\": \"FY2026-Q3\",\n            \"claim_type\": \"forward_clock\",\n            \"clock\": \"FY2027-Q4\",\n            \"excerpt\": (\"we think that we can exit at $2 billion and 40% operating margins anywhere from 18 months-24 months from now.\"),\n            \"dimension\": \"management_confidence\",\n            \"status\": \"verbatim\",\n        },\n        \"nodes\": (),\n    },",
+      "book": "desk_hc_v2",
+      "provenance": {
+        "source": "autopilot",
+        "status": "provisional",
+        "confidence": "medium",
+        "proposed_at": "2026-09-09T18:32:54.263282+00:00",
+        "model": "claude-sonnet-4-5",
+        "run_id": "7006c32e-9268-4d9b-b7f7-9104887e1392"
+      }
+    },
+    {
+      "tree_id": "ddog-bits-ai-sre-ga-2025",
+      "title": "Move Bits AI SRE from private beta to GA",
+      "kind": "promise",
+      "bucket": "competitive_position",
+      "objects": [
+        "Bits AI SRE",
+        "SRE Agent"
+      ],
+      "match": {
+        "anchors": [
+          "Bits AI SRE",
+          "SRE Agent"
+        ],
+        "context": [
+          "GA",
+          "general availability",
+          "private beta",
+          "preview",
+          "launched"
+        ],
+        "exclude": [
+          "considering Bits",
+          "exploring Bits"
+        ],
+        "generic": null
+      },
+      "seed": {
+        "fiscal_period": "CONF-2025-11-18",
+        "claim_type": "forward_clock",
+        "clock": null,
+        "excerpt": "Right now, we're still in private beta. I think we haven't said to everybody where we, when we're going to be in GA.",
+        "dimension": "product_roadmap",
+        "status": "composite",
+        "materiality": "high",
+        "materiality_rationale": "Bits AI SRE represents Datadog's first autonomous AI agent for production environments, critical for competitive differentiation and potential $100M+ product as stated in analyst day.",
+        "delivery_basis": "transcript"
+      },
+      "confidence": "high",
+      "rationale": "Management explicitly states Bits AI SRE is in private beta with clear path to GA\u2014a product launch milestone trackable via product announcements and subsequent monetization commentary.",
+      "materiality": "high",
+      "materiality_rationale": "Bits AI SRE represents Datadog's first autonomous AI agent for production environments, critical for competitive differentiation and potential $100M+ product as stated in analyst day.",
+      "ticker": "DDOG",
+      "excerpt_verified": true,
+      "proposed_seed_py": "    {\n        \"tree_id\": \"ddog-bits-ai-sre-ga-2025\",\n        \"ticker\": \"DDOG\",\n        \"kind\": \"promise\",\n        \"beat_id\": \"bits-ai-sre-ga-2025\",\n        \"bucket\": \"competitive_position\",\n        \"title\": \"Move Bits AI SRE from private beta to GA\",\n        \"objects\": (\"Bits AI SRE\", \"SRE Agent\",),\n        \"match\": {\n            \"anchors\": (\"Bits AI SRE\", \"SRE Agent\"),\n            \"context\": (\"GA\", \"general availability\", \"private beta\", \"preview\", \"launched\"),\n            \"exclude\": (\"considering Bits\", \"exploring Bits\"),\n            \"generic\": None,\n        },\n        \"seed\": {\n            \"fiscal_period\": \"CONF-2025-11-18\",\n            \"claim_type\": \"forward_clock\",\n            \"clock\": None,\n            \"excerpt\": (\"Right now, we're still in private beta. I think we haven't said to everybody where we, when we're going to be in GA.\"),\n            \"dimension\": \"product_roadmap\",\n            \"status\": \"composite\",\n        },\n        \"nodes\": (),\n    },",
+      "book": "desk_hc_v2",
+      "provenance": {
+        "source": "autopilot",
+        "status": "confirmed",
+        "confidence": "high",
+        "proposed_at": "2026-09-09T23:04:34.495655+00:00",
+        "model": "claude-sonnet-4-5",
+        "run_id": "b1ba49d1-9e96-480c-8fc2-d42a603dfc1b"
+      }
+    },
+    {
+      "tree_id": "ddog-r-and-d-30-percent-revenue",
+      "title": "Maintain R&D spending at ~30% of revenue",
+      "kind": "promise",
+      "bucket": "capital_allocation",
+      "objects": [
+        "30%",
+        "R&D"
+      ],
+      "match": {
+        "anchors": [
+          "30%",
+          "R&D"
+        ],
+        "context": [
+          "top line",
+          "revenue",
+          "invest",
+          "maintain",
+          "target"
+        ],
+        "exclude": [
+          "20% R&D",
+          "reducing R&D"
+        ],
+        "generic": null
+      },
+      "seed": {
+        "fiscal_period": "CONF-2025-09-03",
+        "claim_type": "forward_clock",
+        "clock": null,
+        "excerpt": "We've been trying to maintain our R&D at approximately 30% of revenues. We've given that target.",
+        "dimension": "r_and_d",
+        "status": "verbatim",
+        "materiality": "high",
+        "materiality_rationale": "30% R&D commitment represents industry-leading innovation investment critical for maintaining platform advantage, directly impacting product velocity and competitive moat.",
+        "delivery_basis": "transcript"
+      },
+      "confidence": "high",
+      "rationale": "Explicit commitment to maintain R&D at 30% of revenue\u2014a capital allocation discipline trackable quarterly via R&D expense as percentage of revenue.",
+      "materiality": "high",
+      "materiality_rationale": "30% R&D commitment represents industry-leading innovation investment critical for maintaining platform advantage, directly impacting product velocity and competitive moat.",
+      "ticker": "DDOG",
+      "excerpt_verified": true,
+      "proposed_seed_py": "    {\n        \"tree_id\": \"ddog-r-and-d-30-percent-revenue\",\n        \"ticker\": \"DDOG\",\n        \"kind\": \"promise\",\n        \"beat_id\": \"r-and-d-30-percent-revenue\",\n        \"bucket\": \"capital_allocation\",\n        \"title\": \"Maintain R&D spending at ~30% of revenue\",\n        \"objects\": (\"30%\", \"R&D\",),\n        \"match\": {\n            \"anchors\": (\"30%\", \"R&D\"),\n            \"context\": (\"top line\", \"revenue\", \"invest\", \"maintain\", \"target\"),\n            \"exclude\": (\"20% R&D\", \"reducing R&D\"),\n            \"generic\": None,\n        },\n        \"seed\": {\n            \"fiscal_period\": \"CONF-2025-09-03\",\n            \"claim_type\": \"forward_clock\",\n            \"clock\": None,\n            \"excerpt\": (\"We've been trying to maintain our R&D at approximately 30% of revenues. We've given that target.\"),\n            \"dimension\": \"r_and_d\",\n            \"status\": \"verbatim\",\n        },\n        \"nodes\": (),\n    },",
+      "book": "desk_hc_v2",
+      "provenance": {
+        "source": "autopilot",
+        "status": "confirmed",
+        "confidence": "high",
+        "proposed_at": "2026-09-09T23:04:34.495655+00:00",
+        "model": "claude-sonnet-4-5",
+        "run_id": "b1ba49d1-9e96-480c-8fc2-d42a603dfc1b"
       }
     }
   ],

@@ -1,6 +1,6 @@
 {
   "schema_version": "1",
-  "updated_at": "2026-09-03T18:16:41.473895+00:00",
+  "updated_at": "2026-09-09T13:32:02.202265+00:00",
   "trees": [
     {
       "tree_id": "aapl-india-lte-rollout",
@@ -8086,6 +8086,59 @@
         "model": "claude-sonnet-4-5",
         "run_id": "04bf7d0a-0716-4240-870e-a7f64df9f7c3"
       }
+    },
+    {
+      "tree_id": "aapl-ar-profound-marvel",
+      "title": "AR will be profound and huge",
+      "kind": "promise",
+      "bucket": "management_confidence",
+      "objects": [
+        "AR",
+        "augmented reality"
+      ],
+      "match": {
+        "anchors": [
+          "AR"
+        ],
+        "context": [
+          "big",
+          "profound",
+          "huge",
+          "marvel",
+          "start"
+        ],
+        "exclude": [
+          "AR is"
+        ],
+        "generic": null
+      },
+      "seed": {
+        "fiscal_period": "FY2017-Q3",
+        "claim_type": "forward_clock",
+        "clock": null,
+        "excerpt": "I think AR is big and profound and this is one of those huge things that we'll look back at and marvel on the start of it.",
+        "dimension": "management_confidence",
+        "status": "verbatim",
+        "materiality": "high",
+        "materiality_rationale": "AR became thesis-critical with Vision Pro launch; this early statement establishes management's multi-year strategic commitment to the platform.",
+        "delivery_basis": "transcript"
+      },
+      "confidence": "medium",
+      "rationale": "High conviction statement about AR as transformative technology; trackable through subsequent AR product launches and AR-related revenue disclosures.",
+      "materiality": "high",
+      "materiality_rationale": "AR became thesis-critical with Vision Pro launch; this early statement establishes management's multi-year strategic commitment to the platform.",
+      "ticker": "AAPL",
+      "excerpt_verified": true,
+      "proposed_seed_py": "    {\n        \"tree_id\": \"aapl-ar-profound-marvel\",\n        \"ticker\": \"AAPL\",\n        \"kind\": \"promise\",\n        \"beat_id\": \"ar-profound-marvel\",\n        \"bucket\": \"management_confidence\",\n        \"title\": \"AR will be profound and huge\",\n        \"objects\": (\"AR\", \"augmented reality\",),\n        \"match\": {\n            \"anchors\": (\"AR\",),\n            \"context\": (\"big\", \"profound\", \"huge\", \"marvel\", \"start\"),\n            \"exclude\": (\"AR is\",),\n            \"generic\": None,\n        },\n        \"seed\": {\n            \"fiscal_period\": \"FY2017-Q3\",\n            \"claim_type\": \"forward_clock\",\n            \"clock\": None,\n            \"excerpt\": (\"I think AR is big and profound and this is one of those huge things that we'll look back at and marvel on the start of it.\"),\n            \"dimension\": \"management_confidence\",\n            \"status\": \"verbatim\",\n        },\n        \"nodes\": (),\n    },",
+      "book": "desk_ops_v2",
+      "provenance": {
+        "source": "autopilot",
+        "status": "provisional",
+        "confidence": "medium",
+        "proposed_at": "2026-09-09T13:31:18.545275+00:00",
+        "model": "claude-sonnet-4-5",
+        "run_id": "6f280f1b-8eb6-4c37-b88e-993315cd73bb"
+      }
     }
   ],
   "nodes": {
@@ -9602,6 +9655,114 @@
           "proposed_at": "2026-09-03T18:16:41.472897+00:00",
           "model": "claude-sonnet-4-5",
           "run_id": "04bf7d0a-0716-4240-870e-a7f64df9f7c3"
+        }
+      }
+    ],
+    "aapl-mac-pro-us-production": [
+      {
+        "edge": "delivered",
+        "fiscal_period": "FY2019-Q4",
+        "excerpt": "And for our pro customers who push the limits of what Mac can do, we're very excited about the upcoming launch of our newly redesigned Mac Pro this fall, which we are proud to be manufacturing in Austin, Texas.",
+        "dimension": "terminal",
+        "status": "verbatim",
+        "delivery_basis": "transcript",
+        "provenance": {
+          "source": "autopilot",
+          "status": "provisional",
+          "confidence": "",
+          "proposed_at": "2026-09-09T13:30:20.303158+00:00",
+          "model": "claude-sonnet-4-5",
+          "run_id": "79e01d41-9fde-41a1-a7ad-182457e2d63b"
+        }
+      }
+    ],
+    "aapl-ai-investment-ramp": [
+      {
+        "edge": "delivered",
+        "fiscal_period": "FY2025-Q4",
+        "excerpt": "Operating expenses landed at $15.9 billion, up 11% year-over-year, driven by increased investment in R&D.",
+        "dimension": "terminal",
+        "status": "verbatim",
+        "delivery_basis": "transcript",
+        "provenance": {
+          "source": "autopilot",
+          "status": "provisional",
+          "confidence": "",
+          "proposed_at": "2026-09-09T13:30:20.303158+00:00",
+          "model": "claude-sonnet-4-5",
+          "run_id": "79e01d41-9fde-41a1-a7ad-182457e2d63b"
+        }
+      }
+    ],
+    "aapl-sept-revenue-acceleration": [
+      {
+        "edge": "hit",
+        "fiscal_period": "FY2022-Q4",
+        "excerpt": "In Wearables, Home and Accessories a wave of innovation spurred 10% year-over-year revenue growth during the September quarter.",
+        "dimension": "terminal",
+        "status": "verbatim",
+        "delivery_basis": "transcript",
+        "provenance": {
+          "source": "autopilot",
+          "status": "provisional",
+          "confidence": "",
+          "proposed_at": "2026-09-09T13:30:20.303158+00:00",
+          "model": "claude-sonnet-4-5",
+          "run_id": "79e01d41-9fde-41a1-a7ad-182457e2d63b"
+        }
+      }
+    ],
+    "aapl-india-retail-expansion": [
+      {
+        "edge": "delivered",
+        "fiscal_period": "FY2023-Q4",
+        "excerpt": "We are expanding our direct presence in these markets from new Apple retail stores in India to online stores in Vietnam and Chile.",
+        "dimension": "terminal",
+        "status": "verbatim",
+        "delivery_basis": "transcript",
+        "provenance": {
+          "source": "autopilot",
+          "status": "provisional",
+          "confidence": "",
+          "proposed_at": "2026-09-09T13:30:20.303158+00:00",
+          "model": "claude-sonnet-4-5",
+          "run_id": "79e01d41-9fde-41a1-a7ad-182457e2d63b"
+        }
+      }
+    ],
+    "aapl-vision-pro-launch-stores": [
+      {
+        "edge": "delivered",
+        "fiscal_period": "FY2024-Q1",
+        "excerpt": "team members are especially excited to begin demoing Apple Vision Pro for our customers tomorrow.",
+        "dimension": "terminal",
+        "status": "verbatim",
+        "delivery_basis": "transcript",
+        "provenance": {
+          "source": "autopilot",
+          "status": "provisional",
+          "confidence": "",
+          "proposed_at": "2026-09-09T13:30:20.303158+00:00",
+          "model": "claude-sonnet-4-5",
+          "run_id": "79e01d41-9fde-41a1-a7ad-182457e2d63b"
+        }
+      }
+    ],
+    "aapl-china-q1-fy26-return-growth": [
+      {
+        "edge": "delivered",
+        "fiscal_period": "FY2026-Q1",
+        "excerpt": "Greater China was up 38% year on year. It was driven by iPhone, where we set an all-time revenue record. So it was the best iPhone quarter in history in Greater China.",
+        "dimension": "terminal",
+        "status": "verbatim",
+        "delivery_basis": "transcript",
+        "provenance": {
+          "source": "autopilot",
+          "status": "provisional",
+          "confidence": "",
+          "proposed_at": "2026-09-09T13:30:20.303158+00:00",
+          "model": "claude-sonnet-4-5",
+          "run_id": "79e01d41-9fde-41a1-a7ad-182457e2d63b"
         }
       }
     ]

@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 
 from services.earnings_monitor.dashboard.claims_trees import (
+    _BOOK_ALL,
     _BOOK_HC,
     _BOOK_NVDA,
     _BOOK_OPS,
@@ -13,6 +14,11 @@ from services.earnings_monitor.dashboard.claims_trees import (
     clock_board,
     conversion_caption,
     conversion_from_trees,
+    cues_for_universe,
+    desk_tickers,
+    iter_book_payloads,
+    rates_from_visible_trees,
+    trees_for_universe,
     filter_trees_to_bucket,
     filter_trees_to_universe,
     group_trees_by_bucket,
@@ -26,6 +32,8 @@ from services.earnings_monitor.dashboard.claims_trees import (
     show_trailing_credibility,
     suggested_book,
     load_desk_panel_metrics_v2,
+    load_desk_trees_hc_v2,
+    load_desk_trees_ops_v2,
     load_desk_trees_v2,
     tree_kind_label,
     tree_node_rows,
@@ -223,6 +231,9 @@ def test_honest_rate_caption_and_gold_only_trust() -> None:
     assert show_trailing_credibility(_BOOK_NVDA) is True
     assert show_trailing_credibility(_BOOK_OPS) is False
     assert show_trailing_credibility(_BOOK_HC) is False
+    assert show_trailing_credibility(_BOOK_ALL) is True
+    assert show_trailing_credibility(_BOOK_ALL, ["NVDA"]) is True
+    assert show_trailing_credibility(_BOOK_ALL, ["CRWV"]) is False
 
 
 def test_conversion_caption_and_kind_labels() -> None:
@@ -291,7 +302,7 @@ def test_workshop_html_mirrors_roz_copy() -> None:
             "subtitle": "Workshop for the Roz Claims Trees desk.",
             "books": {},
             "book_order": [],
-            "default_book": _BOOK_NVDA,
+            "default_book": _BOOK_ALL,
             "labels": {},
             "metrics": None,
             "buckets": ["demand"],
@@ -315,6 +326,9 @@ def test_workshop_html_mirrors_roz_copy() -> None:
     assert "Clocked trees check at the clock" in html
     assert "id=\"known-delivered\"" in html
     assert "id=\"quant\"" in html
+    assert "id=\"custom-list\"" in html
+    assert "id=\"companies\"" in html
+    assert "Rates are this filter" in html
 
 
 def test_workshop_bundle_loads_recognized_books() -> None:
@@ -323,6 +337,9 @@ def test_workshop_bundle_loads_recognized_books() -> None:
         return
     assert bundle["surface"] == "claims_trees"
     assert set(bundle["books"]) <= {_BOOK_NVDA, _BOOK_OPS, _BOOK_HC}
+    assert bundle["default_book"] == _BOOK_ALL
+    assert bundle["book_order"][0] == _BOOK_ALL
+    assert isinstance(bundle.get("tickers"), list)
     assert bundle["title"] == "Claims Desk"
     assert "transparency" in bundle
     assert "quant" in bundle
@@ -330,3 +347,83 @@ def test_workshop_bundle_loads_recognized_books() -> None:
     assert "Expiration means" in str(bundle.get("expire_caption"))
     for entry in bundle["books"].values():
         assert "known_delivered" in entry
+
+
+def _desk_tree(ticker: str, *, kind: str = "promise", delivery=None, goal_outcome=None) -> dict:
+    return {
+        "ticker": ticker,
+        "kind": kind,
+        "delivery": delivery,
+        "goal_outcome": goal_outcome,
+        "title": ticker,
+        "open": True,
+        "seed": {},
+        "nodes": [],
+    }
+
+
+def test_trees_for_universe_isolates_crwv_across_books() -> None:
+    gold = {"trees": [_desk_tree("NVDA", delivery="delivered")]}
+    ops = {"trees": [_desk_tree("MSFT", kind="goal", goal_outcome="hit")]}
+    hc = {"trees": [_desk_tree("CRWV"), _desk_tree("UNH")]}
+    payloads = iter_book_payloads(gold=gold, ops=ops, healthcare=hc)
+
+    custom = trees_for_universe(payloads, ["CRWV"])
+    assert [t["ticker"] for t in custom] == ["CRWV"]
+    assert custom[0]["book_id"] == _BOOK_HC
+
+    independent = trees_for_universe(payloads, ["CRWV"], _BOOK_ALL)
+    assert [t["ticker"] for t in independent] == ["CRWV"]
+
+    xlk_plus = trees_for_universe(payloads, ["MSFT", "CRWV"])
+    assert {t["ticker"] for t in xlk_plus} == {"MSFT", "CRWV"}
+
+    assert trees_for_universe(payloads, ["ZZZZ"]) == []
+    assert trees_for_universe(payloads, ["CRWV"], _BOOK_OPS) == []
+
+
+def test_cues_for_universe_follow_ticker_filter() -> None:
+    queues = (
+        (_BOOK_NVDA, {"missed": [{"ticker": "NVDA", "excerpt": "gold"}], "latest_quarter": "FY2026-Q1"}),
+        (_BOOK_OPS, {"missed": [{"ticker": "MSFT", "excerpt": "ops"}]}),
+        (_BOOK_HC, {"missed": [{"ticker": "CRWV", "excerpt": "hc"}]}),
+    )
+    crwv = cues_for_universe(queues, ["CRWV"])
+    assert [r["ticker"] for r in crwv["missed"]] == ["CRWV"]
+    assert crwv["n_missed"] == 1
+    assert "n_seedable" not in crwv
+    assert cues_for_universe(queues, ["ZZZZ"])["missed"] == []
+
+
+def test_rates_from_visible_trees_follow_filter() -> None:
+    trees = [
+        _desk_tree("CRWV"),
+        _desk_tree("NVDA", delivery="delivered"),
+        _desk_tree("NVDA", delivery="missed"),
+    ]
+    all_rates = rates_from_visible_trees(trees)
+    assert all_rates["deliver"]["n_scoreable"] == 2
+    assert all_rates["deliver"]["deliver_rate"] == 0.5
+
+    crwv = rates_from_visible_trees([t for t in trees if t["ticker"] == "CRWV"])
+    assert crwv["deliver"]["n_scoreable"] == 0
+    assert crwv["deliver"]["deliver_rate"] is None
+    assert desk_tickers(trees) == ["CRWV", "NVDA"]
+
+
+def test_live_crwv_is_isolatable_when_present() -> None:
+    payloads = iter_book_payloads(
+        gold=load_desk_trees_v2(),
+        ops=load_desk_trees_ops_v2(),
+        healthcare=load_desk_trees_hc_v2(),
+    )
+    if not any(
+        str(tree.get("ticker") or "").upper() == "CRWV"
+        for _name, payload in payloads
+        for tree in payload.get("trees") or []
+    ):
+        return
+    found = trees_for_universe(payloads, ["CRWV"])
+    assert found
+    assert {tree["ticker"] for tree in found} == {"CRWV"}
+    assert all(tree.get("book_id") == _BOOK_HC for tree in found)

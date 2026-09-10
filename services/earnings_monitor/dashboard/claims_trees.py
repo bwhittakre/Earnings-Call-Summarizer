@@ -37,6 +37,8 @@ from services.earnings_monitor.dashboard.claims_transparency import (
 from scripts._desk_trees_v2 import (
     BUCKETS,
     bucket_label,
+    deliver_rate_counts,
+    hit_rate_counts,
     known_delivered_caption,
     known_delivered_counts,
     normalize_bucket,
@@ -66,6 +68,8 @@ _HC_QUEUE_INDEX = "desk_cue_queue_hc_v2.json"
 _BOOK_NVDA = "nvda_gold_v2"
 _BOOK_OPS = "desk_ops_v2"
 _BOOK_HC = "desk_hc_v2"
+_BOOK_ALL = "all_books"
+_BOOK_ORDER = (_BOOK_NVDA, _BOOK_OPS, _BOOK_HC)
 _HC_SECTORS = frozenset(
     {
         "healthcare_large_cap",
@@ -155,9 +159,27 @@ def scored_rate_caption(n_scoreable: object, kind: str) -> str:
     return f"Scored {kind} only. Unresolved is an em dash."
 
 
-def show_trailing_credibility(book_choice: str) -> bool:
+def show_trailing_credibility(
+    book_choice: str,
+    tickers: Sequence[str] | None = None,
+) -> bool:
     """Locked NVIDIA sidecar stays off ops and healthcare books."""
-    return book_choice == _BOOK_NVDA
+    if book_choice == _BOOK_NVDA:
+        return True
+    if book_choice == _BOOK_ALL:
+        if tickers is None:
+            return True
+        return "NVDA" in {str(t).upper() for t in tickers}
+    return False
+
+
+def book_label(book_id: str) -> str:
+    return {
+        _BOOK_ALL: "All books",
+        _BOOK_NVDA: "NVIDIA gold",
+        _BOOK_OPS: "Tech ops",
+        _BOOK_HC: "Healthcare / Independent",
+    }.get(str(book_id), str(book_id))
 
 
 def conversion_from_trees(trees: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
@@ -556,6 +578,118 @@ def filter_trees_to_universe(
     ]
 
 
+def filter_rows_to_universe(
+    rows: Sequence[Mapping[str, Any]],
+    universe: Sequence[str] | None,
+) -> list[dict[str, Any]]:
+    if universe is None:
+        return [dict(row) for row in rows if isinstance(row, Mapping)]
+    allowed = {str(ticker).upper() for ticker in universe}
+    return [
+        dict(row)
+        for row in rows
+        if isinstance(row, Mapping)
+        and str(row.get("ticker") or "").upper() in allowed
+    ]
+
+
+def _tag_book(row: Mapping[str, Any], book_id: str) -> dict[str, Any]:
+    out = dict(row)
+    out["book_id"] = book_id
+    return out
+
+
+def iter_book_payloads(
+    gold: Mapping[str, Any] | None = None,
+    ops: Mapping[str, Any] | None = None,
+    healthcare: Mapping[str, Any] | None = None,
+) -> list[tuple[str, Mapping[str, Any]]]:
+    found: list[tuple[str, Mapping[str, Any]]] = []
+    for name, payload in (
+        (_BOOK_NVDA, gold),
+        (_BOOK_OPS, ops),
+        (_BOOK_HC, healthcare),
+    ):
+        if payload:
+            found.append((name, payload))
+    return found
+
+
+def trees_for_universe(
+    book_payloads: Sequence[tuple[str, Mapping[str, Any]]],
+    universe: Sequence[str] | None = None,
+    book_id: str | None = None,
+) -> list[dict[str, Any]]:
+    """Union trees across books, then filter to *universe*."""
+    trees: list[dict[str, Any]] = []
+    pinned = str(book_id or _BOOK_ALL)
+    for name, payload in book_payloads:
+        if pinned not in {_BOOK_ALL, ""} and name != pinned:
+            continue
+        for tree in payload.get("trees") or []:
+            if isinstance(tree, Mapping):
+                trees.append(_tag_book(tree, name))
+    return filter_trees_to_universe(trees, universe)
+
+
+def cues_for_universe(
+    queues: Sequence[tuple[str, Mapping[str, Any] | None]],
+    universe: Sequence[str] | None = None,
+    book_id: str | None = None,
+) -> dict[str, Any]:
+    """Union uncovered cues across books, then filter to *universe*."""
+    missed: list[dict[str, Any]] = []
+    latest = None
+    gold_recall = None
+    pinned = str(book_id or _BOOK_ALL)
+    for name, queue in queues:
+        if not queue:
+            continue
+        if pinned not in {_BOOK_ALL, ""} and name != pinned:
+            continue
+        latest = queue.get("latest_quarter") or latest
+        if name == _BOOK_NVDA:
+            gold_recall = (queue.get("gold") or {}).get("recall")
+        for row in queue.get("missed") or []:
+            if isinstance(row, Mapping):
+                missed.append(_tag_book(row, name))
+    missed = filter_rows_to_universe(missed, universe)
+    return {
+        "missed": missed,
+        "n_missed": len(missed),
+        "latest_quarter": latest,
+        "gold": {"recall": gold_recall} if gold_recall is not None else None,
+    }
+
+
+def desk_tickers(
+    trees: Sequence[Mapping[str, Any]],
+    cues: Sequence[Mapping[str, Any]] | None = None,
+) -> list[str]:
+    found: set[str] = set()
+    for row in list(trees) + list(cues or ()):
+        ticker = str(row.get("ticker") or "").upper()
+        if ticker:
+            found.add(ticker)
+    return sorted(found)
+
+
+def rates_from_visible_trees(
+    trees: Sequence[Mapping[str, Any]],
+    *,
+    latest: str | None = None,
+) -> dict[str, Any]:
+    """Deliver / hit / conversion / known-delivered from the visible trees only."""
+    promises = [t for t in trees if str(t.get("kind") or "") == "promise"]
+    goals = [t for t in trees if str(t.get("kind") or "") == "goal"]
+    return {
+        "deliver": deliver_rate_counts(promises),
+        "hit": hit_rate_counts(goals),
+        "conversion": conversion_from_trees(trees),
+        "known": known_delivered_counts(trees, latest),
+    }
+
+
 def tree_bucket(tree: Mapping[str, Any]) -> str | None:
     return normalize_bucket(tree.get("bucket"))
 
@@ -821,7 +955,11 @@ def workshop_book_entry(
 ) -> dict[str, Any] | None:
     if payload is None:
         return None
-    trees = [dict(tree) for tree in (payload.get("trees") or []) if isinstance(tree, Mapping)]
+    trees = [
+        _tag_book(tree, name)
+        for tree in (payload.get("trees") or [])
+        if isinstance(tree, Mapping)
+    ]
     n_provisional = int(payload.get("n_provisional") or 0)
     n_confirmed_overlay = int(payload.get("n_confirmed_overlay") or 0)
     deliver_rates = dict(payload.get("deliver_rates") or {})
@@ -830,6 +968,15 @@ def workshop_book_entry(
     # They live inside deliver_rates.book; surface them at the top level too for
     # easy JS access on the workshop page.
     book_deliver = dict(deliver_rates.get("book") or {})
+    tagged_queue = None
+    if queue:
+        tagged_queue = dict(queue)
+        tagged_queue["missed"] = [
+            _tag_book(row, name)
+            for row in (queue.get("missed") or [])
+            if isinstance(row, Mapping)
+        ]
+        tagged_queue["n_missed"] = len(tagged_queue["missed"])
     return {
         "book_id": name,
         "caption": payload.get("caption"),
@@ -843,7 +990,7 @@ def workshop_book_entry(
         "weighted_deliver_rate": book_deliver.get("weighted_deliver_rate"),
         "conversion": payload.get("conversion") or conversion_from_trees(trees),
         "trees": trees,
-        "queue": queue,
+        "queue": tagged_queue,
         "latest": latest_scored_fiscal(payload, queue),
         "horizon_events": workshop_horizon_events(trees),
         "quotes": quote_rows(trees),
@@ -924,13 +1071,17 @@ def workshop_bundle(
         "surface": "claims_trees",
         "title": "Claims Desk",
         "subtitle": (
-            "Workshop for the Roz Claims Desk. Same books, rates, "
-            "buckets, and edges. Roz sector sidebar is omitted. "
-            "Company-history backdrop is Roz-only."
+            "Workshop for the Roz Claims Desk. Same trees, rates, "
+            "buckets, and edges. Company / custom-list filter is first; "
+            "books are an optional source. Company-history backdrop is Roz-only."
         ),
         "books": books,
-        "book_order": available,
-        "default_book": suggested_book(None, available),
+        "book_order": [_BOOK_ALL, *available],
+        "default_book": _BOOK_ALL,
+        "book_labels": {
+            name: book_label(name) for name in [_BOOK_ALL, *available]
+        },
+        "tickers": sorted(labels),
         "labels": labels,
         "metrics": load_desk_panel_metrics_v2(history_source),
         "buckets": list(BUCKETS),
@@ -959,10 +1110,20 @@ def _render_transparency_panel(
             "This is not desk_trust."
         )
         return
-    block = ((payload.get("books") or {}).get(book_choice) or {})
-    counts = dict(block.get("book") or {})
-    company_rows = list(block.get("by_company") or [])
-    events = list(block.get("events") or [])
+    books = payload.get("books") or {}
+    if book_choice == _BOOK_ALL:
+        company_rows: list[dict[str, Any]] = []
+        events: list[dict[str, Any]] = []
+        for name in _BOOK_ORDER:
+            block = books.get(name) or {}
+            company_rows.extend(block.get("by_company") or [])
+            events.extend(block.get("events") or [])
+        counts = book_counts(events)
+    else:
+        block = books.get(book_choice) or {}
+        counts = dict(block.get("book") or {})
+        company_rows = list(block.get("by_company") or [])
+        events = list(block.get("events") or [])
     if universe is not None:
         allowed = {str(ticker).upper() for ticker in universe}
         company_rows = [
@@ -1025,7 +1186,12 @@ def _render_transparency_panel(
         )
 
 
-def _render_quant_panel(st: Any, book_choice: str, latest: str | None) -> None:
+def _render_quant_panel(
+    st: Any,
+    book_choice: str,
+    latest: str | None,
+    universe: Sequence[str] | None = None,
+) -> None:
     payload = load_desk_quant_v2()
     st.subheader("Quant cross-check")
     st.caption(EXPIRE_CAPTION)
@@ -1036,15 +1202,28 @@ def _render_quant_panel(st: Any, book_choice: str, latest: str | None) -> None:
         )
         return
     st.caption(str(payload.get("caption") or ""))
-    block = ((payload.get("books") or {}).get(book_choice) or {})
-    rows = list(block.get("rows") or [])
+    books = payload.get("books") or {}
+    rows: list[dict[str, Any]] = []
+    as_of = None
+    if book_choice == _BOOK_ALL:
+        for name in _BOOK_ORDER:
+            block = books.get(name) or {}
+            rows.extend(block.get("rows") or [])
+            as_of = block.get("as_of") or as_of
+    else:
+        block = books.get(book_choice) or {}
+        rows = list(block.get("rows") or [])
+        as_of = block.get("as_of")
+    if universe is not None:
+        allowed = {str(ticker).upper() for ticker in universe}
+        rows = [row for row in rows if str(row.get("ticker") or "").upper() in allowed]
     st.caption(
-        f"As of {block.get('as_of') or latest or '—'}. "
+        f"As of {as_of or latest or '—'}. "
         "Clocked trees check at the clock. Unclocked trees wait four silent "
         "quarters, then stop at expire or seed+8Q."
     )
     if not rows:
-        st.caption("No expire or quant bindings on this book.")
+        st.caption("No expire or quant bindings in this filter.")
         return
     st.dataframe(
         [
@@ -1082,65 +1261,69 @@ def render_claims_trees(
             "Claims desk v2 is missing or the stamp is not a recognized book."
         )
         return
-    books = [
-        name
-        for name, payload in (
-            (_BOOK_NVDA, gold),
-            (_BOOK_OPS, ops),
-            (_BOOK_HC, healthcare),
-        )
-        if payload
-    ]
+    payloads = iter_book_payloads(gold=gold, ops=ops, healthcare=healthcare)
+    books = [name for name, _ in payloads]
     universe = None
     if sector_tickers is not None:
         universe = [str(ticker).upper() for ticker in sector_tickers]
-    default_book = suggested_book(
-        sector_choice,
-        books,
-        custom_tickers=universe if sector_choice == "Custom List" else None,
-    )
-    book_index = books.index(default_book) if default_book in books else 0
-    book_choice = st.selectbox(
+    book_options = [_BOOK_ALL, *books]
+    book_choice = st.radio(
         "Book",
-        books,
-        index=book_index,
-        key=f"claims_trees_book_follow_{sector_choice or 'all'}",
+        book_options,
+        index=0,
+        format_func=book_label,
+        horizontal=True,
+        key=f"claims_trees_source_{sector_choice or 'all'}",
+        help="Optional source. All books is the default — this does not hide a company.",
     )
-    payload = {_BOOK_NVDA: gold, _BOOK_OPS: ops, _BOOK_HC: healthcare}.get(book_choice)
-    if payload is None:
-        st.info("Selected book is not loaded.")
-        return
-    trees = filter_trees_to_universe(list(payload.get("trees") or []), universe)
-    if not trees and book_choice == _BOOK_NVDA:
-        st.info("No v2 trees in the current Roz universe filter.")
-        return
+    queues = (
+        (_BOOK_NVDA, load_desk_cue_queue_v2()),
+        (_BOOK_OPS, load_desk_cue_queue_ops_v2()),
+        (_BOOK_HC, load_desk_cue_queue_hc_v2()),
+    )
+    trees = trees_for_universe(payloads, universe, book_choice)
+    queue = cues_for_universe(queues, universe, book_choice)
+    option_tickers = desk_tickers(trees, queue.get("missed") or [])
+    if universe:
+        option_tickers = [t for t in universe if t in set(option_tickers)]
+    picked = st.multiselect(
+        "Companies",
+        option_tickers,
+        default=option_tickers,
+        format_func=format_company_label,
+        key=f"claims_trees_companies_{sector_choice or 'all'}_{book_choice}",
+        help="Isolate one name or a group. Defaults to the Roz sector / custom list.",
+    )
+    visible = picked or option_tickers
+    if visible != option_tickers:
+        trees = filter_trees_to_universe(trees, visible)
+        queue = {
+            **queue,
+            "missed": filter_rows_to_universe(queue.get("missed") or [], visible),
+        }
+        queue["n_missed"] = len(queue["missed"])
     if not trees:
-        st.caption("No typed trees yet. Uncovered cues still list leftover seeds.")
+        st.caption("No typed trees in this filter. Uncovered cues still list leftover seeds.")
 
-    if book_choice == _BOOK_NVDA:
-        queue = load_desk_cue_queue_v2()
-    elif book_choice == _BOOK_HC:
-        queue = load_desk_cue_queue_hc_v2()
-    else:
-        queue = load_desk_cue_queue_ops_v2()
-    latest = latest_scored_fiscal(payload, queue)
-
-    deliver = (payload.get("deliver_rates") or {}).get("book") or {}
-    hits = (payload.get("hit_rates") or {}).get("book") or {}
-    st.caption(str(payload.get("caption") or ""))
-    window = list(payload.get("window") or [])
-    window_text = f"{window[0]}–{window[-1]}" if window else "operational, no gold window"
+    latest = queue.get("latest_quarter")
+    if not latest:
+        for _name, payload in payloads:
+            latest = latest_scored_fiscal(payload, None) or latest
+    rates = rates_from_visible_trees(trees, latest=latest)
+    deliver = rates["deliver"]
+    hits = rates["hit"]
+    conversion = rates["conversion"]
+    known = rates["known"]
     st.caption(
-        f"Stamp {payload.get('generated_at')} · {payload.get('split')} · "
-        f"calendar {payload.get('calendar')} · "
-        f"window {window_text}. "
-        f"Sector filter {sector_choice or 'all'} does not retune xlk_tech."
+        f"{book_label(book_choice)} · sector {sector_choice or 'all'} · "
+        f"{len(visible)} compan{'y' if len(visible) == 1 else 'ies'}. "
+        "Rates are this filter, not the whole book."
     )
     col_a, col_b = st.columns(2)
     with col_a:
         st.subheader("Deliver rate")
         st.caption(scored_rate_caption(deliver.get("n_scoreable"), "promises"))
-        st.metric("Book deliver rate", format_rate(deliver.get("deliver_rate")))
+        st.metric("Deliver rate (this filter)", format_rate(deliver.get("deliver_rate")))
         st.caption(
             f"{deliver.get('delivered', 0)} delivered / "
             f"{deliver.get('n_scoreable', 0)} scored"
@@ -1148,12 +1331,11 @@ def render_claims_trees(
     with col_b:
         st.subheader("Hit rate")
         st.caption(scored_rate_caption(hits.get("n_scoreable"), "goals"))
-        st.metric("Book hit rate", format_rate(hits.get("hit_rate")))
+        st.metric("Hit rate (this filter)", format_rate(hits.get("hit_rate")))
         st.caption(
             f"{hits.get('hit', 0)} hit / {hits.get('n_scoreable', 0)} scored"
         )
 
-    known = known_delivered_counts(trees, latest)
     st.subheader("Known-delivered")
     st.caption(
         "This is what we know has been delivered. "
@@ -1167,7 +1349,6 @@ def render_claims_trees(
         f"{known.get('n_unknown', 0)} unknown. Not desk_trust."
     )
 
-    conversion = payload.get("conversion") or conversion_from_trees(trees)
     st.subheader("Became a promise")
     st.caption(conversion_caption(conversion))
     st.metric("Conversion rate", format_rate(conversion.get("harden_rate")))
@@ -1177,11 +1358,11 @@ def render_claims_trees(
         "Not desk_trust. Same tree stays open until the promise closes."
     )
 
-    _render_transparency_panel(st, book_choice, universe)
-    _render_quant_panel(st, book_choice, latest)
+    _render_transparency_panel(st, book_choice, visible)
+    _render_quant_panel(st, book_choice, latest, visible)
 
     metrics_payload = load_desk_panel_metrics_v2()
-    if show_trailing_credibility(book_choice) and metrics_payload:
+    if show_trailing_credibility(book_choice, visible) and metrics_payload:
         st.subheader("Trailing credibility")
         st.caption(
             "Point-in-time expanding rates on management_confidence. "
@@ -1190,7 +1371,7 @@ def render_claims_trees(
         series = [
             row
             for row in (metrics_payload.get("rows") or [])
-            if universe is None or str(row.get("ticker") or "").upper() in set(universe)
+            if not visible or str(row.get("ticker") or "").upper() in set(visible)
         ]
         if series:
             st.dataframe(
@@ -1221,7 +1402,7 @@ def render_claims_trees(
         "Open trees with no clock are someday wants, not due."
     )
     if not board["due"] and not board["slipped"]:
-        st.caption("No due or slipped trees in this book.")
+        st.caption("No due or slipped trees in this filter.")
     if board["due"] or board["slipped"]:
         from itertools import groupby as _groupby
         all_clock_rows = sorted(
@@ -1277,7 +1458,7 @@ def render_claims_trees(
                     use_container_width=True,
                 )
     else:
-        st.caption("No open undated claims in this book.")
+        st.caption("No open undated claims in this filter.")
 
     if trees:
         _render_horizon_panel(st, trees)
@@ -1292,13 +1473,14 @@ def render_claims_trees(
         )
         gold = (queue or {}).get("gold") or {}
         st.caption(
-            f"Full-history missed {queue.get('n_missed')} / "
-            f"{queue.get('n_seedable')} · gold recall {gold.get('recall')}"
+            f"Missed {queue.get('n_missed')} in this filter"
+            + (f" · gold recall {gold.get('recall')}" if gold.get("recall") is not None else "")
         )
         st.dataframe(
             [
                 {
                     "company": format_company_label(str(row.get("ticker") or "")),
+                    "book": book_label(str(row.get("book_id") or "")),
                     "fiscal_period": row.get("fiscal_period"),
                     "class": row.get("class"),
                     "dimension": row.get("dimension"),
@@ -1313,10 +1495,14 @@ def render_claims_trees(
     # ── Seed candidates (always visible, collapsed) ───────────────────────────
     seed_data = _load_seed_candidates()
     _sc_by_ticker = (seed_data.get("candidates_by_ticker") or {}) if seed_data else {}
-    _sc_total = (
-        (seed_data.get("n_proposed_seeds") or sum(len(v) for v in _sc_by_ticker.values()))
-        if seed_data else 0
-    )
+    if visible:
+        _allowed = {str(t).upper() for t in visible}
+        _sc_by_ticker = {
+            key: rows
+            for key, rows in _sc_by_ticker.items()
+            if str(key).upper() in _allowed
+        }
+    _sc_total = sum(len(v) for v in _sc_by_ticker.values()) if seed_data else 0
     _sc_partial = (" · PARTIAL RUN" if (seed_data or {}).get("complete") is False else "")
     _sc_label = (
         f"Seed candidates ({_sc_total}){_sc_partial} — expand to review"
@@ -1379,6 +1565,10 @@ def render_claims_trees(
     else:
         _nr = term_data.get("needs_review") or []
         _tc = term_data.get("candidates") or []
+        if visible:
+            _allowed = {str(t).upper() for t in visible}
+            _nr = [it for it in _nr if str(it.get("ticker") or "").upper() in _allowed]
+            _tc = [c for c in _tc if str(c.get("ticker") or "").upper() in _allowed]
         _tc_total = len(_tc)
         _nr_total = len(_nr)
 
@@ -1500,7 +1690,8 @@ def render_claims_trees(
             else seed_fp_raw
         )
         st.caption(
-            f"{tree.get('tree_id')} · {tree.get('beat_id')} · "
+            f"{tree.get('tree_id')} · {book_label(str(tree.get('book_id') or ''))} · "
+            f"{tree.get('beat_id')} · "
             f"{bucket_label(tree_bucket(tree))} · "
             f"seed: {source_badge} · "
             f"clock {tree.get('clock') or '—'} · "
@@ -1569,41 +1760,32 @@ def render_claims_trees(
             )
 
     if _trees_group_by == "Company":
-        # Build company list from *all* trees in the book (not just the bucket-filtered set)
-        # so the picker is stable regardless of bucket choice.
-        _all_co_tickers = sorted(
-            {str(t.get("ticker") or "") for t in trees if t.get("ticker")}
+        from itertools import groupby as _groupby
+        _sorted_by_co = sorted(
+            listed,
+            key=lambda t: str(t.get("ticker") or ""),
         )
-        if not _all_co_tickers:
-            st.caption("No trees available in this book — company selector unavailable.")
+        if not _sorted_by_co:
+            st.caption("No trees in this filter.")
         else:
-            _co_selected = st.sidebar.selectbox(
-                "Company (trees)",
-                _all_co_tickers,
-                format_func=format_company_label,
-                key="claims_trees_co_picker",
-            )
-            # Filter to the selected company (bucket filter already applied to `listed`)
-            _co_listed = [t for t in listed if str(t.get("ticker") or "") == _co_selected]
-            if not _co_listed:
-                st.caption(
-                    f"No trees for {format_company_label(_co_selected)} in the selected bucket."
-                )
-            else:
+            for _ticker, _group in _groupby(
+                _sorted_by_co, key=lambda t: str(t.get("ticker") or "")
+            ):
+                _co_listed = list(_group)
                 st.markdown(
-                    f"**{format_company_label(_co_selected)}** — "
+                    f"**{format_company_label(_ticker)}** — "
                     f"{len(_co_listed)} tree(s)"
                 )
                 for bucket_key, group in group_trees_by_bucket(_co_listed):
                     st.markdown(f"**{bucket_label(bucket_key)}**")
                     for tree in group:
+                        _scoring = str(tree.get("current_kind") or tree.get("kind") or "")
                         _co_outcome = (
                             str(tree.get("delivery") or "—")
-                            if _scoring_kind_h2 == "promise"
+                            if _scoring == "promise"
                             else str(tree.get("goal_outcome") or "—")
                         )
                         with st.expander(
-                            # Drop company prefix — we're already scoped to one company
                             f"{tree.get('title')} · {tree_kind_label(tree)} · "
                             f"{tree.get('state')} / {_co_outcome}"
                             + (" · SLIPPED" if tree.get("slipped") else ""),

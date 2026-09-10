@@ -1,12 +1,12 @@
 """Conference / supplemental event ingest → claims desk seeds.
 
-Fetches a Quartr transcript for a non-earnings event (conference, AGM,
-investor day), extracts promise/goal excerpts via Haiku, writes a
-supplemental cue queue file, and optionally feeds it into the autopilot.
+Live path is Quartr MCP + ``--transcript-file``. There is no
+``QUARTR_API_KEY`` on this desk. Do not use the leftover REST fetch
+unless someone has explicitly opted into REST.
 
 Architecture
 ------------
-  1. Fetch transcript via Quartr REST API (same key as quartr_history_import)
+  1. Load an MCP-seeded transcript (``data/conf_transcripts/{TICKER}/{eventId}.json``)
   2. Flatten to speaker-labelled plain text
   3. LLM extraction (Haiku) — single-pass promise/goal classifier
   4. Write data/desk_conf_cue_{TICKER}.json (supplemental cue queue)
@@ -14,24 +14,21 @@ Architecture
 
 Usage
 -----
-    # Ingest a single conference and feed autopilot:
+    # MCP-seeded file (the default Independent onboard path):
     python scripts/_desk_conf_ingest.py \\
         --ticker CRWV \\
         --event-id 746055 \\
         --event-date 2026-09-08 \\
-        --event-name "Goldman Sachs 2026"
+        --event-name "Goldman Sachs 2026" \\
+        --transcript-file data/conf_transcripts/CRWV/746055.json \\
+        --extract-only
 
     # Dry-run (no LLM calls, no overlay writes):
     python scripts/_desk_conf_ingest.py --ticker CRWV --event-id 746055 \\
-        --event-date 2026-09-08 --event-name "Goldman Sachs 2026" --dry-run
+        --event-date 2026-09-08 --event-name "Goldman Sachs 2026" \\
+        --transcript-file data/conf_transcripts/CRWV/746055.json --dry-run
 
-    # Extract only — write cue file but skip autopilot:
-    python scripts/_desk_conf_ingest.py --ticker CRWV --event-id 746055 \\
-        --event-date 2026-09-08 --event-name "Goldman Sachs 2026" --extract-only
-
-Environment variables (same as quartr_history_import):
-    QUARTR_API_KEY   — required
-    QUARTR_API_BASE  — optional (default https://api.quartr.com)
+Environment variables:
     ANTHROPIC_API_KEY — required for extraction
 """
 from __future__ import annotations

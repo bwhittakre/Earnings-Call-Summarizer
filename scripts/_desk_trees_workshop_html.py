@@ -101,6 +101,7 @@ _TEMPLATE = r"""<!DOCTYPE html>
     padding: 6px 8px;
     min-width: 140px;
   }
+  select[multiple] { min-width: 200px; min-height: 96px; }
   table { width: 100%; border-collapse: collapse; font-size: 13px; }
   th, td { border-bottom: 1px solid var(--line); padding: 6px 8px; text-align: left; vertical-align: top; }
   th { color: var(--muted); font-weight: 500; }
@@ -359,9 +360,210 @@ function table(headers, rows) {
 function optionLabel(opt) {
   if (opt === ALL) return "All";
   if (opt === UNBUCKETED) return "Unbucketed";
+  if ((DESK.book_labels || {})[opt]) return DESK.book_labels[opt];
   if (DESK.bucket_labels[opt]) return DESK.bucket_labels[opt];
   if (DESK.labels[opt]) return DESK.labels[opt];
   return opt;
+}
+const ALL_BOOKS = "all_books";
+function bookLabel(id) {
+  return (DESK.book_labels || {})[id] || ({
+    all_books: "All books",
+    nvda_gold_v2: "NVIDIA gold",
+    desk_ops_v2: "Tech ops",
+    desk_hc_v2: "Healthcare / Independent",
+  }[id] || id);
+}
+function selectedBookId() {
+  return document.getElementById("book")?.value || DESK.default_book || ALL_BOOKS;
+}
+function parseCustomList() {
+  const raw = document.getElementById("custom-list")?.value || "";
+  return raw.split(/[\s,;]+/).map(s => s.trim().toUpperCase()).filter(Boolean);
+}
+function bookNames(bookId) {
+  const names = DESK.book_order.filter(n => n !== ALL_BOOKS && DESK.books[n]);
+  if (!bookId || bookId === ALL_BOOKS) return names;
+  return names.includes(bookId) ? [bookId] : [];
+}
+function unionTrees(bookId) {
+  const trees = [];
+  for (const name of bookNames(bookId)) {
+    for (const tree of (DESK.books[name] || {}).trees || []) trees.push(tree);
+  }
+  return trees;
+}
+function unionCues(bookId) {
+  const missed = [];
+  let latest = null;
+  let goldRecall = null;
+  for (const name of bookNames(bookId)) {
+    const queue = (DESK.books[name] || {}).queue || {};
+    latest = queue.latest_quarter || (DESK.books[name] || {}).latest || latest;
+    if (name === "nvda_gold_v2" && (queue.gold || {}).recall != null) goldRecall = queue.gold.recall;
+    for (const row of queue.missed || []) missed.push(row);
+  }
+  return {missed, latest, goldRecall};
+}
+function unionHorizonEvents(bookId, treeIds) {
+  const ids = treeIds ? new Set(treeIds) : null;
+  const events = [];
+  for (const name of bookNames(bookId)) {
+    for (const ev of (DESK.books[name] || {}).horizon_events || []) {
+      if (!ids || ids.has(ev.tree_id)) events.push(ev);
+    }
+  }
+  return events;
+}
+function unionQuotes(bookId, treeIds) {
+  const ids = treeIds ? new Set(treeIds) : null;
+  const rows = [];
+  for (const name of bookNames(bookId)) {
+    for (const row of (DESK.books[name] || {}).quotes || []) {
+      if (!ids || ids.has(row.tree_id)) rows.push(row);
+    }
+  }
+  return rows;
+}
+function unionSpan(bookId, trees) {
+  if (trees && trees.length) {
+    const periods = trees.map(t => (t.seed || {}).fiscal_period).filter(Boolean);
+    if (periods.length) {
+      const sorted = periods.slice().sort(cmpFiscal);
+      return [sorted[0], sorted[sorted.length - 1]];
+    }
+  }
+  let start = null, end = null;
+  for (const name of bookNames(bookId)) {
+    const span = (DESK.books[name] || {}).span || [];
+    if (span[0] && (!start || cmpFiscal(span[0], start) < 0)) start = span[0];
+    if (span[1] && (!end || cmpFiscal(span[1], end) > 0)) end = span[1];
+  }
+  return [start, end];
+}
+function deskTickers(trees, cues) {
+  const found = new Set();
+  for (const row of [...trees, ...(cues || [])]) {
+    const t = String(row.ticker || "").toUpperCase();
+    if (t) found.add(t);
+  }
+  return [...found].sort();
+}
+function filterByTickers(rows, tickers) {
+  if (!tickers) return rows.slice();
+  const allow = new Set(tickers);
+  return rows.filter(r => allow.has(String(r.ticker || "").toUpperCase()));
+}
+function selectedCompanies(options) {
+  const sel = document.getElementById("companies");
+  if (!sel) return options.slice();
+  const picked = [...sel.selectedOptions].map(o => o.value);
+  return picked.length ? picked : options.slice();
+}
+function visibleFilter() {
+  const bookId = selectedBookId();
+  const custom = parseCustomList();
+  const treesAll = unionTrees(bookId);
+  const cuesAll = unionCues(bookId);
+  let options = deskTickers(treesAll, cuesAll.missed);
+  if (custom.length) {
+    const allow = new Set(custom);
+    options = options.filter(t => allow.has(t));
+  }
+  const visible = selectedCompanies(options);
+  return {
+    bookId,
+    options,
+    visible,
+    trees: filterByTickers(treesAll, visible),
+    cues: filterByTickers(cuesAll.missed, visible),
+    latest: cuesAll.latest,
+    goldRecall: cuesAll.goldRecall,
+  };
+}
+function deliverRateCounts(trees) {
+  const delivered = trees.filter(t => t.delivery === "delivered").length;
+  const missed = trees.filter(t => t.delivery === "missed").length;
+  const n = delivered + missed;
+  return {delivered, missed, n_scoreable: n, deliver_rate: n ? delivered / n : null};
+}
+function hitRateCounts(trees) {
+  const hit = trees.filter(t => t.goal_outcome === "hit").length;
+  const missed = trees.filter(t => t.goal_outcome === "missed").length;
+  const n = hit + missed;
+  return {hit, missed, n_scoreable: n, hit_rate: n ? hit / n : null};
+}
+function conversionFromTrees(trees) {
+  const goals = trees.filter(t => t.kind === "goal");
+  const became = goals.filter(t => t.goal_outcome === "became-promise");
+  const nGoals = goals.length;
+  return {n_goals: nGoals, n_became_promise: became.length, harden_rate: nGoals ? became.length / nGoals : null};
+}
+function lastNodeEdge(tree) {
+  const nodes = tree.nodes || [];
+  if (!nodes.length) return null;
+  return String(nodes[nodes.length - 1].edge || "") || null;
+}
+function treeAgedBucket(tree, asOf) {
+  const delivery = String(tree.delivery || "");
+  const goal = String(tree.goal_outcome || "");
+  const state = String(tree.state || "");
+  const edge = lastNodeEdge(tree);
+  if (delivery === "delivered" || goal === "hit") return "confirmed";
+  if (delivery === "missed" || goal === "missed") return "failed";
+  if (goal === "dropped" || edge === "abandoned" || state === "abandoned") return "withdrawn";
+  if (delivery === "expired" || goal === "expired" || state === "expired" || edge === "expired") return "unknown";
+  if (!asOf || fiscalKey(asOf)[0] < 0) return null;
+  if (clockIsDue(tree.clock, asOf) || clockIsDue(tree.expire, asOf)) return "unknown";
+  return null;
+}
+function knownDeliveredCounts(trees, asOf) {
+  let confirmed = 0, failed = 0, withdrawn = 0, unknown = 0;
+  for (const tree of trees) {
+    const b = treeAgedBucket(tree, asOf);
+    if (b === "confirmed") confirmed++;
+    else if (b === "failed") failed++;
+    else if (b === "withdrawn") withdrawn++;
+    else if (b === "unknown") unknown++;
+  }
+  const aged = confirmed + failed + withdrawn + unknown;
+  return {
+    n_confirmed: confirmed, n_failed: failed, n_withdrawn: withdrawn, n_unknown: unknown,
+    n_aged: aged,
+    known_delivered_rate: aged ? confirmed / aged : null,
+    settled_share: aged ? (confirmed + failed + withdrawn) / aged : null,
+  };
+}
+function ratesFromVisibleTrees(trees, latest) {
+  const promises = trees.filter(t => t.kind === "promise");
+  const goals = trees.filter(t => t.kind === "goal");
+  return {
+    deliver: deliverRateCounts(promises),
+    hit: hitRateCounts(goals),
+    conversion: conversionFromTrees(trees),
+    known: knownDeliveredCounts(trees, latest),
+  };
+}
+function rebuildCompanySelect() {
+  const bookId = selectedBookId();
+  const custom = parseCustomList();
+  const treesAll = unionTrees(bookId);
+  const cuesAll = unionCues(bookId);
+  let options = deskTickers(treesAll, cuesAll.missed);
+  if (custom.length) {
+    const allow = new Set(custom);
+    options = options.filter(t => allow.has(t));
+  }
+  const sel = document.getElementById("companies");
+  if (!sel) return;
+  const prev = [...sel.selectedOptions].map(o => o.value);
+  const wasAll = !prev.length || prev.length === sel.options.length;
+  const keep = wasAll ? options : options.filter(t => prev.includes(t));
+  const chosen = keep.length ? keep : options;
+  sel.innerHTML = options.map(opt =>
+    '<option value="' + esc(opt) + '"' + (chosen.includes(opt) ? " selected" : "") + ">" +
+    esc(labelOf(opt)) + "</option>"
+  ).join("");
 }
 function select(id, options, selected, labels) {
   return '<label for="' + id + '">' + esc(labels || id) + '</label><select id="' + id + '">' +
@@ -369,8 +571,9 @@ function select(id, options, selected, labels) {
       esc(optionLabel(opt)) +
       "</option>").join("") + "</select>";
 }
-function currentBook() {
-  return DESK.books[document.getElementById("book").value] || DESK.books[DESK.default_book];
+function firstBook(bookId) {
+  const names = bookNames(bookId);
+  return DESK.books[names[0]] || {};
 }
 function drawChart(rows) {
   const w = 1000, h = 220, pad = 28;
@@ -395,28 +598,29 @@ function drawChart(rows) {
 function render() {
   document.getElementById("title").textContent = DESK.title;
   document.getElementById("subtitle").textContent = DESK.subtitle;
-  const book = currentBook();
-  const trees = book.trees || [];
-  const deliver = (book.deliver_rates || {}).book || {};
-  const hits = (book.hit_rates || {}).book || {};
-  const conversion = book.conversion || {};
-  const windowText = (book.window && book.window.length)
-    ? book.window[0] + "–" + book.window[book.window.length - 1]
-    : "operational, no gold window";
-  document.getElementById("book-caption").textContent = book.caption || "";
+  const filter = visibleFilter();
+  const trees = filter.trees;
+  const rates = ratesFromVisibleTrees(trees, filter.latest);
+  const deliver = rates.deliver;
+  const hits = rates.hit;
+  const conversion = rates.conversion;
+  const known = rates.known;
+  document.getElementById("book-caption").textContent =
+    bookLabel(filter.bookId) + " · " +
+    (parseCustomList().length ? "custom list " + parseCustomList().join(", ") + " · " : "") +
+    filter.visible.length + (filter.visible.length === 1 ? " company" : " companies") +
+    ". Rates are this filter, not the whole book.";
   document.getElementById("book-meta").textContent =
-    "Stamp " + (book.generated_at || "—") + " · " + (book.split || "") +
-    " · calendar " + (book.calendar || "") + " · window " + windowText +
-    ". Sector filter all does not retune xlk_tech.";
-  const nProvisional = book.n_provisional || 0;
+    "Company / custom-list filter is first. Books are an optional source.";
+  const nProvisional = bookNames(filter.bookId).reduce((n, name) => n + Number((DESK.books[name] || {}).n_provisional || 0), 0);
   const provisionalBadge = nProvisional > 0
     ? ' <span class="badge-provisional">(+' + nProvisional + ' provisional)</span>'
     : '';
   document.getElementById("rates").innerHTML =
-    '<div class="card"><h2>Deliver rate' + provisionalBadge + '</h2><p class="cap">' + esc(scoredRateCaption(deliver.n_scoreable, "promises")) +
+    '<div class="card"><h2>Deliver rate (this filter)' + provisionalBadge + '</h2><p class="cap">' + esc(scoredRateCaption(deliver.n_scoreable, "promises")) +
     '</p><div class="metric">' + esc(formatRate(deliver.deliver_rate)) + '</div><p class="cap">' +
     esc((deliver.delivered || 0) + " delivered / " + (deliver.n_scoreable || 0) + " scored") + "</p></div>" +
-    '<div class="card"><h2>Hit rate</h2><p class="cap">' + esc(scoredRateCaption(hits.n_scoreable, "goals")) +
+    '<div class="card"><h2>Hit rate (this filter)</h2><p class="cap">' + esc(scoredRateCaption(hits.n_scoreable, "goals")) +
     '</p><div class="metric">' + esc(formatRate(hits.hit_rate)) + '</div><p class="cap">' +
     esc((hits.hit || 0) + " hit / " + (hits.n_scoreable || 0) + " scored") + "</p></div>";
   document.getElementById("conversion").innerHTML =
@@ -425,7 +629,6 @@ function render() {
     "</div><p class='cap'>" + esc((conversion.n_became_promise || 0) + " became a promise / " +
     (conversion.n_goals || 0) + " goals. Not desk_trust. Same tree stays open until the promise closes.") + "</p>";
 
-  const known = book.known_delivered || {};
   document.getElementById("known-delivered").innerHTML =
     "<h2>Known-delivered</h2>" +
     "<p class='cap'>This is what we know has been delivered. Aged trees we cannot settle sit in the denominator.</p>" +
@@ -435,20 +638,28 @@ function render() {
     (known.n_aged || 0) + " aged · settled share " + formatRate(known.settled_share) +
     " · " + (known.n_unknown || 0) + " unknown. Not desk_trust.") + "</p>";
 
-  renderTransparency(book);
-  renderQuant(book);
-  renderManagementRegimes(book.book_id);
+  renderTransparency(filter);
+  renderQuant(filter);
+  renderManagementRegimes(filter);
 
   const cred = document.getElementById("credibility");
-  if (book.book_id === "nvda_gold_v2" && DESK.metrics) {
-    const rows = (DESK.metrics.rows || []).filter(r => r.desk_trust_n || r.desk_ambition_n);
+  const showCred = DESK.metrics && (
+    filter.bookId === "nvda_gold_v2" ||
+    (filter.bookId === ALL_BOOKS && (!filter.visible.length || filter.visible.includes("NVDA")))
+  );
+  if (showCred) {
+    const allow = new Set(filter.visible);
+    const rows = (DESK.metrics.rows || []).filter(r =>
+      (r.desk_trust_n || r.desk_ambition_n) &&
+      (!allow.size || allow.has(String(r.ticker || "").toUpperCase()))
+    );
     cred.innerHTML = "<h2>Trailing credibility</h2><p class='cap'>Point-in-time expanding rates on management_confidence. A quarter only sees terminals already cited. Null is an em dash.</p>" +
       table(["company", "fiscal_period", "trust", "trust_n", "ambition", "ambition_n"],
         rows.map(r => [esc(labelOf(r.ticker)), esc(r.fiscal_period), esc(formatRate(r.desk_trust)),
           esc(r.desk_trust_n), esc(formatRate(r.desk_ambition)), esc(r.desk_ambition_n)]));
   } else cred.innerHTML = "";
 
-  const latest = book.latest;
+  const latest = filter.latest;
   const board = clockBoard(trees, latest);
   let clockHtml = "<h2>Due and slipped</h2><p class='cap'>As of " + esc(latest || "—") +
     ". Open clocks on typed trees. Slipped here is a typed silent plus a due clock, not missed. " +
@@ -489,22 +700,50 @@ function render() {
   }
   document.getElementById("clocks").innerHTML = clockHtml;
 
-  renderHorizon(book, trees);
-  renderQuotes(book);
-  renderUncovered(book);
+  renderHorizon(filter, trees);
+  renderQuotes(filter);
+  renderUncovered(filter);
+  renderSeedCandidates(filter);
+  renderNeedsReview(filter);
+  renderTerminalCandidates(filter);
   renderTrees(trees);
 }
-function renderTransparency(book) {
+function renderTransparency(filter) {
   const host = document.getElementById("transparency");
   const payload = DESK.transparency;
   if (!payload) {
     host.innerHTML = "<h2>Management transparency</h2><p class='cap'>Rebuild the sidecar with python scripts/_desk_transparency_v2.py. This is not desk_trust.</p>";
     return;
   }
-  const block = ((payload.books || {})[book.book_id] || {});
-  const counts = block.book || {};
-  const companies = block.by_company || [];
-  const ledger = block.ledger || [];
+  const names = bookNames(filter.bookId);
+  let companies = [];
+  let ledger = [];
+  let counts = {};
+  for (const name of names) {
+    const block = ((payload.books || {})[name] || {});
+    companies = companies.concat(block.by_company || []);
+    ledger = ledger.concat(block.ledger || []);
+    const bookCounts = block.book || {};
+    for (const [k, v] of Object.entries(bookCounts)) {
+      if (typeof v === "number") counts[k] = (counts[k] || 0) + v;
+    }
+  }
+  const allow = new Set(filter.visible);
+  if (allow.size) {
+    companies = companies.filter(r => allow.has(String(r.ticker || "").toUpperCase()));
+    ledger = ledger.filter(r => allow.has(String(r.ticker || "").toUpperCase()));
+  }
+  if (allow.size && names.length !== 1) {
+    counts = {
+      n_trees_slipped: companies.reduce((n, r) => n + Number(r.n_trees_slipped || 0), 0),
+      n_trees_due: companies.reduce((n, r) => n + Number(r.n_trees_due || 0), 0),
+      n_slipped: companies.reduce((n, r) => n + Number(r.n_slipped || 0), 0),
+      n_ignored: companies.reduce((n, r) => n + Number(r.n_ignored || 0), 0),
+      n_withdrawn: companies.reduce((n, r) => n + Number(r.n_withdrawn || 0), 0),
+    };
+  }
+  const due = Number(counts.n_trees_due || 0);
+  counts.tree_slip_rate = due ? Number(counts.n_trees_slipped || 0) / due : null;
   let html = "<h2>Management transparency</h2><p class='cap'>" + esc(payload.caption || "") + "</p>" +
     "<p class='cap'>" + esc(neglectCaption(counts)) + "</p>" +
     '<div class="row"><div class="card"><h2>Due-clock slip rate</h2><div class="metric">' +
@@ -527,7 +766,7 @@ function renderTransparency(book) {
       esc(r.implicit ? "view" : "typed")]));
   host.innerHTML = html;
 }
-function renderQuant(book) {
+function renderQuant(filter) {
   const host = document.getElementById("quant");
   const payload = DESK.quant;
   let html = "<h2>Quant cross-check</h2><p class='cap'>" + esc(EXPIRE_CAPTION) + "</p>" +
@@ -537,13 +776,23 @@ function renderQuant(book) {
     host.innerHTML = html;
     return;
   }
-  const block = ((payload.books || {})[book.book_id] || {});
-  const rows = block.rows || [];
+  const names = bookNames(filter.bookId);
+  let rows = [];
+  let asOf = filter.latest;
+  for (const name of names) {
+    const block = ((payload.books || {})[name] || {});
+    rows = rows.concat(block.rows || []);
+    asOf = block.as_of || asOf;
+  }
+  if (filter.visible.length) {
+    const allow = new Set(filter.visible);
+    rows = rows.filter(r => allow.has(String(r.ticker || "").toUpperCase()));
+  }
   html += "<p class='cap'>" + esc(payload.caption || "") + "</p>" +
-    "<p class='cap'>As of " + esc(block.as_of || book.latest || "—") +
+    "<p class='cap'>As of " + esc(asOf || "—") +
     ". Binding, clock vs unclocked cap, last actual, verdict, next check, stop fiscal.</p>";
   if (!rows.length) {
-    html += "<p class='cap'>No expire or quant bindings on this book.</p>";
+    html += "<p class='cap'>No expire or quant bindings in this filter.</p>";
     host.innerHTML = html;
     return;
   }
@@ -562,9 +811,10 @@ function renderQuant(book) {
   );
   host.innerHTML = html;
 }
-function renderHorizon(book, trees) {
+function renderHorizon(filter, trees) {
   const host = document.getElementById("horizon");
-  const span = fiscalSpan(book.span[0], book.span[1]);
+  const spanPair = unionSpan(filter.bookId, trees);
+  const span = fiscalSpan(spanPair[0], spanPair[1]);
   if (!span.length) {
     host.innerHTML = "<h2>Horizon keep rate</h2><p class='cap'>No dated clocks to score.</p>";
     return;
@@ -588,7 +838,7 @@ function renderHorizon(book, trees) {
   const kinds = kindChoice === "promises" ? ["promise"] : kindChoice === "goals" ? ["goal"] : null;
   const filteredTrees = filterTreesToBucket(trees, bucket);
   const ids = new Set(filteredTrees.map(t => t.tree_id));
-  const events = filterHorizonEvents((book.horizon_events || []).filter(e => ids.has(e.tree_id)), {
+  const events = filterHorizonEvents(unionHorizonEvents(filter.bookId, ids), {
     horizon, ticker: company, kinds, start, end
   });
   const series = horizonSeries(events, fiscalSpan(start, end), kinds);
@@ -605,11 +855,12 @@ function renderHorizon(book, trees) {
       esc(formatNRate(r.horizon_cum_rate, r.horizon_cum_n, r.horizon_cum_yes)),
     ]));
   ["horizon-choice", "horizon-kind", "horizon-company", "horizon-bucket", "horizon-from", "horizon-through"]
-    .forEach(id => document.getElementById(id).onchange = () => renderHorizon(book, trees));
+    .forEach(id => document.getElementById(id).onchange = () => renderHorizon(filter, trees));
 }
-function renderQuotes(book) {
+function renderQuotes(filter) {
   const host = document.getElementById("quotes");
-  const rows = book.quotes || [];
+  const treeIds = (filter.trees || []).map(t => t.tree_id);
+  const rows = unionQuotes(filter.bookId, treeIds);
   if (!rows.length) { host.innerHTML = ""; return; }
   const outcomes = [...new Set(rows.map(r => r.outcome || ""))].sort();
   const tickers = [...new Set(rows.map(r => String(r.ticker || "").toUpperCase()).filter(Boolean))].sort();
@@ -638,19 +889,17 @@ function renderQuotes(book) {
     table(["company", "fiscal_period", "role", "edge", "kind", "outcome", "claim", "clock", "excerpt"],
       filtered.map(r => [esc(labelOf(r.ticker)), esc(r.fiscal_period), esc(r.role), esc(r.edge),
         esc(r.kind), esc(r.outcome), esc(r.title), esc(r.clock || "—"), esc(r.excerpt)]));
-  host.querySelectorAll("input").forEach(i => i.onchange = () => renderQuotes(book));
+  host.querySelectorAll("input").forEach(i => i.onchange = () => renderQuotes(filter));
 }
-function renderUncovered(book) {
-  const queue = book.queue || {};
-  const missed = queue.missed || [];
+function renderUncovered(filter) {
+  const missed = filter.cues || [];
   const host = document.getElementById("uncovered");
   if (!missed.length) { host.innerHTML = ""; return; }
-  const gold = queue.gold || {};
   host.innerHTML = "<h2>Uncovered cues</h2><p class='cap'>Seedable promise/goal cues in novelty_view that are not yet on a typed tree. Do not auto-seed. Gold 20Q recall stays locked.</p>" +
-    "<p class='cap'>Full-history missed " + esc(queue.n_missed) + " / " + esc(queue.n_seedable) +
-    " · gold recall " + esc(gold.recall) + "</p>" +
-    table(["company", "fiscal_period", "class", "dimension", "excerpt"],
-      missed.map(r => [esc(labelOf(r.ticker)), esc(r.fiscal_period), esc(r.class), esc(r.dimension), esc(r.excerpt)]));
+    "<p class='cap'>Missed " + esc(String(missed.length)) + " in this filter" +
+    (filter.goldRecall != null ? " · gold recall " + esc(filter.goldRecall) : "") + "</p>" +
+    table(["company", "book", "fiscal_period", "class", "dimension", "excerpt"],
+      missed.map(r => [esc(labelOf(r.ticker)), esc(bookLabel(r.book_id)), esc(r.fiscal_period), esc(r.class), esc(r.dimension), esc(r.excerpt)]));
 }
 function buildTreeDetailsHtml(tree) {
   const scoring = tree.current_kind || tree.kind || "";
@@ -660,7 +909,8 @@ function buildTreeDetailsHtml(tree) {
     (tree.state || "") + " / " + (outcome || "")) + slippedBadge;
   // Always collapsed — slipped trees get a visual badge instead of auto-open
   let html = '<details class="tree"><summary>' + title + "</summary>";
-  html += '<p class="cite">' + esc(tree.tree_id) + " · " + esc(tree.beat_id) + " · " +
+  html += '<p class="cite">' + esc(tree.tree_id) + " · " + esc(bookLabel(tree.book_id)) + " · " +
+    esc(tree.beat_id) + " · " +
     esc(bucketLabel(treeBucket(tree))) + " · clock " + esc(tree.clock || "—") + " · " +
     (tree.open ? "open" : "closed") + "</p>";
   if (tree.parent_tree_id) html += '<p class="cite">Evolved from ' + esc(tree.parent_tree_id) + ". Parent seed cite is kept.</p>";
@@ -694,52 +944,18 @@ function renderTrees(trees) {
   else {
     let html = "";
     if (groupBy === "company") {
-      // Build company list from ALL trees (not just bucket-filtered) so the picker is stable
-      const allTickers = [...new Set(trees.map(t => t.ticker || "").filter(Boolean))].sort();
-      const selCo = document.getElementById("list-company")?.value || allTickers[0] || "";
-      const coSelector = allTickers.length
-        ? select("list-company", allTickers, selCo, "Company")
-        : "<span class='cap'>No companies</span>";
-      // Inject company selector into controls div if not already there
-      let controlsEl = host.querySelector(".controls");
-      if (controlsEl && !document.getElementById("list-company")) {
-        controlsEl.insertAdjacentHTML("beforeend", "&nbsp;&nbsp;" + coSelector);
-        document.getElementById("list-company").onchange = () => renderTrees(trees);
+      const byTicker = {};
+      for (const tree of listed) {
+        const t = String(tree.ticker || "").toUpperCase();
+        if (!byTicker[t]) byTicker[t] = [];
+        byTicker[t].push(tree);
       }
-      // Filter to selected company (bucket filter already applied to `listed`)
-      const coListed = listed.filter(t => t.ticker === selCo);
-      if (!coListed.length) {
-        html += "<p class='empty'>" + esc("No trees for " + labelOf(selCo) + " in the selected bucket.") + "</p>";
-      } else {
-        html += "<h3>" + esc(labelOf(selCo)) + " — " + esc(String(coListed.length)) + " tree(s)</h3>";
+      for (const ticker of Object.keys(byTicker).sort()) {
+        const coListed = byTicker[ticker];
+        html += "<h3>" + esc(labelOf(ticker)) + " — " + esc(String(coListed.length)) + " tree(s)</h3>";
         for (const [key, group] of groupTreesByBucket(coListed)) {
           html += "<h4 style='margin:8px 0 4px'>" + esc(bucketLabel(key)) + "</h4>";
-          for (const tree of group) {
-            // Drop company prefix in title since we're scoped to one company
-            const scoring = tree.current_kind || tree.kind || "";
-            const outcome = scoring === "promise" ? tree.delivery : tree.goal_outcome;
-            const slippedBadge = tree.slipped ? " <span style='color:var(--warn);font-weight:700'>[SLIPPED]</span>" : "";
-            const coTitle = esc((tree.title || "") + " · " + treeKindLabel(tree) + " · " +
-              (tree.state || "") + " / " + (outcome || "")) + slippedBadge;
-            let treeHtml = '<details class="tree"><summary>' + coTitle + "</summary>";
-            treeHtml += '<p class="cite">' + esc(tree.tree_id) + " · " + esc(tree.beat_id) + " · " +
-              esc(bucketLabel(treeBucket(tree))) + " · clock " + esc(tree.clock || "—") + " · " +
-              (tree.open ? "open" : "closed") + "</p>";
-            if (tree.parent_tree_id) treeHtml += '<p class="cite">Evolved from ' + esc(tree.parent_tree_id) + ". Parent seed cite is kept.</p>";
-            if (tree.goal_outcome === "became-promise") treeHtml += '<p class="cite">Became a promise. Same tree. Current label is promise (was goal) until the promise closes.</p>';
-            for (const row of treeNodeRows(tree)) {
-              let lab = (row.fiscal_period || "") + " · " + nodeEdgeLabel(row);
-              if (row.slipped) lab += " · slipped";
-              treeHtml += "<p><strong>" + esc(lab) + "</strong></p>";
-              if (row.citation) treeHtml += '<p class="cite">' + esc(row.citation) + "</p>";
-              if (row.excerpt) treeHtml += "<p>" + esc(row.excerpt) + "</p>";
-              else if (row.edge === "silent") treeHtml += '<p class="silent">Silent quarter. No cite on this object.</p>';
-              else if (row.edge === "expired") treeHtml += '<p class="silent">Expired. Completeness is unfeasible. Not a miss and not a withdrawal.</p>';
-            }
-            if (tree.coverage_summary) treeHtml += "<p><strong>Coverage.</strong> " + esc(tree.coverage_summary) + "</p>";
-            treeHtml += "</details>";
-            html += treeHtml;
-          }
+          for (const tree of group) html += buildTreeDetailsHtml(tree);
         }
       }
     } else if (groupBy === "period") {
@@ -768,14 +984,29 @@ function renderTrees(trees) {
   const groupEl = document.getElementById("list-group");
   if (groupEl) groupEl.onchange = () => renderTrees(trees);
 }
-function renderManagementRegimes(book) {
+function renderManagementRegimes(filter) {
   const host = document.getElementById("management-regimes");
   const sidecar = DESK.regimes;
   if (!sidecar) { host.innerHTML = ""; return; }
-  const bookBlock = (sidecar.books || {})[book] || {};
+  const names = bookNames(filter.bookId);
   const regimes = sidecar.regimes || [];
-  const regimeRates = bookBlock.regime_rates || {};
-  const transferLedger = bookBlock.transfer_ledger || [];
+  let regimeRates = {};
+  let transferLedger = [];
+  for (const name of names) {
+    const bookBlock = (sidecar.books || {})[name] || {};
+    regimeRates = Object.assign(regimeRates, bookBlock.regime_rates || {});
+    transferLedger = transferLedger.concat(bookBlock.transfer_ledger || []);
+  }
+  if (filter.visible.length) {
+    const allow = new Set(filter.visible);
+    const kept = {};
+    for (const [regimeId, data] of Object.entries(regimeRates)) {
+      const meta = regimes.find(r => r.regime_id === regimeId) || {};
+      if (allow.has(String(meta.ticker || "").toUpperCase())) kept[regimeId] = data;
+    }
+    regimeRates = kept;
+    transferLedger = transferLedger.filter(e => allow.has(String(e.ticker || "").toUpperCase()));
+  }
 
   // Current-regime rates table
   const rateRows = [];
@@ -838,7 +1069,7 @@ function renderManagementRegimes(book) {
       ledgerRows
     );
   } else {
-    html += "<p class='cap'>No inherited (open-at-transition) trees in this book.</p>";
+    html += "<p class='cap'>No inherited (open-at-transition) trees in this filter.</p>";
   }
 
   host.innerHTML = html;
@@ -863,7 +1094,7 @@ function citeBadge(verified) {
     : '<span style="color:#d9534f;font-weight:600" title="LLM paraphrased — re-cite from novelty_view before typing">✗ paraphrased</span>';
 }
 
-function renderSeedCandidates() {
+function renderSeedCandidates(filter) {
   const host = document.getElementById("seed-candidates");
   const data = DESK.seed_candidates;
   if (!data) {
@@ -872,8 +1103,8 @@ function renderSeedCandidates() {
   }
   const byTicker = data.candidates_by_ticker || {};
   const priority = new Set(data.priority_tickers || []);
-  // Tickers: priority first, then alphabetical
-  const allTickers = Object.keys(byTicker);
+  const allow = new Set((filter && filter.visible) || []);
+  const allTickers = Object.keys(byTicker).filter(t => !allow.size || allow.has(String(t).toUpperCase()));
   const ordered = [
     ...allTickers.filter(t => priority.has(t)),
     ...allTickers.filter(t => !priority.has(t)).sort(),
@@ -969,11 +1200,12 @@ const REASON_HELP = {
   expired_guard: "Sonnet proposed expired but the clock is still open or the window has gaps — downgraded to none.",
 };
 
-function renderNeedsReview() {
+function renderNeedsReview(filter) {
   const host = document.getElementById("needs-review");
   const data = DESK.terminal_candidates;
   if (!data || !Array.isArray(data.needs_review)) { host.innerHTML = ""; return; }
-  const items = data.needs_review;
+  const allow = new Set((filter && filter.visible) || []);
+  const items = data.needs_review.filter(it => !allow.size || allow.has(String(it.ticker || "").toUpperCase()));
   if (!items.length) {
     host.innerHTML = "<details open><summary style='cursor:pointer;font-weight:600'><span class='review-badge'>Needs Review — 0</span></summary><p class='cap'>Every open tree either has retrieved evidence or a verdict. Nothing is parked.</p></details>";
     return;
@@ -1007,11 +1239,12 @@ function renderNeedsReview() {
     "</summary>" + innerHtml + "</details>";
 }
 
-function renderTerminalCandidates() {
+function renderTerminalCandidates(filter) {
   const host = document.getElementById("terminal-candidates");
   const data = DESK.terminal_candidates;
   if (!data) { host.innerHTML = ""; return; }
-  const candidates = data.candidates || [];
+  const allow = new Set((filter && filter.visible) || []);
+  const candidates = (data.candidates || []).filter(c => !allow.size || allow.has(String(c.ticker || "").toUpperCase()));
   const retrievalFirst = !!data.evidence_source;
   const tcCount = candidates.length;
   const partial = data.complete === false ? " · <span style='color:var(--warn)'>PARTIAL RUN</span>" : "";
@@ -1083,11 +1316,18 @@ function renderTerminalCandidates() {
 
 function boot() {
   document.getElementById("book-controls").innerHTML =
-    select("book", DESK.book_order, DESK.default_book, "Book");
-  document.getElementById("book").onchange = render;
-  renderSeedCandidates();
-  renderNeedsReview();
-  renderTerminalCandidates();
+    select("book", DESK.book_order, DESK.default_book, "Book") +
+    '<div><label for="custom-list">Custom list</label>' +
+    '<input type="search" id="custom-list" placeholder="CRWV, NVDA" /></div>' +
+    '<div><label for="companies">Companies</label>' +
+    '<select id="companies" multiple size="6"></select></div>';
+  document.getElementById("book").onchange = () => { rebuildCompanySelect(); render(); };
+  document.getElementById("custom-list").onchange = () => { rebuildCompanySelect(); render(); };
+  document.getElementById("custom-list").addEventListener("keydown", e => {
+    if (e.key === "Enter") { e.preventDefault(); rebuildCompanySelect(); render(); }
+  });
+  document.getElementById("companies").onchange = render;
+  rebuildCompanySelect();
   render();
 }
 boot();
